@@ -151,6 +151,30 @@ namespace ReMap.Standalone.Tests
             Assert.That(fortyFive.z, Is.EqualTo(Mathf.Sqrt(.5f)).Within(.0001f));
         }
 
+        [Test]
+        public void HorizontalZiplinePreviewSagsWithLowerLengthScale()
+        {
+            Vector3 start = new Vector3(0f, 4f, 0f), end = new Vector3(20f, 4f, 0f);
+            var taut = WorldView.ZiplinePreviewPoints(start, end, 1f, false, 8);
+            var typical = WorldView.ZiplinePreviewPoints(start, end, .9f, false, 8);
+            var loose = WorldView.ZiplinePreviewPoints(start, end, .7f, false, 8);
+
+            Assert.That(taut[4].y, Is.EqualTo(4f).Within(.0001f));
+            Assert.That(typical[4].y, Is.LessThan(taut[4].y));
+            Assert.That(loose[4].y, Is.LessThan(typical[4].y));
+            Assert.That(typical[0], Is.EqualTo(start));
+            Assert.That(typical[8], Is.EqualTo(end));
+        }
+
+        [Test]
+        public void VerticalZiplinePreviewStaysStraightRegardlessOfLengthScale()
+        {
+            var points = WorldView.ZiplinePreviewPoints(Vector3.zero, Vector3.up * 20f, 0f, true, 8);
+
+            for (int index = 0; index < points.Length; index++)
+                Assert.That(points[index], Is.EqualTo(Vector3.up * (20f * index / 8f)));
+        }
+
 
         [Test]
         public void DuplicateKeepsItsOwnEndpoints()

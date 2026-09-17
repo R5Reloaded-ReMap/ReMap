@@ -33,7 +33,7 @@ namespace ReMap.Standalone
                 if (line == null)
                 {
                     line = instance.AddComponent<LineRenderer>();
-                    line.useWorldSpace = true; line.positionCount = 2; line.numCapVertices = 4;
+                    line.useWorldSpace = true; line.numCapVertices = 4;
                 }
                 line.sharedMaterial = ZiplineCableMaterial();
                 line.widthMultiplier = Mathf.Max(.1f, item.ziplineWidth) * ApexCoordinates.MetersPerUnit;
@@ -59,8 +59,10 @@ namespace ReMap.Standalone
                         if (item.ziplineAutoDetachStart > 0f) cableStart = startGuideEnd;
                         if (item.ziplineAutoDetachEnd > 0f) cableEnd = endGuideStart;
                     }
-                    line.SetPosition(0, cableStart);
-                    line.SetPosition(1, cableEnd);
+                    var cablePoints = ZiplinePreviewPoints(cableStart, cableEnd,
+                        item.ziplineLengthScale, item.ziplineMode == "vertical");
+                    line.positionCount = cablePoints.Length;
+                    line.SetPositions(cablePoints);
                     UpdateZiplineDetachGuides(instance, startAnchor, endAnchor,
                         item.ziplineAutoDetachStart, item.ziplineAutoDetachEnd);
                     Vector3 pushDirection = ZiplinePushDirection(item.ziplinePushOffAngle);
@@ -111,6 +113,28 @@ namespace ReMap.Standalone
 
         private static Vector3 VerticalEndAnchor(Vector3 startAnchor, Vector3 endAnchor) =>
             new Vector3(startAnchor.x, endAnchor.y, startAnchor.z);
+
+        public static Vector3[] ZiplinePreviewPoints(Vector3 start, Vector3 end,
+            float lengthScale, bool vertical, int segments = 24)
+        {
+            segments = Mathf.Clamp(segments, 1, 128);
+            var points = new Vector3[segments + 1];
+            Vector3 delta = end - start;
+            float distance = delta.magnitude;
+            float horizontal = new Vector2(delta.x, delta.z).magnitude;
+            float slack = Mathf.Max(0f, 1f - Mathf.Clamp(lengthScale, 0f, 1.2f));
+            // Apex computes the final rope shape natively. This preview follows the intent of
+            // the legacy editor prototype: distance * (1 - lengthScale) minus a small dead zone.
+            float sag = vertical || distance < .0001f ? 0f : Mathf.Max(0f,
+                distance * slack - 16f * ApexCoordinates.MetersPerUnit) * horizontal / distance;
+            sag = Mathf.Min(sag, distance * .35f);
+            for (int index = 0; index <= segments; index++)
+            {
+                float t = index / (float)segments;
+                points[index] = Vector3.Lerp(start, end, t) + Vector3.down * (sag * 4f * t * (1f - t));
+            }
+            return points;
+        }
 
         private static void SetZiplineMarkerPosition(GameObject endpoint, Vector3 position)
         {
