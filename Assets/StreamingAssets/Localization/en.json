@@ -4355,6 +4355,30 @@
       "text": "The sound settings are invalid."
     },
     {
+      "key": "#NEW_LOCATION_PAIR",
+      "text": "New location pair"
+    },
+    {
+      "key": "#CUSTOM_OBJECT_LOCATION_PAIR",
+      "text": "Location pair"
+    },
+    {
+      "key": "#LOCATION_PAIR_CUSTOM_HELP",
+      "text": "Stores an Apex position and angle pair through ReMap’s wrapper around the native NewLocPair function."
+    },
+    {
+      "key": "#LOCATION_PAIR_HELP",
+      "text": "Move and rotate this marker to define the position and angles passed directly to native NewLocPair."
+    },
+    {
+      "key": "#LOCATION_PAIR_CREATED",
+      "text": "Location pair created."
+    },
+    {
+      "key": "#LOCATION_PAIR_HIERARCHY_GROUP",
+      "text": "A location pair must remain a hierarchy group."
+    },
+    {
       "key": "#DEVELOPMENT_BUILD",
       "text": "Development build — debugging enabled"
     },

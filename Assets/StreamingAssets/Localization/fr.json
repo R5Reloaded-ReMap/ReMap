@@ -4355,6 +4355,30 @@
       "text": "Les réglages du son sont invalides."
     },
     {
+      "key": "#NEW_LOCATION_PAIR",
+      "text": "Nouvelle paire de position"
+    },
+    {
+      "key": "#CUSTOM_OBJECT_LOCATION_PAIR",
+      "text": "Paire de position"
+    },
+    {
+      "key": "#LOCATION_PAIR_CUSTOM_HELP",
+      "text": "Stocke une position et des angles Apex via le wrapper ReMap de la fonction native NewLocPair."
+    },
+    {
+      "key": "#LOCATION_PAIR_HELP",
+      "text": "Déplacez et orientez ce repère pour définir la position et les angles transmis directement à NewLocPair."
+    },
+    {
+      "key": "#LOCATION_PAIR_CREATED",
+      "text": "Paire de position créée."
+    },
+    {
+      "key": "#LOCATION_PAIR_HIERARCHY_GROUP",
+      "text": "Une paire de position doit rester un groupe dans la hiérarchie."
+    },
+    {
       "key": "#DEVELOPMENT_BUILD",
       "text": "Build de développement — débogage activé"
     },

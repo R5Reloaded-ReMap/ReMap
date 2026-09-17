@@ -32,6 +32,7 @@ global function ReMap_CreateSpeedBoost
 global function ReMap_CreateBubbleShield
 global function ReMap_CreateAnimatedCamera
 global function ReMap_CreateSound
+global function ReMap_NewLocPair
 
 global const int REMAP_DOOR_SINGLE = 0
 global const int REMAP_DOOR_DOUBLE = 1
@@ -374,6 +375,11 @@ entity function ReMap_CreateSound( vector origin, string soundName, float radius
 	DispatchSpawn( sound )
 	file.props.append( sound )
 	return sound
+}
+
+LocPair function ReMap_NewLocPair( vector origin, vector angles )
+{
+	return NewLocPair( origin, angles )
 }
 
 void function ReMap_AnimateCamera( entity cameraHead, float maxLeft, float maxRight,

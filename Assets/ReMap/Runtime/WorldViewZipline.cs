@@ -14,6 +14,7 @@ namespace ReMap.Standalone
         private const string TriggerPreviewName = "__remap_trigger_volume";
         private const string CameraPathMarkerName = "__remap_camera_path_marker";
         private const string SoundMarkerName = "__remap_sound_marker";
+        private const string LocationPairMarkerName = "__remap_location_pair_marker";
         private MapDocument syncedZiplineDocument;
         private Material ziplineCableMaterial, ziplineDetachMaterial;
 
@@ -39,6 +40,7 @@ namespace ReMap.Standalone
                     EnsureCameraPathMarker(instance, item);
                 if (item.customType == "sound" || item.customType == "sound-point")
                     EnsureSoundMarker(instance, item);
+                if (item.customType == "location-pair") EnsureLocationPairMarker(instance, item);
             }
             foreach (var item in document.objects)
             {
@@ -237,6 +239,27 @@ namespace ReMap.Standalone
             var tint = new MaterialPropertyBlock();
             tint.SetColor("_BaseColor", item.customType == "sound" ?
                 new Color(.15f, .8f, 1f) : new Color(.3f, 1f, .65f));
+            marker.GetComponent<Renderer>().SetPropertyBlock(tint);
+        }
+
+        private void EnsureLocationPairMarker(GameObject instance, MapObject item)
+        {
+            var existing = instance.transform.Find(LocationPairMarkerName);
+            GameObject marker;
+            if (existing == null)
+            {
+                marker = GameObject.CreatePrimitive(PrimitiveType.Cube);
+                marker.name = LocationPairMarkerName; marker.transform.SetParent(instance.transform, false);
+                marker.GetComponent<Collider>().enabled = false;
+                marker.GetComponent<Renderer>().sharedMaterial = lineMaterial;
+                instanceIds[marker] = item.id;
+            }
+            else marker = existing.gameObject;
+            marker.transform.localPosition = new Vector3(0f, 0f, .25f);
+            marker.transform.localRotation = Quaternion.identity;
+            marker.transform.localScale = new Vector3(.16f, .16f, .5f);
+            var tint = new MaterialPropertyBlock();
+            tint.SetColor("_BaseColor", new Color(1f, .4f, .85f));
             marker.GetComponent<Renderer>().SetPropertyBlock(tint);
         }
 

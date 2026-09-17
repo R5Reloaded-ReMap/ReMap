@@ -24,7 +24,8 @@ namespace ReMap.Standalone
             new CatalogEntry("custom:bubble-shield", L.T("#BUBBLE_SHIELD"), L.T("#CUSTOM"), new Vector3(5.2f, 5.2f, 5.2f)) { CustomType = "bubble-shield" },
             new CatalogEntry("custom:camera-path", L.T("#CAMERA_PATH"), L.T("#CUSTOM"), new Vector3(15f, 2f, 2f)) { CustomType = "camera-path" },
             new CatalogEntry("custom:animated-camera", L.T("#ANIMATED_CAMERA"), L.T("#CUSTOM"), new Vector3(1f, 1f, 1f)) { CustomType = "animated-camera" },
-            new CatalogEntry("custom:sound", L.T("#SOUND"), L.T("#CUSTOM"), new Vector3(1f, 1f, 1f)) { CustomType = "sound" }
+            new CatalogEntry("custom:sound", L.T("#SOUND"), L.T("#CUSTOM"), new Vector3(1f, 1f, 1f)) { CustomType = "sound" },
+            new CatalogEntry("custom:new-location-pair", L.T("#NEW_LOCATION_PAIR"), L.T("#CUSTOM"), new Vector3(1f, 1f, 1f)) { CustomType = "location-pair" }
         };
 
         private bool CustomObjectAvailable(CatalogEntry entry)
@@ -117,6 +118,7 @@ namespace ReMap.Standalone
                     entry.CustomType == "camera-path" ? "#CAMERA_PATH_CUSTOM_HELP" :
                     entry.CustomType == "animated-camera" ? "#ANIMATED_CAMERA_CUSTOM_HELP" :
                     entry.CustomType == "sound" ? "#SOUND_CUSTOM_HELP" :
+                    entry.CustomType == "location-pair" ? "#LOCATION_PAIR_CUSTOM_HELP" :
                     "#CABLE_TWO_INDEPENDENTLY_MOVABLE_ENDPOINTS");
             placeAssetButton.SetEnabled(true); RefreshCatalog();
             _ = PrepareZiplineModels();
@@ -153,6 +155,7 @@ namespace ReMap.Standalone
             else if (entry?.CustomType == "camera-path") InsertCameraPath(position, parent);
             else if (entry?.CustomType == "animated-camera") InsertAnimatedCamera(position, parent);
             else if (entry?.CustomType == "sound") InsertSound(position, parent);
+            else if (entry?.CustomType == "location-pair") InsertLocationPair(position, parent);
         }
     }
 }

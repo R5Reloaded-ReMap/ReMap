@@ -136,6 +136,7 @@ namespace ReMap.Standalone
             AppendSpeedBoosts(server, world, false, originOffset, useOriginOffset);
             AppendBubbleShields(server, world, false, originOffset, useOriginOffset);
             AppendSounds(server, world, false, originOffset, useOriginOffset);
+            AppendLocationPairs(server, world, false, originOffset, useOriginOffset);
             AppendAnimatedCameras(server, world, false, originOffset, useOriginOffset);
             AppendCurvedZiplines(server, world, false, originOffset, useOriginOffset);
             AppendZiplines(server, world, false, originOffset, useOriginOffset);
@@ -233,6 +234,7 @@ namespace ReMap.Standalone
             AppendSpeedBoosts(result, world, true, originOffset, false);
             AppendBubbleShields(result, world, true, originOffset, false);
             AppendSounds(result, world, true, originOffset, false);
+            AppendLocationPairs(result, world, true, originOffset, false);
             AppendAnimatedCameras(result, world, true, originOffset, false);
             AppendCurvedZiplines(result, world, true, originOffset, false);
             AppendZiplines(result, world, true, originOffset, false);
@@ -710,6 +712,20 @@ namespace ReMap.Standalone
                     (sound.soundWaveAmbient ? "true" : "false") + ", " +
                     (sound.soundEnabled ? "true" : "false") + ", [ " +
                     string.Join(", ", points) + " ] )";
+                code.Append(live ? "script " : "\t").Append(expression).AppendLine();
+            }
+        }
+
+        private static void AppendLocationPairs(StringBuilder code, List<MapObject> world, bool live,
+            Vector3 originOffset, bool symbolicOffset)
+        {
+            var pairs = world.Where(o => o.customType == "location-pair").ToList();
+            if (!live && pairs.Count > 0) { code.AppendLine(); code.AppendLine("\t// Location pairs"); }
+            foreach (var pair in pairs)
+            {
+                string expression = "ReMap_NewLocPair( " +
+                    Position(pair.position, originOffset, symbolicOffset) + ", " +
+                    Vector(ApexDisplay.Angles(WorldView.ToVector(pair.rotation))) + " )";
                 code.Append(live ? "script " : "\t").Append(expression).AppendLine();
             }
         }

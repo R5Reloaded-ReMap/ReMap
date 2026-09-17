@@ -250,7 +250,7 @@ namespace ReMap.Standalone.Core
                     item.customType != "camera-path" && item.customType != "camera-path-point" &&
                     item.customType != "camera-path-target" && item.customType != "animated-camera" &&
                     item.customType != "animated-camera-component" && item.customType != "sound" &&
-                    item.customType != "sound-point")
+                    item.customType != "sound-point" && item.customType != "location-pair")
                     throw new ArgumentException(L.T("#UNKNOWN_CUSTOM_OBJECT_TYPE"));
                 if (item.customType == "zipline" && !item.isGroup)
                     throw new ArgumentException(L.T("#ZIPLINE_HIERARCHY_GROUP"));
@@ -385,6 +385,8 @@ namespace ReMap.Standalone.Core
                     objects.FindAll(candidate => candidate.parentId == item.id &&
                         candidate.customType == "sound-point").Count > 64))
                     throw new ArgumentException(L.T("#INVALID_SOUND_SETTINGS"));
+                if (item.customType == "location-pair" && !item.isGroup)
+                    throw new ArgumentException(L.T("#LOCATION_PAIR_HIERARCHY_GROUP"));
                 if (!item.position.IsFinite || !item.rotation.IsFinite || !item.scale.IsFinite)
                     throw new ArgumentException(L.T("#TRANSFORMS_FINITE_NUMBERS"));
                 if (!Finite(item.fadeDistance) || item.fadeDistance < -1f)
