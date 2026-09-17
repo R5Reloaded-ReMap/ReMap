@@ -3891,6 +3891,74 @@
       "text": "Le râtelier doit utiliser une référence mp_weapon_ valide et un délai de réapparition compris entre 0 et 86400 secondes."
     },
     {
+      "key": "#RESPAWN_HEAL",
+      "text": "Soin réapparaissable"
+    },
+    {
+      "key": "#CUSTOM_OBJECT_RESPAWN_HEAL",
+      "text": "Soin réapparaissable personnalisé"
+    },
+    {
+      "key": "#RESPAWN_HEAL_MEDKIT",
+      "text": "Kit médical"
+    },
+    {
+      "key": "#RESPAWN_HEAL_BATTERY",
+      "text": "Batterie de bouclier"
+    },
+    {
+      "key": "#RESPAWN_HEAL_SYRINGE",
+      "text": "Seringue"
+    },
+    {
+      "key": "#RESPAWN_HEAL_CELL",
+      "text": "Cellule de bouclier"
+    },
+    {
+      "key": "#RESPAWN_HEAL_PHOENIX",
+      "text": "Kit Phénix"
+    },
+    {
+      "key": "#RESPAWN_HEAL_TYPE",
+      "text": "Type de soin"
+    },
+    {
+      "key": "#RESPAWN_HEAL_RESPAWN_TIME",
+      "text": "Délai de réapparition (secondes)"
+    },
+    {
+      "key": "#RESPAWN_HEAL_DURATION",
+      "text": "Durée du soin (secondes)"
+    },
+    {
+      "key": "#RESPAWN_HEAL_AMOUNT",
+      "text": "Quantité du petit soin"
+    },
+    {
+      "key": "#RESPAWN_HEAL_PROGRESSIVE",
+      "text": "Soin progressif"
+    },
+    {
+      "key": "#RESPAWN_HEAL_CUSTOM_HELP",
+      "text": "Soin de santé ou de bouclier réutilisable. Les types dont le modèle manque dans les RPAK sélectionnés sont masqués."
+    },
+    {
+      "key": "#RESPAWN_HEAL_HELP",
+      "text": "La quantité s’applique uniquement aux seringues et cellules. Les objets complets restaurent toute la ressource."
+    },
+    {
+      "key": "#RESPAWN_HEAL_CREATED",
+      "text": "Soin réapparaissable créé."
+    },
+    {
+      "key": "#RESPAWN_HEAL_PREVIEW_ERROR",
+      "text": "Impossible de préparer les modèles de soin : "
+    },
+    {
+      "key": "#INVALID_RESPAWN_HEAL_SETTINGS",
+      "text": "Les paramètres du soin réapparaissable sont invalides."
+    },
+    {
       "key": "#DEVELOPMENT_BUILD",
       "text": "Build de développement — débogage activé"
     },

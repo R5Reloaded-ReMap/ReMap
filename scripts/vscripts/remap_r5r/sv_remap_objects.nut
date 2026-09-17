@@ -25,6 +25,7 @@ global function ReMap_CreateSpawnPoint
 global function ReMap_CreateTrigger
 global function ReMap_CreateJumpTower
 global function ReMap_CreateWeaponRack
+global function ReMap_CreateRespawnHeal
 
 global const int REMAP_DOOR_SINGLE = 0
 global const int REMAP_DOOR_DOUBLE = 1
@@ -42,6 +43,18 @@ const asset REMAP_WEAPON_RACK_MODEL = $"mdl/industrial/gun_rack_arm_down.rmdl"
 const asset REMAP_WEAPON_RACK_RESPAWN_FX = $"P_impact_shieldbreaker_sparks"
 const vector REMAP_WEAPON_RACK_ITEM_OFFSET = < 0, 0, 45 >
 const vector REMAP_WEAPON_RACK_ITEM_ANGLES = < -90, 180, 0 >
+global const int REMAP_HEAL_MEDKIT = 0
+global const int REMAP_HEAL_BATTERY = 1
+global const int REMAP_HEAL_SYRINGE = 2
+global const int REMAP_HEAL_CELL = 3
+global const int REMAP_HEAL_PHOENIX = 4
+const asset REMAP_HEAL_MEDKIT_MODEL = $"mdl/weapons_r5/loot/w_loot_wep_iso_health_main_large.rmdl"
+const asset REMAP_HEAL_BATTERY_MODEL = $"mdl/weapons_r5/loot/w_loot_wep_iso_shield_battery_large.rmdl"
+const asset REMAP_HEAL_SYRINGE_MODEL = $"mdl/weapons_r5/loot/w_loot_wep_iso_health_main_small.rmdl"
+const asset REMAP_HEAL_CELL_MODEL = $"mdl/weapons_r5/loot/w_loot_wep_iso_shield_battery_small.rmdl"
+const asset REMAP_HEAL_PHOENIX_MODEL = $"mdl/weapons_r5/loot/w_loot_wep_iso_phoenix_kit_v1.rmdl"
+const asset REMAP_HEAL_IDLE_FX = $"P_LL_med_drone_jet_ctr_loop"
+const string REMAP_HEAL_ACTIVE_SOUND = "Lifeline_Drone_Healing_1P"
 
 struct
 {
@@ -455,4 +468,171 @@ void function ReMap_WeaponRackRespawnThread( entity rack, entity weapon, string 
 	StartParticleEffectInWorld( GetParticleSystemIndex( REMAP_WEAPON_RACK_RESPAWN_FX ),
 		replacement.GetOrigin(), replacement.GetAngles() )
 	thread ReMap_WeaponRackRespawnThread( rack, replacement, weaponName, respawnTime )
+}
+
+void function ReMap_CreateRespawnHeal( vector origin, int healType = REMAP_HEAL_MEDKIT,
+	float respawnTime = 6.0, float healDuration = 5.0, int healAmount = 25,
+	bool progressive = true )
+{
+	entity pickup = CreateEntity( "prop_dynamic" )
+	pickup.SetOrigin( origin )
+	pickup.SetAngles( ZERO_VECTOR )
+	pickup.SetValueForModelKey( ReMap_RespawnHealModel( healType ) )
+	pickup.kv.fadedist = 50000
+	pickup.kv.renderamt = 255
+	pickup.kv.rendercolor = "255 255 255 200"
+	pickup.kv.solid = 0
+	DispatchSpawn( pickup )
+	pickup.NotSolid()
+	SetSurvivalPropHighlight( pickup, ReMap_RespawnHealHighlight( healType ), false )
+	EmitSoundOnEntity( pickup, ReMap_RespawnHealPickupSound( healType ) )
+	thread ReMap_RotateRespawnHeal( pickup )
+
+	entity trigger = CreateEntity( "trigger_cylinder" )
+	trigger.SetRadius( 50 )
+	trigger.SetAboveHeight( 60 )
+	trigger.SetBelowHeight( 0 )
+	trigger.SetOrigin( origin )
+	trigger.s.remapPickup <- pickup
+	trigger.s.remapHealType <- healType
+	trigger.s.remapRespawnTime <- respawnTime
+	trigger.s.remapHealDuration <- healDuration
+	trigger.s.remapHealAmount <- healAmount
+	trigger.s.remapProgressive <- progressive
+	trigger.s.remapActive <- true
+	trigger.s.remapFx <- ReMap_StartRespawnHealEffects( pickup )
+	DispatchSpawn( trigger )
+	trigger.SetEnterCallback( ReMap_OnRespawnHealEnter )
+
+	file.props.append( pickup )
+	file.props.append( trigger )
+}
+
+void function ReMap_OnRespawnHealEnter( entity trigger, entity player )
+{
+	if ( !IsValid( player ) || !player.IsPlayer() || !trigger.s.remapActive )
+		return
+	int healType = expect int( trigger.s.remapHealType )
+	bool needsHealth = player.GetHealth() < player.GetMaxHealth()
+	bool needsShield = player.GetShieldHealth() < player.GetShieldHealthMax()
+	if ( ( healType == REMAP_HEAL_MEDKIT || healType == REMAP_HEAL_SYRINGE ) && !needsHealth )
+		return
+	if ( ( healType == REMAP_HEAL_BATTERY || healType == REMAP_HEAL_CELL ) && !needsShield )
+		return
+	if ( healType == REMAP_HEAL_PHOENIX && !needsHealth && !needsShield )
+		return
+
+	trigger.s.remapActive = false
+	entity pickup = expect entity( trigger.s.remapPickup )
+	pickup.kv.rendercolor = "255 255 255 40"
+	foreach ( entity fx in expect array<entity>( trigger.s.remapFx ) )
+		if ( IsValid( fx ) ) fx.Destroy()
+	trigger.s.remapFx.clear()
+	thread ReMap_ConsumeRespawnHeal( trigger, player )
+}
+
+void function ReMap_ConsumeRespawnHeal( entity trigger, entity player )
+{
+	trigger.EndSignal( "OnDestroy" )
+	int healType = expect int( trigger.s.remapHealType )
+	float duration = expect float( trigger.s.remapHealDuration )
+	int amount = expect int( trigger.s.remapHealAmount )
+	bool progressive = expect bool( trigger.s.remapProgressive )
+	int startHealth = player.GetHealth()
+	int startShield = player.GetShieldHealth()
+	int targetHealth = startHealth
+	int targetShield = startShield
+	if ( healType == REMAP_HEAL_MEDKIT || healType == REMAP_HEAL_PHOENIX ) targetHealth = player.GetMaxHealth()
+	if ( healType == REMAP_HEAL_SYRINGE ) targetHealth = min( player.GetMaxHealth(), startHealth + amount )
+	if ( healType == REMAP_HEAL_BATTERY || healType == REMAP_HEAL_PHOENIX ) targetShield = player.GetShieldHealthMax()
+	if ( healType == REMAP_HEAL_CELL ) targetShield = min( player.GetShieldHealthMax(), startShield + amount )
+
+	if ( IsValid( player ) )
+	{
+		StatusEffect_StopAllOfType( player, eStatusEffect.drone_healing )
+		StatusEffect_AddEndless( player, eStatusEffect.drone_healing, 1 )
+		EmitSoundOnEntityOnlyToPlayer( player, player, REMAP_HEAL_ACTIVE_SOUND )
+	}
+	if ( progressive )
+	{
+		int steps = maxint( 1, int( duration / 0.05 ) )
+		for ( int step = 1; step <= steps && IsValid( player ); step++ )
+		{
+			float fraction = float( step ) / float( steps )
+			player.SetHealth( int( startHealth + float( targetHealth - startHealth ) * fraction ) )
+			player.SetShieldHealth( int( startShield + float( targetShield - startShield ) * fraction ) )
+			wait duration / float( steps )
+		}
+	}
+	else
+	{
+		wait duration
+		if ( IsValid( player ) )
+		{
+			player.SetHealth( targetHealth )
+			player.SetShieldHealth( targetShield )
+		}
+	}
+	if ( IsValid( player ) )
+	{
+		StopSoundOnEntity( player, REMAP_HEAL_ACTIVE_SOUND )
+		StatusEffect_StopAllOfType( player, eStatusEffect.drone_healing )
+	}
+	wait expect float( trigger.s.remapRespawnTime )
+	if ( !IsValid( trigger ) ) return
+	entity pickup = expect entity( trigger.s.remapPickup )
+	if ( !IsValid( pickup ) ) return
+	pickup.kv.rendercolor = "255 255 255 200"
+	trigger.s.remapFx = ReMap_StartRespawnHealEffects( pickup )
+	EmitSoundOnEntity( pickup, ReMap_RespawnHealPickupSound( healType ) )
+	trigger.s.remapActive = true
+}
+
+array<entity> function ReMap_StartRespawnHealEffects( entity pickup )
+{
+	array<entity> effects
+	for ( int index = 0; index < 4; index++ )
+	{
+		entity fx = StartParticleEffectInWorld_ReturnEntity( GetParticleSystemIndex( REMAP_HEAL_IDLE_FX ),
+			pickup.GetOrigin(), < 0, index * 90, 0 > )
+		fx.SetParent( pickup )
+		effects.append( fx )
+	}
+	return effects
+}
+
+void function ReMap_RotateRespawnHeal( entity pickup )
+{
+	while ( IsValid( pickup ) )
+	{
+		vector angles = pickup.GetAngles()
+		pickup.SetAngles( < angles.x, angles.y + 7.0 * FrameTime(), angles.z > )
+		WaitFrame()
+	}
+}
+
+asset function ReMap_RespawnHealModel( int healType )
+{
+	switch ( healType )
+	{
+		case REMAP_HEAL_BATTERY: return REMAP_HEAL_BATTERY_MODEL
+		case REMAP_HEAL_SYRINGE: return REMAP_HEAL_SYRINGE_MODEL
+		case REMAP_HEAL_CELL: return REMAP_HEAL_CELL_MODEL
+		case REMAP_HEAL_PHOENIX: return REMAP_HEAL_PHOENIX_MODEL
+	}
+	return REMAP_HEAL_MEDKIT_MODEL
+}
+
+string function ReMap_RespawnHealHighlight( int healType )
+{
+	if ( healType == REMAP_HEAL_PHOENIX ) return "survival_item_epic"
+	if ( healType == REMAP_HEAL_MEDKIT || healType == REMAP_HEAL_BATTERY ) return "survival_item_rare"
+	return "survival_item_common"
+}
+
+string function ReMap_RespawnHealPickupSound( int healType )
+{
+	if ( healType == REMAP_HEAL_MEDKIT ) return "survival_loot_pickup_Medkit_3P"
+	if ( healType == REMAP_HEAL_SYRINGE ) return "survival_loot_pickup_3p_small_health"
+	return "survival_loot_pickup_Battery_Shield_3p"
 }

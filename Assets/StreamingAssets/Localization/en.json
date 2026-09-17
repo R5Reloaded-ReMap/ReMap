@@ -3891,6 +3891,74 @@
       "text": "The weapon rack must use a valid mp_weapon_ reference and a respawn time between 0 and 86400 seconds."
     },
     {
+      "key": "#RESPAWN_HEAL",
+      "text": "Respawnable heal"
+    },
+    {
+      "key": "#CUSTOM_OBJECT_RESPAWN_HEAL",
+      "text": "Custom respawnable heal"
+    },
+    {
+      "key": "#RESPAWN_HEAL_MEDKIT",
+      "text": "Med kit"
+    },
+    {
+      "key": "#RESPAWN_HEAL_BATTERY",
+      "text": "Shield battery"
+    },
+    {
+      "key": "#RESPAWN_HEAL_SYRINGE",
+      "text": "Syringe"
+    },
+    {
+      "key": "#RESPAWN_HEAL_CELL",
+      "text": "Shield cell"
+    },
+    {
+      "key": "#RESPAWN_HEAL_PHOENIX",
+      "text": "Phoenix kit"
+    },
+    {
+      "key": "#RESPAWN_HEAL_TYPE",
+      "text": "Heal type"
+    },
+    {
+      "key": "#RESPAWN_HEAL_RESPAWN_TIME",
+      "text": "Respawn time (seconds)"
+    },
+    {
+      "key": "#RESPAWN_HEAL_DURATION",
+      "text": "Heal duration (seconds)"
+    },
+    {
+      "key": "#RESPAWN_HEAL_AMOUNT",
+      "text": "Small heal amount"
+    },
+    {
+      "key": "#RESPAWN_HEAL_PROGRESSIVE",
+      "text": "Progressive healing"
+    },
+    {
+      "key": "#RESPAWN_HEAL_CUSTOM_HELP",
+      "text": "Reusable health or shield pickup. Types whose model is absent from the selected RPAKs are hidden."
+    },
+    {
+      "key": "#RESPAWN_HEAL_HELP",
+      "text": "The amount only applies to syringes and shield cells. Full items restore their entire resource."
+    },
+    {
+      "key": "#RESPAWN_HEAL_CREATED",
+      "text": "Respawnable heal created."
+    },
+    {
+      "key": "#RESPAWN_HEAL_PREVIEW_ERROR",
+      "text": "Could not prepare respawnable heal models: "
+    },
+    {
+      "key": "#INVALID_RESPAWN_HEAL_SETTINGS",
+      "text": "The respawnable heal settings are invalid."
+    },
+    {
       "key": "#DEVELOPMENT_BUILD",
       "text": "Development build — debugging enabled"
     },

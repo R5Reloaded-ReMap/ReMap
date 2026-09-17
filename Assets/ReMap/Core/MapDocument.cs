@@ -92,6 +92,11 @@ namespace ReMap.Standalone.Core
         public float jumpTowerHeight = 2000f;
         public string weaponRackWeapon = "mp_weapon_rspn101";
         public float weaponRackRespawnTime = .5f;
+        public int respawnHealType;
+        public float respawnHealRespawnTime = 6f;
+        public float respawnHealDuration = 5f;
+        public int respawnHealAmount = 25;
+        public bool respawnHealProgressive = true;
         public bool commonAsset;
         public List<string> availableMaps = new List<string>();
         public bool allowMantle = true;
@@ -200,7 +205,7 @@ namespace ReMap.Standalone.Core
                     item.customType != "loot-bin" && item.customType != "jump-pad" &&
                     item.customType != "spawn-point" && item.customType != "trigger" &&
                     item.customType != "jump-tower" && item.customType != "jump-tower-component" &&
-                    item.customType != "weapon-rack")
+                    item.customType != "weapon-rack" && item.customType != "respawn-heal")
                     throw new ArgumentException(L.T("#UNKNOWN_CUSTOM_OBJECT_TYPE"));
                 if (item.customType == "zipline" && !item.isGroup)
                     throw new ArgumentException(L.T("#ZIPLINE_HIERARCHY_GROUP"));
@@ -275,6 +280,13 @@ namespace ReMap.Standalone.Core
                     !item.weaponRackWeapon.StartsWith("mp_weapon_", StringComparison.Ordinal) ||
                     !IsScriptIdentifier(item.weaponRackWeapon)))
                     throw new ArgumentException(L.T("#INVALID_WEAPON_RACK_SETTINGS"));
+                if (item.customType == "respawn-heal" && (item.respawnHealType < 0 ||
+                    item.respawnHealType > 4 || !Finite(item.respawnHealRespawnTime) ||
+                    !Finite(item.respawnHealDuration) || item.respawnHealRespawnTime < 0f ||
+                    item.respawnHealRespawnTime > 86400f || item.respawnHealDuration < .05f ||
+                    item.respawnHealDuration > 3600f || item.respawnHealAmount < 1 ||
+                    item.respawnHealAmount > 1000))
+                    throw new ArgumentException(L.T("#INVALID_RESPAWN_HEAL_SETTINGS"));
                 if (!item.position.IsFinite || !item.rotation.IsFinite || !item.scale.IsFinite)
                     throw new ArgumentException(L.T("#TRANSFORMS_FINITE_NUMBERS"));
                 if (!Finite(item.fadeDistance) || item.fadeDistance < -1f)

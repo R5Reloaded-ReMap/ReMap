@@ -66,6 +66,9 @@ namespace ReMap.Standalone
             if (world.Any(o => o.customType == "weapon-rack") &&
                 !models.Contains(ReMapApp.WeaponRackModelPath, StringComparer.OrdinalIgnoreCase))
                 models.Add(ReMapApp.WeaponRackModelPath);
+            models.AddRange(world.Where(o => o.customType == "respawn-heal")
+                .Select(o => ReMapApp.RespawnHealModelPath(o.respawnHealType))
+                .Where(model => !models.Contains(model, StringComparer.OrdinalIgnoreCase)));
             Vector3 originOffset = OriginOffset(document);
             bool useOriginOffset = HasOriginOffset(originOffset);
             var shared = new StringBuilder();
@@ -73,6 +76,8 @@ namespace ReMap.Standalone
             foreach (string model in models) shared.Append("\tPrecacheModel( $\"").Append(model).AppendLine("\" )");
             if (world.Any(o => o.customType == "weapon-rack"))
                 shared.AppendLine("\tPrecacheParticleSystem( $\"P_impact_shieldbreaker_sparks\" )");
+            if (world.Any(o => o.customType == "respawn-heal"))
+                shared.AppendLine("\tPrecacheParticleSystem( $\"P_LL_med_drone_jet_ctr_loop\" )");
 
             var server = new StringBuilder();
             server.Append("\tif ( GetMapName() != \"").Append(map).AppendLine("\" )");
@@ -98,6 +103,7 @@ namespace ReMap.Standalone
             AppendTriggers(server, world, false, originOffset, useOriginOffset);
             AppendJumpTowers(server, world, false, originOffset, useOriginOffset);
             AppendWeaponRacks(server, world, false, originOffset, useOriginOffset);
+            AppendRespawnHeals(server, world, false, originOffset, useOriginOffset);
             AppendCurvedZiplines(server, world, false, originOffset, useOriginOffset);
             AppendZiplines(server, world, false, originOffset, useOriginOffset);
 
@@ -188,6 +194,7 @@ namespace ReMap.Standalone
             AppendSpawnPoints(result, world, true, originOffset, false);
             AppendJumpTowers(result, world, true, originOffset, false);
             AppendWeaponRacks(result, world, true, originOffset, false);
+            AppendRespawnHeals(result, world, true, originOffset, false);
             AppendCurvedZiplines(result, world, true, originOffset, false);
             AppendZiplines(result, world, true, originOffset, false);
             return result.ToString();
@@ -506,6 +513,23 @@ namespace ReMap.Standalone
                 rack.weaponRackRespawnTime < 0f || rack.weaponRackRespawnTime > 86400f)
                 throw new ArgumentException(L.T("#INVALID_WEAPON_RACK_SETTINGS"));
             return value;
+        }
+
+        private static void AppendRespawnHeals(StringBuilder code, List<MapObject> world, bool live,
+            Vector3 originOffset, bool symbolicOffset)
+        {
+            var heals = world.Where(o => o.customType == "respawn-heal").ToList();
+            if (!live && heals.Count > 0) { code.AppendLine(); code.AppendLine("\t// Respawnable heals"); }
+            foreach (var heal in heals)
+            {
+                string expression = "ReMap_CreateRespawnHeal( " +
+                    Position(heal.position, originOffset, symbolicOffset) + ", " +
+                    heal.respawnHealType.ToString(CultureInfo.InvariantCulture) + ", " +
+                    Number(heal.respawnHealRespawnTime) + ", " + Number(heal.respawnHealDuration) + ", " +
+                    heal.respawnHealAmount.ToString(CultureInfo.InvariantCulture) + ", " +
+                    (heal.respawnHealProgressive ? "true" : "false") + " )";
+                code.Append(live ? "script " : "\t").Append(expression).AppendLine();
+            }
         }
 
         private static void AppendTriggerCallback(StringBuilder code, string variable,
