@@ -4379,6 +4379,46 @@
       "text": "A location pair must remain a hierarchy group."
     },
     {
+      "key": "#TEXT_INFO_PANEL",
+      "text": "Text info panel"
+    },
+    {
+      "key": "#CUSTOM_OBJECT_TEXT_INFO_PANEL",
+      "text": "Text info panel"
+    },
+    {
+      "key": "#TEXT_INFO_PANEL_TITLE",
+      "text": "Title"
+    },
+    {
+      "key": "#TEXT_INFO_PANEL_DESCRIPTION",
+      "text": "Description"
+    },
+    {
+      "key": "#TEXT_INFO_PANEL_SHOW_PIN",
+      "text": "Show pin"
+    },
+    {
+      "key": "#TEXT_INFO_PANEL_SCALE",
+      "text": "Text scale"
+    },
+    {
+      "key": "#TEXT_INFO_PANEL_CUSTOM_HELP",
+      "text": "Creates a native world-space text panel. It does not require a model or an additional RPAK."
+    },
+    {
+      "key": "#TEXT_INFO_PANEL_HELP",
+      "text": "Title and description share Apex’s 598-character safe limit. The panel is resent automatically to players who join later."
+    },
+    {
+      "key": "#TEXT_INFO_PANEL_CREATED",
+      "text": "Text info panel created."
+    },
+    {
+      "key": "#INVALID_TEXT_INFO_PANEL_SETTINGS",
+      "text": "The text info panel settings are invalid."
+    },
+    {
       "key": "#DEVELOPMENT_BUILD",
       "text": "Development build — debugging enabled"
     },

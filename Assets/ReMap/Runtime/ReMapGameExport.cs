@@ -137,6 +137,7 @@ namespace ReMap.Standalone
             AppendBubbleShields(server, world, false, originOffset, useOriginOffset);
             AppendSounds(server, world, false, originOffset, useOriginOffset);
             AppendLocationPairs(server, world, false, originOffset, useOriginOffset);
+            AppendTextInfoPanels(server, world, false, originOffset, useOriginOffset);
             AppendAnimatedCameras(server, world, false, originOffset, useOriginOffset);
             AppendCurvedZiplines(server, world, false, originOffset, useOriginOffset);
             AppendZiplines(server, world, false, originOffset, useOriginOffset);
@@ -235,6 +236,7 @@ namespace ReMap.Standalone
             AppendBubbleShields(result, world, true, originOffset, false);
             AppendSounds(result, world, true, originOffset, false);
             AppendLocationPairs(result, world, true, originOffset, false);
+            AppendTextInfoPanels(result, world, true, originOffset, false);
             AppendAnimatedCameras(result, world, true, originOffset, false);
             AppendCurvedZiplines(result, world, true, originOffset, false);
             AppendZiplines(result, world, true, originOffset, false);
@@ -726,6 +728,24 @@ namespace ReMap.Standalone
                 string expression = "ReMap_NewLocPair( " +
                     Position(pair.position, originOffset, symbolicOffset) + ", " +
                     Vector(ApexDisplay.Angles(WorldView.ToVector(pair.rotation))) + " )";
+                code.Append(live ? "script " : "\t").Append(expression).AppendLine();
+            }
+        }
+
+        private static void AppendTextInfoPanels(StringBuilder code, List<MapObject> world, bool live,
+            Vector3 originOffset, bool symbolicOffset)
+        {
+            var panels = world.Where(o => o.customType == "text-info-panel").ToList();
+            if (!live && panels.Count > 0) { code.AppendLine(); code.AppendLine("\t// Text info panels"); }
+            foreach (var panel in panels)
+            {
+                string expression = "ReMap_CreateTextInfoPanel( " +
+                    ScriptString(panel.textInfoPanelTitle) + ", " +
+                    ScriptString(panel.textInfoPanelDescription) + ", " +
+                    Position(panel.position, originOffset, symbolicOffset) + ", " +
+                    Vector(ApexDisplay.Angles(WorldView.ToVector(panel.rotation))) + ", " +
+                    (panel.textInfoPanelShowPin ? "true" : "false") + ", " +
+                    Number(panel.textInfoPanelScale) + " )";
                 code.Append(live ? "script " : "\t").Append(expression).AppendLine();
             }
         }

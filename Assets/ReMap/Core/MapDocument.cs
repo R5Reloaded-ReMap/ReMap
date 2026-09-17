@@ -129,6 +129,10 @@ namespace ReMap.Standalone.Core
         public bool soundWaveAmbient;
         public bool soundEnabled = true;
         public bool soundShowPolyline = true;
+        public string textInfoPanelTitle = "";
+        public string textInfoPanelDescription = "";
+        public bool textInfoPanelShowPin = true;
+        public float textInfoPanelScale = 1f;
         public bool commonAsset;
         public List<string> availableMaps = new List<string>();
         public bool allowMantle = true;
@@ -222,6 +226,8 @@ namespace ReMap.Standalone.Core
                 item.buttonSubMessage = item.buttonSubMessage ?? "";
                 item.buttonToken = item.buttonToken ?? "#FS_STRING_VAR";
                 item.soundName = item.soundName ?? "";
+                item.textInfoPanelTitle = item.textInfoPanelTitle ?? "";
+                item.textInfoPanelDescription = item.textInfoPanelDescription ?? "";
                 if (item.customType == "curved-zipline" && item.customProfile == "")
                     item.customProfile = item.curvedZiplineSupport ? "arm" : "none";
                 if (item.customType == "curved-zipline")
@@ -250,7 +256,8 @@ namespace ReMap.Standalone.Core
                     item.customType != "camera-path" && item.customType != "camera-path-point" &&
                     item.customType != "camera-path-target" && item.customType != "animated-camera" &&
                     item.customType != "animated-camera-component" && item.customType != "sound" &&
-                    item.customType != "sound-point" && item.customType != "location-pair")
+                    item.customType != "sound-point" && item.customType != "location-pair" &&
+                    item.customType != "text-info-panel")
                     throw new ArgumentException(L.T("#UNKNOWN_CUSTOM_OBJECT_TYPE"));
                 if (item.customType == "zipline" && !item.isGroup)
                     throw new ArgumentException(L.T("#ZIPLINE_HIERARCHY_GROUP"));
@@ -387,6 +394,12 @@ namespace ReMap.Standalone.Core
                     throw new ArgumentException(L.T("#INVALID_SOUND_SETTINGS"));
                 if (item.customType == "location-pair" && !item.isGroup)
                     throw new ArgumentException(L.T("#LOCATION_PAIR_HIERARCHY_GROUP"));
+                if (item.customType == "text-info-panel" && (!item.isGroup ||
+                    item.textInfoPanelTitle.Length + item.textInfoPanelDescription.Length > 598 ||
+                    item.textInfoPanelTitle.IndexOf('\0') >= 0 || item.textInfoPanelDescription.IndexOf('\0') >= 0 ||
+                    !Finite(item.textInfoPanelScale) || item.textInfoPanelScale < .01f ||
+                    item.textInfoPanelScale > 100f))
+                    throw new ArgumentException(L.T("#INVALID_TEXT_INFO_PANEL_SETTINGS"));
                 if (!item.position.IsFinite || !item.rotation.IsFinite || !item.scale.IsFinite)
                     throw new ArgumentException(L.T("#TRANSFORMS_FINITE_NUMBERS"));
                 if (!Finite(item.fadeDistance) || item.fadeDistance < -1f)

@@ -837,7 +837,8 @@ namespace ReMap.Standalone
                 item.customType == "bubble-shield" || item.customType == "camera-path" ||
                 item.customType == "camera-path-point" || item.customType == "camera-path-target" ||
                 item.customType == "animated-camera" || item.customType == "sound" ||
-                item.customType == "sound-point" || item.customType == "location-pair")
+                item.customType == "sound-point" || item.customType == "location-pair" ||
+                item.customType == "text-info-panel")
             {
                 var remapSettings = InspectorSection(L.T("#REMAP_SETTINGS"), "remap-settings");
                 if (item.customType == "zipline") BuildZiplineInspector(item, remapSettings);
@@ -861,7 +862,8 @@ namespace ReMap.Standalone
                 else if (item.customType == "animated-camera") BuildAnimatedCameraInspector(item, remapSettings);
                 else if (item.customType == "sound") BuildSoundInspector(item, remapSettings);
                 else if (item.customType == "sound-point") BuildSoundPointInspector(item, remapSettings);
-                else BuildLocationPairInspector(remapSettings);
+                else if (item.customType == "location-pair") BuildLocationPairInspector(remapSettings);
+                else BuildTextInfoPanelInspector(item, remapSettings);
                 inspector.Add(remapSettings);
             }
             if (!item.isGroup && string.IsNullOrEmpty(item.customType))
@@ -900,6 +902,7 @@ namespace ReMap.Standalone
                 item.customType == "sound" ? L.T("#CUSTOM_OBJECT_SOUND") :
                 item.customType == "sound-point" ? L.T("#SOUND_POLYLINE_POINT") :
                 item.customType == "location-pair" ? L.T("#CUSTOM_OBJECT_LOCATION_PAIR") :
+                item.customType == "text-info-panel" ? L.T("#CUSTOM_OBJECT_TEXT_INFO_PANEL") :
                 item.customType == "zipline-endpoint" ? L.T("#ZIPLINE_ATTACHMENT_POINT") :
                 item.isGroup ? L.T("#GROUP_CHILDREN_SHARE_TRANSFORM") : L.T("#MODEL");
             information.Add(CopyableInspectorValue(L.T("#OBJECT_TYPE"), typeDetails));

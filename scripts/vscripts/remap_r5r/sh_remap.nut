@@ -26,6 +26,7 @@ void function Sh_ReMap_Init()
 {
 #if SERVER
 	ReMap_PrecacheZiplines()
+	ReMap_RegisterTextInfoPanelCallbacks()
 #endif
 	Sh_ReMap_PrecacheMap()
 

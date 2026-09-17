@@ -4379,6 +4379,46 @@
       "text": "Une paire de position doit rester un groupe dans la hiérarchie."
     },
     {
+      "key": "#TEXT_INFO_PANEL",
+      "text": "Panneau d’information"
+    },
+    {
+      "key": "#CUSTOM_OBJECT_TEXT_INFO_PANEL",
+      "text": "Panneau d’information"
+    },
+    {
+      "key": "#TEXT_INFO_PANEL_TITLE",
+      "text": "Titre"
+    },
+    {
+      "key": "#TEXT_INFO_PANEL_DESCRIPTION",
+      "text": "Description"
+    },
+    {
+      "key": "#TEXT_INFO_PANEL_SHOW_PIN",
+      "text": "Afficher le repère"
+    },
+    {
+      "key": "#TEXT_INFO_PANEL_SCALE",
+      "text": "Échelle du texte"
+    },
+    {
+      "key": "#TEXT_INFO_PANEL_CUSTOM_HELP",
+      "text": "Crée un panneau de texte natif dans le monde. Il ne nécessite aucun modèle ni RPAK supplémentaire."
+    },
+    {
+      "key": "#TEXT_INFO_PANEL_HELP",
+      "text": "Le titre et la description partagent la limite sûre de 598 caractères d’Apex. Le panneau est renvoyé automatiquement aux joueurs qui rejoignent plus tard."
+    },
+    {
+      "key": "#TEXT_INFO_PANEL_CREATED",
+      "text": "Panneau d’information créé."
+    },
+    {
+      "key": "#INVALID_TEXT_INFO_PANEL_SETTINGS",
+      "text": "Les réglages du panneau d’information sont invalides."
+    },
+    {
       "key": "#DEVELOPMENT_BUILD",
       "text": "Build de développement — débogage activé"
     },

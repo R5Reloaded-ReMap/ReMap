@@ -1,0 +1,52 @@
+using NUnit.Framework;
+using ReMap.Standalone.Core;
+using System.IO;
+using UnityEngine;
+
+namespace ReMap.Standalone.Tests
+{
+    public sealed class TextInfoPanelTests
+    {
+        [Test]
+        public void SavesValidatesAndExportsAllLegacySettings()
+        {
+            var document = new MapDocument { name = "panel", editingMap = "mp_rr_desertlands_hu" };
+            document.objects.Add(new MapObject {
+                assetId = "custom:text-info-panel", displayName = "Panel", customType = "text-info-panel",
+                isGroup = true, position = ApexCoordinates.ToUnity(new Float3(10, 20, 30)),
+                rotation = WorldView.ToData(ApexDisplay.UnityAngles(new Vector3(5, 90, 0))),
+                textInfoPanelTitle = "Movement", textInfoPanelDescription = "Jump here",
+                textInfoPanelShowPin = false, textInfoPanelScale = 2f
+            });
+            document.Validate();
+            var restored = new UnityMapCodec().Decode(new UnityMapCodec().Encode(document));
+            string code = ReMapGameScript.Generate(restored, restored.objects);
+            StringAssert.Contains("ReMap_CreateTextInfoPanel( \"Movement\", \"Jump here\", <10, 20, 30>, <5, 90, 0>, false, 2 )", code);
+            StringAssert.Contains("script ReMap_CreateTextInfoPanel( \"Movement\"",
+                ReMapGameScript.GenerateLiveCommands(restored, restored.objects));
+        }
+
+        [Test]
+        public void ApexImplementationHandlesCurrentLateAndClearedPanelsWithoutLegacyHelpers()
+        {
+            string root = Path.GetFullPath(Path.Combine(Application.dataPath, ".."));
+            string script = File.ReadAllText(Path.Combine(root, "scripts/vscripts/source/sv_remap_objects.source.nut"));
+            StringAssert.Contains("void function ReMap_CreateTextInfoPanel", script);
+            StringAssert.Contains("AddCallback_OnClientConnected( ReMap_SendTextInfoPanelsToPlayer )", script);
+            StringAssert.Contains("Dev_CreateTextInfoPanelWithID", script);
+            StringAssert.Contains("Dev_DestroyTextInfoPanelWithID", script);
+            StringAssert.DoesNotContain("MapEditor_CreateTextInfoPanel", script);
+        }
+
+        [Test]
+        public void RejectsTextPastNativePanelLimit()
+        {
+            var document = new MapDocument();
+            document.objects.Add(new MapObject {
+                assetId = "custom:text-info-panel", displayName = "Panel", customType = "text-info-panel",
+                isGroup = true, textInfoPanelTitle = new string('x', 599)
+            });
+            Assert.Throws<System.ArgumentException>(document.Validate);
+        }
+    }
+}

@@ -29,6 +29,8 @@ global function ReMap_CreateBubbleShield
 global function ReMap_CreateAnimatedCamera
 global function ReMap_CreateSound
 global function ReMap_NewLocPair
+global function ReMap_RegisterTextInfoPanelCallbacks
+global function ReMap_CreateTextInfoPanel
 
 global const int REMAP_DOOR_SINGLE = 0
 global const int REMAP_DOOR_DOUBLE = 1
@@ -70,10 +72,14 @@ const asset REMAP_ANIMATED_CAMERA_HEAD_MODEL = $"mdl/IMC_base/camera_imc_01.rmdl
 struct
 {
 	array< entity > props
+	array< array > textInfoPanels
+	int nextTextInfoPanelId = 1000000
+	bool textInfoPanelCallbackRegistered = false
 } file
 
 void function ReMap_ClearProps()
 {
+	ReMap_ClearTextInfoPanels()
 	foreach ( entity prop in file.props )
 	{
 		if ( IsValid( prop ) )
@@ -81,6 +87,55 @@ void function ReMap_ClearProps()
 	}
 
 	file.props.clear()
+}
+
+void function ReMap_RegisterTextInfoPanelCallbacks()
+{
+	if ( file.textInfoPanelCallbackRegistered )
+		return
+	file.textInfoPanelCallbackRegistered = true
+	AddCallback_OnClientConnected( ReMap_SendTextInfoPanelsToPlayer )
+}
+
+void function ReMap_CreateTextInfoPanel( string title, string description, vector origin,
+	vector angles, bool showPin = true, float textScale = 1.0 )
+{
+	int panelId = file.nextTextInfoPanelId++
+	array panel = [ panelId, title, description, origin, angles, showPin, textScale ]
+	file.textInfoPanels.append( panel )
+	foreach ( entity player in GetPlayerArray() )
+		ReMap_SendTextInfoPanelToPlayer( player, panel )
+}
+
+void function ReMap_SendTextInfoPanelsToPlayer( entity player )
+{
+	foreach ( array panel in file.textInfoPanels )
+		ReMap_SendTextInfoPanelToPlayer( player, panel )
+}
+
+void function ReMap_SendTextInfoPanelToPlayer( entity player, array panel )
+{
+	if ( !IsValid( player ) || !player.IsPlayer() )
+		return
+	string title = expect string( panel[1] )
+	string description = expect string( panel[2] )
+	foreach ( int textType, string value in [ title, description ] )
+		for ( int index = 0; index < value.len(); index++ )
+			Remote_CallFunction_NonReplay( player, "Dev_BuildTextInfoPanel", textType, value[index] )
+	vector origin = expect vector( panel[3] )
+	vector angles = expect vector( panel[4] )
+	Remote_CallFunction_NonReplay( player, "Dev_CreateTextInfoPanelWithID",
+		origin.x, origin.y, origin.z, angles.x, angles.y, angles.z,
+		expect bool( panel[5] ), expect float( panel[6] ), expect int( panel[0] ) )
+}
+
+void function ReMap_ClearTextInfoPanels()
+{
+	foreach ( array panel in file.textInfoPanels )
+		foreach ( entity player in GetPlayerArray() )
+			if ( IsValid( player ) )
+				Remote_CallFunction_NonReplay( player, "Dev_DestroyTextInfoPanelWithID", expect int( panel[0] ) )
+	file.textInfoPanels.clear()
 }
 
 entity function ReMap_CreateProp( asset model, vector origin, vector angles, bool allowMantle = true, float fadeDistance = 50000.0, int realmId = -1, float scale = 1.0 )

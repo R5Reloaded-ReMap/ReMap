@@ -15,6 +15,7 @@ namespace ReMap.Standalone
         private const string CameraPathMarkerName = "__remap_camera_path_marker";
         private const string SoundMarkerName = "__remap_sound_marker";
         private const string LocationPairMarkerName = "__remap_location_pair_marker";
+        private const string TextInfoPanelMarkerName = "__remap_text_info_panel_marker";
         private MapDocument syncedZiplineDocument;
         private Material ziplineCableMaterial, ziplineDetachMaterial;
 
@@ -41,6 +42,7 @@ namespace ReMap.Standalone
                 if (item.customType == "sound" || item.customType == "sound-point")
                     EnsureSoundMarker(instance, item);
                 if (item.customType == "location-pair") EnsureLocationPairMarker(instance, item);
+                if (item.customType == "text-info-panel") EnsureTextInfoPanelMarker(instance, item);
             }
             foreach (var item in document.objects)
             {
@@ -260,6 +262,28 @@ namespace ReMap.Standalone
             marker.transform.localScale = new Vector3(.16f, .16f, .5f);
             var tint = new MaterialPropertyBlock();
             tint.SetColor("_BaseColor", new Color(1f, .4f, .85f));
+            marker.GetComponent<Renderer>().SetPropertyBlock(tint);
+        }
+
+        private void EnsureTextInfoPanelMarker(GameObject instance, MapObject item)
+        {
+            var existing = instance.transform.Find(TextInfoPanelMarkerName);
+            GameObject marker;
+            if (existing == null)
+            {
+                marker = GameObject.CreatePrimitive(PrimitiveType.Cube);
+                marker.name = TextInfoPanelMarkerName; marker.transform.SetParent(instance.transform, false);
+                marker.GetComponent<Collider>().enabled = false;
+                marker.GetComponent<Renderer>().sharedMaterial = lineMaterial;
+                instanceIds[marker] = item.id;
+            }
+            else marker = existing.gameObject;
+            float scale = Mathf.Max(.01f, item.textInfoPanelScale);
+            marker.transform.localPosition = Vector3.zero;
+            marker.transform.localRotation = Quaternion.identity;
+            marker.transform.localScale = new Vector3(.08f, 1.2f * scale, 2.4f * scale);
+            var tint = new MaterialPropertyBlock();
+            tint.SetColor("_BaseColor", new Color(.25f, .75f, 1f, .65f));
             marker.GetComponent<Renderer>().SetPropertyBlock(tint);
         }
 
@@ -599,6 +623,20 @@ namespace ReMap.Standalone
                     var triggerTint = new MaterialPropertyBlock();
                     triggerTint.SetColor("_BaseColor", new Color(.15f, .7f, 1f, .28f));
                     ghost.GetComponent<Renderer>().SetPropertyBlock(triggerTint);
+                    ghost.transform.position = position.Value;
+                    return;
+                }
+                if (entry.CustomType == "text-info-panel")
+                {
+                    ghost = GameObject.CreatePrimitive(PrimitiveType.Cube);
+                    ghost.name = "Text info panel placement preview";
+                    ghost.transform.SetParent(root.transform);
+                    ghost.transform.localScale = new Vector3(.08f, entry.Size.y, entry.Size.x);
+                    ghost.GetComponent<Collider>().enabled = false;
+                    ghost.GetComponent<Renderer>().sharedMaterial = lineMaterial;
+                    var panelTint = new MaterialPropertyBlock();
+                    panelTint.SetColor("_BaseColor", new Color(.25f, .75f, 1f, .65f));
+                    ghost.GetComponent<Renderer>().SetPropertyBlock(panelTint);
                     ghost.transform.position = position.Value;
                     return;
                 }
