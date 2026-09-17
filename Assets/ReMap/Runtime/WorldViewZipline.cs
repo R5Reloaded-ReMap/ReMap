@@ -109,6 +109,23 @@ namespace ReMap.Standalone
                 line.positionCount = curve.Length;
                 line.SetPositions(curve);
             }
+            foreach (var item in document.objects)
+            {
+                if (item.customType != "jump-tower" || !instances.TryGetValue(item.id, out var instance))
+                    continue;
+                var line = instance.GetComponent<LineRenderer>();
+                if (line == null)
+                {
+                    line = instance.AddComponent<LineRenderer>();
+                    line.useWorldSpace = true; line.numCapVertices = 4;
+                }
+                line.sharedMaterial = ZiplineCableMaterial(); line.widthMultiplier = .05f;
+                line.positionCount = 2;
+                line.SetPosition(0, instance.transform.TransformPoint(ReMapZiplineProfiles.UnityOffset(
+                    new Vector3(-1.75f, -2.75f, item.jumpTowerHeight))));
+                line.SetPosition(1, instance.transform.TransformPoint(ReMapZiplineProfiles.UnityOffset(
+                    new Vector3(-1.75f, -2.75f, 64f))));
+            }
         }
 
         private void EnsureTriggerVisual(GameObject instance, MapObject item)
@@ -469,6 +486,29 @@ namespace ReMap.Standalone
                     var triggerTint = new MaterialPropertyBlock();
                     triggerTint.SetColor("_BaseColor", new Color(.15f, .7f, 1f, .28f));
                     ghost.GetComponent<Renderer>().SetPropertyBlock(triggerTint);
+                    ghost.transform.position = position.Value;
+                    return;
+                }
+                if (entry.CustomType == "jump-tower")
+                {
+                    ghost = new GameObject("Jump tower placement preview");
+                    ghost.transform.SetParent(root.transform);
+                    var towerBase = GameObject.CreatePrimitive(PrimitiveType.Cylinder);
+                    towerBase.transform.SetParent(ghost.transform, false);
+                    towerBase.transform.localScale = new Vector3(1.2f, .5f, 1.2f);
+                    var balloon = GameObject.CreatePrimitive(PrimitiveType.Sphere);
+                    balloon.transform.SetParent(ghost.transform, false);
+                    balloon.transform.localPosition = Vector3.up * entry.Size.y;
+                    balloon.transform.localScale = Vector3.one * 2.5f;
+                    foreach (var part in new[] { towerBase, balloon })
+                    {
+                        part.GetComponent<Collider>().enabled = false;
+                        part.GetComponent<Renderer>().sharedMaterial = lineMaterial;
+                    }
+                    var towerLine = ghost.AddComponent<LineRenderer>();
+                    towerLine.sharedMaterial = lineMaterial; towerLine.useWorldSpace = false;
+                    towerLine.positionCount = 2; towerLine.SetPosition(0, Vector3.up * 1.6f);
+                    towerLine.SetPosition(1, Vector3.up * entry.Size.y); towerLine.widthMultiplier = .05f;
                     ghost.transform.position = position.Value;
                     return;
                 }

@@ -471,7 +471,7 @@ namespace ReMap.Standalone
                     item.customType != "door" && item.customType != "curved-zipline" &&
                     item.customType != "curved-zipline-point" && item.customType != "loot-bin" &&
                     item.customType != "jump-pad" && item.customType != "spawn-point" &&
-                    item.customType != "trigger") continue;
+                    item.customType != "trigger" && item.customType != "jump-tower") continue;
                 if (!MapHierarchy.IsEnabled(document, item.id)) continue;
                 var copy = item.Copy(); var pose = WorldPose(item.id);
                 copy.parentId = item.customType == "curved-zipline-point" ? item.parentId : "";

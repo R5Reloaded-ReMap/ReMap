@@ -89,6 +89,7 @@ namespace ReMap.Standalone.Core
         public bool triggerDebug;
         public string triggerEnterCallback = "";
         public string triggerLeaveCallback = "";
+        public float jumpTowerHeight = 2000f;
         public bool commonAsset;
         public List<string> availableMaps = new List<string>();
         public bool allowMantle = true;
@@ -194,7 +195,8 @@ namespace ReMap.Standalone.Core
                     item.customType != "door-component" && item.customType != "curved-zipline" &&
                     item.customType != "curved-zipline-point" && item.customType != "curved-zipline-component" &&
                     item.customType != "loot-bin" && item.customType != "jump-pad" &&
-                    item.customType != "spawn-point" && item.customType != "trigger")
+                    item.customType != "spawn-point" && item.customType != "trigger" &&
+                    item.customType != "jump-tower" && item.customType != "jump-tower-component")
                     throw new ArgumentException(L.T("#UNKNOWN_CUSTOM_OBJECT_TYPE"));
                 if (item.customType == "zipline" && !item.isGroup)
                     throw new ArgumentException(L.T("#ZIPLINE_HIERARCHY_GROUP"));
@@ -260,6 +262,9 @@ namespace ReMap.Standalone.Core
                     item.triggerEnterCallback.Length > 65535 || item.triggerLeaveCallback.Length > 65535 ||
                     item.triggerEnterCallback.IndexOf('\0') >= 0 || item.triggerLeaveCallback.IndexOf('\0') >= 0))
                     throw new ArgumentException(L.T("#INVALID_TRIGGER_SETTINGS"));
+                if (item.customType == "jump-tower" && (!item.isGroup || !Finite(item.jumpTowerHeight) ||
+                    item.jumpTowerHeight < 128f || item.jumpTowerHeight > 65535f))
+                    throw new ArgumentException(L.T("#INVALID_JUMP_TOWER_HEIGHT"));
                 if (!item.position.IsFinite || !item.rotation.IsFinite || !item.scale.IsFinite)
                     throw new ArgumentException(L.T("#TRANSFORMS_FINITE_NUMBERS"));
                 if (!Finite(item.fadeDistance) || item.fadeDistance < -1f)

@@ -19,6 +19,7 @@ global function ReMap_CreateLootBin
 global function ReMap_CreateJumpPad
 global function ReMap_CreateSpawnPoint
 global function ReMap_CreateTrigger
+global function ReMap_CreateJumpTower
 
 global const int REMAP_DOOR_SINGLE = 0
 global const int REMAP_DOOR_DOUBLE = 1
@@ -30,6 +31,8 @@ const asset REMAP_DOOR_MODEL_VERTICAL = $"mdl/door/door_canyonlands_large_01_ani
 const asset REMAP_DOOR_MODEL_HORIZONTAL = $"mdl/door/door_256x256x8_elevatorstyle02_animated.rmdl"
 const asset REMAP_LOOT_BIN_MODEL = $"mdl/props/loot_bin/loot_bin_01_animated.rmdl"
 const asset REMAP_JUMP_PAD_MODEL = $"mdl/props/octane_jump_pad/octane_jump_pad.rmdl"
+const asset REMAP_JUMP_TOWER_BASE_MODEL = $"mdl/props/zipline_balloon/zipline_balloon_base.rmdl"
+const asset REMAP_JUMP_TOWER_BALLOON_MODEL = $"mdl/props/zipline_balloon/zipline_balloon.rmdl"
 
 struct
 {
@@ -361,4 +364,44 @@ entity function ReMap_CreateTrigger( vector origin, vector angles, float radius,
 	}
 	file.props.append( trigger )
 	return trigger
+}
+
+void function ReMap_CreateJumpTower( vector origin, vector angles, float height = 2000.0 )
+{
+	vector towerAngles = < 0, angles.y, 0 >
+	entity towerBase = CreateEntity( "prop_dynamic" )
+	towerBase.SetOrigin( origin )
+	towerBase.SetAngles( towerAngles )
+	towerBase.SetValueForModelKey( REMAP_JUMP_TOWER_BASE_MODEL )
+	towerBase.kv.solid = 6
+	towerBase.AllowMantle()
+
+	entity balloon = CreateEntity( "prop_dynamic" )
+	balloon.SetOrigin( origin + < 0, 0, height > )
+	balloon.SetAngles( towerAngles )
+	balloon.SetValueForModelKey( REMAP_JUMP_TOWER_BALLOON_MODEL )
+	balloon.kv.solid = 3
+
+	foreach ( entity part in [ towerBase, balloon ] )
+	{
+		part.kv.fadedist = -1
+		part.kv.renderamt = 255
+		part.kv.rendercolor = "255 255 255"
+		part.kv.CollisionGroup = TRACE_COLLISION_GROUP_PLAYER
+		part.SetScriptName( "jump_tower" )
+		DispatchSpawn( part )
+		file.props.append( part )
+	}
+
+	vector topCable = PositionOffsetFromEnt( balloon, -1.75, -2.75, 0 )
+	vector bottomCable = PositionOffsetFromEnt( towerBase, -1.75, -2.75, 64 )
+	ReMap_CreateZipline( topCable, towerAngles, bottomCable, towerAngles,
+		REMAP_ZIPLINE_END_NONE, REMAP_ZIPLINE_END_NONE, true, 2.0, 1.0,
+		180.0, 180.0, true, 1.0, angles.y, -1.0, 1.0,
+		false, true, 200.0, 200.0, false, false, false )
+
+	entity skydiveTrigger = ReMap_CreateTrigger( origin + < 0, 0, height - 20.0 >,
+		towerAngles, 200.0, 200.0, false, -1 )
+	skydiveTrigger.SetEnterCallback( ForcedSkydiveTriggerThink_EnterCallback )
+	DispatchSpawn( skydiveTrigger )
 }

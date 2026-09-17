@@ -56,6 +56,13 @@ namespace ReMap.Standalone
             if (world.Any(o => o.customType == "spawn-point") &&
                 !models.Contains(ReMapApp.SpawnPointModelPath, StringComparer.OrdinalIgnoreCase))
                 models.Add(ReMapApp.SpawnPointModelPath);
+            if (world.Any(o => o.customType == "jump-tower"))
+            {
+                if (!models.Contains(ReMapApp.JumpTowerBaseModelPath, StringComparer.OrdinalIgnoreCase))
+                    models.Add(ReMapApp.JumpTowerBaseModelPath);
+                if (!models.Contains(ReMapApp.JumpTowerBalloonModelPath, StringComparer.OrdinalIgnoreCase))
+                    models.Add(ReMapApp.JumpTowerBalloonModelPath);
+            }
             Vector3 originOffset = OriginOffset(document);
             bool useOriginOffset = HasOriginOffset(originOffset);
             var shared = new StringBuilder();
@@ -84,6 +91,7 @@ namespace ReMap.Standalone
             AppendJumpPads(server, world, false, originOffset, useOriginOffset);
             AppendSpawnPoints(server, world, false, originOffset, useOriginOffset);
             AppendTriggers(server, world, false, originOffset, useOriginOffset);
+            AppendJumpTowers(server, world, false, originOffset, useOriginOffset);
             AppendCurvedZiplines(server, world, false, originOffset, useOriginOffset);
             AppendZiplines(server, world, false, originOffset, useOriginOffset);
 
@@ -172,6 +180,7 @@ namespace ReMap.Standalone
             AppendLootBins(result, world, true, originOffset, false);
             AppendJumpPads(result, world, true, originOffset, false);
             AppendSpawnPoints(result, world, true, originOffset, false);
+            AppendJumpTowers(result, world, true, originOffset, false);
             AppendCurvedZiplines(result, world, true, originOffset, false);
             AppendZiplines(result, world, true, originOffset, false);
             return result.ToString();
@@ -440,6 +449,21 @@ namespace ReMap.Standalone
                 AppendTriggerCallback(code, variable, "SetEnterCallback", trigger.triggerEnterCallback);
                 AppendTriggerCallback(code, variable, "SetLeaveCallback", trigger.triggerLeaveCallback);
                 code.Append("\tDispatchSpawn( ").Append(variable).AppendLine(" )");
+            }
+        }
+
+        private static void AppendJumpTowers(StringBuilder code, List<MapObject> world, bool live,
+            Vector3 originOffset, bool symbolicOffset)
+        {
+            var towers = world.Where(o => o.customType == "jump-tower").ToList();
+            if (!live && towers.Count > 0) { code.AppendLine(); code.AppendLine("\t// Jump towers"); }
+            foreach (var tower in towers)
+            {
+                string expression = "ReMap_CreateJumpTower( " +
+                    Position(tower.position, originOffset, symbolicOffset) + ", " +
+                    Vector(ApexDisplay.Angles(WorldView.ToVector(tower.rotation))) + ", " +
+                    Number(tower.jumpTowerHeight) + " )";
+                code.Append(live ? "script " : "\t").Append(expression).AppendLine();
             }
         }
 

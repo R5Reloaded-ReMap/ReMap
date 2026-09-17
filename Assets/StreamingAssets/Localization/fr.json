@@ -3275,6 +3275,50 @@
       "text": "Rayon, hauteur ou code de callback du trigger invalide."
     },
     {
+      "key": "#JUMP_TOWER",
+      "text": "Tour de saut"
+    },
+    {
+      "key": "#CUSTOM_OBJECT_JUMP_TOWER",
+      "text": "Objet personnalisé · Tour de saut"
+    },
+    {
+      "key": "#JUMP_TOWER_COMPONENT",
+      "text": "Composant de modèle de tour de saut"
+    },
+    {
+      "key": "#JUMP_TOWER_BASE",
+      "text": "Base de la tour de saut"
+    },
+    {
+      "key": "#JUMP_TOWER_BALLOON",
+      "text": "Ballon de la tour de saut"
+    },
+    {
+      "key": "#JUMP_TOWER_CUSTOM_HELP",
+      "text": "Une tour de saut fonctionnelle avec base, ballon, zipline verticale et trigger de chute libre."
+    },
+    {
+      "key": "#JUMP_TOWER_HEIGHT_APEX_U",
+      "text": "Hauteur de la tour (unités Apex)"
+    },
+    {
+      "key": "#JUMP_TOWER_HELP",
+      "text": "Le ballon, le câble et le trigger de chute libre suivent cette hauteur."
+    },
+    {
+      "key": "#JUMP_TOWER_CREATED",
+      "text": "Tour de saut créée. Configurez sa hauteur dans les réglages ReMap."
+    },
+    {
+      "key": "#JUMP_TOWER_PREVIEW_ERROR",
+      "text": "Aperçu de la tour de saut : "
+    },
+    {
+      "key": "#INVALID_JUMP_TOWER_HEIGHT",
+      "text": "La hauteur de la tour de saut doit être comprise entre 128 et 65535 unités Apex."
+    },
+    {
       "key": "#TARGET_GAME",
       "text": "Jeu cible"
     },

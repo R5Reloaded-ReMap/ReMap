@@ -3275,6 +3275,50 @@
       "text": "Invalid trigger radius, height or callback code."
     },
     {
+      "key": "#JUMP_TOWER",
+      "text": "Jump tower"
+    },
+    {
+      "key": "#CUSTOM_OBJECT_JUMP_TOWER",
+      "text": "Custom object · Jump tower"
+    },
+    {
+      "key": "#JUMP_TOWER_COMPONENT",
+      "text": "Jump tower model component"
+    },
+    {
+      "key": "#JUMP_TOWER_BASE",
+      "text": "Jump tower base"
+    },
+    {
+      "key": "#JUMP_TOWER_BALLOON",
+      "text": "Jump tower balloon"
+    },
+    {
+      "key": "#JUMP_TOWER_CUSTOM_HELP",
+      "text": "A functional jump tower with base, balloon, vertical zipline and skydive trigger."
+    },
+    {
+      "key": "#JUMP_TOWER_HEIGHT_APEX_U",
+      "text": "Tower height (Apex units)"
+    },
+    {
+      "key": "#JUMP_TOWER_HELP",
+      "text": "The balloon, cable and skydive trigger follow this height."
+    },
+    {
+      "key": "#JUMP_TOWER_CREATED",
+      "text": "Jump tower created. Configure its height in ReMap settings."
+    },
+    {
+      "key": "#JUMP_TOWER_PREVIEW_ERROR",
+      "text": "Jump tower preview: "
+    },
+    {
+      "key": "#INVALID_JUMP_TOWER_HEIGHT",
+      "text": "Jump tower height must be between 128 and 65535 Apex units."
+    },
+    {
       "key": "#TARGET_GAME",
       "text": "Target game"
     },
