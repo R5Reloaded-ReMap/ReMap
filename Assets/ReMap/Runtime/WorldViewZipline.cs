@@ -13,6 +13,7 @@ namespace ReMap.Standalone
         private const string ZiplineDetachEndName = "__remap_zipline_detach_end";
         private const string TriggerPreviewName = "__remap_trigger_volume";
         private const string CameraPathMarkerName = "__remap_camera_path_marker";
+        private const string SoundMarkerName = "__remap_sound_marker";
         private MapDocument syncedZiplineDocument;
         private Material ziplineCableMaterial, ziplineDetachMaterial;
 
@@ -36,6 +37,8 @@ namespace ReMap.Standalone
                 if (item.customType == "trigger") EnsureTriggerVisual(instance, item);
                 if (item.customType == "camera-path-point" || item.customType == "camera-path-target")
                     EnsureCameraPathMarker(instance, item);
+                if (item.customType == "sound" || item.customType == "sound-point")
+                    EnsureSoundMarker(instance, item);
             }
             foreach (var item in document.objects)
             {
@@ -133,6 +136,26 @@ namespace ReMap.Standalone
             }
             foreach (var item in document.objects)
             {
+                if (item.customType != "sound" || !instances.TryGetValue(item.id, out var instance))
+                    continue;
+                var line = instance.GetComponent<LineRenderer>();
+                if (line == null)
+                {
+                    line = instance.AddComponent<LineRenderer>();
+                    line.useWorldSpace = true; line.numCapVertices = 4;
+                }
+                line.sharedMaterial = ZiplineCableMaterial(); line.widthMultiplier = .025f;
+                var points = document.objects.Where(candidate => candidate.parentId == item.id &&
+                    candidate.customType == "sound-point")
+                    .OrderBy(candidate => int.TryParse(candidate.customRole, out int index) ? index : int.MaxValue)
+                    .Select(candidate => instances.TryGetValue(candidate.id, out var point)
+                        ? point.transform.position : Vector3.zero).ToList();
+                points.Insert(0, instance.transform.position);
+                line.enabled = item.soundShowPolyline && points.Count >= 2;
+                if (line.enabled) { line.positionCount = points.Count; line.SetPositions(points.ToArray()); }
+            }
+            foreach (var item in document.objects)
+            {
                 if (item.customType != "jump-tower" || !instances.TryGetValue(item.id, out var instance))
                     continue;
                 var line = instance.GetComponent<LineRenderer>();
@@ -191,6 +214,30 @@ namespace ReMap.Standalone
             var tint = new MaterialPropertyBlock();
             tint.SetColor("_BaseColor", new Color(.15f, .7f, 1f, .28f));
             volume.GetComponent<Renderer>().SetPropertyBlock(tint);
+        }
+
+        private void EnsureSoundMarker(GameObject instance, MapObject item)
+        {
+            var existing = instance.transform.Find(SoundMarkerName);
+            GameObject marker;
+            if (existing == null)
+            {
+                marker = GameObject.CreatePrimitive(item.customType == "sound" ?
+                    PrimitiveType.Cylinder : PrimitiveType.Sphere);
+                marker.name = SoundMarkerName; marker.transform.SetParent(instance.transform, false);
+                marker.GetComponent<Collider>().enabled = false;
+                marker.GetComponent<Renderer>().sharedMaterial = lineMaterial;
+                instanceIds[marker] = item.id;
+            }
+            else marker = existing.gameObject;
+            marker.transform.localPosition = Vector3.zero;
+            marker.transform.localRotation = Quaternion.identity;
+            marker.transform.localScale = item.customType == "sound" ?
+                new Vector3(.28f, .08f, .28f) : Vector3.one * .16f;
+            var tint = new MaterialPropertyBlock();
+            tint.SetColor("_BaseColor", item.customType == "sound" ?
+                new Color(.15f, .8f, 1f) : new Color(.3f, 1f, .65f));
+            marker.GetComponent<Renderer>().SetPropertyBlock(tint);
         }
 
         private void EnsureZiplineMarker(GameObject instance, MapObject item)

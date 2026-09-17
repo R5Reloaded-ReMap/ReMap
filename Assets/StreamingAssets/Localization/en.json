@@ -4291,6 +4291,70 @@
       "text": "The animated camera settings are invalid."
     },
     {
+      "key": "#SOUND",
+      "text": "Sound"
+    },
+    {
+      "key": "#CUSTOM_OBJECT_SOUND",
+      "text": "Custom sound"
+    },
+    {
+      "key": "#SOUND_POLYLINE_POINT",
+      "text": "Sound polyline point"
+    },
+    {
+      "key": "#SOUND_POINT_ARG0",
+      "text": "Sound point {0}"
+    },
+    {
+      "key": "#ARG0_SOUND_POINTS",
+      "text": "{0} polyline point(s)"
+    },
+    {
+      "key": "#SOUND_NAME",
+      "text": "Sound alias"
+    },
+    {
+      "key": "#SOUND_RADIUS",
+      "text": "Radius (Apex u)"
+    },
+    {
+      "key": "#SOUND_WAVE_AMBIENT",
+      "text": "Wave ambient"
+    },
+    {
+      "key": "#SOUND_ENABLED",
+      "text": "Enabled on spawn"
+    },
+    {
+      "key": "#SOUND_SHOW_POLYLINE",
+      "text": "Show polyline"
+    },
+    {
+      "key": "#SOUND_CUSTOM_HELP",
+      "text": "Creates an ambient_generic sound. Optional points define the native sound polyline and do not require a model from an RPAK."
+    },
+    {
+      "key": "#SOUND_HELP",
+      "text": "Enter an Apex sound alias. Polyline points are ordered from the sound origin and can be moved independently."
+    },
+    {
+      "key": "#SOUND_POINT_HELP",
+      "text": "Move this point to shape the native ambient sound polyline."
+    },
+    {
+      "key": "#SELECT_SOUND",
+      "text": "Select sound"
+    },
+    {
+      "key": "#SOUND_CREATED",
+      "text": "Sound created."
+    },
+    {
+      "key": "#INVALID_SOUND_SETTINGS",
+      "text": "The sound settings are invalid."
+    },
+    {
       "key": "#DEVELOPMENT_BUILD",
       "text": "Development build — debugging enabled"
     },

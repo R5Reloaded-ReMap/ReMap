@@ -124,6 +124,11 @@ namespace ReMap.Standalone.Core
         public float animatedCameraMaxRight = 40f;
         public float animatedCameraRotationTime = 4f;
         public float animatedCameraTransitionTime = 2f;
+        public string soundName = "";
+        public float soundRadius;
+        public bool soundWaveAmbient;
+        public bool soundEnabled = true;
+        public bool soundShowPolyline = true;
         public bool commonAsset;
         public List<string> availableMaps = new List<string>();
         public bool allowMantle = true;
@@ -216,6 +221,7 @@ namespace ReMap.Standalone.Core
                 item.buttonMessage = item.buttonMessage ?? "";
                 item.buttonSubMessage = item.buttonSubMessage ?? "";
                 item.buttonToken = item.buttonToken ?? "#FS_STRING_VAR";
+                item.soundName = item.soundName ?? "";
                 if (item.customType == "curved-zipline" && item.customProfile == "")
                     item.customProfile = item.curvedZiplineSupport ? "arm" : "none";
                 if (item.customType == "curved-zipline")
@@ -243,7 +249,8 @@ namespace ReMap.Standalone.Core
                     item.customType != "speed-boost-component" && item.customType != "bubble-shield" &&
                     item.customType != "camera-path" && item.customType != "camera-path-point" &&
                     item.customType != "camera-path-target" && item.customType != "animated-camera" &&
-                    item.customType != "animated-camera-component")
+                    item.customType != "animated-camera-component" && item.customType != "sound" &&
+                    item.customType != "sound-point")
                     throw new ArgumentException(L.T("#UNKNOWN_CUSTOM_OBJECT_TYPE"));
                 if (item.customType == "zipline" && !item.isGroup)
                     throw new ArgumentException(L.T("#ZIPLINE_HIERARCHY_GROUP"));
@@ -371,6 +378,13 @@ namespace ReMap.Standalone.Core
                     !Finite(item.animatedCameraTransitionTime) || item.animatedCameraTransitionTime < 0f ||
                     item.animatedCameraTransitionTime > 3600f))
                     throw new ArgumentException(L.T("#INVALID_ANIMATED_CAMERA_SETTINGS"));
+                if (item.customType == "sound" && (!item.isGroup || !Finite(item.soundRadius) ||
+                    item.soundRadius < 0f || item.soundRadius > 65535f || item.soundName.Length > 256 ||
+                    item.soundName.IndexOf('\0') >= 0 || item.soundName.IndexOf('\r') >= 0 ||
+                    item.soundName.IndexOf('\n') >= 0 ||
+                    objects.FindAll(candidate => candidate.parentId == item.id &&
+                        candidate.customType == "sound-point").Count > 64))
+                    throw new ArgumentException(L.T("#INVALID_SOUND_SETTINGS"));
                 if (!item.position.IsFinite || !item.rotation.IsFinite || !item.scale.IsFinite)
                     throw new ArgumentException(L.T("#TRANSFORMS_FINITE_NUMBERS"));
                 if (!Finite(item.fadeDistance) || item.fadeDistance < -1f)

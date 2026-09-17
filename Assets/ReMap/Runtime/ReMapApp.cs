@@ -836,7 +836,8 @@ namespace ReMap.Standalone
                 item.customType == "button" || item.customType == "speed-boost" ||
                 item.customType == "bubble-shield" || item.customType == "camera-path" ||
                 item.customType == "camera-path-point" || item.customType == "camera-path-target" ||
-                item.customType == "animated-camera")
+                item.customType == "animated-camera" || item.customType == "sound" ||
+                item.customType == "sound-point")
             {
                 var remapSettings = InspectorSection(L.T("#REMAP_SETTINGS"), "remap-settings");
                 if (item.customType == "zipline") BuildZiplineInspector(item, remapSettings);
@@ -857,7 +858,9 @@ namespace ReMap.Standalone
                 else if (item.customType == "camera-path") BuildCameraPathInspector(item, remapSettings);
                 else if (item.customType == "camera-path-point" || item.customType == "camera-path-target")
                     BuildCameraPathNodeInspector(item, remapSettings);
-                else BuildAnimatedCameraInspector(item, remapSettings);
+                else if (item.customType == "animated-camera") BuildAnimatedCameraInspector(item, remapSettings);
+                else if (item.customType == "sound") BuildSoundInspector(item, remapSettings);
+                else BuildSoundPointInspector(item, remapSettings);
                 inspector.Add(remapSettings);
             }
             if (!item.isGroup && string.IsNullOrEmpty(item.customType))
@@ -893,6 +896,8 @@ namespace ReMap.Standalone
                 item.customType == "camera-path-target" ? L.T("#CAMERA_PATH_TARGET") :
                 item.customType == "animated-camera" ? L.T("#CUSTOM_OBJECT_ANIMATED_CAMERA") :
                 item.customType == "animated-camera-component" ? L.T("#ANIMATED_CAMERA_COMPONENT") :
+                item.customType == "sound" ? L.T("#CUSTOM_OBJECT_SOUND") :
+                item.customType == "sound-point" ? L.T("#SOUND_POLYLINE_POINT") :
                 item.customType == "zipline-endpoint" ? L.T("#ZIPLINE_ATTACHMENT_POINT") :
                 item.isGroup ? L.T("#GROUP_CHILDREN_SHARE_TRANSFORM") : L.T("#MODEL");
             information.Add(CopyableInspectorValue(L.T("#OBJECT_TYPE"), typeDetails));

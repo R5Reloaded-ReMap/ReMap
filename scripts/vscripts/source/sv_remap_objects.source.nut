@@ -27,6 +27,7 @@ global function ReMap_CreateTeleportButton
 global function ReMap_CreateSpeedBoost
 global function ReMap_CreateBubbleShield
 global function ReMap_CreateAnimatedCamera
+global function ReMap_CreateSound
 
 global const int REMAP_DOOR_SINGLE = 0
 global const int REMAP_DOOR_DOUBLE = 1
@@ -369,6 +370,27 @@ entity function ReMap_CreateAnimatedCamera( vector origin, vector angles,
 	file.props.append( cameraHead )
 	thread ReMap_AnimateCamera( cameraHead, maxLeft, maxRight, rotationTime, transitionTime )
 	return mover
+}
+
+entity function ReMap_CreateSound( vector origin, string soundName, float radius = 0.0,
+	bool isWaveAmbient = false, bool enabled = true, array<vector> polylinePoints = [] )
+{
+	entity sound = CreateEntity( "ambient_generic" )
+	sound.SetOrigin( origin )
+	sound.SetValueForKey( "radius", string( radius ) )
+	sound.SetValueForKey( "isWaveAmbient", isWaveAmbient ? "1" : "0" )
+	for ( int index = 0; index < polylinePoints.len(); index++ )
+	{
+		vector start = index == 0 ? ZERO_VECTOR : polylinePoints[index - 1] - origin
+		vector end = polylinePoints[index] - origin
+		sound.SetValueForKey( "polyline_segment_" + index,
+			"(" + VectorToString( start ) + ") (" + VectorToString( end ) + ")" )
+	}
+	sound.SetSoundName( soundName )
+	sound.SetEnabled( enabled )
+	DispatchSpawn( sound )
+	file.props.append( sound )
+	return sound
 }
 
 void function ReMap_AnimateCamera( entity cameraHead, float maxLeft, float maxRight,

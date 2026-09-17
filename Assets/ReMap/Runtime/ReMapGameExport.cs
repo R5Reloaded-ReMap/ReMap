@@ -135,6 +135,7 @@ namespace ReMap.Standalone
             AppendButtons(server, world, false, originOffset, useOriginOffset);
             AppendSpeedBoosts(server, world, false, originOffset, useOriginOffset);
             AppendBubbleShields(server, world, false, originOffset, useOriginOffset);
+            AppendSounds(server, world, false, originOffset, useOriginOffset);
             AppendAnimatedCameras(server, world, false, originOffset, useOriginOffset);
             AppendCurvedZiplines(server, world, false, originOffset, useOriginOffset);
             AppendZiplines(server, world, false, originOffset, useOriginOffset);
@@ -231,6 +232,7 @@ namespace ReMap.Standalone
             AppendButtons(result, world, true, originOffset, false);
             AppendSpeedBoosts(result, world, true, originOffset, false);
             AppendBubbleShields(result, world, true, originOffset, false);
+            AppendSounds(result, world, true, originOffset, false);
             AppendAnimatedCameras(result, world, true, originOffset, false);
             AppendCurvedZiplines(result, world, true, originOffset, false);
             AppendZiplines(result, world, true, originOffset, false);
@@ -688,6 +690,26 @@ namespace ReMap.Standalone
                     Number(camera.animatedCameraAngleOffset) + ", " + Number(camera.animatedCameraMaxLeft) + ", " +
                     Number(camera.animatedCameraMaxRight) + ", " + Number(camera.animatedCameraRotationTime) + ", " +
                     Number(camera.animatedCameraTransitionTime) + " )";
+                code.Append(live ? "script " : "\t").Append(expression).AppendLine();
+            }
+        }
+
+        private static void AppendSounds(StringBuilder code, List<MapObject> world, bool live,
+            Vector3 originOffset, bool symbolicOffset)
+        {
+            var sounds = world.Where(o => o.customType == "sound").ToList();
+            if (!live && sounds.Count > 0) { code.AppendLine(); code.AppendLine("\t// Sounds"); }
+            foreach (var sound in sounds)
+            {
+                var points = world.Where(o => o.parentId == sound.id && o.customType == "sound-point")
+                    .OrderBy(o => int.TryParse(o.customRole, out int index) ? index : int.MaxValue)
+                    .Select(point => Position(point.position, originOffset, symbolicOffset));
+                string expression = "ReMap_CreateSound( " +
+                    Position(sound.position, originOffset, symbolicOffset) + ", " +
+                    ScriptString(sound.soundName) + ", " + Number(sound.soundRadius) + ", " +
+                    (sound.soundWaveAmbient ? "true" : "false") + ", " +
+                    (sound.soundEnabled ? "true" : "false") + ", [ " +
+                    string.Join(", ", points) + " ] )";
                 code.Append(live ? "script " : "\t").Append(expression).AppendLine();
             }
         }

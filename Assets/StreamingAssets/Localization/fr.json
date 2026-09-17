@@ -4291,6 +4291,70 @@
       "text": "Les paramètres de la caméra animée sont invalides."
     },
     {
+      "key": "#SOUND",
+      "text": "Son"
+    },
+    {
+      "key": "#CUSTOM_OBJECT_SOUND",
+      "text": "Son personnalisé"
+    },
+    {
+      "key": "#SOUND_POLYLINE_POINT",
+      "text": "Point de polyligne sonore"
+    },
+    {
+      "key": "#SOUND_POINT_ARG0",
+      "text": "Point sonore {0}"
+    },
+    {
+      "key": "#ARG0_SOUND_POINTS",
+      "text": "{0} point(s) de polyligne"
+    },
+    {
+      "key": "#SOUND_NAME",
+      "text": "Alias sonore"
+    },
+    {
+      "key": "#SOUND_RADIUS",
+      "text": "Rayon (u Apex)"
+    },
+    {
+      "key": "#SOUND_WAVE_AMBIENT",
+      "text": "Ambiance wave"
+    },
+    {
+      "key": "#SOUND_ENABLED",
+      "text": "Activé à l’apparition"
+    },
+    {
+      "key": "#SOUND_SHOW_POLYLINE",
+      "text": "Afficher la polyligne"
+    },
+    {
+      "key": "#SOUND_CUSTOM_HELP",
+      "text": "Crée un son ambient_generic. Les points facultatifs définissent la polyligne sonore native et ne nécessitent aucun modèle provenant d’un RPAK."
+    },
+    {
+      "key": "#SOUND_HELP",
+      "text": "Saisissez un alias sonore Apex. Les points de polyligne sont ordonnés depuis l’origine du son et se déplacent indépendamment."
+    },
+    {
+      "key": "#SOUND_POINT_HELP",
+      "text": "Déplacez ce point pour définir la polyligne du son ambiant natif."
+    },
+    {
+      "key": "#SELECT_SOUND",
+      "text": "Sélectionner le son"
+    },
+    {
+      "key": "#SOUND_CREATED",
+      "text": "Son créé."
+    },
+    {
+      "key": "#INVALID_SOUND_SETTINGS",
+      "text": "Les réglages du son sont invalides."
+    },
+    {
       "key": "#DEVELOPMENT_BUILD",
       "text": "Build de développement — débogage activé"
     },
