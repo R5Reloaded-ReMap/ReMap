@@ -487,7 +487,8 @@ namespace ReMap.Standalone
                     item.customType != "jump-pad" && item.customType != "spawn-point" &&
                     item.customType != "trigger" && item.customType != "jump-tower" &&
                     item.customType != "weapon-rack" && item.customType != "respawn-heal" &&
-                    item.customType != "button" && item.customType != "speed-boost" &&
+                    item.customType != "button" && item.customType != "button-teleport-target" &&
+                    item.customType != "speed-boost" &&
                     item.customType != "bubble-shield" && item.customType != "camera-path" &&
                     item.customType != "camera-path-point" && item.customType != "camera-path-target" &&
                     item.customType != "animated-camera" && item.customType != "sound" &&
@@ -498,7 +499,7 @@ namespace ReMap.Standalone
                 copy.parentId = item.customType == "curved-zipline-point" ||
                     item.customType == "ziprail-point" ||
                     item.customType == "camera-path-point" || item.customType == "camera-path-target" ||
-                    item.customType == "sound-point"
+                    item.customType == "sound-point" || item.customType == "button-teleport-target"
                     ? item.parentId : "";
                 copy.position = pose.position; copy.rotation = pose.rotation; copy.scale = pose.scale; result.Add(copy);
             }

@@ -26,6 +26,32 @@ namespace ReMap.Standalone.Tests
         }
 
         [Test]
+        public void VisibleButtonTeleportsToChildAndKeepsCallback()
+        {
+            var document = new MapDocument { name = "button", editingMap = "mp_rr_desertlands_hu" };
+            var button = new MapObject {
+                assetId = "custom:button", displayName = "Button", customType = "button",
+                gameModelPath = "mdl/props/global_access_panel_button/global_access_panel_button_console_w_stand.rmdl",
+                buttonMode = "visible", buttonTeleportEnabled = true, buttonTeleportPlaySound = true,
+                buttonCallback = "ent.SetVelocity( <0, 0, 500> )"
+            };
+            document.objects.Add(button);
+            document.objects.Add(new MapObject {
+                assetId = "custom:button-teleport-target", displayName = "Teleport destination",
+                customType = "button-teleport-target", customRole = "destination",
+                parentId = button.id, isGroup = true,
+                position = ApexCoordinates.ToUnity(new Float3(100, 200, 300)),
+                rotation = WorldView.ToData(ApexDisplay.UnityAngles(new Vector3(0, 90, 0)))
+            });
+            document.Validate();
+            var restored = new UnityMapCodec().Decode(new UnityMapCodec().Encode(document));
+            string code = ReMapGameScript.Generate(restored, restored.objects);
+            StringAssert.Contains("ReMap_AddButtonTeleport( remapButton0, <100, 200, 300>, <0, 90, 0>, true )", code);
+            StringAssert.Contains("AddCallback_OnUseEntity( remapButton0", code);
+            StringAssert.Contains("ent.SetVelocity( <0, 0, 500> )", code);
+        }
+
+        [Test]
         public void ExportsInvisibleTeleportRelativeToButton()
         {
             var document = new MapDocument { name = "button", editingMap = "mp_rr_desertlands_hu" };
@@ -43,7 +69,7 @@ namespace ReMap.Standalone.Tests
             StringAssert.Contains("PrecacheModel( $\"mdl/weapons/bullets/damage_arrow.rmdl\" )", code);
             StringAssert.Contains("ReMap_CreateTeleportButton( <100, 200, 300>", code);
             StringAssert.Contains("<110, 220, 330>", code);
-            StringAssert.Contains("\"Go!\", \"Fast\", 4, 3, \"#FS_STRING_VAR\"", code);
+            StringAssert.Contains("\"Go!\", \"Fast\", 4, 3, \"#FS_STRING_VAR\", false )", code);
         }
 
         [Test]
@@ -52,7 +78,11 @@ namespace ReMap.Standalone.Tests
             string root = Path.GetFullPath(Path.Combine(Application.dataPath, ".."));
             string script = File.ReadAllText(Path.Combine(root, "scripts/vscripts/source/sv_remap_objects.source.nut"));
             StringAssert.Contains("entity function ReMap_CreateButton", script);
+            StringAssert.Contains("void function ReMap_AddButtonTeleport", script);
             StringAssert.Contains("void function ReMap_CreateTeleportButton", script);
+            StringAssert.Contains("Wraith_phasegate_Travel_1p", script);
+            StringAssert.Contains("Wraith_phasegate_Travel_3p", script);
+            StringAssert.Contains("EmitDifferentSoundsOnEntityForPlayerAndWorld", script);
             StringAssert.Contains("panel.MakeInvisible()", script);
             StringAssert.Contains("ent.SetVelocity( ZERO_VECTOR )", script);
             StringAssert.DoesNotContain("Invis_Button(", script);
@@ -68,6 +98,17 @@ namespace ReMap.Standalone.Tests
             document.objects.Add(new MapObject {
                 customType = "button", assetId = "custom:button", displayName = "Button",
                 buttonMode = mode, buttonMessageType = type, buttonMessageDuration = duration
+            });
+            Assert.Throws<System.ArgumentException>(document.Validate);
+        }
+
+        [Test]
+        public void RejectsTeleportTargetWithoutButtonParent()
+        {
+            var document = new MapDocument();
+            document.objects.Add(new MapObject {
+                assetId = "custom:button-teleport-target", displayName = "Teleport destination",
+                customType = "button-teleport-target", customRole = "destination", isGroup = true
             });
             Assert.Throws<System.ArgumentException>(document.Validate);
         }

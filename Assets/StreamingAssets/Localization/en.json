@@ -4047,6 +4047,30 @@
       "text": "On-use Apex callback"
     },
     {
+      "key": "#BUTTON_TELEPORT_ON_USE",
+      "text": "Teleport player on use"
+    },
+    {
+      "key": "#BUTTON_TELEPORT_SOUND",
+      "text": "Play teleport sound"
+    },
+    {
+      "key": "#BUTTON_TELEPORT_TARGET",
+      "text": "Teleport destination"
+    },
+    {
+      "key": "#SELECT_BUTTON_TELEPORT_TARGET",
+      "text": "Select teleport destination"
+    },
+    {
+      "key": "#BUTTON_TELEPORT_TARGET_HELP",
+      "text": "Move and rotate this marker to set where the player arrives and the direction they face."
+    },
+    {
+      "key": "#SELECT_BUTTON",
+      "text": "Select button"
+    },
+    {
       "key": "#BUTTON_UP",
       "text": "Up / next arrow"
     },
@@ -4084,11 +4108,11 @@
     },
     {
       "key": "#BUTTON_VISIBLE_HELP",
-      "text": "The callback is inserted in the generated Apex server script and receives panel, ent and input. Live export skips visible callback buttons."
+      "text": "Teleportation runs first when enabled. The callback remains available for extra Apex code and receives panel, ent and input. Live export skips visible callback buttons."
     },
     {
       "key": "#BUTTON_INVISIBLE_HELP",
-      "text": "The destination and direction are relative to the button, so they follow it when it moves. Messages are displayed by R5Flowstate."
+      "text": "Move and rotate the destination child to set the arrival pose. Messages are displayed by R5Flowstate."
     },
     {
       "key": "#BUTTON_CREATED",

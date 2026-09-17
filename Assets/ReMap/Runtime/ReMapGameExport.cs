@@ -614,8 +614,12 @@ namespace ReMap.Standalone
             {
                 Vector3 buttonPosition = WorldView.ToVector(button.position);
                 Quaternion buttonRotation = Quaternion.Euler(WorldView.ToVector(button.rotation));
-                Vector3 destination = buttonPosition + buttonRotation * WorldView.ToVector(button.buttonDestination);
-                Vector3 direction = (buttonRotation * Quaternion.Euler(WorldView.ToVector(button.buttonDirection))).eulerAngles;
+                var target = world.FirstOrDefault(candidate => candidate.parentId == button.id &&
+                    candidate.customType == "button-teleport-target");
+                Vector3 destination = target != null ? WorldView.ToVector(target.position) :
+                    buttonPosition + buttonRotation * WorldView.ToVector(button.buttonDestination);
+                Vector3 direction = target != null ? WorldView.ToVector(target.rotation) :
+                    (buttonRotation * Quaternion.Euler(WorldView.ToVector(button.buttonDirection))).eulerAngles;
                 string common = Position(button.position, originOffset, symbolicOffset) + ", " +
                     Vector(ApexDisplay.Angles(WorldView.ToVector(button.rotation)));
                 if (button.buttonMode == "invisible")
@@ -626,7 +630,8 @@ namespace ReMap.Standalone
                         Vector(ApexDisplay.Angles(direction)) + ", " + ScriptString(button.buttonMessage) + ", " +
                         ScriptString(button.buttonSubMessage) + ", " +
                         button.buttonMessageType.ToString(CultureInfo.InvariantCulture) + ", " +
-                        Number(button.buttonMessageDuration) + ", " + ScriptString(button.buttonToken) + " )";
+                        Number(button.buttonMessageDuration) + ", " + ScriptString(button.buttonToken) + ", " +
+                        (button.buttonTeleportPlaySound ? "true" : "false") + " )";
                     code.Append(live ? "script " : "\t").Append(expression).AppendLine();
                     continue;
                 }
@@ -634,6 +639,11 @@ namespace ReMap.Standalone
                 string variable = "remapButton" + (variableIndex++).ToString(CultureInfo.InvariantCulture);
                 code.Append("\tentity ").Append(variable).Append(" = ReMap_CreateButton( ")
                     .Append(common).Append(", true, true, ").Append(ScriptString(button.buttonUseText)).AppendLine(" )");
+                if (button.buttonTeleportEnabled)
+                    code.Append("\tReMap_AddButtonTeleport( ").Append(variable).Append(", ")
+                        .Append(Position(WorldView.ToData(destination), originOffset, symbolicOffset)).Append(", ")
+                        .Append(Vector(ApexDisplay.Angles(direction))).Append(", ")
+                        .Append(button.buttonTeleportPlaySound ? "true" : "false").AppendLine(" )");
                 AppendButtonCallback(code, variable, button.buttonCallback);
             }
         }

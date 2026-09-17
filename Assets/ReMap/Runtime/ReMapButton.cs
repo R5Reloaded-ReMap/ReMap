@@ -32,7 +32,7 @@ namespace ReMap.Standalone
                 isGroup = record == null, commonAsset = record?.IsCommon ?? false,
                 availableMaps = record?.origins.Select(origin => origin.mapId)
                     .Where(map => map != "").Distinct().ToList() ?? new List<string>(),
-                buttonMode = "visible", buttonUp = true,
+                buttonMode = "visible", buttonUp = true, buttonTeleportPlaySound = true,
                 buttonDestination = WorldView.ToData(Vector3.forward * 5f),
                 buttonToken = "#FS_STRING_VAR", buttonMessageType = 4,
                 buttonMessageDuration = 5f
@@ -60,10 +60,7 @@ namespace ReMap.Standalone
             mode.RegisterValueChangedCallback(change => {
                 int index = labels.IndexOf(change.newValue);
                 if (index < 0) return;
-                ChangeButton(item.id, edited => {
-                    edited.buttonMode = modes[index];
-                    SyncButtonModel(edited);
-                }, true);
+                ChangeButtonMode(item.id, modes[index]);
             });
 
             if (item.buttonMode == "visible")
@@ -71,25 +68,39 @@ namespace ReMap.Standalone
                 var prompt = CompactInspectorField(new TextField(L.T("#BUTTON_USE_TEXT")) {
                     value = item.buttonUseText, isDelayed = true
                 });
+                var teleport = CompactInspectorField(new Toggle(L.T("#BUTTON_TELEPORT_ON_USE")) {
+                    value = item.buttonTeleportEnabled
+                });
                 var callback = new TextField(L.T("#BUTTON_ON_USE_CALLBACK")) {
                     value = item.buttonCallback, multiline = true, isDelayed = true
                 };
                 callback.AddToClassList("property-field");
-                section.Add(prompt); section.Add(callback);
+                section.Add(prompt); section.Add(teleport);
+                if (item.buttonTeleportEnabled)
+                {
+                    var sound = CompactInspectorField(new Toggle(L.T("#BUTTON_TELEPORT_SOUND")) {
+                        value = item.buttonTeleportPlaySound
+                    });
+                    section.Add(sound);
+                    section.Add(Button(L.T("#SELECT_BUTTON_TELEPORT_TARGET"),
+                        () => SelectButtonTeleportTarget(item.id)));
+                    sound.RegisterValueChangedCallback(change => ChangeButton(item.id,
+                        edited => edited.buttonTeleportPlaySound = change.newValue));
+                }
+                section.Add(callback);
                 section.Add(Label(L.T("#BUTTON_VISIBLE_HELP"), "note"));
                 prompt.RegisterValueChangedCallback(change => ChangeButton(item.id,
                     edited => edited.buttonUseText = change.newValue ?? ""));
+                teleport.RegisterValueChangedCallback(change =>
+                    ChangeButtonTeleportEnabled(item.id, change.newValue));
                 callback.RegisterValueChangedCallback(change => ChangeButton(item.id,
                     edited => edited.buttonCallback = change.newValue ?? ""));
                 return;
             }
 
             var up = CompactInspectorField(new Toggle(L.T("#BUTTON_UP")) { value = item.buttonUp });
-            var destination = CompactInspectorField(new Vector3Field(L.T("#BUTTON_DESTINATION_OFFSET")) {
-                value = ApexDisplay.Position(WorldView.ToVector(item.buttonDestination))
-            });
-            var direction = CompactInspectorField(new Vector3Field(L.T("#BUTTON_DESTINATION_ANGLES")) {
-                value = ApexDisplay.Angles(WorldView.ToVector(item.buttonDirection))
+            var soundToggle = CompactInspectorField(new Toggle(L.T("#BUTTON_TELEPORT_SOUND")) {
+                value = item.buttonTeleportPlaySound
             });
             var message = CompactInspectorField(new TextField(L.T("#BUTTON_MESSAGE")) {
                 value = item.buttonMessage, isDelayed = true
@@ -106,14 +117,15 @@ namespace ReMap.Standalone
             var token = CompactInspectorField(new TextField(L.T("#BUTTON_TOKEN")) {
                 value = item.buttonToken, isDelayed = true
             });
-            section.Add(up); section.Add(destination); section.Add(direction); section.Add(message);
+            section.Add(up); section.Add(soundToggle);
+            section.Add(Button(L.T("#SELECT_BUTTON_TELEPORT_TARGET"),
+                () => SelectButtonTeleportTarget(item.id)));
+            section.Add(message);
             section.Add(subMessage); section.Add(type); section.Add(duration); section.Add(token);
             section.Add(Label(L.T("#BUTTON_INVISIBLE_HELP"), "note"));
             up.RegisterValueChangedCallback(change => ChangeButton(item.id, edited => edited.buttonUp = change.newValue));
-            destination.RegisterValueChangedCallback(change => ChangeButton(item.id, edited =>
-                edited.buttonDestination = WorldView.ToData(ApexDisplay.UnityPosition(change.newValue))));
-            direction.RegisterValueChangedCallback(change => ChangeButton(item.id, edited =>
-                edited.buttonDirection = WorldView.ToData(ApexDisplay.UnityAngles(change.newValue))));
+            soundToggle.RegisterValueChangedCallback(change => ChangeButton(item.id,
+                edited => edited.buttonTeleportPlaySound = change.newValue));
             message.RegisterValueChangedCallback(change => ChangeButton(item.id, edited => edited.buttonMessage = change.newValue ?? ""));
             subMessage.RegisterValueChangedCallback(change => ChangeButton(item.id, edited => edited.buttonSubMessage = change.newValue ?? ""));
             type.RegisterValueChangedCallback(change => ChangeButton(item.id, edited => edited.buttonMessageType = Mathf.Clamp(change.newValue, 0, 16)));
@@ -122,6 +134,80 @@ namespace ReMap.Standalone
         }
 
         private static string ButtonModeLabel(string mode) => mode == "invisible" ? L.T("#BUTTON_INVISIBLE") : L.T("#BUTTON_VISIBLE");
+
+        private static MapObject ButtonTeleportTarget(MapDocument document, string buttonId) =>
+            document.objects.FirstOrDefault(candidate => candidate.parentId == buttonId &&
+                candidate.customType == "button-teleport-target");
+
+        private static MapObject CreateButtonTeleportTarget(MapObject button) => new MapObject {
+            assetId = "custom:button-teleport-target", displayName = L.T("#BUTTON_TELEPORT_TARGET"),
+            customType = "button-teleport-target", customRole = "destination", parentId = button.id,
+            isGroup = true, position = button.buttonDestination, rotation = button.buttonDirection
+        };
+
+        private static MapObject EnsureButtonTeleportTarget(MapDocument document, MapObject button)
+        {
+            var target = ButtonTeleportTarget(document, button.id);
+            if (target != null) return target;
+            target = CreateButtonTeleportTarget(button);
+            document.objects.Add(target);
+            return target;
+        }
+
+        private void ChangeButtonMode(string id, string value)
+        {
+            CommitInspectorEdit();
+            session.Edit(document => {
+                var edited = document.objects.Find(candidate => candidate.id == id);
+                edited.buttonMode = value;
+                if (value == "invisible")
+                {
+                    edited.buttonTeleportEnabled = true;
+                    EnsureButtonTeleportTarget(document, edited);
+                }
+                SyncButtonModel(edited);
+            });
+            Refresh();
+            root.schedule.Execute(() => Run(RefreshInspector));
+        }
+
+        private void ChangeButtonTeleportEnabled(string id, bool enabled)
+        {
+            CommitInspectorEdit();
+            session.Edit(document => {
+                var edited = document.objects.Find(candidate => candidate.id == id);
+                edited.buttonTeleportEnabled = enabled;
+                var target = ButtonTeleportTarget(document, id);
+                if (enabled) EnsureButtonTeleportTarget(document, edited);
+                else if (target != null)
+                {
+                    edited.buttonDestination = target.position;
+                    edited.buttonDirection = target.rotation;
+                    var removed = MapHierarchy.Subtree(document, target.id);
+                    document.objects.RemoveAll(candidate => removed.Contains(candidate.id));
+                }
+            });
+            selectedId = id; Refresh();
+        }
+
+        private void SelectButtonTeleportTarget(string buttonId)
+        {
+            string targetId = null;
+            CommitInspectorEdit();
+            session.Edit(document => {
+                var button = document.objects.Find(candidate => candidate.id == buttonId);
+                button.buttonTeleportEnabled = true;
+                targetId = EnsureButtonTeleportTarget(document, button).id;
+            });
+            selectedId = targetId; RevealHierarchy(targetId); Refresh();
+        }
+
+        private void BuildButtonTeleportTargetInspector(MapObject item, VisualElement section)
+        {
+            section.Add(Label(L.T("#BUTTON_TELEPORT_TARGET"), "inspector-subsection-title"));
+            section.Add(Label(L.T("#BUTTON_TELEPORT_TARGET_HELP"), "note"));
+            section.Add(Button(L.T("#SELECT_BUTTON"), () => Select(item.parentId)));
+        }
 
         private void ChangeButton(string id, Action<MapObject> change, bool refreshInspector = false)
         {

@@ -4047,6 +4047,30 @@
       "text": "Callback Apex à l’utilisation"
     },
     {
+      "key": "#BUTTON_TELEPORT_ON_USE",
+      "text": "Téléporter le joueur à l’utilisation"
+    },
+    {
+      "key": "#BUTTON_TELEPORT_SOUND",
+      "text": "Jouer le son de téléportation"
+    },
+    {
+      "key": "#BUTTON_TELEPORT_TARGET",
+      "text": "Destination de téléportation"
+    },
+    {
+      "key": "#SELECT_BUTTON_TELEPORT_TARGET",
+      "text": "Sélectionner la destination"
+    },
+    {
+      "key": "#BUTTON_TELEPORT_TARGET_HELP",
+      "text": "Déplace et oriente ce repère pour choisir le point d’arrivée et la direction regardée par le joueur."
+    },
+    {
+      "key": "#SELECT_BUTTON",
+      "text": "Sélectionner le bouton"
+    },
+    {
       "key": "#BUTTON_UP",
       "text": "Flèche haut / suivant"
     },
@@ -4084,11 +4108,11 @@
     },
     {
       "key": "#BUTTON_VISIBLE_HELP",
-      "text": "Le callback est inséré dans le script serveur Apex généré et reçoit panel, ent et input. L’export live ignore les boutons visibles à callback."
+      "text": "La téléportation est exécutée en premier lorsqu’elle est active. Le callback reste disponible pour ajouter du code Apex et reçoit panel, ent et input. L’export live ignore les boutons visibles à callback."
     },
     {
       "key": "#BUTTON_INVISIBLE_HELP",
-      "text": "La destination et la direction sont relatives au bouton : elles le suivent lorsqu’il est déplacé. Les messages sont affichés par R5Flowstate."
+      "text": "Déplace et oriente l’objet destination pour définir l’arrivée. Les messages sont affichés par R5Flowstate."
     },
     {
       "key": "#BUTTON_CREATED",

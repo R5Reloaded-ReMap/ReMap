@@ -101,6 +101,8 @@ namespace ReMap.Standalone.Core
         public string buttonMode = "visible";
         public string buttonUseText = "";
         public string buttonCallback = "";
+        public bool buttonTeleportEnabled;
+        public bool buttonTeleportPlaySound;
         public bool buttonUp = true;
         public Float3 buttonDestination;
         public Float3 buttonDirection;
@@ -256,7 +258,8 @@ namespace ReMap.Standalone.Core
                     item.customType != "spawn-point" && item.customType != "trigger" &&
                     item.customType != "jump-tower" && item.customType != "jump-tower-component" &&
                     item.customType != "weapon-rack" && item.customType != "respawn-heal" &&
-                    item.customType != "button" && item.customType != "speed-boost" &&
+                    item.customType != "button" && item.customType != "button-teleport-target" &&
+                    item.customType != "speed-boost" &&
                     item.customType != "speed-boost-component" && item.customType != "bubble-shield" &&
                     item.customType != "camera-path" && item.customType != "camera-path-point" &&
                     item.customType != "camera-path-target" && item.customType != "animated-camera" &&
@@ -542,6 +545,21 @@ namespace ReMap.Standalone.Core
                     var parent = objects.Find(o => o.id == item.parentId);
                     if (parent == null || parent.customType != "ziprail-point")
                         throw new ArgumentException(L.T("#INVALID_ZIPRAIL_POINT"));
+                }
+                else if (item.customType == "button")
+                {
+                    int targets = objects.FindAll(candidate => candidate.parentId == item.id &&
+                        candidate.customType == "button-teleport-target").Count;
+                    if (targets > 1 || targets > 0 && item.buttonMode != "invisible" &&
+                        !item.buttonTeleportEnabled)
+                        throw new ArgumentException(L.T("#INVALID_BUTTON_SETTINGS"));
+                }
+                else if (item.customType == "button-teleport-target")
+                {
+                    var parent = objects.Find(candidate => candidate.id == item.parentId);
+                    if (!item.isGroup || parent == null || parent.customType != "button" ||
+                        item.customRole != "destination")
+                        throw new ArgumentException(L.T("#INVALID_BUTTON_SETTINGS"));
                 }
             }
             NormalizeZiplineStartPositions();

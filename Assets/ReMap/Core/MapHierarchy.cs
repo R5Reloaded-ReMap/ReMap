@@ -101,6 +101,7 @@ namespace ReMap.Standalone.Core
         {
             var requested = doc.objects.Single(o => o.id == id);
             if (requested.customType == "zipline-endpoint") id = requested.parentId;
+            if (requested.customType == "button-teleport-target") id = requested.parentId;
             if (requested.customType == "curved-zipline-component")
             {
                 var point = doc.objects.SingleOrDefault(item => item.id == requested.parentId);

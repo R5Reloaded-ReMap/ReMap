@@ -868,7 +868,8 @@ namespace ReMap.Standalone
                 item.customType == "trigger" || item.customType == "jump-tower" ||
                 item.customType == "jump-tower-component" ||
                 item.customType == "weapon-rack" || item.customType == "respawn-heal" ||
-                item.customType == "button" || item.customType == "speed-boost" ||
+                item.customType == "button" || item.customType == "button-teleport-target" ||
+                item.customType == "speed-boost" ||
                 item.customType == "bubble-shield" || item.customType == "camera-path" ||
                 item.customType == "camera-path-point" || item.customType == "camera-path-target" ||
                 item.customType == "animated-camera" || item.customType == "sound" ||
@@ -893,6 +894,8 @@ namespace ReMap.Standalone
                 else if (item.customType == "weapon-rack") BuildWeaponRackInspector(item, remapSettings);
                 else if (item.customType == "respawn-heal") BuildRespawnHealInspector(item, remapSettings);
                 else if (item.customType == "button") BuildButtonInspector(item, remapSettings);
+                else if (item.customType == "button-teleport-target")
+                    BuildButtonTeleportTargetInspector(item, remapSettings);
                 else if (item.customType == "speed-boost") BuildSpeedBoostInspector(item, remapSettings);
                 else if (item.customType == "bubble-shield") BuildBubbleShieldInspector(item, remapSettings);
                 else if (item.customType == "camera-path") BuildCameraPathInspector(item, remapSettings);
@@ -933,6 +936,7 @@ namespace ReMap.Standalone
                 item.customType == "weapon-rack" ? L.T("#CUSTOM_OBJECT_WEAPON_RACK") :
                 item.customType == "respawn-heal" ? L.T("#CUSTOM_OBJECT_RESPAWN_HEAL") :
                 item.customType == "button" ? L.T("#CUSTOM_OBJECT_BUTTON") :
+                item.customType == "button-teleport-target" ? L.T("#BUTTON_TELEPORT_TARGET") :
                 item.customType == "speed-boost" ? L.T("#CUSTOM_OBJECT_SPEED_BOOST") :
                 item.customType == "speed-boost-component" ? L.T("#SPEED_BOOST_COMPONENT") :
                 item.customType == "bubble-shield" ? L.T("#CUSTOM_OBJECT_BUBBLE_SHIELD") :

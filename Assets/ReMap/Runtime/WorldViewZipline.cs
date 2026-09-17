@@ -15,6 +15,8 @@ namespace ReMap.Standalone
         private const string ZiplineModelSelectionName = "__remap_zipline_model_selection";
         private const string TriggerPreviewName = "__remap_trigger_volume";
         private const string CameraPathMarkerName = "__remap_camera_path_marker";
+        private const string ButtonTeleportTargetMarkerName = "__remap_button_teleport_target_marker";
+        private const string ButtonTeleportGuideName = "__remap_button_teleport_guide";
         private const string LocationPairMarkerName = "__remap_location_pair_marker";
         private const string TextInfoPanelMarkerName = "__remap_text_info_panel_marker";
         private const string WindowHintMarkerName = "__remap_window_hint_marker";
@@ -45,11 +47,44 @@ namespace ReMap.Standalone
                 if (item.customType == "trigger") EnsureTriggerVisual(instance, item);
                 if (item.customType == "camera-path-point" || item.customType == "camera-path-target")
                     EnsureCameraPathMarker(instance, item);
+                if (item.customType == "button-teleport-target")
+                    EnsureButtonTeleportTargetMarker(instance, item);
                 if (item.customType == "sound" || item.customType == "sound-point")
                     EnsureSoundMarker(instance, item);
                 if (item.customType == "location-pair") EnsureLocationPairMarker(instance, item);
                 if (item.customType == "text-info-panel") EnsureTextInfoPanelMarker(instance, item);
                 if (item.customType == "window-hint") EnsureWindowHintMarker(instance, item);
+            }
+            foreach (var item in document.objects)
+            {
+                if (item.customType != "button" || !instances.TryGetValue(item.id, out var instance))
+                    continue;
+                var target = document.objects.FirstOrDefault(candidate => candidate.parentId == item.id &&
+                    candidate.customType == "button-teleport-target");
+                var existing = instance.transform.Find(ButtonTeleportGuideName);
+                LineRenderer guide = existing?.GetComponent<LineRenderer>();
+                GameObject targetInstance = null;
+                bool visible = target != null && (item.buttonMode == "invisible" || item.buttonTeleportEnabled) &&
+                    instances.TryGetValue(target.id, out targetInstance);
+                if (visible && guide == null)
+                {
+                    guide = new GameObject(ButtonTeleportGuideName, typeof(LineRenderer)).GetComponent<LineRenderer>();
+                    guide.transform.SetParent(instance.transform, false);
+                    guide.useWorldSpace = true; guide.positionCount = 2; guide.numCapVertices = 4;
+                    guide.sharedMaterial = lineMaterial; guide.widthMultiplier = .025f;
+                    var tint = new MaterialPropertyBlock();
+                    tint.SetColor("_BaseColor", new Color(1f, .25f, .75f));
+                    guide.SetPropertyBlock(tint);
+                }
+                if (guide != null)
+                {
+                    guide.enabled = visible;
+                    if (visible)
+                    {
+                        guide.SetPosition(0, instance.transform.position);
+                        guide.SetPosition(1, targetInstance.transform.position);
+                    }
+                }
             }
             foreach (var item in document.objects)
             {
@@ -240,6 +275,29 @@ namespace ReMap.Standalone
             var tint = new MaterialPropertyBlock();
             tint.SetColor("_BaseColor", item.customType == "camera-path-target" ?
                 new Color(1f, .25f, .65f) : new Color(1f, .82f, .18f));
+            marker.GetComponent<Renderer>().SetPropertyBlock(tint);
+        }
+
+        private void EnsureButtonTeleportTargetMarker(GameObject instance, MapObject item)
+        {
+            var existing = instance.transform.Find(ButtonTeleportTargetMarkerName);
+            GameObject marker;
+            if (existing == null)
+            {
+                marker = GameObject.CreatePrimitive(PrimitiveType.Cube);
+                marker.name = ButtonTeleportTargetMarkerName;
+                marker.transform.SetParent(instance.transform, false);
+                var selection = marker.GetComponent<BoxCollider>();
+                selection.isTrigger = true; selection.enabled = true;
+                marker.GetComponent<Renderer>().sharedMaterial = lineMaterial;
+                instanceIds[marker] = item.id;
+            }
+            else marker = existing.gameObject;
+            marker.transform.localPosition = Vector3.forward * .3f;
+            marker.transform.localRotation = Quaternion.identity;
+            marker.transform.localScale = new Vector3(.22f, .22f, .6f);
+            var tint = new MaterialPropertyBlock();
+            tint.SetColor("_BaseColor", new Color(1f, .25f, .75f));
             marker.GetComponent<Renderer>().SetPropertyBlock(tint);
         }
 

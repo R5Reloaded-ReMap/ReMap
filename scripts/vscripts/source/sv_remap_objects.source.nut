@@ -23,6 +23,7 @@ global function ReMap_CreateJumpTower
 global function ReMap_CreateWeaponRack
 global function ReMap_CreateRespawnHeal
 global function ReMap_CreateButton
+global function ReMap_AddButtonTeleport
 global function ReMap_CreateTeleportButton
 global function ReMap_CreateSpeedBoost
 global function ReMap_CreateBubbleShield
@@ -68,6 +69,8 @@ const asset REMAP_HEAL_IDLE_FX = $"P_LL_med_drone_jet_ctr_loop"
 const string REMAP_HEAL_ACTIVE_SOUND = "Lifeline_Drone_Healing_1P"
 const asset REMAP_BUTTON_PANEL_MODEL = $"mdl/props/global_access_panel_button/global_access_panel_button_console_w_stand.rmdl"
 const asset REMAP_BUTTON_ARROW_MODEL = $"mdl/weapons/bullets/damage_arrow.rmdl"
+const string REMAP_TELEPORT_SOUND_1P = "Wraith_phasegate_Travel_1p"
+const string REMAP_TELEPORT_SOUND_3P = "Wraith_phasegate_Travel_3p"
 const asset REMAP_SPEED_BOOST_ORB_MODEL = $"mdl/fx/plasma_sphere_01.rmdl"
 const asset REMAP_SPEED_BOOST_BASE_MODEL = $"mdl/fx/ar_edge_sphere_512.rmdl"
 const asset REMAP_SPEED_BOOST_FP_FX = $"P_sprint_FP"
@@ -345,13 +348,37 @@ entity function ReMap_CreateButton( vector origin, vector angles, bool visible =
 	return panel
 }
 
+void function ReMap_TeleportPlayer( entity ent, vector destination, vector direction,
+	bool playSound )
+{
+	if ( playSound )
+		EmitDifferentSoundsOnEntityForPlayerAndWorld( REMAP_TELEPORT_SOUND_1P,
+			REMAP_TELEPORT_SOUND_3P, ent, ent )
+	ent.SetOrigin( destination )
+	ent.SetAngles( direction )
+	ent.SetVelocity( ZERO_VECTOR )
+}
+
+void function ReMap_AddButtonTeleport( entity panel, vector destination, vector direction,
+	bool playSound = true )
+{
+	AddCallback_OnUseEntity( panel, void function( entity usedPanel, entity ent, int input ) :
+		( destination, direction, playSound )
+	{
+		if ( !IsValid( ent ) || !ent.IsPlayer() )
+			return
+		ReMap_TeleportPlayer( ent, destination, direction, playSound )
+	} )
+}
+
 void function ReMap_CreateTeleportButton( vector origin, vector angles, bool up,
 	vector destination, vector direction, string message = "", string subMessage = "",
-	int messageType = 4, float duration = 5.0, string token = "#FS_STRING_VAR" )
+	int messageType = 4, float duration = 5.0, string token = "#FS_STRING_VAR",
+	bool playSound = true )
 {
 	entity panel = ReMap_CreateButton( origin, angles, false, up )
 	AddCallback_OnUseEntity( panel, void function( entity usedPanel, entity ent, int input ) :
-		( destination, direction, message, subMessage, messageType, duration, token )
+		( destination, direction, message, subMessage, messageType, duration, token, playSound )
 	{
 		if ( !IsValid( ent ) || !ent.IsPlayer() )
 			return
@@ -363,9 +390,7 @@ void function ReMap_CreateTeleportButton( vector origin, vector angles, bool up,
 			return
 		}
 #endif
-		ent.SetOrigin( destination )
-		ent.SetAngles( direction )
-		ent.SetVelocity( ZERO_VECTOR )
+		ReMap_TeleportPlayer( ent, destination, direction, playSound )
 #if R5F
 		if ( message.len() > 0 || subMessage.len() > 0 )
 			LocalMsg( ent, token, "", messageType, duration, message, subMessage, "", false )
