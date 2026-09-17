@@ -3227,6 +3227,54 @@
       "text": "Spawn point team number must be between 0 and 64."
     },
     {
+      "key": "#TRIGGER",
+      "text": "Trigger"
+    },
+    {
+      "key": "#CUSTOM_OBJECT_TRIGGER",
+      "text": "Custom object · Trigger"
+    },
+    {
+      "key": "#TRIGGER_CUSTOM_HELP",
+      "text": "A cylindrical server trigger with configurable entry and exit Squirrel callbacks."
+    },
+    {
+      "key": "#TRIGGER_RADIUS_APEX_U",
+      "text": "Radius (Apex units)"
+    },
+    {
+      "key": "#TRIGGER_HALF_HEIGHT_APEX_U",
+      "text": "Height above and below (Apex units)"
+    },
+    {
+      "key": "#TRIGGER_DEBUG_DRAW",
+      "text": "Debug draw in Apex"
+    },
+    {
+      "key": "#TRIGGER_CALLBACKS",
+      "text": "Squirrel callbacks"
+    },
+    {
+      "key": "#TRIGGER_CALLBACKS_HELP",
+      "text": "Code runs inside void function(entity trigger, entity ent). Triggers are included in built scripts, not live RCON rebuilds."
+    },
+    {
+      "key": "#TRIGGER_ENTER_CALLBACK",
+      "text": "On enter"
+    },
+    {
+      "key": "#TRIGGER_LEAVE_CALLBACK",
+      "text": "On leave"
+    },
+    {
+      "key": "#TRIGGER_CREATED",
+      "text": "Trigger created. Configure its volume and callbacks in ReMap settings."
+    },
+    {
+      "key": "#INVALID_TRIGGER_SETTINGS",
+      "text": "Invalid trigger radius, height or callback code."
+    },
+    {
       "key": "#TARGET_GAME",
       "text": "Target game"
     },

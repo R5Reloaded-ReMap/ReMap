@@ -3227,6 +3227,54 @@
       "text": "Le numéro d’équipe du point de spawn doit être compris entre 0 et 64."
     },
     {
+      "key": "#TRIGGER",
+      "text": "Trigger"
+    },
+    {
+      "key": "#CUSTOM_OBJECT_TRIGGER",
+      "text": "Objet personnalisé · Trigger"
+    },
+    {
+      "key": "#TRIGGER_CUSTOM_HELP",
+      "text": "Un trigger serveur cylindrique avec des callbacks Squirrel d’entrée et de sortie configurables."
+    },
+    {
+      "key": "#TRIGGER_RADIUS_APEX_U",
+      "text": "Rayon (unités Apex)"
+    },
+    {
+      "key": "#TRIGGER_HALF_HEIGHT_APEX_U",
+      "text": "Hauteur au-dessus et en dessous (unités Apex)"
+    },
+    {
+      "key": "#TRIGGER_DEBUG_DRAW",
+      "text": "Afficher le debug dans Apex"
+    },
+    {
+      "key": "#TRIGGER_CALLBACKS",
+      "text": "Callbacks Squirrel"
+    },
+    {
+      "key": "#TRIGGER_CALLBACKS_HELP",
+      "text": "Le code s’exécute dans void function(entity trigger, entity ent). Les triggers sont inclus dans les scripts construits, pas dans la reconstruction RCON live."
+    },
+    {
+      "key": "#TRIGGER_ENTER_CALLBACK",
+      "text": "À l’entrée"
+    },
+    {
+      "key": "#TRIGGER_LEAVE_CALLBACK",
+      "text": "À la sortie"
+    },
+    {
+      "key": "#TRIGGER_CREATED",
+      "text": "Trigger créé. Configurez son volume et ses callbacks dans les réglages ReMap."
+    },
+    {
+      "key": "#INVALID_TRIGGER_SETTINGS",
+      "text": "Rayon, hauteur ou code de callback du trigger invalide."
+    },
+    {
       "key": "#TARGET_GAME",
       "text": "Jeu cible"
     },

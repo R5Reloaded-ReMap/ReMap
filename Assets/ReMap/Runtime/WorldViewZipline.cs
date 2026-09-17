@@ -11,6 +11,7 @@ namespace ReMap.Standalone
         private const string ZiplineMarkerName = "__remap_zipline_endpoint";
         private const string ZiplineDetachStartName = "__remap_zipline_detach_start";
         private const string ZiplineDetachEndName = "__remap_zipline_detach_end";
+        private const string TriggerPreviewName = "__remap_trigger_volume";
         private MapDocument syncedZiplineDocument;
         private Material ziplineCableMaterial, ziplineDetachMaterial;
 
@@ -31,6 +32,7 @@ namespace ReMap.Standalone
                 if (item.customType == "curved-zipline-component")
                     foreach (var collider in instance.GetComponentsInChildren<Collider>(true))
                         collider.enabled = false;
+                if (item.customType == "trigger") EnsureTriggerVisual(instance, item);
             }
             foreach (var item in document.objects)
             {
@@ -107,6 +109,29 @@ namespace ReMap.Standalone
                 line.positionCount = curve.Length;
                 line.SetPositions(curve);
             }
+        }
+
+        private void EnsureTriggerVisual(GameObject instance, MapObject item)
+        {
+            var child = instance.transform.Find(TriggerPreviewName);
+            GameObject volume;
+            if (child == null)
+            {
+                volume = GameObject.CreatePrimitive(PrimitiveType.Cylinder);
+                volume.name = TriggerPreviewName;
+                volume.transform.SetParent(instance.transform, false);
+                volume.GetComponent<Renderer>().sharedMaterial = lineMaterial;
+                instanceIds[volume] = item.id;
+            }
+            else volume = child.gameObject;
+            float radius = Mathf.Max(.1f, item.triggerRadius) * ApexCoordinates.MetersPerUnit;
+            float halfHeight = Mathf.Max(.1f, item.triggerHalfHeight) * ApexCoordinates.MetersPerUnit;
+            volume.transform.localPosition = Vector3.zero;
+            volume.transform.localRotation = Quaternion.identity;
+            volume.transform.localScale = new Vector3(radius * 2f, halfHeight, radius * 2f);
+            var tint = new MaterialPropertyBlock();
+            tint.SetColor("_BaseColor", new Color(.15f, .7f, 1f, .28f));
+            volume.GetComponent<Renderer>().SetPropertyBlock(tint);
         }
 
         private void EnsureZiplineMarker(GameObject instance, MapObject item)
@@ -431,6 +456,20 @@ namespace ReMap.Standalone
                     doorTint.SetColor("_BaseColor", new Color(.3f, .95f, .65f));
                     ghost.GetComponent<Renderer>().SetPropertyBlock(doorTint);
                     ghost.transform.position = position.Value + Vector3.up * entry.Size.y * .5f;
+                    return;
+                }
+                if (entry.CustomType == "trigger")
+                {
+                    ghost = GameObject.CreatePrimitive(PrimitiveType.Cylinder);
+                    ghost.name = "Trigger placement preview";
+                    ghost.transform.SetParent(root.transform);
+                    ghost.transform.localScale = new Vector3(entry.Size.x, entry.Size.y * .5f, entry.Size.z);
+                    ghost.GetComponent<Collider>().enabled = false;
+                    ghost.GetComponent<Renderer>().sharedMaterial = lineMaterial;
+                    var triggerTint = new MaterialPropertyBlock();
+                    triggerTint.SetColor("_BaseColor", new Color(.15f, .7f, 1f, .28f));
+                    ghost.GetComponent<Renderer>().SetPropertyBlock(triggerTint);
+                    ghost.transform.position = position.Value;
                     return;
                 }
                 ghost = new GameObject("Zipline placement preview"); ghost.transform.SetParent(root.transform);

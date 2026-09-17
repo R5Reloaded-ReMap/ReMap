@@ -84,6 +84,11 @@ namespace ReMap.Standalone.Core
         public float jumpPadRadius = 45f;
         public bool jumpPadDoubleJump = true;
         public int spawnPointTeam;
+        public float triggerRadius = 100f;
+        public float triggerHalfHeight = 50f;
+        public bool triggerDebug;
+        public string triggerEnterCallback = "";
+        public string triggerLeaveCallback = "";
         public bool commonAsset;
         public List<string> availableMaps = new List<string>();
         public bool allowMantle = true;
@@ -167,6 +172,8 @@ namespace ReMap.Standalone.Core
                 item.ziplineEndId = item.ziplineEndId ?? "";
                 item.ziplineMode = item.ziplineMode ?? "horizontal";
                 item.doorType = item.doorType ?? "single";
+                item.triggerEnterCallback = item.triggerEnterCallback ?? "";
+                item.triggerLeaveCallback = item.triggerLeaveCallback ?? "";
                 if (item.customType == "curved-zipline" && item.customProfile == "")
                     item.customProfile = item.curvedZiplineSupport ? "arm" : "none";
                 if (item.customType == "curved-zipline")
@@ -187,7 +194,7 @@ namespace ReMap.Standalone.Core
                     item.customType != "door-component" && item.customType != "curved-zipline" &&
                     item.customType != "curved-zipline-point" && item.customType != "curved-zipline-component" &&
                     item.customType != "loot-bin" && item.customType != "jump-pad" &&
-                    item.customType != "spawn-point")
+                    item.customType != "spawn-point" && item.customType != "trigger")
                     throw new ArgumentException(L.T("#UNKNOWN_CUSTOM_OBJECT_TYPE"));
                 if (item.customType == "zipline" && !item.isGroup)
                     throw new ArgumentException(L.T("#ZIPLINE_HIERARCHY_GROUP"));
@@ -247,6 +254,12 @@ namespace ReMap.Standalone.Core
                     throw new ArgumentException(L.T("#INVALID_JUMP_PAD_SETTINGS"));
                 if (item.customType == "spawn-point" && (item.spawnPointTeam < 0 || item.spawnPointTeam > 64))
                     throw new ArgumentException(L.T("#INVALID_SPAWN_POINT_TEAM"));
+                if (item.customType == "trigger" && (!item.isGroup || !Finite(item.triggerRadius) ||
+                    !Finite(item.triggerHalfHeight) || item.triggerRadius < .1f || item.triggerRadius > 65535f ||
+                    item.triggerHalfHeight < .1f || item.triggerHalfHeight > 65535f ||
+                    item.triggerEnterCallback.Length > 65535 || item.triggerLeaveCallback.Length > 65535 ||
+                    item.triggerEnterCallback.IndexOf('\0') >= 0 || item.triggerLeaveCallback.IndexOf('\0') >= 0))
+                    throw new ArgumentException(L.T("#INVALID_TRIGGER_SETTINGS"));
                 if (!item.position.IsFinite || !item.rotation.IsFinite || !item.scale.IsFinite)
                     throw new ArgumentException(L.T("#TRANSFORMS_FINITE_NUMBERS"));
                 if (!Finite(item.fadeDistance) || item.fadeDistance < -1f)

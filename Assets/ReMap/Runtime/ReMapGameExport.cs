@@ -83,6 +83,7 @@ namespace ReMap.Standalone
             AppendLootBins(server, world, false, originOffset, useOriginOffset);
             AppendJumpPads(server, world, false, originOffset, useOriginOffset);
             AppendSpawnPoints(server, world, false, originOffset, useOriginOffset);
+            AppendTriggers(server, world, false, originOffset, useOriginOffset);
             AppendCurvedZiplines(server, world, false, originOffset, useOriginOffset);
             AppendZiplines(server, world, false, originOffset, useOriginOffset);
 
@@ -416,6 +417,42 @@ namespace ReMap.Standalone
                     spawnPoint.spawnPointTeam.ToString(CultureInfo.InvariantCulture) + " )";
                 code.Append(live ? "script " : "\t").Append(expression).AppendLine();
             }
+        }
+
+        private static void AppendTriggers(StringBuilder code, List<MapObject> world, bool live,
+            Vector3 originOffset, bool symbolicOffset)
+        {
+            if (live) return;
+            var triggers = world.Where(o => o.customType == "trigger").ToList();
+            if (triggers.Count == 0) return;
+            code.AppendLine(); code.AppendLine("\t// Triggers");
+            for (int index = 0; index < triggers.Count; index++)
+            {
+                var trigger = triggers[index];
+                string variable = "remapTrigger" + index.ToString(CultureInfo.InvariantCulture);
+                code.Append("\tentity ").Append(variable).Append(" = ReMap_CreateTrigger( ")
+                    .Append(Position(trigger.position, originOffset, symbolicOffset)).Append(", ")
+                    .Append(Vector(ApexDisplay.Angles(WorldView.ToVector(trigger.rotation)))).Append(", ")
+                    .Append(Number(trigger.triggerRadius)).Append(", ")
+                    .Append(Number(trigger.triggerHalfHeight)).Append(", ")
+                    .Append(trigger.triggerDebug ? "true" : "false").Append(", ")
+                    .Append(trigger.realmId.ToString(CultureInfo.InvariantCulture)).AppendLine(" )");
+                AppendTriggerCallback(code, variable, "SetEnterCallback", trigger.triggerEnterCallback);
+                AppendTriggerCallback(code, variable, "SetLeaveCallback", trigger.triggerLeaveCallback);
+                code.Append("\tDispatchSpawn( ").Append(variable).AppendLine(" )");
+            }
+        }
+
+        private static void AppendTriggerCallback(StringBuilder code, string variable,
+            string setter, string callback)
+        {
+            callback = (callback ?? "").Replace("\r\n", "\n").Replace('\r', '\n');
+            if (string.IsNullOrWhiteSpace(callback)) return;
+            code.Append('\t').Append(variable).Append('.').Append(setter)
+                .AppendLine("( void function( entity trigger, entity ent )");
+            code.AppendLine("\t{");
+            foreach (string line in callback.Split('\n')) code.Append("\t\t").AppendLine(line);
+            code.AppendLine("\t} )");
         }
 
         private static Vector3 OriginOffset(MapDocument document)

@@ -470,7 +470,8 @@ namespace ReMap.Standalone
                 if (item.isGroup && item.customType != "zipline" && item.customType != "zipline-endpoint" &&
                     item.customType != "door" && item.customType != "curved-zipline" &&
                     item.customType != "curved-zipline-point" && item.customType != "loot-bin" &&
-                    item.customType != "jump-pad" && item.customType != "spawn-point") continue;
+                    item.customType != "jump-pad" && item.customType != "spawn-point" &&
+                    item.customType != "trigger") continue;
                 if (!MapHierarchy.IsEnabled(document, item.id)) continue;
                 var copy = item.Copy(); var pose = WorldPose(item.id);
                 copy.parentId = item.customType == "curved-zipline-point" ? item.parentId : "";

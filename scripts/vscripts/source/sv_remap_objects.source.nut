@@ -18,6 +18,7 @@ global function ReMap_CreateDoor
 global function ReMap_CreateLootBin
 global function ReMap_CreateJumpPad
 global function ReMap_CreateSpawnPoint
+global function ReMap_CreateTrigger
 
 global const int REMAP_DOOR_SINGLE = 0
 global const int REMAP_DOOR_DOUBLE = 1
@@ -335,4 +336,29 @@ entity function ReMap_CreateSpawnPoint( vector origin, vector angles, int teamNu
 	DispatchSpawn( spawnPoint )
 	file.props.append( spawnPoint )
 	return spawnPoint
+}
+
+entity function ReMap_CreateTrigger( vector origin, vector angles, float radius,
+	float halfHeight, bool debugDraw = false, int realmId = -1 )
+{
+	entity trigger = CreateEntity( "trigger_cylinder" )
+	trigger.SetRadius( radius )
+	trigger.SetAboveHeight( halfHeight )
+	trigger.SetBelowHeight( halfHeight )
+	trigger.SetOrigin( origin )
+	trigger.SetAngles( angles )
+	if ( realmId > -1 )
+	{
+		trigger.RemoveFromAllRealms()
+		trigger.AddToRealm( realmId )
+	}
+	if ( debugDraw )
+	{
+		DebugDrawCylinder( origin, < -90, 0, 0 >, radius, halfHeight,
+			0, 165, 255, true, 9999.9 )
+		DebugDrawCylinder( origin, < -90, 0, 0 >, radius, -halfHeight,
+			255, 90, 0, true, 9999.9 )
+	}
+	file.props.append( trigger )
+	return trigger
 }
