@@ -7,7 +7,913 @@
       "roll": -90.0
     },
     {
+      "model": "mdl/backwater/rock_set_backwater_02.rmdl",
+      "pitch": 0.0,
+      "yaw": -90.0,
+      "roll": 0.0
+    },
+    {
+      "model": "mdl/barriers/shooting_range_target_01_animated.rmdl",
+      "pitch": 0.0,
+      "yaw": 90.0,
+      "roll": 90.0
+    },
+    {
+      "model": "mdl/beacon/beacon_construction_flag_animated.rmdl",
+      "pitch": 0.0,
+      "yaw": -90.0,
+      "roll": 90.0
+    },
+    {
+      "model": "mdl/beacon/beacon_construction_flag_large_animated.rmdl",
+      "pitch": 0.0,
+      "yaw": -90.0,
+      "roll": 90.0
+    },
+    {
+      "model": "mdl/beacon/beacon_fence_sign_01.rmdl",
+      "pitch": 0.0,
+      "yaw": 0.0,
+      "roll": 180.0
+    },
+    {
+      "model": "mdl/communication/terminal_usable_imc_01.rmdl",
+      "pitch": 0.0,
+      "yaw": 90.0,
+      "roll": 90.0
+    },
+    {
+      "model": "mdl/Creatures/flyer/flyer_kingscanyon_animated.rmdl",
+      "pitch": 0.0,
+      "yaw": 90.0,
+      "roll": 90.0
+    },
+    {
+      "model": "mdl/Creatures/leviathan/leviathan_kingscanyon_animated.rmdl",
+      "pitch": 0.0,
+      "yaw": 90.0,
+      "roll": 90.0
+    },
+    {
+      "model": "mdl/creatures/leviathan/leviathan_kingscanyon_preview_animated.rmdl",
+      "pitch": 0.0,
+      "yaw": 90.0,
+      "roll": 90.0
+    },
+    {
+      "model": "mdl/desertlands/indust_struct_cooling_tower_fan_01_animated.rmdl",
+      "pitch": 0.0,
+      "yaw": 0.0,
+      "roll": 90.0
+    },
+    {
+      "model": "mdl/door/door_104x64x8_elevatorstyle01_right_animated.rmdl",
+      "pitch": 0.0,
+      "yaw": 90.0,
+      "roll": 90.0
+    },
+    {
+      "model": "mdl/door/door_104x64x8_generic_left_animated.rmdl",
+      "pitch": 0.0,
+      "yaw": 90.0,
+      "roll": 90.0
+    },
+    {
+      "model": "mdl/door/door_256x256x8_elevatorstyle02_animated.rmdl",
+      "pitch": 0.0,
+      "yaw": 90.0,
+      "roll": 90.0
+    },
+    {
+      "model": "mdl/door/door_canyonlands_large_01_animated.rmdl",
+      "pitch": 0.0,
+      "yaw": 90.0,
+      "roll": 90.0
+    },
+    {
+      "model": "mdl/foliage/grass_weed_clump_dead_animated.rmdl",
+      "pitch": 0.0,
+      "yaw": -90.0,
+      "roll": 0.0
+    },
+    {
+      "model": "mdl/foliage/leaves_ground_spread_04.rmdl",
+      "pitch": 0.0,
+      "yaw": -90.0,
+      "roll": 0.0
+    },
+    {
+      "model": "mdl/fx/bb_shield.rmdl",
+      "pitch": 0.0,
+      "yaw": -90.0,
+      "roll": 0.0
+    },
+    {
+      "model": "mdl/fx/bb_shield_p4.rmdl",
+      "pitch": 0.0,
+      "yaw": -90.0,
+      "roll": 0.0
+    },
+    {
+      "model": "mdl/gibs/Glass_shard01.rmdl",
+      "pitch": 0.0,
+      "yaw": -90.0,
+      "roll": 0.0
+    },
+    {
+      "model": "mdl/gibs/Glass_shard02.rmdl",
+      "pitch": 0.0,
+      "yaw": -90.0,
+      "roll": 0.0
+    },
+    {
+      "model": "mdl/gibs/Glass_shard03.rmdl",
+      "pitch": 0.0,
+      "yaw": -90.0,
+      "roll": 0.0
+    },
+    {
+      "model": "mdl/gibs/Glass_shard04.rmdl",
+      "pitch": 0.0,
+      "yaw": -90.0,
+      "roll": 0.0
+    },
+    {
+      "model": "mdl/gibs/Glass_shard05.rmdl",
+      "pitch": 0.0,
+      "yaw": -90.0,
+      "roll": 0.0
+    },
+    {
+      "model": "mdl/gibs/Glass_shard06.rmdl",
+      "pitch": 0.0,
+      "yaw": -90.0,
+      "roll": 0.0
+    },
+    {
+      "model": "mdl/gibs/human_gibs.rmdl",
+      "pitch": 0.0,
+      "yaw": -90.0,
+      "roll": 0.0
+    },
+    {
+      "model": "mdl/gibs/human_gibs/gib_small_01.rmdl",
+      "pitch": 0.0,
+      "yaw": -90.0,
+      "roll": 0.0
+    },
+    {
+      "model": "mdl/gibs/metal_gib1.rmdl",
+      "pitch": 0.0,
+      "yaw": -90.0,
+      "roll": 0.0
+    },
+    {
+      "model": "mdl/gibs/metal_gib2.rmdl",
+      "pitch": 0.0,
+      "yaw": -90.0,
+      "roll": 0.0
+    },
+    {
+      "model": "mdl/gibs/metal_gib3.rmdl",
+      "pitch": 0.0,
+      "yaw": -90.0,
+      "roll": 0.0
+    },
+    {
+      "model": "mdl/gibs/metal_gib4.rmdl",
+      "pitch": 0.0,
+      "yaw": -90.0,
+      "roll": 0.0
+    },
+    {
+      "model": "mdl/gibs/metal_gib5.rmdl",
+      "pitch": 0.0,
+      "yaw": -90.0,
+      "roll": 0.0
+    },
+    {
+      "model": "mdl/gibs/titan_gibs/at_gib5.rmdl",
+      "pitch": 0.0,
+      "yaw": -90.0,
+      "roll": 0.0
+    },
+    {
+      "model": "mdl/gibs/titan_gibs/at_gib8_l_thigh2.rmdl",
+      "pitch": 0.0,
+      "yaw": -90.0,
+      "roll": 0.0
+    },
+    {
+      "model": "mdl/gibs/titan_gibs/og_gib_r_forarm_d.rmdl",
+      "pitch": 0.0,
+      "yaw": -90.0,
+      "roll": 0.0
+    },
+    {
+      "model": "mdl/gibs/wood_gib01_LG.rmdl",
+      "pitch": 0.0,
+      "yaw": -90.0,
+      "roll": 0.0
+    },
+    {
+      "model": "mdl/gibs/wood_gib01a.rmdl",
+      "pitch": 0.0,
+      "yaw": -90.0,
+      "roll": 0.0
+    },
+    {
+      "model": "mdl/gibs/wood_gib01b.rmdl",
+      "pitch": 0.0,
+      "yaw": -90.0,
+      "roll": 0.0
+    },
+    {
+      "model": "mdl/gibs/wood_gib01c.rmdl",
+      "pitch": 0.0,
+      "yaw": -90.0,
+      "roll": 0.0
+    },
+    {
+      "model": "mdl/gibs/wood_gib01d.rmdl",
+      "pitch": 0.0,
+      "yaw": -90.0,
+      "roll": 0.0
+    },
+    {
+      "model": "mdl/gibs/wood_gib01e.rmdl",
+      "pitch": 0.0,
+      "yaw": -90.0,
+      "roll": 0.0
+    },
+    {
+      "model": "mdl/humans/class/heavy/pilot_heavy_caustic.rmdl",
+      "pitch": 0.0,
+      "yaw": 90.0,
+      "roll": 90.0
+    },
+    {
+      "model": "mdl/Humans/class/heavy/pilot_heavy_caustic_legendary_01.rmdl",
+      "pitch": 0.0,
+      "yaw": 90.0,
+      "roll": 90.0
+    },
+    {
+      "model": "mdl/Humans/class/heavy/pilot_heavy_caustic_legendary_02.rmdl",
+      "pitch": 0.0,
+      "yaw": 90.0,
+      "roll": 90.0
+    },
+    {
+      "model": "mdl/Humans/class/heavy/pilot_heavy_caustic_season2_legendary_01.rmdl",
+      "pitch": 0.0,
+      "yaw": 90.0,
+      "roll": 90.0
+    },
+    {
+      "model": "mdl/humans/class/heavy/pilot_heavy_gibraltar.rmdl",
+      "pitch": 0.0,
+      "yaw": 90.0,
+      "roll": 90.0
+    },
+    {
+      "model": "mdl/Humans/class/heavy/pilot_heavy_gibraltar_legendary_01.rmdl",
+      "pitch": 0.0,
+      "yaw": 90.0,
+      "roll": 90.0
+    },
+    {
+      "model": "mdl/Humans/class/heavy/pilot_heavy_gibraltar_legendary_02.rmdl",
+      "pitch": 0.0,
+      "yaw": 90.0,
+      "roll": 90.0
+    },
+    {
+      "model": "mdl/humans/class/heavy/pilot_heavy_pathfinder.rmdl",
+      "pitch": 0.0,
+      "yaw": 90.0,
+      "roll": 90.0
+    },
+    {
+      "model": "mdl/Humans/class/heavy/pilot_heavy_pathfinder_legendary_01.rmdl",
+      "pitch": 0.0,
+      "yaw": 90.0,
+      "roll": 90.0
+    },
+    {
+      "model": "mdl/Humans/class/heavy/pilot_heavy_pathfinder_legendary_02.rmdl",
+      "pitch": 0.0,
+      "yaw": 90.0,
+      "roll": 90.0
+    },
+    {
+      "model": "mdl/humans/class/light/pilot_light_support.rmdl",
+      "pitch": 0.0,
+      "yaw": 90.0,
+      "roll": 90.0
+    },
+    {
+      "model": "mdl/Humans/class/light/pilot_light_support_legendary_01.rmdl",
+      "pitch": 0.0,
+      "yaw": 90.0,
+      "roll": 90.0
+    },
+    {
+      "model": "mdl/Humans/class/light/pilot_light_support_legendary_02.rmdl",
+      "pitch": 0.0,
+      "yaw": 90.0,
+      "roll": 90.0
+    },
+    {
+      "model": "mdl/Humans/class/light/pilot_light_wattson.rmdl",
+      "pitch": 0.0,
+      "yaw": 90.0,
+      "roll": 90.0
+    },
+    {
+      "model": "mdl/Humans/class/light/pilot_light_wattson_legendary_01.rmdl",
+      "pitch": 0.0,
+      "yaw": 90.0,
+      "roll": 90.0
+    },
+    {
+      "model": "mdl/Humans/class/light/pilot_light_wattson_legendary_02.rmdl",
+      "pitch": 0.0,
+      "yaw": 90.0,
+      "roll": 90.0
+    },
+    {
+      "model": "mdl/humans/class/light/pilot_light_wraith.rmdl",
+      "pitch": 0.0,
+      "yaw": 90.0,
+      "roll": 90.0
+    },
+    {
+      "model": "mdl/Humans/class/light/pilot_light_wraith_beast_hunter.rmdl",
+      "pitch": 0.0,
+      "yaw": 90.0,
+      "roll": 90.0
+    },
+    {
+      "model": "mdl/humans/class/light/pilot_light_wraith_legendary_01.rmdl",
+      "pitch": 0.0,
+      "yaw": 90.0,
+      "roll": 90.0
+    },
+    {
+      "model": "mdl/Humans/class/light/pilot_light_wraith_legendary_02.rmdl",
+      "pitch": 0.0,
+      "yaw": 90.0,
+      "roll": 90.0
+    },
+    {
+      "model": "mdl/Humans/class/light/pilot_light_wraith_season2_halloween_legendary_01.rmdl",
+      "pitch": 0.0,
+      "yaw": 90.0,
+      "roll": 90.0
+    },
+    {
+      "model": "mdl/Humans/class/light/pilot_light_wraith_season2_legendary_01.rmdl",
+      "pitch": 0.0,
+      "yaw": 90.0,
+      "roll": 90.0
+    },
+    {
+      "model": "mdl/Humans/class/medium/pilot_medium_bangalore.rmdl",
+      "pitch": 0.0,
+      "yaw": 90.0,
+      "roll": 90.0
+    },
+    {
+      "model": "mdl/Humans/class/medium/pilot_medium_bangalore_beast_hunter.rmdl",
+      "pitch": 0.0,
+      "yaw": 90.0,
+      "roll": 90.0
+    },
+    {
+      "model": "mdl/Humans/class/medium/pilot_medium_bangalore_legendary_01.rmdl",
+      "pitch": 0.0,
+      "yaw": 90.0,
+      "roll": 90.0
+    },
+    {
+      "model": "mdl/Humans/class/medium/pilot_medium_bangalore_legendary_02.rmdl",
+      "pitch": 0.0,
+      "yaw": 90.0,
+      "roll": 90.0
+    },
+    {
+      "model": "mdl/Humans/class/medium/pilot_medium_bangalore_legendary_02_mask.rmdl",
+      "pitch": 0.0,
+      "yaw": 90.0,
+      "roll": 90.0
+    },
+    {
+      "model": "mdl/Humans/class/medium/pilot_medium_bangalore_season_02_halloween_legendary_01.rmdl",
+      "pitch": 0.0,
+      "yaw": 90.0,
+      "roll": 90.0
+    },
+    {
+      "model": "mdl/humans/class/medium/pilot_medium_bloodhound.rmdl",
+      "pitch": 0.0,
+      "yaw": 90.0,
+      "roll": 90.0
+    },
+    {
+      "model": "mdl/Humans/class/medium/pilot_medium_bloodhound__season2_legendary_01.rmdl",
+      "pitch": 0.0,
+      "yaw": 90.0,
+      "roll": 90.0
+    },
+    {
+      "model": "mdl/Humans/class/medium/pilot_medium_bloodhound_legendary_01.rmdl",
+      "pitch": 0.0,
+      "yaw": 90.0,
+      "roll": 90.0
+    },
+    {
+      "model": "mdl/Humans/class/medium/pilot_medium_bloodhound_legendary_02.rmdl",
+      "pitch": 0.0,
+      "yaw": 90.0,
+      "roll": 90.0
+    },
+    {
+      "model": "mdl/Humans/class/medium/pilot_medium_bloodhound_marketing_box_legendary_01.rmdl",
+      "pitch": 0.0,
+      "yaw": 90.0,
+      "roll": 90.0
+    },
+    {
+      "model": "mdl/Humans/class/medium/pilot_medium_bloodhound_season_03_halloween_legendary_01.rmdl",
+      "pitch": 0.0,
+      "yaw": 90.0,
+      "roll": 90.0
+    },
+    {
+      "model": "mdl/Humans/class/medium/pilot_medium_crypto.rmdl",
+      "pitch": 0.0,
+      "yaw": 90.0,
+      "roll": 90.0
+    },
+    {
+      "model": "mdl/Humans/class/medium/pilot_medium_crypto_legendary_01.rmdl",
+      "pitch": 0.0,
+      "yaw": 90.0,
+      "roll": 90.0
+    },
+    {
+      "model": "mdl/Humans/class/medium/pilot_medium_crypto_legendary_02.rmdl",
+      "pitch": 0.0,
+      "yaw": 90.0,
+      "roll": 90.0
+    },
+    {
+      "model": "mdl/Humans/class/medium/pilot_medium_crypto_season_02_halloween_legendary_01.rmdl",
+      "pitch": 0.0,
+      "yaw": 90.0,
+      "roll": 90.0
+    },
+    {
+      "model": "mdl/Humans/class/medium/pilot_medium_empty.rmdl",
+      "pitch": 0.0,
+      "yaw": 90.0,
+      "roll": 90.0
+    },
+    {
+      "model": "mdl/humans/class/medium/pilot_medium_generic.rmdl",
+      "pitch": 0.0,
+      "yaw": 90.0,
+      "roll": 90.0
+    },
+    {
+      "model": "mdl/humans/class/medium/pilot_medium_holo.rmdl",
+      "pitch": 0.0,
+      "yaw": 90.0,
+      "roll": 90.0
+    },
+    {
+      "model": "mdl/Humans/class/medium/pilot_medium_holo_bf.rmdl",
+      "pitch": 0.0,
+      "yaw": 90.0,
+      "roll": 90.0
+    },
+    {
+      "model": "mdl/Humans/class/medium/pilot_medium_holo_legendary_01.rmdl",
+      "pitch": 0.0,
+      "yaw": 90.0,
+      "roll": 90.0
+    },
+    {
+      "model": "mdl/Humans/class/medium/pilot_medium_holo_legendary_02.rmdl",
+      "pitch": 0.0,
+      "yaw": 90.0,
+      "roll": 90.0
+    },
+    {
+      "model": "mdl/Humans/class/medium/pilot_medium_holo_season_02_halloween_legendary_01.rmdl",
+      "pitch": 0.0,
+      "yaw": 90.0,
+      "roll": 90.0
+    },
+    {
+      "model": "mdl/Humans/class/medium/pilot_medium_stim.rmdl",
+      "pitch": 0.0,
+      "yaw": 90.0,
+      "roll": 90.0
+    },
+    {
+      "model": "mdl/Humans/class/medium/pilot_medium_stim_battle_forged.rmdl",
+      "pitch": 0.0,
+      "yaw": 90.0,
+      "roll": 90.0
+    },
+    {
+      "model": "mdl/Humans/class/medium/pilot_medium_stim_legendary_01.rmdl",
+      "pitch": 0.0,
+      "yaw": 90.0,
+      "roll": 90.0
+    },
+    {
+      "model": "mdl/Humans/class/medium/pilot_medium_stim_legendary_01_v2.rmdl",
+      "pitch": 0.0,
+      "yaw": 90.0,
+      "roll": 90.0
+    },
+    {
+      "model": "mdl/Humans/class/medium/pilot_medium_stim_legendary_02.rmdl",
+      "pitch": 0.0,
+      "yaw": 90.0,
+      "roll": 90.0
+    },
+    {
+      "model": "mdl/Humans/class/medium/pilot_medium_stim_season_02_halloween_legendary_01.rmdl",
+      "pitch": 0.0,
+      "yaw": 90.0,
+      "roll": 90.0
+    },
+    {
+      "model": "mdl/humans/grunts/imc_grunt_lmg_corpse.rmdl",
+      "pitch": 0.0,
+      "yaw": 90.0,
+      "roll": 90.0
+    },
+    {
+      "model": "mdl/props/death_box/death_box_01.rmdl",
+      "pitch": 0.0,
+      "yaw": 90.0,
+      "roll": 90.0
+    },
+    {
+      "model": "mdl/props/kunai/kunai.rmdl",
+      "pitch": 0.0,
+      "yaw": -90.0,
+      "roll": -90.0
+    },
+    {
+      "model": "mdl/props/lifeline_drone/lifeline_drone.rmdl",
+      "pitch": 0.0,
+      "yaw": 90.0,
+      "roll": 90.0
+    },
+    {
+      "model": "mdl/props/lifeline_needle/lifeline_needle.rmdl",
+      "pitch": 0.0,
+      "yaw": 90.0,
+      "roll": 90.0
+    },
+    {
+      "model": "mdl/props/loot_bin/loot_bin_01_animated.rmdl",
+      "pitch": 0.0,
+      "yaw": 90.0,
+      "roll": 90.0
+    },
+    {
+      "model": "mdl/props/loot_bin/loot_bin_02_animated.rmdl",
+      "pitch": 0.0,
+      "yaw": 90.0,
+      "roll": 90.0
+    },
+    {
+      "model": "mdl/props/loot_drone/loot_drone.rmdl",
+      "pitch": 0.0,
+      "yaw": 90.0,
+      "roll": 90.0
+    },
+    {
       "model": "mdl/props/octane_jump_pad/octane_jump_pad.rmdl",
+      "pitch": 0.0,
+      "yaw": 90.0,
+      "roll": 90.0
+    },
+    {
+      "model": "mdl/props/pathfinder_beacon_radar/pathfinder_beacon_radar_animated.rmdl",
+      "pitch": 0.0,
+      "yaw": 90.0,
+      "roll": 90.0
+    },
+    {
+      "model": "mdl/props/pathfinder_zipline/pathfinder_zipline.rmdl",
+      "pitch": 0.0,
+      "yaw": 90.0,
+      "roll": 90.0
+    },
+    {
+      "model": "mdl/props/shield_battery/shield_battery.rmdl",
+      "pitch": 0.0,
+      "yaw": 90.0,
+      "roll": 90.0
+    },
+    {
+      "model": "mdl/props/tree_green_forest_01_kingscanyon/tree_green_forest_01_kingscanyon.rmdl",
+      "pitch": 0.0,
+      "yaw": 90.0,
+      "roll": 90.0
+    },
+    {
+      "model": "mdl/props/wattson_electric_fence/wattson_electric_fence.rmdl",
+      "pitch": 0.0,
+      "yaw": 90.0,
+      "roll": 90.0
+    },
+    {
+      "model": "mdl/props/wattson_trophy_system/wattson_trophy_system.rmdl",
+      "pitch": 0.0,
+      "yaw": 90.0,
+      "roll": 90.0
+    },
+    {
+      "model": "mdl/robots/drone_frag/drone_frag.rmdl",
+      "pitch": 0.0,
+      "yaw": 90.0,
+      "roll": 90.0
+    },
+    {
+      "model": "mdl/robots/drone_frag/drone_frag_loot.rmdl",
+      "pitch": 0.0,
+      "yaw": 90.0,
+      "roll": 90.0
+    },
+    {
+      "model": "mdl/robots/drone_frag/drone_frag_loot_bf.rmdl",
+      "pitch": 0.0,
+      "yaw": 90.0,
+      "roll": 90.0
+    },
+    {
+      "model": "mdl/robots/drone_frag/drone_frag_loot_christmas_2019.rmdl",
+      "pitch": 0.0,
+      "yaw": 90.0,
+      "roll": 90.0
+    },
+    {
+      "model": "mdl/robots/drone_frag/drone_frag_loot_halloween.rmdl",
+      "pitch": 0.0,
+      "yaw": 90.0,
+      "roll": 90.0
+    },
+    {
+      "model": "mdl/rocks/rock_white_chalk_mud_modular_flat_02.rmdl",
+      "pitch": 0.0,
+      "yaw": -90.0,
+      "roll": 0.0
+    },
+    {
+      "model": "mdl/rocks/rockcluster_light_01.rmdl",
+      "pitch": 0.0,
+      "yaw": -90.0,
+      "roll": 0.0
+    },
+    {
+      "model": "mdl/rocks/rockcluster_light_03.rmdl",
+      "pitch": 0.0,
+      "yaw": -90.0,
+      "roll": 0.0
+    },
+    {
+      "model": "mdl/test/roger_test/grapple_swtich_large_lever_dev.rmdl",
+      "pitch": 0.0,
+      "yaw": 90.0,
+      "roll": 90.0
+    },
+    {
+      "model": "mdl/test/roger_test/grapple_swtich_lever_dev.rmdl",
+      "pitch": 0.0,
+      "yaw": 90.0,
+      "roll": 90.0
+    },
+    {
+      "model": "mdl/thunderdome/thunderdome_tall_spikes_01.rmdl",
+      "pitch": 0.0,
+      "yaw": -90.0,
+      "roll": 0.0
+    },
+    {
+      "model": "mdl/vehicle/droppod_fireteam/droppod_fireteam.rmdl",
+      "pitch": 0.0,
+      "yaw": 90.0,
+      "roll": 90.0
+    },
+    {
+      "model": "mdl/vehicle/droppod_fireteam/droppod_fireteam_door.rmdl",
+      "pitch": 0.0,
+      "yaw": 90.0,
+      "roll": 90.0
+    },
+    {
+      "model": "mdl/vehicle/droppod_loot/droppod_loot_animated.rmdl",
+      "pitch": 0.0,
+      "yaw": 90.0,
+      "roll": 90.0
+    },
+    {
+      "model": "mdl/vehicle/goblin_dropship/goblin_dropship.rmdl",
+      "pitch": 0.0,
+      "yaw": 90.0,
+      "roll": 90.0
+    },
+    {
+      "model": "mdl/vehicle/goblin_dropship/goblin_dropship_holo.rmdl",
+      "pitch": 0.0,
+      "yaw": 90.0,
+      "roll": 90.0
+    },
+    {
+      "model": "mdl/vehicle/hovership/hovership_platform_mp.rmdl",
+      "pitch": 0.0,
+      "yaw": 90.0,
+      "roll": 90.0
+    },
+    {
+      "model": "mdl/vehicle/hovership/hovership_turret.rmdl",
+      "pitch": 0.0,
+      "yaw": 90.0,
+      "roll": 90.0
+    },
+    {
+      "model": "mdl/vehicles_r2/spacecraft/draconis/draconis_flying_small.rmdl",
+      "pitch": 0.0,
+      "yaw": 90.0,
+      "roll": 90.0
+    },
+    {
+      "model": "mdl/weapons/alternator_smg/w_alternator_smg.rmdl",
+      "pitch": 0.0,
+      "yaw": 90.0,
+      "roll": 90.0
+    },
+    {
+      "model": "mdl/weapons/at_rifle/w_at_rifle.rmdl",
+      "pitch": 0.0,
+      "yaw": 90.0,
+      "roll": 90.0
+    },
+    {
+      "model": "mdl/weapons/b3wing/w_b3wing.rmdl",
+      "pitch": 0.0,
+      "yaw": 90.0,
+      "roll": 90.0
+    },
+    {
+      "model": "mdl/Weapons/beam_ar/w_beam_ar.rmdl",
+      "pitch": 0.0,
+      "yaw": 90.0,
+      "roll": 90.0
+    },
+    {
+      "model": "mdl/weapons/bullets/damage_arrow.rmdl",
+      "pitch": 0.0,
+      "yaw": 90.0,
+      "roll": 90.0
+    },
+    {
+      "model": "mdl/weapons/bullets/projectile_rocket.rmdl",
+      "pitch": 0.0,
+      "yaw": 90.0,
+      "roll": 90.0
+    },
+    {
+      "model": "mdl/weapons/bullets/projectile_rocket_launcher_sram.rmdl",
+      "pitch": 0.0,
+      "yaw": 90.0,
+      "roll": 90.0
+    },
+    {
+      "model": "mdl/weapons/caber_shot/caber_shot_thrown.rmdl",
+      "pitch": 0.0,
+      "yaw": 90.0,
+      "roll": 90.0
+    },
+    {
+      "model": "mdl/weapons/defender/w_defender.rmdl",
+      "pitch": 0.0,
+      "yaw": 90.0,
+      "roll": 90.0
+    },
+    {
+      "model": "mdl/weapons/doubletake/w_doubletake.rmdl",
+      "pitch": 0.0,
+      "yaw": 90.0,
+      "roll": 90.0
+    },
+    {
+      "model": "mdl/Weapons/g2/v_g2a4_bangalore.rmdl",
+      "pitch": 0.0,
+      "yaw": 90.0,
+      "roll": 90.0
+    },
+    {
+      "model": "mdl/weapons/grenades/m20_f_grenade.rmdl",
+      "pitch": 0.0,
+      "yaw": 90.0,
+      "roll": 90.0
+    },
+    {
+      "model": "mdl/weapons/hemlock_br/w_hemlock_br.rmdl",
+      "pitch": 0.0,
+      "yaw": 90.0,
+      "roll": 90.0
+    },
+    {
+      "model": "mdl/weapons/lmg_hemlok/w_lmg_hemlok.rmdl",
+      "pitch": 0.0,
+      "yaw": 90.0,
+      "roll": 90.0
+    },
+    {
+      "model": "mdl/weapons/lstar/w_lstar.rmdl",
+      "pitch": 0.0,
+      "yaw": 90.0,
+      "roll": 90.0
+    },
+    {
+      "model": "mdl/weapons/m1a1_hemlok/w_hemlok.rmdl",
+      "pitch": 0.0,
+      "yaw": 90.0,
+      "roll": 90.0
+    },
+    {
+      "model": "mdl/weapons/mastiff_stgn/w_mastiff.rmdl",
+      "pitch": 0.0,
+      "yaw": 90.0,
+      "roll": 90.0
+    },
+    {
+      "model": "mdl/weapons/p2011/w_p2011.rmdl",
+      "pitch": 0.0,
+      "yaw": 90.0,
+      "roll": 90.0
+    },
+    {
+      "model": "mdl/weapons/peacekeeper/w_peacekeeper.rmdl",
+      "pitch": 0.0,
+      "yaw": 90.0,
+      "roll": 90.0
+    },
+    {
+      "model": "mdl/Weapons/prowler_smg/w_prowler_smg.rmdl",
+      "pitch": 0.0,
+      "yaw": 90.0,
+      "roll": 90.0
+    },
+    {
+      "model": "mdl/weapons/pstl_sa3/w_pstl_sa3.rmdl",
+      "pitch": 0.0,
+      "yaw": 90.0,
+      "roll": 90.0
+    },
+    {
+      "model": "mdl/weapons/r97/w_r97.rmdl",
+      "pitch": 0.0,
+      "yaw": 90.0,
+      "roll": 90.0
+    },
+    {
+      "model": "mdl/weapons/rspn101/w_rspn101.rmdl",
+      "pitch": 0.0,
+      "yaw": 90.0,
+      "roll": 90.0
+    },
+    {
+      "model": "mdl/weapons/rspn101_dmr/w_rspn101_dmr.rmdl",
+      "pitch": 0.0,
+      "yaw": 90.0,
+      "roll": 90.0
+    },
+    {
+      "model": "mdl/weapons/vinson/w_vinson.rmdl",
+      "pitch": 0.0,
+      "yaw": 90.0,
+      "roll": 90.0
+    },
+    {
+      "model": "mdl/weapons/w1128/w_w1128.rmdl",
+      "pitch": 0.0,
+      "yaw": 90.0,
+      "roll": 90.0
+    },
+    {
+      "model": "mdl/weapons_r5/misc_bangalore_rockets/bangalore_rockets_projectile.rmdl",
       "pitch": 0.0,
       "yaw": 90.0,
       "roll": 90.0

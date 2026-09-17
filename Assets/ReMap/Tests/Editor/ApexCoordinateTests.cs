@@ -66,6 +66,20 @@ namespace ReMap.Standalone.Tests {
             Assert.That(Quaternion.Angle(jumpPad,jumpPadExpected),Is.LessThan(.001f));
             Assert.That(Quaternion.Angle(ApexModelOrientation.VisualCorrection("ordinary_LOD0.cast"),Quaternion.identity),Is.LessThan(.001f));
         }
+        [TestCase("mdl/backwater/rock_set_backwater_02.rmdl",0,-90,0)]
+        [TestCase("mdl/barriers/shooting_range_target_01_animated.rmdl",0,90,90)]
+        [TestCase("mdl/beacon/beacon_construction_flag_animated.rmdl",0,-90,90)]
+        [TestCase("mdl/beacon/beacon_fence_sign_01.rmdl",0,0,180)]
+        [TestCase("mdl/props/kunai/kunai.rmdl",0,-90,-90)]
+        [TestCase("mdl/desertlands/indust_struct_cooling_tower_fan_01_animated.rmdl",0,0,90)]
+        public void LegacyModelOrientationFamiliesUseConvertedApexAxes(string model,float pitch,float yaw,float roll) {
+            var expected=Quaternion.Euler(ApexDisplay.UnityAngles(new Vector3(pitch,yaw,roll)));
+            Assert.That(Quaternion.Angle(ApexModelOrientation.VisualCorrection(model),expected),Is.LessThan(.001f));
+        }
+        [Test] public void MigratedModelOrientationCatalogContainsEveryLegacyEntry() {
+            var corrections=ApexModelOrientation.ReadCorrections(System.IO.File.ReadAllText(ApexModelOrientation.MetadataPath));
+            Assert.That(corrections.Count,Is.EqualTo(153));
+        }
         [Test] public void EditableModelOrientationMetadataAcceptsPathsAndRejectsInvalidEntries() {
             const string json="{\"corrections\":["+
                 "{\"model\":\"mdl/props/custom/custom_model.rmdl\",\"pitch\":10,\"yaw\":20,\"roll\":30},"+
