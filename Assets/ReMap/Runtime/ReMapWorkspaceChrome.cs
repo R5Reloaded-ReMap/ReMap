@@ -16,7 +16,7 @@ namespace ReMap.Standalone
         private const string LegacyLastWorkspacePreference = "ReMap.LastWorkspace.v1";
         private const string LegacyRecoverySlot = "_session_recovery";
         private VisualElement commandMenu;
-        private Button fileMenuButton, editMenuButton, toolsMenuButton;
+        private Button fileMenuButton, editMenuButton, toolsMenuButton, helpMenuButton;
         private Button workspaceGameButton;
         private Button activeCommandMenuButton;
         private IVisualElementScheduledItem recoverySave;
@@ -55,7 +55,8 @@ namespace ReMap.Standalone
             var viewButton = Button(L.T("#VIEW"), () => { HideCommandMenu(); ShowViewMenu(); }, "menu-button");
             viewButton.name = "view-menu-button";
             toolsMenuButton = Button(L.T("#TOOLS"), () => ShowCommandMenu(toolsMenuButton, BuildToolsMenu), "menu-button");
-            header.Add(fileMenuButton); header.Add(editMenuButton); header.Add(viewButton); header.Add(toolsMenuButton);
+            helpMenuButton = Button(L.T("#HELP"), () => ShowCommandMenu(helpMenuButton, BuildHelpMenu), "menu-button");
+            header.Add(fileMenuButton); header.Add(editMenuButton); header.Add(viewButton); header.Add(toolsMenuButton); header.Add(helpMenuButton);
 
             commandMenu = new VisualElement(); commandMenu.AddToClassList("command-menu"); commandMenu.style.display = DisplayStyle.None; root.Add(commandMenu);
             root.RegisterCallback<PointerDownEvent>(e =>
@@ -125,6 +126,11 @@ namespace ReMap.Standalone
             MenuAction(menu, L.T("#PLACE_DUPLICATE") + "    Ctrl+D", BeginSelectionDuplicatePlacement, selectedIds.Count > 0);
             MenuAction(menu, L.T("#GROUP_SELECTION") + "    Ctrl+G", GroupSelection, selectedIds.Count > 0);
             MenuAction(menu, L.T("#DELETE") + "    Del", Delete, selectedIds.Count > 0);
+        }
+
+        private void BuildHelpMenu(VisualElement menu)
+        {
+            MenuAction(menu, L.T("#ABOUT_REMAP"), () => ShowAbout(true));
         }
 
         private bool HandleGlobalKeyboardShortcuts()
@@ -664,7 +670,7 @@ namespace ReMap.Standalone
         private bool NewMapDialogOpen => newMapOverlay != null && newMapOverlay.style.display.value != DisplayStyle.None;
         private bool PortCompatibilityReportOpen => portCompatibilityOverlay != null && portCompatibilityOverlay.style.display.value != DisplayStyle.None;
         private bool WorkspaceGameDialogOpen => workspaceGameOverlay != null && workspaceGameOverlay.style.display.value != DisplayStyle.None;
-        private bool BlockingDialogOpen => SettingsOpen || IndexingOpen || WorkspaceGameDialogOpen || NewMapDialogOpen || PortCompatibilityReportOpen || AssemblySaveOpen || (renameMapOverlay != null && renameMapOverlay.style.display.value != DisplayStyle.None);
+        private bool BlockingDialogOpen => SettingsOpen || IndexingOpen || AboutOpen || WorkspaceGameDialogOpen || NewMapDialogOpen || PortCompatibilityReportOpen || AssemblySaveOpen || (renameMapOverlay != null && renameMapOverlay.style.display.value != DisplayStyle.None);
     }
 
     internal static class WindowsProjectFileDialog

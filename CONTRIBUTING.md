@@ -16,7 +16,7 @@ Thank you for helping improve ReMap.
 3. Open `Assets/ReMap/Workspace.unity`, or use **ReMap > Prepare and open workspace**.
 4. For RSX integration work, clone [`R5Reloaded-ReMap/rsx`](https://github.com/R5Reloaded-ReMap/rsx) beside this repository as `../rsx`.
 
-Run `./Tools/Build-ReMap.ps1` from PowerShell for a Windows build. It builds RSX in Release/x64 when the expected binary or ReMap session marker is absent, then invokes the pinned Unity editor. Use `-BuildRsx Always` for a release candidate or `-ValidateOnly` to check local prerequisites without compiling.
+Double-click `Build-ReMap.cmd` for the interactive Windows build menu. For automation, run `./Tools/Build-ReMap.ps1 -BuildRsx IfMissing`; use `-BuildRsx Always -Clean` for a release candidate, `-ValidateOnly` to check prerequisites, or `-Version 0.1.0` to override the version for one build without changing the project file.
 
 Unity generates IDE solution and project files locally; do not commit them.
 

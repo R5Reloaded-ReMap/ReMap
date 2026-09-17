@@ -58,16 +58,31 @@ namespace ReMap.Standalone.Editor
         {
             Prepare();
             Unity.CodeEditor.CodeEditor.CurrentEditor.SyncAll();
-            var report = BuildPipeline.BuildPlayer(new BuildPlayerOptions {
-                scenes = new[] { ScenePath }, locationPathName = output,
-                target = BuildTarget.StandaloneWindows64, options = BuildOptions.None
-            });
-            if (report.summary.result != BuildResult.Succeeded)
-                throw new Exception("Windows build failed: " + report.summary.result);
-            string outputDirectory = Path.GetDirectoryName(Path.GetFullPath(report.summary.outputPath));
-            BuildLiveBridge(outputDirectory);
-            BundleOfficialRsx(outputDirectory);
-            Debug.Log("REMAP_BUILD_OK: " + report.summary.outputPath);
+            string configuredVersion = Environment.GetEnvironmentVariable("REMAP_BUILD_VERSION");
+            string originalVersion = PlayerSettings.bundleVersion;
+            try
+            {
+                if (!string.IsNullOrWhiteSpace(configuredVersion))
+                    PlayerSettings.bundleVersion = configuredVersion.Trim();
+                var report = BuildPipeline.BuildPlayer(new BuildPlayerOptions {
+                    scenes = new[] { ScenePath }, locationPathName = output,
+                    target = BuildTarget.StandaloneWindows64, options = BuildOptions.None
+                });
+                if (report.summary.result != BuildResult.Succeeded)
+                    throw new Exception("Windows build failed: " + report.summary.result);
+                string outputDirectory = Path.GetDirectoryName(Path.GetFullPath(report.summary.outputPath));
+                BuildLiveBridge(outputDirectory);
+                BundleOfficialRsx(outputDirectory);
+                Debug.Log("REMAP_BUILD_OK: " + report.summary.outputPath);
+            }
+            finally
+            {
+                if (PlayerSettings.bundleVersion != originalVersion)
+                {
+                    PlayerSettings.bundleVersion = originalVersion;
+                    AssetDatabase.SaveAssets();
+                }
+            }
         }
 
         private static void BundleOfficialRsx(string outputDirectory)

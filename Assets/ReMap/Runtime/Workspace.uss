@@ -425,6 +425,17 @@ Button.script-property-remove-button:hover { background-color: rgb(91,65,66); }
 .inspector-info-field > .unity-base-text-field__input { min-width: 0; flex-grow: 2; flex-basis: 0; padding: 2px 4px; color: rgb(183,201,220); background-color: rgb(31,33,37); font-size: 9px; }
 #inspector-information { margin-top: 0; }
 
+.about-panel { width: 520px; max-width: 92%; max-height: 82%; background-color: rgb(43,44,49); border-width: 1px; border-color: rgb(100,105,116); border-radius: 3px; }
+.about-content { flex-grow: 1; min-height: 0; padding: 14px 18px 8px 18px; }
+.about-content .unity-scroll-view__content-container { align-items: stretch; }
+.about-brand { -unity-text-align: middle-center; -unity-font-style: bold; font-size: 28px; color: rgb(102,220,184); margin-top: 4px; }
+.about-version { -unity-text-align: middle-center; color: rgb(173,193,213); margin: 2px 0 7px 0; }
+.about-tagline { -unity-text-align: middle-center; white-space: normal; color: rgb(211,220,230); margin-bottom: 10px; }
+.about-copy { white-space: normal; color: rgb(188,199,212); margin: 2px 0 5px 0; }
+.about-links { flex-direction: row; margin: 10px 0; }
+.about-links Button { flex-grow: 1; margin: 0 4px; }
+.about-disclaimer { white-space: normal; font-size: 10px; color: rgb(139,151,166); margin: 7px 2px 4px 2px; }
+
 .settings-intro { padding: 8px 10px; margin-bottom: 4px; white-space: normal; color: rgb(188,202,218); background-color: rgb(37,48,61); border-left-width: 3px; border-left-color: rgb(77,137,190); }
 .settings-actions { height: 30px; flex-shrink: 0; flex-direction: row; justify-content: flex-end; padding: 2px 10px 0 10px; border-top-width: 1px; border-top-color: rgb(66,68,75); }
 .settings-actions Button { min-width: 90px; }

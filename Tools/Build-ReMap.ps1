@@ -3,12 +3,14 @@ param(
     [string]$UnityPath,
     [string]$RsxRoot,
     [string]$MSBuildPath,
+    [string]$Version,
 
     [ValidateSet("IfMissing", "Always", "Never")]
     [string]$BuildRsx = "IfMissing",
 
     [switch]$Clean,
-    [switch]$ValidateOnly
+    [switch]$ValidateOnly,
+    [switch]$Interactive
 )
 
 Set-StrictMode -Version Latest
@@ -139,6 +141,51 @@ function Assert-File {
 }
 
 $projectRoot = [IO.Path]::GetFullPath((Join-Path $PSScriptRoot ".."))
+$projectSettings = Join-Path $projectRoot "ProjectSettings\ProjectSettings.asset"
+$versionMatch = Select-String -LiteralPath $projectSettings -Pattern '^\s*bundleVersion:\s*(.+)$' | Select-Object -First 1
+if ($null -eq $versionMatch) {
+    throw "Unable to read bundleVersion from $projectSettings."
+}
+$projectVersion = $versionMatch.Matches[0].Groups[1].Value.Trim()
+
+$interactiveMode = $Interactive -or $PSBoundParameters.Count -eq 0
+if ($interactiveMode) {
+    Write-Host ""
+    Write-Host "ReMap build tool" -ForegroundColor Cyan
+    Write-Host "Current application version: $projectVersion"
+    Write-Host ""
+    Write-Host "  1. Build ReMap (build RSX only when missing)"
+    Write-Host "  2. Clean rebuild of RSX and ReMap"
+    Write-Host "  3. Validate local prerequisites"
+    $publisher = Join-Path $projectRoot "Tools\.local\Publish-ReMap.ps1"
+    if (Test-Path -LiteralPath $publisher -PathType Leaf) {
+        Write-Host "  4. Create a local release ZIP"
+    }
+    Write-Host "  Q. Cancel"
+    Write-Host ""
+    $choice = (Read-Host "Choose an action [1]").Trim()
+    if ([string]::IsNullOrWhiteSpace($choice)) { $choice = "1" }
+    switch ($choice.ToUpperInvariant()) {
+        "1" { $BuildRsx = "IfMissing" }
+        "2" { $BuildRsx = "Always"; $Clean = $true }
+        "3" { $ValidateOnly = $true }
+        "4" {
+            if (-not (Test-Path -LiteralPath $publisher -PathType Leaf)) {
+                throw "The personal release packager is not installed at $publisher."
+            }
+            & $publisher
+            exit 0
+        }
+        "Q" { exit 0 }
+        default { throw "Unknown action: $choice" }
+    }
+}
+
+if ([string]::IsNullOrWhiteSpace($Version)) { $Version = $projectVersion }
+if ($Version -notmatch '^[0-9]+\.[0-9]+\.[0-9]+(?:-[0-9A-Za-z.-]+)?(?:\+[0-9A-Za-z.-]+)?$') {
+    throw "Application version must use semantic versioning, for example 0.1.0 or 0.1.0-beta.1."
+}
+
 $unityVersion = Get-UnityVersion -ProjectRoot $projectRoot
 $resolvedUnity = Find-UnityEditor -RequestedPath $UnityPath -Version $unityVersion
 
@@ -163,7 +210,8 @@ if ($shouldBuildRsx -or $ValidateOnly) {
 }
 
 Write-Host "ReMap project : $projectRoot"
-Write-Host "Unity        : $resolvedUnity"
+Write-Host "App version   : $Version"
+Write-Host "Unity         : $resolvedUnity"
 Write-Host "RSX source   : $resolvedRsxRoot"
 if ($null -ne $resolvedMSBuild) {
     Write-Host "MSBuild      : $resolvedMSBuild"
@@ -209,8 +257,10 @@ New-Item -ItemType Directory -Path $logDirectory -Force | Out-Null
 $unityLog = Join-Path $logDirectory "unity-build.log"
 
 $previousRsxRoot = $env:REMAP_RSX_ROOT
+$previousBuildVersion = $env:REMAP_BUILD_VERSION
 try {
     $env:REMAP_RSX_ROOT = $resolvedRsxRoot
+    $env:REMAP_BUILD_VERSION = $Version
     Write-Host "Building ReMap for Windows x64..."
     $unityArguments = @(
         "-batchmode",
@@ -219,9 +269,17 @@ try {
         "-executeMethod", "ReMap.Standalone.Editor.ProjectSetup.BuildWindows",
         "-logFile", "`"$unityLog`""
     )
-    $unityProcess = Start-Process -FilePath $resolvedUnity -ArgumentList $unityArguments `
-        -WindowStyle Hidden -Wait -PassThru
+    $processInfo = [Diagnostics.ProcessStartInfo]::new()
+    $processInfo.FileName = $resolvedUnity
+    $processInfo.Arguments = $unityArguments -join " "
+    $processInfo.UseShellExecute = $false
+    $processInfo.CreateNoWindow = $true
+    $unityProcess = [Diagnostics.Process]::new()
+    $unityProcess.StartInfo = $processInfo
+    if (-not $unityProcess.Start()) { throw "Unity could not be started." }
+    $unityProcess.WaitForExit()
     $unityExitCode = $unityProcess.ExitCode
+    $unityProcess.Dispose()
 }
 finally {
     if ($null -eq $previousRsxRoot) {
@@ -229,6 +287,12 @@ finally {
     }
     else {
         $env:REMAP_RSX_ROOT = $previousRsxRoot
+    }
+    if ($null -eq $previousBuildVersion) {
+        Remove-Item Env:REMAP_BUILD_VERSION -ErrorAction SilentlyContinue
+    }
+    else {
+        $env:REMAP_BUILD_VERSION = $previousBuildVersion
     }
 }
 

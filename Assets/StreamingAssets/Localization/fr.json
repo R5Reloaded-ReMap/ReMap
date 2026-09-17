@@ -3425,6 +3425,58 @@
     {
       "key": "#CLIENT_E_FIELDS_MANUAL_ONLY",
       "text": "Les champs .e côté client appartiennent à ClientEntityStruct. Saisissez leur nom manuellement ; les préréglages serveur sont masqués."
+    },
+    {
+      "key": "#HELP",
+      "text": "Aide"
+    },
+    {
+      "key": "#ABOUT_REMAP",
+      "text": "À propos de ReMap"
+    },
+    {
+      "key": "#VERSION_ARG0",
+      "text": "Version {0}"
+    },
+    {
+      "key": "#ABOUT_TAGLINE",
+      "text": "Un éditeur de cartes autonome créé avec amour pour la communauté de modding Apex."
+    },
+    {
+      "key": "#CREDITS",
+      "text": "Crédits"
+    },
+    {
+      "key": "#ABOUT_ORIGINAL_EDITOR",
+      "text": "L'éditeur ReMap original a été créé par Zee et Julefox."
+    },
+    {
+      "key": "#ABOUT_STANDALONE",
+      "text": "Cette réécriture autonome est créée et maintenue par Julefox."
+    },
+    {
+      "key": "#ABOUT_FOUNDATION",
+      "text": "Fondations techniques : Mauler125, r5sdk et l'ensemble de la communauté de modding Apex."
+    },
+    {
+      "key": "#LICENSES",
+      "text": "Licences"
+    },
+    {
+      "key": "#ABOUT_LICENSES",
+      "text": "Le code original de ReMap est sous licence MPL 2.0. Le programme externe RSX inclus est distribué séparément sous licence AGPL 3.0."
+    },
+    {
+      "key": "#PROJECT_SOURCE",
+      "text": "Sources de ReMap"
+    },
+    {
+      "key": "#RSX_SOURCE",
+      "text": "Sources de RSX"
+    },
+    {
+      "key": "#ABOUT_DISCLAIMER",
+      "text": "Projet non affilié à Electronic Arts, Respawn Entertainment, Valve ou Unity Technologies, et non approuvé par ces sociétés."
     }
   ]
 }

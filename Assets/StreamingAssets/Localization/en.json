@@ -3425,6 +3425,58 @@
     {
       "key": "#CLIENT_E_FIELDS_MANUAL_ONLY",
       "text": "Client-side .e fields belong to ClientEntityStruct. Enter their names manually; server presets are hidden."
+    },
+    {
+      "key": "#HELP",
+      "text": "Help"
+    },
+    {
+      "key": "#ABOUT_REMAP",
+      "text": "About ReMap"
+    },
+    {
+      "key": "#VERSION_ARG0",
+      "text": "Version {0}"
+    },
+    {
+      "key": "#ABOUT_TAGLINE",
+      "text": "A standalone map editor made with love for the Apex modding community."
+    },
+    {
+      "key": "#CREDITS",
+      "text": "Credits"
+    },
+    {
+      "key": "#ABOUT_ORIGINAL_EDITOR",
+      "text": "The original ReMap editor was created by Zee and Julefox."
+    },
+    {
+      "key": "#ABOUT_STANDALONE",
+      "text": "This standalone rewrite is created and maintained by Julefox."
+    },
+    {
+      "key": "#ABOUT_FOUNDATION",
+      "text": "Technical foundation: Mauler125, r5sdk, and the wider Apex modding community."
+    },
+    {
+      "key": "#LICENSES",
+      "text": "Licenses"
+    },
+    {
+      "key": "#ABOUT_LICENSES",
+      "text": "ReMap's original code is licensed under MPL 2.0. The bundled external RSX program is licensed separately under AGPL 3.0."
+    },
+    {
+      "key": "#PROJECT_SOURCE",
+      "text": "ReMap source"
+    },
+    {
+      "key": "#RSX_SOURCE",
+      "text": "RSX source"
+    },
+    {
+      "key": "#ABOUT_DISCLAIMER",
+      "text": "Not affiliated with or endorsed by Electronic Arts, Respawn Entertainment, Valve, or Unity Technologies."
     }
   ]
 }
