@@ -830,7 +830,7 @@ namespace ReMap.Standalone
             if (item.customType == "zipline" || item.customType == "zipline-endpoint" ||
                 item.customType == "door" || item.customType == "curved-zipline" ||
                 item.customType == "curved-zipline-point" || item.customType == "loot-bin" ||
-                item.customType == "jump-pad")
+                item.customType == "jump-pad" || item.customType == "spawn-point")
             {
                 var remapSettings = InspectorSection(L.T("#REMAP_SETTINGS"), "remap-settings");
                 if (item.customType == "zipline") BuildZiplineInspector(item, remapSettings);
@@ -839,7 +839,8 @@ namespace ReMap.Standalone
                 else if (item.customType == "curved-zipline") BuildCurvedZiplineInspector(item, remapSettings);
                 else if (item.customType == "curved-zipline-point") BuildCurvedZiplinePointInspector(item, remapSettings);
                 else if (item.customType == "loot-bin") BuildLootBinInspector(item, remapSettings);
-                else BuildJumpPadInspector(item, remapSettings);
+                else if (item.customType == "jump-pad") BuildJumpPadInspector(item, remapSettings);
+                else BuildSpawnPointInspector(item, remapSettings);
                 inspector.Add(remapSettings);
             }
             if (!item.isGroup && string.IsNullOrEmpty(item.customType))
@@ -860,6 +861,7 @@ namespace ReMap.Standalone
                 item.customType == "curved-zipline-point" ? L.T("#CURVED_ZIPLINE_CONTROL_POINT") :
                 item.customType == "loot-bin" ? L.T("#CUSTOM_OBJECT_LOOT_BIN") :
                 item.customType == "jump-pad" ? L.T("#CUSTOM_OBJECT_JUMP_PAD") :
+                item.customType == "spawn-point" ? L.T("#CUSTOM_OBJECT_SPAWN_POINT") :
                 item.customType == "zipline-endpoint" ? L.T("#ZIPLINE_ATTACHMENT_POINT") :
                 item.isGroup ? L.T("#GROUP_CHILDREN_SHARE_TRANSFORM") : L.T("#MODEL");
             information.Add(CopyableInspectorValue(L.T("#OBJECT_TYPE"), typeDetails));

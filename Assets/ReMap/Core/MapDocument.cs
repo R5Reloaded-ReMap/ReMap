@@ -83,6 +83,7 @@ namespace ReMap.Standalone.Core
         public float jumpPadForwardScale = 1.7f;
         public float jumpPadRadius = 45f;
         public bool jumpPadDoubleJump = true;
+        public int spawnPointTeam;
         public bool commonAsset;
         public List<string> availableMaps = new List<string>();
         public bool allowMantle = true;
@@ -185,7 +186,8 @@ namespace ReMap.Standalone.Core
                     item.customType != "zipline-component" && item.customType != "door" &&
                     item.customType != "door-component" && item.customType != "curved-zipline" &&
                     item.customType != "curved-zipline-point" && item.customType != "curved-zipline-component" &&
-                    item.customType != "loot-bin" && item.customType != "jump-pad")
+                    item.customType != "loot-bin" && item.customType != "jump-pad" &&
+                    item.customType != "spawn-point")
                     throw new ArgumentException(L.T("#UNKNOWN_CUSTOM_OBJECT_TYPE"));
                 if (item.customType == "zipline" && !item.isGroup)
                     throw new ArgumentException(L.T("#ZIPLINE_HIERARCHY_GROUP"));
@@ -243,6 +245,8 @@ namespace ReMap.Standalone.Core
                     item.jumpPadForwardScale < .1f || item.jumpPadForwardScale > 10f ||
                     item.jumpPadRadius < 1f || item.jumpPadRadius > 512f))
                     throw new ArgumentException(L.T("#INVALID_JUMP_PAD_SETTINGS"));
+                if (item.customType == "spawn-point" && (item.spawnPointTeam < 0 || item.spawnPointTeam > 64))
+                    throw new ArgumentException(L.T("#INVALID_SPAWN_POINT_TEAM"));
                 if (!item.position.IsFinite || !item.rotation.IsFinite || !item.scale.IsFinite)
                     throw new ArgumentException(L.T("#TRANSFORMS_FINITE_NUMBERS"));
                 if (!Finite(item.fadeDistance) || item.fadeDistance < -1f)

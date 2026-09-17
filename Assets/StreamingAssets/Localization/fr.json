@@ -3191,6 +3191,42 @@
       "text": "Vitesse de propulsion, élan avant ou rayon du tremplin invalide."
     },
     {
+      "key": "#SPAWN_POINT",
+      "text": "Point de spawn joueur"
+    },
+    {
+      "key": "#CUSTOM_OBJECT_SPAWN_POINT",
+      "text": "Objet personnalisé · Point de spawn joueur"
+    },
+    {
+      "key": "#SPAWN_POINT_CUSTOM_HELP",
+      "text": "Un info_spawnpoint_human dynamique compatible avec les mêmes modes de jeu que l’ancien objet ReMap."
+    },
+    {
+      "key": "#SPAWN_POINT_TEAM",
+      "text": "Numéro d’équipe"
+    },
+    {
+      "key": "#SPAWN_POINT_TEAM_HELP",
+      "text": "0 accepte toutes les équipes. Utilisez un numéro d’équipe Apex pour limiter ce spawn."
+    },
+    {
+      "key": "#SPAWN_POINT_MODES_HELP",
+      "text": "Activé pour TDM, FFA, Défense de la Frontière, CTF, Point de contrôle et Titans amplifiés, comme l’ancien objet."
+    },
+    {
+      "key": "#SPAWN_POINT_CREATED",
+      "text": "Point de spawn joueur créé. Faites-le pivoter pour choisir la direction du regard."
+    },
+    {
+      "key": "#SPAWN_POINT_PREVIEW_ERROR",
+      "text": "Aperçu du point de spawn joueur : "
+    },
+    {
+      "key": "#INVALID_SPAWN_POINT_TEAM",
+      "text": "Le numéro d’équipe du point de spawn doit être compris entre 0 et 64."
+    },
+    {
       "key": "#TARGET_GAME",
       "text": "Jeu cible"
     },

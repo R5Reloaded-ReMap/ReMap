@@ -3191,6 +3191,42 @@
       "text": "Invalid jump pad launch velocity, forward momentum or trigger radius."
     },
     {
+      "key": "#SPAWN_POINT",
+      "text": "Player spawn point"
+    },
+    {
+      "key": "#CUSTOM_OBJECT_SPAWN_POINT",
+      "text": "Custom object · Player spawn point"
+    },
+    {
+      "key": "#SPAWN_POINT_CUSTOM_HELP",
+      "text": "A dynamic info_spawnpoint_human compatible with the same game modes as the legacy ReMap object."
+    },
+    {
+      "key": "#SPAWN_POINT_TEAM",
+      "text": "Team number"
+    },
+    {
+      "key": "#SPAWN_POINT_TEAM_HELP",
+      "text": "0 accepts every team. Use an Apex team number to restrict this spawn."
+    },
+    {
+      "key": "#SPAWN_POINT_MODES_HELP",
+      "text": "Enabled for TDM, FFA, Frontier Defense, CTF, Control Point and Amped Titans, matching the legacy object."
+    },
+    {
+      "key": "#SPAWN_POINT_CREATED",
+      "text": "Player spawn point created. Rotate it to choose the facing direction."
+    },
+    {
+      "key": "#SPAWN_POINT_PREVIEW_ERROR",
+      "text": "Player spawn point preview: "
+    },
+    {
+      "key": "#INVALID_SPAWN_POINT_TEAM",
+      "text": "Spawn point team number must be between 0 and 64."
+    },
+    {
       "key": "#TARGET_GAME",
       "text": "Target game"
     },

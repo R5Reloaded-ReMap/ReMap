@@ -53,6 +53,9 @@ namespace ReMap.Standalone
             if (world.Any(o => o.customType == "jump-pad") &&
                 !models.Contains(ReMapApp.JumpPadModelPath, StringComparer.OrdinalIgnoreCase))
                 models.Add(ReMapApp.JumpPadModelPath);
+            if (world.Any(o => o.customType == "spawn-point") &&
+                !models.Contains(ReMapApp.SpawnPointModelPath, StringComparer.OrdinalIgnoreCase))
+                models.Add(ReMapApp.SpawnPointModelPath);
             Vector3 originOffset = OriginOffset(document);
             bool useOriginOffset = HasOriginOffset(originOffset);
             var shared = new StringBuilder();
@@ -79,6 +82,7 @@ namespace ReMap.Standalone
             AppendDoors(server, world, false, originOffset, useOriginOffset);
             AppendLootBins(server, world, false, originOffset, useOriginOffset);
             AppendJumpPads(server, world, false, originOffset, useOriginOffset);
+            AppendSpawnPoints(server, world, false, originOffset, useOriginOffset);
             AppendCurvedZiplines(server, world, false, originOffset, useOriginOffset);
             AppendZiplines(server, world, false, originOffset, useOriginOffset);
 
@@ -166,6 +170,7 @@ namespace ReMap.Standalone
             AppendDoors(result, world, true, originOffset, false);
             AppendLootBins(result, world, true, originOffset, false);
             AppendJumpPads(result, world, true, originOffset, false);
+            AppendSpawnPoints(result, world, true, originOffset, false);
             AppendCurvedZiplines(result, world, true, originOffset, false);
             AppendZiplines(result, world, true, originOffset, false);
             return result.ToString();
@@ -394,6 +399,21 @@ namespace ReMap.Standalone
                     Number(jumpPad.scale.x) + ", " + Number(jumpPad.jumpPadLaunchVelocity) + ", " +
                     Number(jumpPad.jumpPadForwardScale) + ", " + Number(jumpPad.jumpPadRadius) + ", " +
                     (jumpPad.jumpPadDoubleJump ? "true" : "false") + " )";
+                code.Append(live ? "script " : "\t").Append(expression).AppendLine();
+            }
+        }
+
+        private static void AppendSpawnPoints(StringBuilder code, List<MapObject> world, bool live,
+            Vector3 originOffset, bool symbolicOffset)
+        {
+            var spawnPoints = world.Where(o => o.customType == "spawn-point").ToList();
+            if (!live && spawnPoints.Count > 0) { code.AppendLine(); code.AppendLine("\t// Player spawn points"); }
+            foreach (var spawnPoint in spawnPoints)
+            {
+                string expression = "ReMap_CreateSpawnPoint( " +
+                    Position(spawnPoint.position, originOffset, symbolicOffset) + ", " +
+                    Vector(ApexDisplay.Angles(WorldView.ToVector(spawnPoint.rotation))) + ", " +
+                    spawnPoint.spawnPointTeam.ToString(CultureInfo.InvariantCulture) + " )";
                 code.Append(live ? "script " : "\t").Append(expression).AppendLine();
             }
         }

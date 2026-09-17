@@ -21,6 +21,7 @@ global function ReMap_CreateProp
 global function ReMap_CreateDoor
 global function ReMap_CreateLootBin
 global function ReMap_CreateJumpPad
+global function ReMap_CreateSpawnPoint
 
 global const int REMAP_DOOR_SINGLE = 0
 global const int REMAP_DOOR_DOUBLE = 1
@@ -301,4 +302,34 @@ void function ReMap_ConsumeJumpPadDoubleJump( entity player )
 		return
 	player.ConsumeDoubleJump()
 	RemoveButtonPressedPlayerInputCallback( player, IN_JUMP, ReMap_ConsumeJumpPadDoubleJump )
+}
+
+entity function ReMap_CreateSpawnPoint( vector origin, vector angles, int teamNumber = 0 )
+{
+	entity spawnPoint = CreateEntity( "info_spawnpoint_human" )
+	spawnPoint.SetOrigin( origin )
+	spawnPoint.SetAngles( angles )
+	spawnPoint.SetValueForModelKey( $"mdl/dev/mp_spawn.rmdl" )
+	spawnPoint.kv.teamnumber = teamNumber
+	spawnPoint.kv.control_teamnumber = -1
+	spawnPoint.kv.phase_1 = 0
+	spawnPoint.kv.phase_2 = 0
+	spawnPoint.kv.phase_3 = 0
+	spawnPoint.kv.phase_4 = 0
+	spawnPoint.kv.phase_5 = 0
+	spawnPoint.kv.phase_6 = 0
+	spawnPoint.kv.phase_7 = 0
+	spawnPoint.kv.phase_8 = 0
+	spawnPoint.kv.phase_9 = 0
+	spawnPoint.kv.gamemode_tdm = 1
+	spawnPoint.kv.gamemode_ffa = 1
+	spawnPoint.kv.gamemode_fd = 1
+	spawnPoint.kv.gamemode_ctf = 1
+	spawnPoint.kv.gamemode_cp = 1
+	spawnPoint.kv.gamemode_at = 1
+	spawnPoint.kv.gamemode_fw = 0
+	spawnPoint.kv.gamemode_freelance = 0
+	DispatchSpawn( spawnPoint )
+	file.props.append( spawnPoint )
+	return spawnPoint
 }
