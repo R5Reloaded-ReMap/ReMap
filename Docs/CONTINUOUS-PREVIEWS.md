@@ -14,9 +14,9 @@ The session is released before index subprocesses to avoid waiting on its own na
 
 The modified native source is kept in the sibling `rsx` repository. Its changes are limited to the persistent ReMap protocol, hidden command-line execution, and generation of the compatibility marker. The upstream license and corresponding source obligations are unchanged; RSX remains an external process.
 
-Build the Release x64 solution normally. It writes `bin/Release/rsx.exe` and `rsx.exe.remap-session-v1`; ReMap copies both beside its executable. CAST/PNG formats are unchanged, so existing exports and thumbnails remain reusable.
+Build the Release x64 solution normally. It writes `bin/Release/rsx.exe` plus the `.remap-session-v1`, `.remap-session-v2`, and `.remap-session-v3` capability markers; ReMap copies all four files beside its executable. CAST/PNG formats are unchanged, so existing exports and thumbnails remain reusable.
 
-Protocol v1 starts with REMAP_SESSION READY 1 (tab separated). LOAD carries absolute RPAK paths, EXPORT carries a 16-digit asset GUID and an 8-digit job ID, QUIT ends the process. The native exporter creates a distinct job directory so identical model basenames cannot overwrite each other. Unity publishes complete.txt only after export acknowledgment, exact LOD0 matching and CAST validation. Errors are explicit; geometry-only fallback is attempted within the same native session when a normal export reports failure.
+Protocol v1 starts with REMAP_SESSION READY 1 (tab separated). LOAD carries absolute RPAK paths, EXPORT carries a 16-digit asset GUID and an 8-digit job ID, QUIT ends the process. V2 adds EXPORTBATCH for up to eight GUIDs. V3 adds EXPORTGEOMETRY and EXPORTBATCHGEOMETRY: after a native crash during textured R5F export, ReMap restarts RSX with the model-only whitelist and retries the batch without material textures. The native exporter creates a distinct job directory so identical model basenames cannot overwrite each other. Unity publishes complete.txt only after export acknowledgment, exact LOD0 matching and CAST validation.
 
 ## Verification
 

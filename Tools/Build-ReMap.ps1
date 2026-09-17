@@ -216,11 +216,13 @@ $rsxSolution = Join-Path $resolvedRsxRoot "rsx.sln"
 $rsxExecutable = Join-Path $resolvedRsxRoot "bin\Release\rsx.exe"
 $rsxSessionMarker = "$rsxExecutable.remap-session-v1"
 $rsxBatchMarker = "$rsxExecutable.remap-session-v2"
+$rsxGeometryMarker = "$rsxExecutable.remap-session-v3"
 $rsxLicense = Join-Path $resolvedRsxRoot "LICENSE"
 $rsxNotices = Join-Path $resolvedRsxRoot "thirdpartylegalnotices.txt"
 $needsRsxBuild = -not (Test-Path -LiteralPath $rsxExecutable -PathType Leaf) -or
     -not (Test-Path -LiteralPath $rsxSessionMarker -PathType Leaf) -or
-    -not (Test-Path -LiteralPath $rsxBatchMarker -PathType Leaf)
+    -not (Test-Path -LiteralPath $rsxBatchMarker -PathType Leaf) -or
+    -not (Test-Path -LiteralPath $rsxGeometryMarker -PathType Leaf)
 
 Assert-File -Path $rsxSolution -Description "The RSX solution"
 
@@ -262,6 +264,7 @@ else {
 Assert-File -Path $rsxExecutable -Description "The RSX executable"
 Assert-File -Path $rsxSessionMarker -Description "The ReMap RSX session marker"
 Assert-File -Path $rsxBatchMarker -Description "The ReMap RSX batch session marker"
+Assert-File -Path $rsxGeometryMarker -Description "The ReMap RSX geometry fallback marker"
 Assert-File -Path $rsxLicense -Description "The RSX AGPL license"
 Assert-File -Path $rsxNotices -Description "The RSX third-party notices"
 
@@ -348,6 +351,7 @@ foreach ($artifact in @(
     "rsx.exe",
     "rsx.exe.remap-session-v1",
     "rsx.exe.remap-session-v2",
+    "rsx.exe.remap-session-v3",
     "RSX-LICENSE.txt",
     "RSX-THIRD-PARTY-NOTICES.txt"
 )) {

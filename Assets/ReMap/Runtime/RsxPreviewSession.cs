@@ -21,15 +21,17 @@ namespace ReMap.Standalone
         internal string LastArchive { get; private set; }
         internal int ArchiveLoads { get; private set; }
         internal int ProcessId => process.Id;
+        internal bool GeometryOnly { get; }
         internal bool Alive { get { try { return !process.HasExited; } catch { return false; } } }
-        internal RsxPreviewSession(string executable,string root,string workingDirectory,CancellationToken shutdown)
+        internal RsxPreviewSession(string executable,string root,string workingDirectory,CancellationToken shutdown,bool geometryOnly=false)
         {
-            this.shutdown=shutdown; Root=root;Directory.CreateDirectory(root);Directory.CreateDirectory(workingDirectory);
+            this.shutdown=shutdown;GeometryOnly=geometryOnly;Root=root;Directory.CreateDirectory(root);Directory.CreateDirectory(workingDirectory);
             log=new StreamWriter(Path.Combine(root,"session.log"),false){AutoFlush=true};
             process=new Process();
             string threads=Math.Min(4,Math.Max(1,Environment.ProcessorCount/2)).ToString();
-            var arguments=new[]{"-nogui","-embedded","-export","--loadwhitelist","mdl_,matl,txtr,shdr,shds,Ptch","--parsethreads",threads,"--exportthreads",threads,"-matltextures","--remap-session",root};
-            if(File.Exists(executable+".remap-albedo-v1"))arguments=arguments.Concat(new[]{"-albedoonly"}).ToArray();
+            var arguments=new[]{"-nogui","-embedded","-export","--loadwhitelist",geometryOnly?"mdl_,Ptch":"mdl_,matl,txtr,shdr,shds,Ptch","--parsethreads",threads,"--exportthreads",threads}
+                .Concat(geometryOnly?Array.Empty<string>():new[]{"-matltextures"}).Concat(new[]{"--remap-session",root}).ToArray();
+            if(!geometryOnly&&File.Exists(executable+".remap-albedo-v1"))arguments=arguments.Concat(new[]{"-albedoonly"}).ToArray();
             process.StartInfo=new ProcessStartInfo{FileName=executable,Arguments=string.Join(" ",arguments.Select(Quote)),WorkingDirectory=workingDirectory,
                 UseShellExecute=false,CreateNoWindow=true,RedirectStandardInput=true,RedirectStandardOutput=true,RedirectStandardError=true,
                 StandardOutputEncoding=Encoding.UTF8,StandardErrorEncoding=Encoding.UTF8};
@@ -81,19 +83,19 @@ namespace ReMap.Standalone
             }
             LastArchive=origin;
         }
-        internal string Export(string guid)
+        internal string Export(string guid,bool geometryOnly=false)
         {
             string job=Guid.NewGuid().ToString("N").Substring(0,8);
-            Send("EXPORT\t"+guid+"\t"+job);var reply=ReadReply();
+            Send((geometryOnly?"EXPORTGEOMETRY":"EXPORT")+"\t"+guid+"\t"+job);var reply=ReadReply();
             if(reply.Length!=4||reply[1]!="DONE"||!string.Equals(reply[2],guid,StringComparison.OrdinalIgnoreCase)||reply[3]!=job)
                 throw new IOException(L.T("#RSX_MODEL_EXPORT_FAILED")+string.Join(" ",reply));
             return Path.Combine(Root,job);
         }
-        internal string ExportBatch(string[] guids)
+        internal string ExportBatch(string[] guids,bool geometryOnly=false)
         {
             if(guids==null||guids.Length<2||guids.Length>8)throw new ArgumentException(L.T("#BATCH_1_8_MODELS_REQUIRED"));
             string job=Guid.NewGuid().ToString("N").Substring(0,8);
-            Send("EXPORTBATCH\t"+job+"\t"+string.Join("\t",guids));var reply=ReadReply();
+            Send((geometryOnly?"EXPORTBATCHGEOMETRY":"EXPORTBATCH")+"\t"+job+"\t"+string.Join("\t",guids));var reply=ReadReply();
             if(reply.Length!=3||reply[1]!="BATCHDONE"||reply[2]!=job)
                 throw new IOException(L.T("#RSX_MODEL_EXPORT_FAILED")+string.Join(" ",reply));
             return Path.Combine(Root,job);
