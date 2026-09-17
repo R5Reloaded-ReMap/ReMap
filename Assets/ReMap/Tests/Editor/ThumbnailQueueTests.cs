@@ -30,6 +30,16 @@ namespace ReMap.Standalone.Tests {
             var result=ThumbnailQueue.Next(new[]{a,b},new[]{a},new HashSet<string>(),new HashSet<string>(),"",Array.Empty<string>(),8,"loaded.rpak");
             Assert.That(result.Select(r=>r.Id),Is.EqualTo(new[]{a.Id}));
         }
+        [Test] public void MissingSceneModelsWinOverVisibleAndCustomModels() {
+            var scene=Record("1","scene","scene.rpak");var visible=Record("2","visible","visible.rpak");var custom=Record("3","custom","custom.rpak");
+            var result=ThumbnailQueue.Next(new[]{custom,visible,scene},new[]{scene},new[]{visible},new[]{custom},new HashSet<string>(),new HashSet<string>(),"",Array.Empty<string>());
+            Assert.That(result.Select(r=>r.Id),Is.EqualTo(new[]{scene.Id}));
+        }
+        [Test] public void VisibleAndCustomModelsOverrideLoadedArchivePreference() {
+            var background=Record("1","background","loaded.rpak");var custom=Record("2","custom","custom.rpak");
+            var result=ThumbnailQueue.Next(new[]{background,custom},Array.Empty<GameAssetRecord>(),Array.Empty<GameAssetRecord>(),new[]{custom},new HashSet<string>(),new HashSet<string>(),"",Array.Empty<string>(),8,"loaded.rpak");
+            Assert.That(result.Select(r=>r.Id),Is.EqualTo(new[]{custom.Id}));
+        }
         [Test] public void OnDemandQueueNeverFillsFromOffscreenAssets() {
             var visible=Record("1","visible");var offscreen=Record("2","offscreen");
             var result=ThumbnailQueue.NextVisible(new[]{visible,offscreen},new[]{visible},new HashSet<string>(),new HashSet<string>(),"",Array.Empty<string>());

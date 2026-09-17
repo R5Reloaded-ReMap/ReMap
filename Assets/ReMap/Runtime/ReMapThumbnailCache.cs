@@ -132,11 +132,51 @@ namespace ReMap.Standalone
         }
         private bool ThumbnailExternalWorkBlocked() => indexRequested||pendingAssetDrops>0||thumbnailPaused||SettingsOpen||IndexingOpen||inspectorDirty||libraryDragging||draggingGizmo||sceneSelectionPending||assemblyDragging;
         private bool ThumbnailWorkBlocked() => assetBusy||ThumbnailExternalWorkBlocked();
+        private GameAssetRecord[] SceneThumbnailPriorities(GameAssetRecord[] eligible) {
+            if(snapshot==null)return Array.Empty<GameAssetRecord>();
+            var byId=eligible.ToDictionary(record=>record.Id,StringComparer.OrdinalIgnoreCase);
+            var byPath=eligible.GroupBy(record=>GameAssetIndex.NormalizeModelPath(record.modelPath),StringComparer.OrdinalIgnoreCase).ToDictionary(group=>group.Key,group=>group.First(),StringComparer.OrdinalIgnoreCase);
+            var found=new HashSet<string>(StringComparer.OrdinalIgnoreCase);var result=new List<GameAssetRecord>();
+            foreach(var item in snapshot.objects) {
+                if(item.isGroup)continue;
+                GameAssetRecord record=null;
+                if(!string.IsNullOrEmpty(item.assetId))byId.TryGetValue(item.assetId,out record);
+                if(record==null&&!string.IsNullOrWhiteSpace(item.gameModelPath))byPath.TryGetValue(GameAssetIndex.NormalizeModelPath(item.gameModelPath),out record);
+                if(record!=null&&!world.models.IsPrepared(record.Id)&&found.Add(record.Id))result.Add(record);
+            }
+            return result.ToArray();
+        }
+        private static IEnumerable<string> CustomThumbnailModelPaths(string type) {
+            switch(type) {
+                case "zipline":case "curved-zipline":return ReMapZiplineProfiles.RequiredModelPaths;
+                case "ziprail":return new[]{"mdl/props/zip_rail/zip_rail_building_claw_01.rmdl","mdl/props/zip_rail/zip_rail_cord_end_01.rmdl","mdl/props/zip_rail/zip_rail_ground_base_01.rmdl","mdl/props/zip_rail/zip_rail_ground_post_01.rmdl","mdl/props/zip_rail/zip_rail_ground_post_top_01.rmdl"};
+                case "door":return ReMapDoorProfiles.RequiredModelPaths;
+                case "loot-bin":return new[]{LootBinModelPath};
+                case "jump-pad":return new[]{JumpPadModelPath};
+                case "spawn-point":return new[]{SpawnPointModelPath};
+                case "jump-tower":return new[]{JumpTowerBaseModelPath,JumpTowerBalloonModelPath};
+                case "weapon-rack":return new[]{WeaponRackModelPath};
+                case "respawn-heal":return RespawnHealProfiles.Select(profile=>profile.ModelPath);
+                case "button":return new[]{ButtonPanelModelPath,ButtonArrowModelPath};
+                case "speed-boost":return new[]{SpeedBoostBaseModelPath,SpeedBoostOrbModelPath};
+                case "bubble-shield":return new[]{BubbleShieldModelPath};
+                case "animated-camera":return new[]{AnimatedCameraBaseModelPath,AnimatedCameraHeadModelPath};
+                default:return Array.Empty<string>();
+            }
+        }
+        private GameAssetRecord[] CustomThumbnailPriorities(GameAssetRecord[] eligible) {
+            if(catalogMode==null||catalogMode.index!=2||snapshot==null)return Array.Empty<GameAssetRecord>();
+            string term=search.value??"";
+            var paths=new HashSet<string>(CustomCatalogEntries().Where(entry=>entry.SupportsGame(snapshot.gameTarget)&&(entry.Name.IndexOf(term,StringComparison.OrdinalIgnoreCase)>=0||entry.Category.IndexOf(term,StringComparison.OrdinalIgnoreCase)>=0)).SelectMany(entry=>CustomThumbnailModelPaths(entry.CustomType)).Select(GameAssetIndex.NormalizeModelPath),StringComparer.OrdinalIgnoreCase);
+            return eligible.Where(record=>paths.Contains(GameAssetIndex.NormalizeModelPath(record.modelPath))).ToArray();
+        }
         private GameAssetRecord[] NextThumbnailBatch(GameAssetRecord[] eligible,HashSet<string> targetSet,string[] targets,int batchSize) {
             var unavailable=new HashSet<string>(readyThumbnails,StringComparer.OrdinalIgnoreCase);unavailable.UnionWith(extractingThumbnails);
-            var batch=ThumbnailQueue.Next(eligible,visibleAssets,unavailable,failedThumbnails,search.value,targets,batchSize,assetLibrary.PreferredPreviewArchive);
+            var scene=SceneThumbnailPriorities(eligible);var custom=CustomThumbnailPriorities(eligible);
+            var batch=ThumbnailQueue.Next(eligible,scene,visibleAssets,custom,unavailable,failedThumbnails,search.value,targets,batchSize,assetLibrary.PreferredPreviewArchive);
             // Render already exported visible models before waiting for any further archive decompression.
-            var cached=visibleAssets.Where(r=>r.Supports(targetSet)&&!unavailable.Contains(r.Id)&&!failedThumbnails.Contains(r.Id)&&assetLibrary.CachedModel(r)!=null).Take(batchSize).ToArray();
+            bool scenePending=scene.Any(r=>!unavailable.Contains(r.Id)&&!failedThumbnails.Contains(r.Id));
+            var cached=scenePending?Array.Empty<GameAssetRecord>():visibleAssets.Where(r=>r.Supports(targetSet)&&!unavailable.Contains(r.Id)&&!failedThumbnails.Contains(r.Id)&&assetLibrary.CachedModel(r)!=null).Take(batchSize).ToArray();
             return cached.Length>0?cached:batch;
         }
         private ThumbnailExtraction StartThumbnailExtraction(GameAssetRecord[] batch,string[] targets,GameAssetRecord[] eligible) {
@@ -191,6 +231,7 @@ namespace ReMap.Standalone
                             var nextBatch=NextThumbnailBatch(eligible,targetSet,targets,batchSize);
                             if(nextBatch.Length>0)prefetched=StartThumbnailExtraction(nextBatch,targets,eligible);
                         }
+                        var reloadScene=new HashSet<string>(StringComparer.OrdinalIgnoreCase);
                         foreach(var next in batch) {
                             GameObject model=null;Texture2D thumbnail=null;
                             try {
@@ -198,6 +239,7 @@ namespace ReMap.Standalone
                                 await SharedTextureCache.Normalize(assetLibrary.ModelDirectory(next),assetLibrary.Settings.textureLimit);
                                 if(this==null||backgroundStopped||generation!=assetLibrary.CacheRoot)return;
                                 world.models.Prepare(next.Id,cast);model=world.models.Create(next.Id,false);RememberPlacementEntry(next,model);thumbnail=ModelThumbnail.Render(model);
+                                if(snapshot.objects.Any(item=>!item.isGroup&&(string.Equals(item.assetId,next.Id,StringComparison.OrdinalIgnoreCase)||GameAssetIndex.SameModelPath(item.gameModelPath,next.modelPath))))reloadScene.Add(next.Id);
                                 File.WriteAllBytes(Path.Combine(assetLibrary.ModelDirectory(next),"thumbnail.png"),thumbnail.EncodeToPNG());
                                 availableThumbnails.Add(next.Id);
                                 SaveThumbnailInfo(next,world.models.MissingAlbedo(next.Id));
@@ -206,6 +248,7 @@ namespace ReMap.Standalone
                             finally {if(this!=null&&!backgroundStopped){if(model!=null)world.models.Release(next.Id,model);if(thumbnail!=null)Destroy(thumbnail);extractingThumbnails.Remove(next.Id);UpdateThumbnailProgress(eligible);UpdateThumbnailControls();RefreshCatalog();}}
                             await Task.Yield();
                         }
+                        if(reloadScene.Count>0){foreach(string id in reloadScene)world.Reload(id);Refresh();}
                     }catch(OperationCanceledException) { Debug.Log("REMAP_THUMBNAIL_PREEMPTED"); /* Requeued without failure. */ }
                     catch(Exception ex){if(this!=null&&!backgroundStopped)foreach(var entry in batch)if(!readyThumbnails.Contains(entry.Id))ThumbnailFailure(entry,ex);}
                     finally {
