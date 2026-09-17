@@ -107,6 +107,7 @@ namespace ReMap.Standalone
             MenuAction(menu, L.T("#SAVE") + "    Ctrl+S", Save);
             MenuSeparator(menu);
             MenuAction(menu, L.T("#BUILD_GAME_SCRIPT"), BuildGameScript, snapshot?.objects.Count > 0);
+            MenuAction(menu, L.T("#EXPORT_ENT_BUNDLE"), ExportEntBundle, snapshot?.objects.Count > 0);
             MenuAction(menu, L.T("#RESET_INSTALLED_GAME_SCRIPT"), ResetGameScript);
             MenuAction(menu, L.T("#PREVIEW_GAME_CODE"), () => ShowCodePreview(), snapshot?.objects.Count > 0);
             MenuAction(menu, L.T("#LIVE_GAME_F9FC5E"), () => ShowLiveConsole(), snapshot?.objects.Count > 0);
@@ -460,6 +461,16 @@ namespace ReMap.Standalone
             SetStatus(L.F("#PROJECT_EXPORTED_ARG0", path));
         }
 
+        private void ExportEntBundle()
+        {
+            CommitInspectorEdit();
+            string source = WindowsProjectFileDialog.OpenEnt(snapshot?.editingMap);
+            if (string.IsNullOrEmpty(source)) return;
+            string path = ReMapEntExporter.WriteMergedBundle(source, snapshot,
+                world.GenerationObjects(snapshot));
+            SetStatus(L.F("#ENT_BUNDLE_EXPORTED_ARG0", path));
+        }
+
         private void ImportSharedProject()
         {
             string path = WindowsProjectFileDialog.Open();
@@ -681,6 +692,7 @@ namespace ReMap.Standalone
         private const int OverwritePrompt = 0x00000002;
         private const int NoChangeDirectory = 0x00000008;
         private const string Filter = "ReMap project (*.remap-project.json)\0*.remap-project.json\0All files (*.*)\0*.*\0\0";
+        private const string EntFilter = "Apex entity lump (*.ent)\0*.ent\0All files (*.*)\0*.*\0\0";
 
         [StructLayout(LayoutKind.Sequential, CharSet = CharSet.Unicode)]
         private struct OpenFileName
@@ -748,6 +760,22 @@ namespace ReMap.Standalone
             return dialog.file.ToString();
         }
 
+        public static string OpenEnt(string map)
+        {
+            var dialog = Create(L.T("#SELECT_BASE_ENT_LUMP"), (map ?? "") + "_script.ent",
+                Explorer | PathMustExist | FileMustExist | NoChangeDirectory, EntFilter, "ent");
+            bool accepted = GetOpenFileNameW(ref dialog);
+            uint error = accepted ? 0 : CommDlgExtendedError();
+            RestoreOwner(dialog.owner);
+            if (!accepted)
+            {
+                if (error != 0) throw new InvalidOperationException(
+                    "Windows open dialog failed (0x" + error.ToString("X4") + ").");
+                return null;
+            }
+            return dialog.file.ToString();
+        }
+
         private static IntPtr DialogOwner()
         {
             IntPtr active = GetActiveWindow();
@@ -759,12 +787,13 @@ namespace ReMap.Standalone
             if (owner != IntPtr.Zero) SetForegroundWindow(owner);
         }
 
-        private static OpenFileName Create(string title, string initialName, int flags)
+        private static OpenFileName Create(string title, string initialName, int flags,
+            string filter = Filter, string extension = null)
         {
             var dialog = new OpenFileName
             {
                 owner = DialogOwner(),
-                filter = Filter,
+                filter = filter,
                 filterIndex = 1,
                 file = new StringBuilder(initialName ?? "", 4096),
                 maximumFile = 4096,
@@ -773,7 +802,7 @@ namespace ReMap.Standalone
                 initialDirectory = Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments),
                 title = title,
                 flags = flags,
-                defaultExtension = MapFiles.PortableExtension.TrimStart('.')
+                defaultExtension = extension ?? MapFiles.PortableExtension.TrimStart('.')
             };
             dialog.size = Marshal.SizeOf(dialog);
             return dialog;

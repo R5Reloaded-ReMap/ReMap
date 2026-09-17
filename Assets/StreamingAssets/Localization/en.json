@@ -2039,6 +2039,30 @@
       "text": "Build game script"
     },
     {
+      "key": "#EXPORT_ENT_BUNDLE",
+      "text": "Export merged .ent bundle"
+    },
+    {
+      "key": "#SELECT_BASE_ENT_LUMP",
+      "text": "Select one original map .ent lump"
+    },
+    {
+      "key": "#ENT_BUNDLE_EXPORTED_ARG0",
+      "text": ".ent bundle exported: {0}"
+    },
+    {
+      "key": "#ENT_SOURCE_MISSING_ARG0",
+      "text": "The source folder does not contain {0}. Select a folder containing all five original map lumps."
+    },
+    {
+      "key": "#ARG0_NOT_VALID_ENT_LUMP",
+      "text": "{0} is not a valid Apex ENTITIES02 lump."
+    },
+    {
+      "key": "#ENT_VALUE_CONTAINS_INVALID_CHARACTERS",
+      "text": "An .ent value contains a quote, line break, or null character."
+    },
+    {
       "key": "#COPY_LIVE_COMMANDS",
       "text": "Copy live commands"
     },

@@ -2039,6 +2039,30 @@
       "text": "Construire le script jeu"
     },
     {
+      "key": "#EXPORT_ENT_BUNDLE",
+      "text": "Exporter le bundle .ent fusionné"
+    },
+    {
+      "key": "#SELECT_BASE_ENT_LUMP",
+      "text": "Sélectionner un lump .ent original de la carte"
+    },
+    {
+      "key": "#ENT_BUNDLE_EXPORTED_ARG0",
+      "text": "Bundle .ent exporté : {0}"
+    },
+    {
+      "key": "#ENT_SOURCE_MISSING_ARG0",
+      "text": "Le dossier source ne contient pas {0}. Sélectionnez un dossier contenant les cinq lumps originaux de la carte."
+    },
+    {
+      "key": "#ARG0_NOT_VALID_ENT_LUMP",
+      "text": "{0} n’est pas un lump Apex ENTITIES02 valide."
+    },
+    {
+      "key": "#ENT_VALUE_CONTAINS_INVALID_CHARACTERS",
+      "text": "Une valeur .ent contient un guillemet, un saut de ligne ou un caractère nul."
+    },
+    {
       "key": "#COPY_LIVE_COMMANDS",
       "text": "Copier les commandes live"
     },
