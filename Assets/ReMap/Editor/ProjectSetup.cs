@@ -52,7 +52,10 @@ namespace ReMap.Standalone.Editor
         [MenuItem("ReMap/Build Windows app")]
         public static void BuildWindows()
         {
-            BuildWindowsAt("Builds/Windows/ReMap.exe");
+            string configuredOutput = Environment.GetEnvironmentVariable("REMAP_BUILD_OUTPUT");
+            BuildWindowsAt(string.IsNullOrWhiteSpace(configuredOutput)
+                ? "Builds/Windows/ReMap.exe"
+                : configuredOutput);
         }
         private static void BuildWindowsAt(string output)
         {
@@ -64,9 +67,13 @@ namespace ReMap.Standalone.Editor
             {
                 if (!string.IsNullOrWhiteSpace(configuredVersion))
                     PlayerSettings.bundleVersion = configuredVersion.Trim();
+                bool development = Environment.GetEnvironmentVariable("REMAP_DEVELOPMENT_BUILD") == "1";
+                BuildOptions options = development
+                    ? BuildOptions.Development | BuildOptions.AllowDebugging
+                    : BuildOptions.None;
                 var report = BuildPipeline.BuildPlayer(new BuildPlayerOptions {
                     scenes = new[] { ScenePath }, locationPathName = output,
-                    target = BuildTarget.StandaloneWindows64, options = BuildOptions.None
+                    target = BuildTarget.StandaloneWindows64, options = options
                 });
                 if (report.summary.result != BuildResult.Succeeded)
                     throw new Exception("Windows build failed: " + report.summary.result);

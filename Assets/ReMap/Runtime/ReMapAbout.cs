@@ -28,6 +28,7 @@ namespace ReMap.Standalone
 
             content.Add(Label("ReMap", "about-brand"));
             content.Add(Label(L.F("#VERSION_ARG0", Application.version), "about-version"));
+            content.Add(Label(L.T(Debug.isDebugBuild ? "#DEVELOPMENT_BUILD" : "#RELEASE_BUILD"), "about-build-type"));
             content.Add(Label(L.T("#ABOUT_TAGLINE"), "about-tagline"));
 
             content.Add(Label(L.T("#CREDITS"), "section-title"));

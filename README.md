@@ -12,7 +12,7 @@ Add this repository folder as an existing project in Unity Hub.
 Open `Assets/ReMap/Workspace.unity` and enter Play mode. If the scene is missing, use **ReMap > Prepare and open workspace**.
 Unity generates the solution files used by code editors.
 
-Double-click `Build-ReMap.cmd` for the interactive Windows build menu, or run `./Tools/Build-ReMap.ps1` from PowerShell for automation. The tool locates the project's Unity version, builds the sibling `../rsx` solution when needed, and creates the distributable build at `Builds/Windows/ReMap.exe`. A normal development build keeps the current application version; release version changes are explicit so routine builds never dirty the repository.
+Double-click `Build-ReMap.cmd` for the interactive Windows build menu, or run `./Tools/Build-ReMap.ps1` from PowerShell for automation. The menu provides optimized local builds; when the maintainer-only local packager is installed, it also provides personal test packages, Unity development/RC packages, and public release packages. Release candidates use compact tags such as `v0.1.0-rc.1`; final releases use `v0.1.0`. Tags are created locally only after a package succeeds and are never pushed automatically. See [Release workflow](Docs/RELEASING.md).
 Distribute the complete Windows directory, not the executable alone. It contains `ReMap.exe`, `ReMap_Data`, `ReMapLiveBridge.exe`, and the ReMap session build of official RSX with its legal notices. The application version and project credits are available from **Help > About ReMap**.
 
 ## Main features

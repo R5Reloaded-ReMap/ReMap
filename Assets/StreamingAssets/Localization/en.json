@@ -3477,6 +3477,14 @@
     {
       "key": "#ABOUT_DISCLAIMER",
       "text": "Not affiliated with or endorsed by Electronic Arts, Respawn Entertainment, Valve, or Unity Technologies."
+    },
+    {
+      "key": "#DEVELOPMENT_BUILD",
+      "text": "Development build — debugging enabled"
+    },
+    {
+      "key": "#RELEASE_BUILD",
+      "text": "Optimized build"
     }
   ]
 }

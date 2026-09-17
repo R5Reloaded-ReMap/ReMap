@@ -429,7 +429,8 @@ Button.script-property-remove-button:hover { background-color: rgb(91,65,66); }
 .about-content { flex-grow: 1; min-height: 0; padding: 14px 18px 8px 18px; }
 .about-content .unity-scroll-view__content-container { align-items: stretch; }
 .about-brand { -unity-text-align: middle-center; -unity-font-style: bold; font-size: 28px; color: rgb(102,220,184); margin-top: 4px; }
-.about-version { -unity-text-align: middle-center; color: rgb(173,193,213); margin: 2px 0 7px 0; }
+.about-version { -unity-text-align: middle-center; color: rgb(173,193,213); margin: 2px 0 2px 0; }
+.about-build-type { -unity-text-align: middle-center; font-size: 10px; color: rgb(222,177,103); margin-bottom: 7px; }
 .about-tagline { -unity-text-align: middle-center; white-space: normal; color: rgb(211,220,230); margin-bottom: 10px; }
 .about-copy { white-space: normal; color: rgb(188,199,212); margin: 2px 0 5px 0; }
 .about-links { flex-direction: row; margin: 10px 0; }

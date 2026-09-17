@@ -3477,6 +3477,14 @@
     {
       "key": "#ABOUT_DISCLAIMER",
       "text": "Projet non affilié à Electronic Arts, Respawn Entertainment, Valve ou Unity Technologies, et non approuvé par ces sociétés."
+    },
+    {
+      "key": "#DEVELOPMENT_BUILD",
+      "text": "Build de développement — débogage activé"
+    },
+    {
+      "key": "#RELEASE_BUILD",
+      "text": "Build optimisé"
     }
   ]
 }

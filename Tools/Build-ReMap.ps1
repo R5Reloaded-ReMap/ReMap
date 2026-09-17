@@ -10,6 +10,7 @@ param(
 
     [switch]$Clean,
     [switch]$ValidateOnly,
+    [switch]$Development,
     [switch]$Interactive
 )
 
@@ -154,12 +155,14 @@ if ($interactiveMode) {
     Write-Host "ReMap build tool" -ForegroundColor Cyan
     Write-Host "Current application version: $projectVersion"
     Write-Host ""
-    Write-Host "  1. Build ReMap (build RSX only when missing)"
+    Write-Host "  1. Build ReMap locally (optimized)"
     Write-Host "  2. Clean rebuild of RSX and ReMap"
     Write-Host "  3. Validate local prerequisites"
     $publisher = Join-Path $projectRoot "Tools\.local\Publish-ReMap.ps1"
     if (Test-Path -LiteralPath $publisher -PathType Leaf) {
-        Write-Host "  4. Create a local release ZIP"
+        Write-Host "  4. Package a personal/test build"
+        Write-Host "  5. Package a public release"
+        Write-Host "  6. Package a Unity development/RC build"
     }
     Write-Host "  Q. Cancel"
     Write-Host ""
@@ -173,7 +176,21 @@ if ($interactiveMode) {
             if (-not (Test-Path -LiteralPath $publisher -PathType Leaf)) {
                 throw "The personal release packager is not installed at $publisher."
             }
-            & $publisher
+            & $publisher -Mode Personal
+            exit 0
+        }
+        "5" {
+            if (-not (Test-Path -LiteralPath $publisher -PathType Leaf)) {
+                throw "The personal release packager is not installed at $publisher."
+            }
+            & $publisher -Mode Release
+            exit 0
+        }
+        "6" {
+            if (-not (Test-Path -LiteralPath $publisher -PathType Leaf)) {
+                throw "The personal release packager is not installed at $publisher."
+            }
+            & $publisher -Mode Development
             exit 0
         }
         "Q" { exit 0 }
@@ -181,7 +198,9 @@ if ($interactiveMode) {
     }
 }
 
-if ([string]::IsNullOrWhiteSpace($Version)) { $Version = $projectVersion }
+if ([string]::IsNullOrWhiteSpace($Version)) {
+    $Version = if ($Development) { "$projectVersion-dev" } else { $projectVersion }
+}
 if ($Version -notmatch '^[0-9]+\.[0-9]+\.[0-9]+(?:-[0-9A-Za-z.-]+)?(?:\+[0-9A-Za-z.-]+)?$') {
     throw "Application version must use semantic versioning, for example 0.1.0 or 0.1.0-beta.1."
 }
@@ -211,6 +230,7 @@ if ($shouldBuildRsx -or $ValidateOnly) {
 
 Write-Host "ReMap project : $projectRoot"
 Write-Host "App version   : $Version"
+Write-Host "Build type    : $(if ($Development) { 'Unity development/debug' } else { 'optimized' })"
 Write-Host "Unity         : $resolvedUnity"
 Write-Host "RSX source   : $resolvedRsxRoot"
 if ($null -ne $resolvedMSBuild) {
@@ -242,7 +262,8 @@ Assert-File -Path $rsxSessionMarker -Description "The ReMap RSX session marker"
 Assert-File -Path $rsxLicense -Description "The RSX AGPL license"
 Assert-File -Path $rsxNotices -Description "The RSX third-party notices"
 
-$windowsBuildRoot = Join-Path $projectRoot "Builds\Windows"
+$windowsBuildFolder = if ($Development) { "Windows-Development" } else { "Windows" }
+$windowsBuildRoot = Join-Path $projectRoot "Builds\$windowsBuildFolder"
 if ($Clean -and (Test-Path -LiteralPath $windowsBuildRoot)) {
     $resolvedBuildRoot = [IO.Path]::GetFullPath($windowsBuildRoot)
     $expectedPrefix = $projectRoot.TrimEnd('\') + '\Builds\'
@@ -254,13 +275,17 @@ if ($Clean -and (Test-Path -LiteralPath $windowsBuildRoot)) {
 
 $logDirectory = Join-Path $projectRoot "Builds\Logs"
 New-Item -ItemType Directory -Path $logDirectory -Force | Out-Null
-$unityLog = Join-Path $logDirectory "unity-build.log"
+$unityLog = Join-Path $logDirectory $(if ($Development) { "unity-development-build.log" } else { "unity-build.log" })
 
 $previousRsxRoot = $env:REMAP_RSX_ROOT
 $previousBuildVersion = $env:REMAP_BUILD_VERSION
+$previousDevelopmentBuild = $env:REMAP_DEVELOPMENT_BUILD
+$previousBuildOutput = $env:REMAP_BUILD_OUTPUT
 try {
     $env:REMAP_RSX_ROOT = $resolvedRsxRoot
     $env:REMAP_BUILD_VERSION = $Version
+    $env:REMAP_DEVELOPMENT_BUILD = if ($Development) { "1" } else { "0" }
+    $env:REMAP_BUILD_OUTPUT = Join-Path $windowsBuildRoot "ReMap.exe"
     Write-Host "Building ReMap for Windows x64..."
     $unityArguments = @(
         "-batchmode",
@@ -293,6 +318,18 @@ finally {
     }
     else {
         $env:REMAP_BUILD_VERSION = $previousBuildVersion
+    }
+    if ($null -eq $previousDevelopmentBuild) {
+        Remove-Item Env:REMAP_DEVELOPMENT_BUILD -ErrorAction SilentlyContinue
+    }
+    else {
+        $env:REMAP_DEVELOPMENT_BUILD = $previousDevelopmentBuild
+    }
+    if ($null -eq $previousBuildOutput) {
+        Remove-Item Env:REMAP_BUILD_OUTPUT -ErrorAction SilentlyContinue
+    }
+    else {
+        $env:REMAP_BUILD_OUTPUT = $previousBuildOutput
     }
 }
 
