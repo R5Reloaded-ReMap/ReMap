@@ -3959,6 +3959,90 @@
       "text": "Les paramètres du soin réapparaissable sont invalides."
     },
     {
+      "key": "#BUTTON",
+      "text": "Bouton"
+    },
+    {
+      "key": "#CUSTOM_OBJECT_BUTTON",
+      "text": "Bouton personnalisé"
+    },
+    {
+      "key": "#BUTTON_MODE",
+      "text": "Mode du bouton"
+    },
+    {
+      "key": "#BUTTON_VISIBLE",
+      "text": "Visible"
+    },
+    {
+      "key": "#BUTTON_INVISIBLE",
+      "text": "Téléporteur invisible"
+    },
+    {
+      "key": "#BUTTON_USE_TEXT",
+      "text": "Texte d’utilisation"
+    },
+    {
+      "key": "#BUTTON_ON_USE_CALLBACK",
+      "text": "Callback Apex à l’utilisation"
+    },
+    {
+      "key": "#BUTTON_UP",
+      "text": "Flèche haut / suivant"
+    },
+    {
+      "key": "#BUTTON_DESTINATION_OFFSET",
+      "text": "Décalage de destination (u Apex)"
+    },
+    {
+      "key": "#BUTTON_DESTINATION_ANGLES",
+      "text": "Angles de destination"
+    },
+    {
+      "key": "#BUTTON_MESSAGE",
+      "text": "Message"
+    },
+    {
+      "key": "#BUTTON_SUB_MESSAGE",
+      "text": "Sous-message"
+    },
+    {
+      "key": "#BUTTON_MESSAGE_TYPE",
+      "text": "Type de message"
+    },
+    {
+      "key": "#BUTTON_MESSAGE_DURATION",
+      "text": "Durée du message"
+    },
+    {
+      "key": "#BUTTON_TOKEN",
+      "text": "Jeton du message"
+    },
+    {
+      "key": "#BUTTON_CUSTOM_HELP",
+      "text": "Un seul objet pour un panneau visible à callback ou un bouton de téléportation invisible. Les modes dont le modèle manque sont masqués."
+    },
+    {
+      "key": "#BUTTON_VISIBLE_HELP",
+      "text": "Le callback est inséré dans le script serveur Apex généré et reçoit panel, ent et input. L’export live ignore les boutons visibles à callback."
+    },
+    {
+      "key": "#BUTTON_INVISIBLE_HELP",
+      "text": "La destination et la direction sont relatives au bouton : elles le suivent lorsqu’il est déplacé. Les messages sont affichés par R5Flowstate."
+    },
+    {
+      "key": "#BUTTON_CREATED",
+      "text": "Bouton créé."
+    },
+    {
+      "key": "#BUTTON_PREVIEW_ERROR",
+      "text": "Impossible de préparer les modèles du bouton : "
+    },
+    {
+      "key": "#INVALID_BUTTON_SETTINGS",
+      "text": "Les paramètres du bouton sont invalides."
+    },
+    {
       "key": "#DEVELOPMENT_BUILD",
       "text": "Build de développement — débogage activé"
     },

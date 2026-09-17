@@ -26,6 +26,8 @@ global function ReMap_CreateTrigger
 global function ReMap_CreateJumpTower
 global function ReMap_CreateWeaponRack
 global function ReMap_CreateRespawnHeal
+global function ReMap_CreateButton
+global function ReMap_CreateTeleportButton
 
 global const int REMAP_DOOR_SINGLE = 0
 global const int REMAP_DOOR_DOUBLE = 1
@@ -55,6 +57,8 @@ const asset REMAP_HEAL_CELL_MODEL = $"mdl/weapons_r5/loot/w_loot_wep_iso_shield_
 const asset REMAP_HEAL_PHOENIX_MODEL = $"mdl/weapons_r5/loot/w_loot_wep_iso_phoenix_kit_v1.rmdl"
 const asset REMAP_HEAL_IDLE_FX = $"P_LL_med_drone_jet_ctr_loop"
 const string REMAP_HEAL_ACTIVE_SOUND = "Lifeline_Drone_Healing_1P"
+const asset REMAP_BUTTON_PANEL_MODEL = $"mdl/props/global_access_panel_button/global_access_panel_button_console_w_stand.rmdl"
+const asset REMAP_BUTTON_ARROW_MODEL = $"mdl/weapons/bullets/damage_arrow.rmdl"
 
 struct
 {
@@ -132,8 +136,7 @@ void function ReMap_CreateDoor( vector origin, vector angles, int type = REMAP_D
 
 		case REMAP_DOOR_VERTICAL:
 		{
-			entity door = ReMap_CreateDoorEntity( "prop_dynamic", REMAP_DOOR_MODEL_VERTICAL,
-				"survival_door_plain", origin, angles, false )
+			entity door = ReMap_CreateDoorEntity( "prop_dynamic", REMAP_DOOR_MODEL_VERTICAL, "survival_door_plain", origin, angles, false )
 			DispatchSpawn( door )
 			if ( spawnOpen )
 				ReMap_OpenPlainDoorAtSpawn( door )
@@ -143,8 +146,7 @@ void function ReMap_CreateDoor( vector origin, vector angles, int type = REMAP_D
 
 		case REMAP_DOOR_HORIZONTAL:
 		{
-			entity door = ReMap_CreateDoorEntity( "prop_dynamic", REMAP_DOOR_MODEL_HORIZONTAL,
-				"survival_door_plain", origin, angles, false )
+			entity door = ReMap_CreateDoorEntity( "prop_dynamic", REMAP_DOOR_MODEL_HORIZONTAL, "survival_door_plain", origin, angles, false )
 			DispatchSpawn( door )
 			if ( spawnOpen )
 				ReMap_OpenPlainDoorAtSpawn( door )
@@ -203,10 +205,58 @@ entity function ReMap_CreateLootBin( vector origin, vector angles, int skin = 0 
 	return lootBin
 }
 
-entity function ReMap_CreateJumpPad( vector origin, vector angles, bool allowMantle = true,
-	float fadeDistance = 50000.0, int realmId = -1, float scale = 1.0,
-	float launchVelocity = 1000.0, float forwardScale = 1.7, float radius = 45.0,
-	bool doubleJump = true )
+entity function ReMap_CreateButton( vector origin, vector angles, bool visible = true,
+	bool up = true, string useText = "" )
+{
+	entity panel = CreateEntity( "prop_dynamic" )
+	panel.SetValueForModelKey( REMAP_BUTTON_PANEL_MODEL )
+	panel.SetOrigin( origin )
+	panel.SetAngles( angles )
+	panel.kv.solid = 0
+	DispatchSpawn( panel )
+	panel.SetUsable()
+	panel.SetUsableByGroup( "pilot" )
+	string prompt = useText
+	if ( prompt == "" )
+		prompt = visible ? "%use% Use" : ( up ? "%use% Next" : "%use% Back" )
+	panel.SetUsePrompts( prompt, prompt )
+	file.props.append( panel )
+
+	if ( !visible )
+	{
+		panel.MakeInvisible()
+		vector arrowOffset = up ? < 0, 0, -25 > : < 0, 0, 100 >
+		vector arrowAngles = up ? < -90, 90, 0 > : < 90, -90, 0 >
+		entity arrow = CreateEntity( "prop_dynamic" )
+		arrow.SetValueForModelKey( REMAP_BUTTON_ARROW_MODEL )
+		arrow.SetOrigin( origin + arrowOffset )
+		arrow.SetAngles( angles + arrowAngles )
+		arrow.kv.solid = 0
+		arrow.kv.fadedist = 300
+		DispatchSpawn( arrow )
+		arrow.SetModelScale( 10.0 )
+		file.props.append( arrow )
+	}
+	return panel
+}
+
+void function ReMap_CreateTeleportButton( vector origin, vector angles, bool up,
+	vector destination, vector direction, string message = "", string subMessage = "",
+	int messageType = 4, float duration = 5.0, string token = "#FS_STRING_VAR" )
+{
+	entity panel = ReMap_CreateButton( origin, angles, false, up )
+	AddCallback_OnUseEntity( panel, void function( entity usedPanel, entity ent, int input ) :
+		( destination, direction, message, subMessage, messageType, duration, token )
+	{
+		if ( !IsValid( ent ) || !ent.IsPlayer() )
+			return
+		ent.SetOrigin( destination )
+		ent.SetAngles( direction )
+		ent.SetVelocity( ZERO_VECTOR )
+	} )
+}
+
+entity function ReMap_CreateJumpPad( vector origin, vector angles, bool allowMantle = true, float fadeDistance = 50000.0, int realmId = -1, float scale = 1.0, float launchVelocity = 1000.0, float forwardScale = 1.7, float radius = 45.0, bool doubleJump = true )
 {
 	entity jumpPad = ReMap_CreateProp( REMAP_JUMP_PAD_MODEL, origin, angles, allowMantle,
 		fadeDistance, realmId, scale )
@@ -470,9 +520,7 @@ void function ReMap_WeaponRackRespawnThread( entity rack, entity weapon, string 
 	thread ReMap_WeaponRackRespawnThread( rack, replacement, weaponName, respawnTime )
 }
 
-void function ReMap_CreateRespawnHeal( vector origin, int healType = REMAP_HEAL_MEDKIT,
-	float respawnTime = 6.0, float healDuration = 5.0, int healAmount = 25,
-	bool progressive = true )
+void function ReMap_CreateRespawnHeal( vector origin, int healType = REMAP_HEAL_MEDKIT, float respawnTime = 6.0, float healDuration = 5.0, int healAmount = 25, bool progressive = true )
 {
 	entity pickup = CreateEntity( "prop_dynamic" )
 	pickup.SetOrigin( origin )

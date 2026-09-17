@@ -3959,6 +3959,90 @@
       "text": "The respawnable heal settings are invalid."
     },
     {
+      "key": "#BUTTON",
+      "text": "Button"
+    },
+    {
+      "key": "#CUSTOM_OBJECT_BUTTON",
+      "text": "Custom button"
+    },
+    {
+      "key": "#BUTTON_MODE",
+      "text": "Button mode"
+    },
+    {
+      "key": "#BUTTON_VISIBLE",
+      "text": "Visible"
+    },
+    {
+      "key": "#BUTTON_INVISIBLE",
+      "text": "Invisible teleport"
+    },
+    {
+      "key": "#BUTTON_USE_TEXT",
+      "text": "Use prompt"
+    },
+    {
+      "key": "#BUTTON_ON_USE_CALLBACK",
+      "text": "On-use Apex callback"
+    },
+    {
+      "key": "#BUTTON_UP",
+      "text": "Up / next arrow"
+    },
+    {
+      "key": "#BUTTON_DESTINATION_OFFSET",
+      "text": "Destination offset (Apex u)"
+    },
+    {
+      "key": "#BUTTON_DESTINATION_ANGLES",
+      "text": "Destination angles"
+    },
+    {
+      "key": "#BUTTON_MESSAGE",
+      "text": "Message"
+    },
+    {
+      "key": "#BUTTON_SUB_MESSAGE",
+      "text": "Sub-message"
+    },
+    {
+      "key": "#BUTTON_MESSAGE_TYPE",
+      "text": "Message type"
+    },
+    {
+      "key": "#BUTTON_MESSAGE_DURATION",
+      "text": "Message duration"
+    },
+    {
+      "key": "#BUTTON_TOKEN",
+      "text": "Message token"
+    },
+    {
+      "key": "#BUTTON_CUSTOM_HELP",
+      "text": "One object for a visible callback panel or an invisible teleport button. Unavailable model modes are hidden."
+    },
+    {
+      "key": "#BUTTON_VISIBLE_HELP",
+      "text": "The callback is inserted in the generated Apex server script and receives panel, ent and input. Live export skips visible callback buttons."
+    },
+    {
+      "key": "#BUTTON_INVISIBLE_HELP",
+      "text": "The destination and direction are relative to the button, so they follow it when it moves. Messages are displayed by R5Flowstate."
+    },
+    {
+      "key": "#BUTTON_CREATED",
+      "text": "Button created."
+    },
+    {
+      "key": "#BUTTON_PREVIEW_ERROR",
+      "text": "Could not prepare button models: "
+    },
+    {
+      "key": "#INVALID_BUTTON_SETTINGS",
+      "text": "The button settings are invalid."
+    },
+    {
       "key": "#DEVELOPMENT_BUILD",
       "text": "Development build — debugging enabled"
     },

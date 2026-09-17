@@ -97,6 +97,17 @@ namespace ReMap.Standalone.Core
         public float respawnHealDuration = 5f;
         public int respawnHealAmount = 25;
         public bool respawnHealProgressive = true;
+        public string buttonMode = "visible";
+        public string buttonUseText = "";
+        public string buttonCallback = "";
+        public bool buttonUp = true;
+        public Float3 buttonDestination;
+        public Float3 buttonDirection;
+        public string buttonMessage = "";
+        public string buttonSubMessage = "";
+        public int buttonMessageType = 4;
+        public float buttonMessageDuration = 5f;
+        public string buttonToken = "#FS_STRING_VAR";
         public bool commonAsset;
         public List<string> availableMaps = new List<string>();
         public bool allowMantle = true;
@@ -183,6 +194,12 @@ namespace ReMap.Standalone.Core
                 item.triggerEnterCallback = item.triggerEnterCallback ?? "";
                 item.triggerLeaveCallback = item.triggerLeaveCallback ?? "";
                 item.weaponRackWeapon = item.weaponRackWeapon ?? "mp_weapon_rspn101";
+                item.buttonMode = item.buttonMode ?? "visible";
+                item.buttonUseText = item.buttonUseText ?? "";
+                item.buttonCallback = item.buttonCallback ?? "";
+                item.buttonMessage = item.buttonMessage ?? "";
+                item.buttonSubMessage = item.buttonSubMessage ?? "";
+                item.buttonToken = item.buttonToken ?? "#FS_STRING_VAR";
                 if (item.customType == "curved-zipline" && item.customProfile == "")
                     item.customProfile = item.curvedZiplineSupport ? "arm" : "none";
                 if (item.customType == "curved-zipline")
@@ -205,7 +222,8 @@ namespace ReMap.Standalone.Core
                     item.customType != "loot-bin" && item.customType != "jump-pad" &&
                     item.customType != "spawn-point" && item.customType != "trigger" &&
                     item.customType != "jump-tower" && item.customType != "jump-tower-component" &&
-                    item.customType != "weapon-rack" && item.customType != "respawn-heal")
+                    item.customType != "weapon-rack" && item.customType != "respawn-heal" &&
+                    item.customType != "button")
                     throw new ArgumentException(L.T("#UNKNOWN_CUSTOM_OBJECT_TYPE"));
                 if (item.customType == "zipline" && !item.isGroup)
                     throw new ArgumentException(L.T("#ZIPLINE_HIERARCHY_GROUP"));
@@ -287,6 +305,17 @@ namespace ReMap.Standalone.Core
                     item.respawnHealDuration > 3600f || item.respawnHealAmount < 1 ||
                     item.respawnHealAmount > 1000))
                     throw new ArgumentException(L.T("#INVALID_RESPAWN_HEAL_SETTINGS"));
+                if (item.customType == "button" && ((item.buttonMode != "visible" &&
+                    item.buttonMode != "invisible") || !item.buttonDestination.IsFinite ||
+                    !item.buttonDirection.IsFinite || item.buttonUseText.Length > 2048 ||
+                    item.buttonCallback.Length > 65535 || item.buttonMessage.Length > 2048 ||
+                    item.buttonSubMessage.Length > 2048 || item.buttonToken.Length > 256 ||
+                    item.buttonMessageType < 0 || item.buttonMessageType > 16 ||
+                    !Finite(item.buttonMessageDuration) || item.buttonMessageDuration < 0f ||
+                    item.buttonMessageDuration > 3600f || item.buttonUseText.IndexOf('\0') >= 0 ||
+                    item.buttonCallback.IndexOf('\0') >= 0 || item.buttonMessage.IndexOf('\0') >= 0 ||
+                    item.buttonSubMessage.IndexOf('\0') >= 0 || item.buttonToken.IndexOf('\0') >= 0))
+                    throw new ArgumentException(L.T("#INVALID_BUTTON_SETTINGS"));
                 if (!item.position.IsFinite || !item.rotation.IsFinite || !item.scale.IsFinite)
                     throw new ArgumentException(L.T("#TRANSFORMS_FINITE_NUMBERS"));
                 if (!Finite(item.fadeDistance) || item.fadeDistance < -1f)

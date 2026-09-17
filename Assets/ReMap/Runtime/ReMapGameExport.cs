@@ -69,6 +69,12 @@ namespace ReMap.Standalone
             models.AddRange(world.Where(o => o.customType == "respawn-heal")
                 .Select(o => ReMapApp.RespawnHealModelPath(o.respawnHealType))
                 .Where(model => !models.Contains(model, StringComparer.OrdinalIgnoreCase)));
+            if (world.Any(o => o.customType == "button") &&
+                !models.Contains(ReMapApp.ButtonPanelModelPath, StringComparer.OrdinalIgnoreCase))
+                models.Add(ReMapApp.ButtonPanelModelPath);
+            if (world.Any(o => o.customType == "button" && o.buttonMode == "invisible") &&
+                !models.Contains(ReMapApp.ButtonArrowModelPath, StringComparer.OrdinalIgnoreCase))
+                models.Add(ReMapApp.ButtonArrowModelPath);
             Vector3 originOffset = OriginOffset(document);
             bool useOriginOffset = HasOriginOffset(originOffset);
             var shared = new StringBuilder();
@@ -104,6 +110,7 @@ namespace ReMap.Standalone
             AppendJumpTowers(server, world, false, originOffset, useOriginOffset);
             AppendWeaponRacks(server, world, false, originOffset, useOriginOffset);
             AppendRespawnHeals(server, world, false, originOffset, useOriginOffset);
+            AppendButtons(server, world, false, originOffset, useOriginOffset);
             AppendCurvedZiplines(server, world, false, originOffset, useOriginOffset);
             AppendZiplines(server, world, false, originOffset, useOriginOffset);
 
@@ -195,6 +202,7 @@ namespace ReMap.Standalone
             AppendJumpTowers(result, world, true, originOffset, false);
             AppendWeaponRacks(result, world, true, originOffset, false);
             AppendRespawnHeals(result, world, true, originOffset, false);
+            AppendButtons(result, world, true, originOffset, false);
             AppendCurvedZiplines(result, world, true, originOffset, false);
             AppendZiplines(result, world, true, originOffset, false);
             return result.ToString();
@@ -532,6 +540,51 @@ namespace ReMap.Standalone
             }
         }
 
+        private static void AppendButtons(StringBuilder code, List<MapObject> world, bool live,
+            Vector3 originOffset, bool symbolicOffset)
+        {
+            var buttons = world.Where(o => o.customType == "button").ToList();
+            if (!live && buttons.Count > 0) { code.AppendLine(); code.AppendLine("\t// Buttons"); }
+            int variableIndex = 0;
+            foreach (var button in buttons)
+            {
+                Vector3 buttonPosition = WorldView.ToVector(button.position);
+                Quaternion buttonRotation = Quaternion.Euler(WorldView.ToVector(button.rotation));
+                Vector3 destination = buttonPosition + buttonRotation * WorldView.ToVector(button.buttonDestination);
+                Vector3 direction = (buttonRotation * Quaternion.Euler(WorldView.ToVector(button.buttonDirection))).eulerAngles;
+                string common = Position(button.position, originOffset, symbolicOffset) + ", " +
+                    Vector(ApexDisplay.Angles(WorldView.ToVector(button.rotation)));
+                if (button.buttonMode == "invisible")
+                {
+                    string expression = "ReMap_CreateTeleportButton( " + common + ", " +
+                        (button.buttonUp ? "true" : "false") + ", " +
+                        Position(WorldView.ToData(destination), originOffset, symbolicOffset) + ", " +
+                        Vector(ApexDisplay.Angles(direction)) + ", " + ScriptString(button.buttonMessage) + ", " +
+                        ScriptString(button.buttonSubMessage) + ", " +
+                        button.buttonMessageType.ToString(CultureInfo.InvariantCulture) + ", " +
+                        Number(button.buttonMessageDuration) + ", " + ScriptString(button.buttonToken) + " )";
+                    code.Append(live ? "script " : "\t").Append(expression).AppendLine();
+                    continue;
+                }
+                if (live) continue;
+                string variable = "remapButton" + (variableIndex++).ToString(CultureInfo.InvariantCulture);
+                code.Append("\tentity ").Append(variable).Append(" = ReMap_CreateButton( ")
+                    .Append(common).Append(", true, true, ").Append(ScriptString(button.buttonUseText)).AppendLine(" )");
+                AppendButtonCallback(code, variable, button.buttonCallback);
+            }
+        }
+
+        private static void AppendButtonCallback(StringBuilder code, string variable, string callback)
+        {
+            callback = (callback ?? "").Replace("\r\n", "\n").Replace('\r', '\n');
+            if (string.IsNullOrWhiteSpace(callback)) return;
+            code.Append("\tAddCallback_OnUseEntity( ").Append(variable)
+                .AppendLine(", void function( entity panel, entity ent, int input )");
+            code.AppendLine("\t{");
+            foreach (string line in callback.Split('\n')) code.Append("\t\t").AppendLine(line);
+            code.AppendLine("\t} )");
+        }
+
         private static void AppendTriggerCallback(StringBuilder code, string variable,
             string setter, string callback)
         {
@@ -562,6 +615,8 @@ namespace ReMap.Standalone
         }
 
         private static string Vector(Vector3 value) => "<" + Number(value.x) + ", " + Number(value.y) + ", " + Number(value.z) + ">";
+        private static string ScriptString(string value) => "\"" + (value ?? "")
+            .Replace("\\", "\\\\").Replace("\"", "\\\"").Replace("\r", "").Replace("\n", "\\n") + "\"";
         private static string Number(float value)
         {
             double rounded = Math.Round(value, 4, MidpointRounding.AwayFromZero);
