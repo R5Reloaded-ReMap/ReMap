@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using ReMap.Standalone.Core;
@@ -43,7 +44,8 @@ namespace ReMap.Standalone
             var roots=SelectionRoots();if(roots.Count==0)throw new InvalidOperationException(L.T("#SELECT_ITEMS_SAVE"));
             var branches=MapSelection.Branches(snapshot,roots);var rootIds=roots.ToHashSet();
             var bounds=world.CombinedBounds(roots);var pivot=bounds.HasValue?new Vector3(bounds.Value.center.x,bounds.Value.min.y,bounds.Value.center.z):SelectionPivot();
-            var assembly=new MapDocument {name=name};var group=new MapObject{isGroup=true,assetId="group:empty",displayName=name};assembly.objects.Add(group);
+            var assembly=new MapDocument {name=name,gameTarget=snapshot.gameTarget,editingMap=snapshot.editingMap,
+                targetMaps=new List<string>(snapshot.targetMaps??new List<string>())};var group=new MapObject{isGroup=true,assetId="group:empty",displayName=name};assembly.objects.Add(group);
             foreach(var original in snapshot.objects.Where(o=>branches.Contains(o.id))) {
                 var copy=original.Copy();if(rootIds.Contains(copy.id)) {
                     var pose=world.ReparentPose(copy.id,"");copy.parentId=group.id;copy.position=WorldView.ToData(WorldView.ToVector(pose.position)-pivot);copy.rotation=pose.rotation;copy.scale=pose.scale;
@@ -94,7 +96,8 @@ namespace ReMap.Standalone
             if(roots.Length==0){SetStatus(L.T("#SELECT_ONE_MORE_OBJECTS_DUPLICATE"));return;}
             var branches=MapSelection.Branches(snapshot,roots);var rootIds=roots.ToHashSet();
             var pivot=SelectionDuplicatePlacementPivot(roots);
-            var template=new MapDocument{name="duplicate"};
+            var template=new MapDocument{name="duplicate",gameTarget=snapshot.gameTarget,editingMap=snapshot.editingMap,
+                targetMaps=new List<string>(snapshot.targetMaps??new List<string>())};
             foreach(var original in snapshot.objects.Where(o=>branches.Contains(o.id)))
             {
                 var copy=original.Copy();

@@ -21,7 +21,8 @@ namespace ReMap.Standalone
             if (found) return result;
             var item = syncedZiplineDocument?.objects.Find(candidate => candidate.id == id);
             return item != null && (item.customType == "zipline" || item.customType == "zipline-endpoint" ||
-                item.customType == "curved-zipline" || item.customType == "curved-zipline-point")
+                item.customType == "curved-zipline" || item.customType == "curved-zipline-point" ||
+                item.customType == "ziprail" || item.customType == "ziprail-point")
                 ? new Bounds(instance.transform.position, Vector3.zero) : (Bounds?)null;
         }
         public Vector3 ParentDelta(string id, Vector3 delta) => instances[id].transform.parent.InverseTransformVector(delta);

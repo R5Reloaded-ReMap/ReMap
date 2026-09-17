@@ -38,5 +38,17 @@ namespace ReMap.Standalone
             return !profile.HasSupport || HasModel(records, targets,
                 ReMapZiplineProfiles.SupportModelPath);
         }
+
+        internal static bool ZiprailProfile(IEnumerable<GameAssetRecord> records,
+            IEnumerable<string> targets, ReMapZiprailProfile profile)
+        {
+            if (profile == null) return false;
+            return ReMapZiprailProfiles.ModelPaths(profile).All(path =>
+                HasModel(records, targets, path));
+        }
+
+        public static bool ZiprailProfile(IEnumerable<GameAssetRecord> records,
+            IEnumerable<string> targets, string profileId) =>
+            ZiprailProfile(records, targets, ReMapZiprailProfiles.Find(profileId));
     }
 }

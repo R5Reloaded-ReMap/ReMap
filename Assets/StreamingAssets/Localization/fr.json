@@ -4451,6 +4451,46 @@
       "text": "Les dimensions de l’indication de fenêtre sont invalides."
     },
     {
+      "key": "#ZIPRAIL",
+      "text": "Ziprail"
+    },
+    {
+      "key": "#ZIPRAIL_CUSTOM_HELP",
+      "text": "Crée un ziprail natif R5Flowstate avec des nœuds de train modifiables. Chaque point peut n’avoir aucun modèle, un bras de rail, ou un support avec bras sans collision. Les modèles de Broken Moon nécessitent la sélection de son RPAK."
+    },
+    {
+      "key": "#ZIPRAIL_CREATED",
+      "text": "Ziprail créé."
+    },
+    {
+      "key": "#ZIPRAIL_CONTROL_POINT",
+      "text": "Point de contrôle du ziprail"
+    },
+    {
+      "key": "#ZIPRAIL_SUPPORT_HEIGHT_APEX_U",
+      "text": "Hauteur du support (u Apex)"
+    },
+    {
+      "key": "#ZIPRAIL_R5FLOWSTATE_ONLY",
+      "text": "Les ziprails sont uniquement pris en charge par R5Flowstate."
+    },
+    {
+      "key": "#INVALID_ZIPRAIL_SETTINGS",
+      "text": "Les réglages du ziprail sont invalides."
+    },
+    {
+      "key": "#ZIPRAIL_NEEDS_TWO_POINTS",
+      "text": "Un ziprail nécessite au moins deux points de contrôle."
+    },
+    {
+      "key": "#INVALID_ZIPRAIL_POINT",
+      "text": "La hiérarchie des points de contrôle du ziprail est invalide."
+    },
+    {
+      "key": "#ARG0_ZIPRAIL_POINTS_MISSING",
+      "text": "{0} : des points de contrôle du ziprail sont manquants."
+    },
+    {
       "key": "#DEVELOPMENT_BUILD",
       "text": "Build de développement — débogage activé"
     },

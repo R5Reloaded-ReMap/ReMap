@@ -4451,6 +4451,46 @@
       "text": "The window hint dimensions are invalid."
     },
     {
+      "key": "#ZIPRAIL",
+      "text": "Ziprail"
+    },
+    {
+      "key": "#ZIPRAIL_CUSTOM_HELP",
+      "text": "Creates an R5Flowstate native ziprail through editable train nodes. Every point can use no model, a rail arm, or a collision-free support and arm. Broken Moon model choices require its RPAK to be selected."
+    },
+    {
+      "key": "#ZIPRAIL_CREATED",
+      "text": "Ziprail created."
+    },
+    {
+      "key": "#ZIPRAIL_CONTROL_POINT",
+      "text": "Ziprail control point"
+    },
+    {
+      "key": "#ZIPRAIL_SUPPORT_HEIGHT_APEX_U",
+      "text": "Support height (Apex u)"
+    },
+    {
+      "key": "#ZIPRAIL_R5FLOWSTATE_ONLY",
+      "text": "Ziprails are only supported by R5Flowstate."
+    },
+    {
+      "key": "#INVALID_ZIPRAIL_SETTINGS",
+      "text": "The ziprail settings are invalid."
+    },
+    {
+      "key": "#ZIPRAIL_NEEDS_TWO_POINTS",
+      "text": "A ziprail needs at least two control points."
+    },
+    {
+      "key": "#INVALID_ZIPRAIL_POINT",
+      "text": "The ziprail control-point hierarchy is invalid."
+    },
+    {
+      "key": "#ARG0_ZIPRAIL_POINTS_MISSING",
+      "text": "{0}: ziprail control points are missing."
+    },
+    {
       "key": "#DEVELOPMENT_BUILD",
       "text": "Development build — debugging enabled"
     },

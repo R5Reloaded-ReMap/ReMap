@@ -249,6 +249,8 @@ namespace ReMap.Standalone.Core
                     item.customType != "zipline-component" && item.customType != "door" &&
                     item.customType != "door-component" && item.customType != "curved-zipline" &&
                     item.customType != "curved-zipline-point" && item.customType != "curved-zipline-component" &&
+                    item.customType != "ziprail" && item.customType != "ziprail-point" &&
+                    item.customType != "ziprail-component" &&
                     item.customType != "loot-bin" && item.customType != "jump-pad" &&
                     item.customType != "spawn-point" && item.customType != "trigger" &&
                     item.customType != "jump-tower" && item.customType != "jump-tower-component" &&
@@ -309,6 +311,21 @@ namespace ReMap.Standalone.Core
                 if (item.customType == "curved-zipline-point" && (!Finite(item.ziplineArmHeight) ||
                     item.ziplineArmHeight < 70f || item.ziplineArmHeight > 290f))
                     throw new ArgumentException(L.T("#INVALID_ZIPLINE_ARM_HEIGHT"));
+                if ((item.customType == "ziprail" || item.customType == "ziprail-point" ||
+                    item.customType == "ziprail-component") && gameTarget != GameTargets.R5Flowstate)
+                    throw new ArgumentException(L.T("#ZIPRAIL_R5FLOWSTATE_ONLY"));
+                if (item.customType == "ziprail" && (!item.isGroup ||
+                    !Finite(item.ziplineWidth) || item.ziplineWidth < .1f || item.ziplineWidth > 32f ||
+                    !Finite(item.ziplineSpeed) || item.ziplineSpeed < .1f || item.ziplineSpeed > 10f ||
+                    !Finite(item.ziplineAutoDetachStart) || !Finite(item.ziplineAutoDetachEnd) ||
+                    item.ziplineAutoDetachStart < 0f || item.ziplineAutoDetachStart > 65535f ||
+                    item.ziplineAutoDetachEnd < 0f || item.ziplineAutoDetachEnd > 65535f))
+                    throw new ArgumentException(L.T("#INVALID_ZIPRAIL_SETTINGS"));
+                if (item.customType == "ziprail-point" &&
+                    (item.customProfile != "none" && item.customProfile != "arm" &&
+                    item.customProfile != "support" || !Finite(item.ziplineArmHeight) ||
+                    item.ziplineArmHeight < 40f || item.ziplineArmHeight > 1024f))
+                    throw new ArgumentException(L.T("#INVALID_ZIPRAIL_SETTINGS"));
                 if (item.customType == "loot-bin" && (item.lootBinSkin < 0 || item.lootBinSkin > 3))
                     throw new ArgumentException(L.T("#INVALID_LOOT_BIN_SKIN"));
                 if (item.customType == "jump-pad" && (!Finite(item.jumpPadLaunchVelocity) ||
@@ -501,6 +518,29 @@ namespace ReMap.Standalone.Core
                     var parent = objects.Find(o => o.id == item.parentId);
                     if (parent == null || parent.customType != "curved-zipline-point")
                         throw new ArgumentException(L.T("#INVALID_CURVED_ZIPLINE_POINT"));
+                }
+                else if (item.customType == "ziprail")
+                {
+                    var points = objects.FindAll(o => o.parentId == item.id &&
+                        o.customType == "ziprail-point");
+                    points.Sort((a, b) => ParsePointIndex(a).CompareTo(ParsePointIndex(b)));
+                    if (points.Count < 2)
+                        throw new ArgumentException(L.T("#ZIPRAIL_NEEDS_TWO_POINTS"));
+                    for (int index = 0; index < points.Count; index++)
+                        if (ParsePointIndex(points[index]) != index)
+                            throw new ArgumentException(L.T("#INVALID_ZIPRAIL_POINT"));
+                }
+                else if (item.customType == "ziprail-point")
+                {
+                    var parent = objects.Find(o => o.id == item.parentId);
+                    if (parent == null || parent.customType != "ziprail" || ParsePointIndex(item) < 0)
+                        throw new ArgumentException(L.T("#INVALID_ZIPRAIL_POINT"));
+                }
+                else if (item.customType == "ziprail-component")
+                {
+                    var parent = objects.Find(o => o.id == item.parentId);
+                    if (parent == null || parent.customType != "ziprail-point")
+                        throw new ArgumentException(L.T("#INVALID_ZIPRAIL_POINT"));
                 }
             }
             NormalizeZiplineStartPositions();

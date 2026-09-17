@@ -108,6 +108,13 @@ namespace ReMap.Standalone.Core
             }
             else if (requested.customType == "curved-zipline-point")
                 id = requested.parentId;
+            if (requested.customType == "ziprail-component")
+            {
+                var point = doc.objects.SingleOrDefault(item => item.id == requested.parentId);
+                id = point?.customType == "ziprail-point" ? point.parentId : requested.parentId;
+            }
+            else if (requested.customType == "ziprail-point")
+                id = requested.parentId;
             var ids = Subtree(doc, id); var source = doc.objects.Where(o => ids.Contains(o.id)).ToArray();
             var mapping = source.ToDictionary(o => o.id, o => Guid.NewGuid().ToString("N"));
             foreach (var item in source)

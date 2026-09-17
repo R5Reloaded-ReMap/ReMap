@@ -32,9 +32,10 @@ namespace ReMap.Standalone
             foreach (var item in document.objects)
             {
                 if (!instances.TryGetValue(item.id, out var instance)) continue;
-                if (item.customType == "zipline-endpoint" || item.customType == "curved-zipline-point")
+                if (item.customType == "zipline-endpoint" || item.customType == "curved-zipline-point" ||
+                    item.customType == "ziprail-point")
                     EnsureZiplineMarker(instance, item);
-                if (item.customType == "curved-zipline-component")
+                if (item.customType == "curved-zipline-component" || item.customType == "ziprail-component")
                     foreach (var collider in instance.GetComponentsInChildren<Collider>(true))
                         collider.enabled = false;
                 if (item.customType == "trigger") EnsureTriggerVisual(instance, item);
@@ -118,6 +119,30 @@ namespace ReMap.Standalone
                 line.enabled = controls.Length >= 2;
                 if (!line.enabled) continue;
                 var curve = CurvedZiplinePreviewPoints(controls, item.curvedZiplineSegments);
+                line.positionCount = curve.Length;
+                line.SetPositions(curve);
+            }
+            foreach (var item in document.objects)
+            {
+                if (item.customType != "ziprail" || !instances.TryGetValue(item.id, out var instance))
+                    continue;
+                var line = instance.GetComponent<LineRenderer>();
+                if (line == null)
+                {
+                    line = instance.AddComponent<LineRenderer>();
+                    line.useWorldSpace = true; line.numCapVertices = 4;
+                }
+                line.sharedMaterial = ZiplineCableMaterial();
+                line.widthMultiplier = Mathf.Max(.1f, item.ziplineWidth) * ApexCoordinates.MetersPerUnit;
+                var controls = document.objects.Where(candidate => candidate.parentId == item.id &&
+                    candidate.customType == "ziprail-point")
+                    .OrderBy(candidate => int.TryParse(candidate.customRole, out int index)
+                        ? index : int.MaxValue)
+                    .Select(candidate => instances.TryGetValue(candidate.id, out var point)
+                        ? point.transform.position : Vector3.zero).ToArray();
+                line.enabled = controls.Length >= 2;
+                if (!line.enabled) continue;
+                var curve = ZiprailPreviewPoints(controls, item.curvedZiplineSegments);
                 line.positionCount = curve.Length;
                 line.SetPositions(curve);
             }
@@ -325,12 +350,40 @@ namespace ReMap.Standalone
                 instanceIds[marker] = item.id;
             }
             else marker = markerTransform.gameObject;
-            marker.transform.position = ZiplineCableAnchor(instance, item);
+            marker.transform.position = item.customType == "ziprail-point"
+                ? instance.transform.position
+                : ZiplineCableAnchor(instance, item);
             var tint = new MaterialPropertyBlock();
-            bool start = item.customRole == "start" || item.customType == "curved-zipline-point" && item.customRole == "0";
+            bool railPoint = item.customType == "curved-zipline-point" || item.customType == "ziprail-point";
+            bool start = item.customRole == "start" || railPoint && item.customRole == "0";
             tint.SetColor("_BaseColor", start ? new Color(.25f, 1f, .55f) :
-                item.customType == "curved-zipline-point" ? new Color(.2f, .75f, 1f) : new Color(1f, .58f, .2f));
+                railPoint ? new Color(.2f, .75f, 1f) : new Color(1f, .58f, .2f));
             marker.GetComponent<Renderer>().SetPropertyBlock(tint);
+        }
+
+        public static Vector3[] ZiprailPreviewPoints(IReadOnlyList<Vector3> controls, int segmentsPerSpan)
+        {
+            if (controls == null || controls.Count < 2) return Array.Empty<Vector3>();
+            segmentsPerSpan = Mathf.Clamp(segmentsPerSpan, 2, 32);
+            var result = new List<Vector3>((controls.Count - 1) * segmentsPerSpan + 1) {
+                controls[0]
+            };
+            for (int span = 0; span < controls.Count - 1; span++)
+            {
+                Vector3 p0 = span == 0 ? controls[span] : controls[span - 1];
+                Vector3 p1 = controls[span];
+                Vector3 p2 = controls[span + 1];
+                Vector3 p3 = span + 2 < controls.Count ? controls[span + 2] : p2;
+                for (int segment = 1; segment <= segmentsPerSpan; segment++)
+                {
+                    float t = segment / (float)segmentsPerSpan;
+                    float t2 = t * t, t3 = t2 * t;
+                    result.Add(.5f * ((2f * p1) + (-p0 + p2) * t +
+                        (2f * p0 - 5f * p1 + 4f * p2 - p3) * t2 +
+                        (-p0 + 3f * p1 - 3f * p2 + p3) * t3));
+                }
+            }
+            return result.ToArray();
         }
 
         public static Vector3[] CurvedZiplinePreviewPoints(IReadOnlyList<Vector3> controls, int segmentsPerSpan)
@@ -620,6 +673,29 @@ namespace ReMap.Standalone
                     var curve = CurvedZiplinePreviewPoints(controls, 8);
                     curveLine.positionCount = curve.Length; curveLine.SetPositions(curve);
                     curveLine.widthMultiplier = .04f; curveLine.numCapVertices = 4;
+                    ghost.transform.position = position.Value;
+                    return;
+                }
+                if (entry.CustomType == "ziprail")
+                {
+                    ghost = new GameObject("Ziprail placement preview");
+                    ghost.transform.SetParent(root.transform);
+                    var controls = new[] { Vector3.zero, new Vector3(3.8f, 1.2f, 1.5f),
+                        new Vector3(7.6f, 0f, 0f) };
+                    foreach (var control in controls)
+                    {
+                        var marker = GameObject.CreatePrimitive(PrimitiveType.Sphere);
+                        marker.transform.SetParent(ghost.transform, false);
+                        marker.transform.localPosition = control;
+                        marker.transform.localScale = Vector3.one * .18f;
+                        marker.GetComponent<Collider>().enabled = false;
+                        marker.GetComponent<Renderer>().sharedMaterial = lineMaterial;
+                    }
+                    var railLine = ghost.AddComponent<LineRenderer>();
+                    railLine.sharedMaterial = lineMaterial; railLine.useWorldSpace = false;
+                    var curve = ZiprailPreviewPoints(controls, 8);
+                    railLine.positionCount = curve.Length; railLine.SetPositions(curve);
+                    railLine.widthMultiplier = .04f; railLine.numCapVertices = 4;
                     ghost.transform.position = position.Value;
                     return;
                 }

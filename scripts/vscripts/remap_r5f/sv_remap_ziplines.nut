@@ -20,6 +20,7 @@ global function ReMap_PrecacheZiplines
 global function ReMap_ClearZiplines
 global function ReMap_CreateZipline
 global function ReMap_CreateCurvedZipline
+global function ReMap_CreateZiprail
 
 global const int REMAP_ZIPLINE_END_NONE = 0
 global const int REMAP_ZIPLINE_END_ARM = 1
@@ -27,6 +28,15 @@ global const int REMAP_ZIPLINE_END_SUPPORT = 2
 
 const asset REMAP_ZIPLINE_MODEL_ARM = $"mdl/industrial/zipline_arm.rmdl"
 const asset REMAP_ZIPLINE_MODEL_SUPPORT = $"mdl/industrial/security_fence_post.rmdl"
+global const int REMAP_ZIPRAIL_POINT_NONE = 0
+global const int REMAP_ZIPRAIL_POINT_ARM = 1
+global const int REMAP_ZIPRAIL_POINT_SUPPORT = 2
+
+const asset REMAP_ZIPRAIL_MODEL_BUILDING_CLAW = $"mdl/props/zip_rail/zip_rail_building_claw_01.rmdl"
+const asset REMAP_ZIPRAIL_MODEL_CORD_END = $"mdl/props/zip_rail/zip_rail_cord_end_01.rmdl"
+const asset REMAP_ZIPRAIL_MODEL_GROUND_BASE = $"mdl/props/zip_rail/zip_rail_ground_base_01.rmdl"
+const asset REMAP_ZIPRAIL_MODEL_GROUND_POST = $"mdl/props/zip_rail/zip_rail_ground_post_01.rmdl"
+const asset REMAP_ZIPRAIL_MODEL_GROUND_POST_TOP = $"mdl/props/zip_rail/zip_rail_ground_post_top_01.rmdl"
 
 struct
 {
@@ -254,4 +264,121 @@ vector function ReMap_CreateZiplineEndModel( int profile, vector origin, vector 
 	}
 
 	return origin
+}
+
+void function ReMap_CreateZiprail( array<vector> controlPoints,
+	array<int> pointProfiles = [], array<vector> pointAngles = [],
+	array<float> pointSupportHeights = [], float width = 1.75,
+	float speedScale = 1.75, float startAutoDetachDistance = 0.0,
+	float endAutoDetachDistance = 0.0 )
+{
+	if ( controlPoints.len() < 2 )
+		return
+
+	for ( int index = 1; index < controlPoints.len(); index++ )
+	{
+		if ( Distance( controlPoints[index - 1], controlPoints[index] ) < 0.01 )
+			return
+	}
+
+	for ( int index = 0; index < controlPoints.len(); index++ )
+	{
+		int profile = index < pointProfiles.len() ? pointProfiles[index] : REMAP_ZIPRAIL_POINT_NONE
+		vector angles = index < pointAngles.len() ? pointAngles[index] : <0, 0, 0>
+		float supportHeight = index < pointSupportHeights.len() ? pointSupportHeights[index] : 320.0
+		ReMap_CreateZiprailPointModels( profile, controlPoints[index], angles, supportHeight )
+	}
+
+	array<entity> nodes
+	for ( int index = 0; index < controlPoints.len(); index++ )
+	{
+		bool isEndpoint = index == 0 || index == controlPoints.len() - 1
+		entity node = CreateEntity( isEndpoint ? "zipline" : "script_mover_train_node" )
+		node.SetOrigin( controlPoints[index] )
+		node.SetScriptName( "script_control_omit_zipline" )
+		if ( isEndpoint )
+		{
+			vector direction = index == 0
+				? controlPoints[index] - controlPoints[index + 1]
+				: controlPoints[index] - controlPoints[index - 1]
+			node.SetAngles( VectorToAngles( Normalize( direction ) ) )
+			float autoDetachDistance = index == 0
+				? startAutoDetachDistance : endAutoDetachDistance
+			ReMap_SetZiprailEndpointProperties( node, width, speedScale, autoDetachDistance )
+		}
+		else
+		{
+			node.kv.tangent_type = 0
+			node.kv.num_smooth_points = -1
+			node.kv.perfect_circular_rotation = 0
+		}
+		nodes.append( node )
+	}
+
+	for ( int index = 1; index < nodes.len(); index++ )
+		nodes[index].LinkToEnt( nodes[index - 1] )
+	foreach ( entity node in nodes )
+	{
+		DispatchSpawn( node )
+		file.entities.append( node )
+	}
+}
+
+void function ReMap_SetZiprailEndpointProperties( entity endpoint, float width,
+	float speedScale, float autoDetachDistance )
+{
+	endpoint.kv.Material = "cable/zipline.vmt"
+	endpoint.kv.DetachEndOnSpawn = 0
+	endpoint.kv.DetachEndOnUse = 0
+	endpoint.kv.scale = 1
+	endpoint.kv.Width = width
+	endpoint.kv.ZiplineAutoDetachDistance = autoDetachDistance
+	endpoint.kv.ZiplineDropToBottom = 1
+	endpoint.kv.ZiplineFadeDistance = -1
+	endpoint.kv.ZiplineLengthScale = 1
+	endpoint.kv.ZiplinePreserveVelocity = 0
+	endpoint.kv.ZiplinePushOffInDirectionX = 0
+	endpoint.kv.ZiplineSpeedScale = speedScale
+	endpoint.kv.ZiplineVersion = 3
+	endpoint.kv.ZiplineVertical = 0
+	endpoint.kv.isZiprailStart = 1
+	endpoint.kv.ziprailMountReverseDistance = 200
+	endpoint.kv.useAutoDetachSpeed = 0
+	endpoint.kv.useZiprailAutoDetachSpeed = autoDetachDistance > 0.0 ? 1 : 0
+}
+
+void function ReMap_CreateZiprailPointModels( int profile, vector origin,
+	vector angles, float supportHeight )
+{
+	if ( profile == REMAP_ZIPRAIL_POINT_ARM )
+	{
+		ReMap_CreateZiprailProp( REMAP_ZIPRAIL_MODEL_BUILDING_CLAW,
+			origin + RotateVector( <0, 235, -137>, angles ), angles )
+		ReMap_CreateZiprailProp( REMAP_ZIPRAIL_MODEL_CORD_END, origin,
+			<angles.x, angles.y + 180.0, angles.z> )
+	}
+	else if ( profile == REMAP_ZIPRAIL_POINT_SUPPORT )
+	{
+		supportHeight = clamp( supportHeight, 40.0, 1024.0 )
+		ReMap_CreateZiprailProp( REMAP_ZIPRAIL_MODEL_GROUND_BASE,
+			origin + RotateVector( <0, 0, -supportHeight>, angles ), angles )
+		ReMap_CreateZiprailProp( REMAP_ZIPRAIL_MODEL_GROUND_POST, origin, angles )
+		ReMap_CreateZiprailProp( REMAP_ZIPRAIL_MODEL_GROUND_POST_TOP,
+			origin + RotateVector( <0, 4, -1>, angles ), angles )
+		ReMap_CreateZiprailProp( REMAP_ZIPRAIL_MODEL_CORD_END, origin,
+			<angles.x, angles.y + 90.0, angles.z> )
+	}
+}
+
+entity function ReMap_CreateZiprailProp( asset model, vector origin, vector angles )
+{
+	entity prop = CreateEntity( "prop_dynamic" )
+	prop.SetOrigin( origin )
+	prop.SetAngles( angles )
+	prop.SetValueForModelKey( model )
+	prop.kv.solid = 0
+	prop.kv.contents = 0
+	DispatchSpawn( prop )
+	file.entities.append( prop )
+	return prop
 }

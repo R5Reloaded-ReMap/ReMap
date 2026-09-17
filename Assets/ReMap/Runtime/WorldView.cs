@@ -469,7 +469,8 @@ namespace ReMap.Standalone
             {
                 if (item.isGroup && item.customType != "zipline" && item.customType != "zipline-endpoint" &&
                     item.customType != "door" && item.customType != "curved-zipline" &&
-                    item.customType != "curved-zipline-point" && item.customType != "loot-bin" &&
+                    item.customType != "curved-zipline-point" && item.customType != "ziprail" &&
+                    item.customType != "ziprail-point" && item.customType != "loot-bin" &&
                     item.customType != "jump-pad" && item.customType != "spawn-point" &&
                     item.customType != "trigger" && item.customType != "jump-tower" &&
                     item.customType != "weapon-rack" && item.customType != "respawn-heal" &&
@@ -482,6 +483,7 @@ namespace ReMap.Standalone
                 if (!MapHierarchy.IsEnabled(document, item.id)) continue;
                 var copy = item.Copy(); var pose = WorldPose(item.id);
                 copy.parentId = item.customType == "curved-zipline-point" ||
+                    item.customType == "ziprail-point" ||
                     item.customType == "camera-path-point" || item.customType == "camera-path-target" ||
                     item.customType == "sound-point"
                     ? item.parentId : "";

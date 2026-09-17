@@ -829,7 +829,8 @@ namespace ReMap.Standalone
 
             if (item.customType == "zipline" || item.customType == "zipline-endpoint" ||
                 item.customType == "door" || item.customType == "curved-zipline" ||
-                item.customType == "curved-zipline-point" || item.customType == "loot-bin" ||
+                item.customType == "curved-zipline-point" || item.customType == "ziprail" ||
+                item.customType == "ziprail-point" || item.customType == "loot-bin" ||
                 item.customType == "jump-pad" || item.customType == "spawn-point" ||
                 item.customType == "trigger" || item.customType == "jump-tower" ||
                 item.customType == "weapon-rack" || item.customType == "respawn-heal" ||
@@ -846,6 +847,8 @@ namespace ReMap.Standalone
                 else if (item.customType == "door") BuildDoorInspector(item, remapSettings);
                 else if (item.customType == "curved-zipline") BuildCurvedZiplineInspector(item, remapSettings);
                 else if (item.customType == "curved-zipline-point") BuildCurvedZiplinePointInspector(item, remapSettings);
+                else if (item.customType == "ziprail") BuildZiprailInspector(item, remapSettings);
+                else if (item.customType == "ziprail-point") BuildZiprailPointInspector(item, remapSettings);
                 else if (item.customType == "loot-bin") BuildLootBinInspector(item, remapSettings);
                 else if (item.customType == "jump-pad") BuildJumpPadInspector(item, remapSettings);
                 else if (item.customType == "spawn-point") BuildSpawnPointInspector(item, remapSettings);
@@ -883,6 +886,8 @@ namespace ReMap.Standalone
                 item.customType == "door" ? L.T("#CUSTOM_OBJECT_DOOR") :
                 item.customType == "curved-zipline" ? L.T("#CUSTOM_OBJECT_CURVED_ZIPLINE") :
                 item.customType == "curved-zipline-point" ? L.T("#CURVED_ZIPLINE_CONTROL_POINT") :
+                item.customType == "ziprail" ? L.T("#ZIPRAIL") :
+                item.customType == "ziprail-point" ? L.T("#ZIPRAIL_CONTROL_POINT") :
                 item.customType == "loot-bin" ? L.T("#CUSTOM_OBJECT_LOOT_BIN") :
                 item.customType == "jump-pad" ? L.T("#CUSTOM_OBJECT_JUMP_PAD") :
                 item.customType == "spawn-point" ? L.T("#CUSTOM_OBJECT_SPAWN_POINT") :
@@ -1051,10 +1056,19 @@ namespace ReMap.Standalone
                 if (points.Count(id => !ids.Contains(id)) < 2)
                     ids.RemoveWhere(points.Contains);
             }
+            foreach (var ziprail in snapshot.objects.Where(item => item.customType == "ziprail" && !ids.Contains(item.id)))
+            {
+                var points = snapshot.objects.Where(item => item.parentId == ziprail.id &&
+                    item.customType == "ziprail-point").Select(item => item.id).ToArray();
+                if (points.Count(id => !ids.Contains(id)) < 2)
+                    ids.RemoveWhere(points.Contains);
+            }
             session.Edit(doc => {
                 doc.objects.RemoveAll(o => ids.Contains(o.id));
                 foreach (var zipline in doc.objects.Where(item => item.customType == "curved-zipline").ToArray())
                     NormalizeCurvedZiplinePoints(doc, zipline.id);
+                foreach (var ziprail in doc.objects.Where(item => item.customType == "ziprail").ToArray())
+                    NormalizeZiprailPoints(doc, ziprail.id);
             });
             selectedId = null; Refresh();
 

@@ -12,6 +12,9 @@ namespace ReMap.Standalone
             new CatalogEntry("custom:zipline", L.T("#ZIPLINE"), L.T("#CUSTOM"), new Vector3(1, 10.16f, 1)) { CustomType = "zipline" },
             new CatalogEntry("custom:door", L.T("#DOOR"), L.T("#CUSTOM"), new Vector3(1.83f, 2.44f, .15f)) { CustomType = "door" },
             new CatalogEntry("custom:curved-zipline", L.T("#CURVED_ZIPLINE"), L.T("#CUSTOM"), new Vector3(15.24f, 2.04f, 2.54f)) { CustomType = "curved-zipline" },
+            new CatalogEntry("custom:ziprail", L.T("#ZIPRAIL"), L.T("#CUSTOM"), new Vector3(15.24f, 2.04f, 2.54f)) {
+                CustomType = "ziprail", SupportedGameTargets = new[] { GameTargets.R5Flowstate }
+            },
             new CatalogEntry("custom:loot-bin", L.T("#LOOT_BIN"), L.T("#CUSTOM"), new Vector3(2.1f, 1.25f, 1.05f)) { CustomType = "loot-bin" },
             new CatalogEntry("custom:jump-pad", L.T("#JUMP_PAD"), L.T("#CUSTOM"), new Vector3(1.2f, .3f, 1.2f)) { CustomType = "jump-pad" },
             new CatalogEntry("custom:spawn-point", L.T("#SPAWN_POINT"), L.T("#CUSTOM"), new Vector3(1.22f, 1.83f, .81f)) { CustomType = "spawn-point" },
@@ -32,7 +35,7 @@ namespace ReMap.Standalone
 
         private bool CustomObjectAvailable(CatalogEntry entry)
         {
-            if (entry == null) return false;
+            if (entry == null || !entry.SupportsGame(snapshot?.gameTarget)) return false;
             if (entry.CustomType == "door")
                 return ReMapModelAvailability.Door(assetLibrary?.Records, Targets);
             if (entry.CustomType == "loot-bin")
@@ -77,13 +80,15 @@ namespace ReMap.Standalone
                 card.tooltip = available ? L.T("#DOUBLE_CLICK_PLACE_DRAG_SCENE") :
                     L.T("#CUSTOM_OBJECT_MODELS_UNAVAILABLE");
                 var image = new VisualElement(); image.AddToClassList("card-image");
-                image.Add(Label(entry.CustomType == "curved-zipline" ? "●╮●╰●" : "●━━━━●", "custom-card-symbol")); card.Add(image);
+                image.Add(Label(entry.CustomType == "curved-zipline" || entry.CustomType == "ziprail"
+                    ? "●╮●╰●" : "●━━━━●", "custom-card-symbol")); card.Add(image);
                 card.Add(Label(entry.Name, "card-name")); card.Add(Label(entry.Category, "card-category"));
                 if (previewEntry?.Id == entry.Id) card.AddToClassList("selected");
                 catalogList.Add(card);
             }
             if (entries.Length == 0) catalogList.Add(Label(L.T("#NO_CUSTOM_OBJECT_MATCHES_SEARCH"), "note"));
             _ = PrepareZiplineModels();
+            _ = PrepareZiprailModels();
             _ = PrepareDoorModels();
             _ = PrepareLootBinModel();
             _ = PrepareJumpPadModel();
@@ -107,6 +112,7 @@ namespace ReMap.Standalone
             previewText.text = entry.Name + "\n" + L.T("#CATEGORY") + entry.Category + "\n\n" +
                 L.T(entry.CustomType == "door" ? "#DOOR_CUSTOM_HELP" :
                     entry.CustomType == "curved-zipline" ? "#CURVED_ZIPLINE_CUSTOM_HELP" :
+                    entry.CustomType == "ziprail" ? "#ZIPRAIL_CUSTOM_HELP" :
                     entry.CustomType == "loot-bin" ? "#LOOT_BIN_CUSTOM_HELP" :
                     entry.CustomType == "jump-pad" ? "#JUMP_PAD_CUSTOM_HELP" :
                     entry.CustomType == "spawn-point" ? "#SPAWN_POINT_CUSTOM_HELP" :
@@ -126,6 +132,7 @@ namespace ReMap.Standalone
                     "#CABLE_TWO_INDEPENDENTLY_MOVABLE_ENDPOINTS");
             placeAssetButton.SetEnabled(true); RefreshCatalog();
             _ = PrepareZiplineModels();
+            _ = PrepareZiprailModels();
             _ = PrepareDoorModels();
             _ = PrepareLootBinModel();
             _ = PrepareJumpPadModel();
@@ -146,6 +153,7 @@ namespace ReMap.Standalone
             if (entry?.CustomType == "zipline") InsertZipline(position, parent);
             else if (entry?.CustomType == "door") InsertDoor(position, parent);
             else if (entry?.CustomType == "curved-zipline") InsertCurvedZipline(position, parent);
+            else if (entry?.CustomType == "ziprail") InsertZiprail(position, parent);
             else if (entry?.CustomType == "loot-bin") InsertLootBin(position, parent);
             else if (entry?.CustomType == "jump-pad") InsertJumpPad(position, parent);
             else if (entry?.CustomType == "spawn-point") InsertSpawnPoint(position, parent);
