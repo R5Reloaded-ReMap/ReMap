@@ -124,37 +124,73 @@ namespace ReMap.Standalone
             return missing>0;
         }
         private string ThumbnailStatus(GameAssetRecord record) => extractingThumbnails.Contains(record.Id)?L.T("#EXTRACTING_B5C67A"):failedThumbnails.Contains(record.Id)||previewFailures.ContainsKey(record.Id)?L.T("#FAILED_RETRY"):L.T("#QUEUED");
+        private sealed class ThumbnailExtraction {
+            public GameAssetRecord[] batch;
+            public CancellationTokenSource cancellation;
+            public Task<AssetBatchResult> work;
+            public IVisualElementScheduledItem progress;
+        }
+        private bool ThumbnailExternalWorkBlocked() => indexRequested||pendingAssetDrops>0||thumbnailPaused||SettingsOpen||IndexingOpen||inspectorDirty||libraryDragging||draggingGizmo||sceneSelectionPending||assemblyDragging;
+        private bool ThumbnailWorkBlocked() => assetBusy||ThumbnailExternalWorkBlocked();
+        private GameAssetRecord[] NextThumbnailBatch(GameAssetRecord[] eligible,HashSet<string> targetSet,string[] targets,int batchSize) {
+            var unavailable=new HashSet<string>(readyThumbnails,StringComparer.OrdinalIgnoreCase);unavailable.UnionWith(extractingThumbnails);
+            var batch=ThumbnailQueue.Next(eligible,visibleAssets,unavailable,failedThumbnails,search.value,targets,batchSize,assetLibrary.PreferredPreviewArchive);
+            // Render already exported visible models before waiting for any further archive decompression.
+            var cached=visibleAssets.Where(r=>r.Supports(targetSet)&&!unavailable.Contains(r.Id)&&!failedThumbnails.Contains(r.Id)&&assetLibrary.CachedModel(r)!=null).Take(batchSize).ToArray();
+            return cached.Length>0?cached:batch;
+        }
+        private ThumbnailExtraction StartThumbnailExtraction(GameAssetRecord[] batch,string[] targets,GameAssetRecord[] eligible) {
+            var extraction=new ThumbnailExtraction{batch=batch,cancellation=new CancellationTokenSource()};
+            extractingThumbnails.UnionWith(batch.Select(r=>r.Id));RefreshCatalog();
+            bool multiple=batch.Length>1;float started=Time.realtimeSinceStartup;
+            UpdateThumbnailProgress(eligible,multiple?L.F("#EXTRACTING_ARG0_MODELS",batch.Length):L.F("#PREPARING_ARG0",batch[0].Name));
+            thumbnailExport=extraction.cancellation;
+            extraction.work=assetLibrary.ExtractBatchAsync(batch,targets,extraction.cancellation.Token);
+            extraction.progress=thumbnailProgress.schedule.Execute(()=> {
+                if(extraction.work.IsCompleted)return;
+                UpdateThumbnailProgress(eligible,multiple?L.F("#ARG0_S_READING_ARG1_MODELS",(int)(Time.realtimeSinceStartup-started),batch.Length):L.F("#ARG0_S_ARG1",(int)(Time.realtimeSinceStartup-started),batch[0].Name));
+            }).Every(1000);
+            return extraction;
+        }
+        private async Task<AssetBatchResult> FinishThumbnailExtraction(ThumbnailExtraction extraction) {
+            try{return await extraction.work;}
+            finally {
+                extraction.progress.Pause();
+                if(ReferenceEquals(thumbnailExport,extraction.cancellation))thumbnailExport=null;
+                extraction.cancellation.Dispose();
+            }
+        }
         private async Task PrepareThumbnails()
         {
             if(thumbnailLoopRunning||assetLibrary.CacheRoot==null)return;
             thumbnailIdleRevision++;
             thumbnailLoopRunning=true;string generation=assetLibrary.CacheRoot;ReadThumbnailState();
+            ThumbnailExtraction prefetched=null;
             try {
                 while(this!=null&&!backgroundStopped&&generation==assetLibrary.CacheRoot) {
                     string[] targets=Targets;var targetSet=new HashSet<string>(targets,StringComparer.OrdinalIgnoreCase);
                     var eligible=assetLibrary.Records.Where(r=>r.Supports(targetSet)).ToArray();
                     UpdateThumbnailProgress(eligible);
                     UpdateThumbnailControls();
-                    if(thumbnailDone+thumbnailFailed>=thumbnailTotal)break;
-                    if(assetBusy||indexRequested||pendingAssetDrops>0||thumbnailPaused||SettingsOpen||IndexingOpen||inspectorDirty||libraryDragging||draggingGizmo||sceneSelectionPending||assemblyDragging){await Task.Delay(200);continue;}
+                    if(thumbnailDone+thumbnailFailed>=thumbnailTotal&&prefetched==null)break;
+                    if(ThumbnailWorkBlocked()){await Task.Delay(200);continue;}
                     bool continuous=assetLibrary.ContinuousPreviewsSupported;
                     int batchSize=assetLibrary.BatchPreviewsSupported?8:continuous?1:assetLibrary.UsesForkFeatures?8:1;
-                    var batch=ThumbnailQueue.Next(eligible,visibleAssets,readyThumbnails,failedThumbnails,search.value,targets,batchSize,assetLibrary.PreferredPreviewArchive);
-                    if(batch.Length==0)break;
-                    // Render already exported visible models before waiting for any further archive decompression.
-                    var cached=visibleAssets.Where(r=>r.Supports(targetSet)&&!readyThumbnails.Contains(r.Id)&&!failedThumbnails.Contains(r.Id)&&assetLibrary.CachedModel(r)!=null).Take(batchSize).ToArray();
-                    if(cached.Length>0)batch=cached;
-                    SetAssetBusy(true);extractingThumbnails.UnionWith(batch.Select(r=>r.Id));RefreshCatalog();
+                    var current=prefetched;prefetched=null;
+                    if(current==null) {
+                        var nextBatch=NextThumbnailBatch(eligible,targetSet,targets,batchSize);
+                        if(nextBatch.Length==0)break;
+                        current=StartThumbnailExtraction(nextBatch,targets,eligible);
+                    }
+                    var batch=current.batch;SetAssetBusy(true);
                     try {
-                        UpdateThumbnailProgress(eligible,continuous?L.F("#PREPARING_ARG0",batch[0].Name):L.F("#EXTRACTING_ARG0_MODELS",batch.Length));
-                        AssetBatchResult result;
-                        using(var cancel=new CancellationTokenSource()) {
-                            thumbnailExport=cancel;var started=Time.realtimeSinceStartup;
-                            var progress=thumbnailProgress.schedule.Execute(()=>UpdateThumbnailProgress(eligible,continuous?L.F("#ARG0_S_ARG1",(int)(Time.realtimeSinceStartup-started),batch[0].Name):L.F("#ARG0_S_READING_ARG1_MODELS",(int)(Time.realtimeSinceStartup-started),batch.Length))).Every(1000);
-                            try {result=await assetLibrary.ExtractBatchAsync(batch,targets,cancel.Token);}
-                            finally {progress.Pause();thumbnailExport=null;}
-                        }
+                        AssetBatchResult result=await FinishThumbnailExtraction(current);
                         if(this==null||backgroundStopped||generation!=assetLibrary.CacheRoot)return;
+                        // Keep RSX busy with one bounded look-ahead batch while Unity renders this batch.
+                        if(!ThumbnailExternalWorkBlocked()) {
+                            var nextBatch=NextThumbnailBatch(eligible,targetSet,targets,batchSize);
+                            if(nextBatch.Length>0)prefetched=StartThumbnailExtraction(nextBatch,targets,eligible);
+                        }
                         foreach(var next in batch) {
                             GameObject model=null;Texture2D thumbnail=null;
                             try {
@@ -173,12 +209,19 @@ namespace ReMap.Standalone
                     }catch(OperationCanceledException) { Debug.Log("REMAP_THUMBNAIL_PREEMPTED"); /* Requeued without failure. */ }
                     catch(Exception ex){if(this!=null&&!backgroundStopped)foreach(var entry in batch)if(!readyThumbnails.Contains(entry.Id))ThumbnailFailure(entry,ex);}
                     finally {
-                        if(this!=null&&!backgroundStopped){extractingThumbnails.Clear();SetAssetBusy(false);RefreshCatalog();if(!indexRequested&&queuedPreview!=null){var next=queuedPreview;queuedPreview=null;_=PreviewGameAsset(next);}}
+                        if(this!=null&&!backgroundStopped){foreach(var entry in batch)extractingThumbnails.Remove(entry.Id);SetAssetBusy(false);RefreshCatalog();if(!indexRequested&&queuedPreview!=null){var next=queuedPreview;queuedPreview=null;_=PreviewGameAsset(next);}}
                     }
                     if(continuous)await Task.Yield();else await Task.Delay(150);
                 }
             }finally{
-                try{if(backgroundStopped||thumbnailDone+thumbnailFailed>=thumbnailTotal)await assetLibrary.ReleasePreviewSessionAsync();}
+                try{
+                    if(prefetched!=null) {
+                        prefetched.cancellation.Cancel();
+                        try{await FinishThumbnailExtraction(prefetched);}catch(Exception ex){Debug.LogWarning("REMAP_THUMBNAIL_PREFETCH_STOP: "+ex.Message);}
+                        foreach(var entry in prefetched.batch)extractingThumbnails.Remove(entry.Id);
+                    }
+                    if(backgroundStopped||thumbnailDone+thumbnailFailed>=thumbnailTotal)await assetLibrary.ReleasePreviewSessionAsync();
+                }
                 finally{thumbnailLoopRunning=false;UpdateThumbnailControls();if(!backgroundStopped&&thumbnailDone+thumbnailFailed<thumbnailTotal)_=ReleaseThumbnailSessionAfterIdle(generation);}
             }
         }
