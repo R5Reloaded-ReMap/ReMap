@@ -22,7 +22,8 @@ namespace ReMap.Standalone
             new CatalogEntry("custom:button", L.T("#BUTTON"), L.T("#CUSTOM"), new Vector3(.8f, 1.2f, .8f)) { CustomType = "button" },
             new CatalogEntry("custom:speed-boost", L.T("#SPEED_BOOST"), L.T("#CUSTOM"), new Vector3(1.5f, 1.3f, 1.5f)) { CustomType = "speed-boost" },
             new CatalogEntry("custom:bubble-shield", L.T("#BUBBLE_SHIELD"), L.T("#CUSTOM"), new Vector3(5.2f, 5.2f, 5.2f)) { CustomType = "bubble-shield" },
-            new CatalogEntry("custom:camera-path", L.T("#CAMERA_PATH"), L.T("#CUSTOM"), new Vector3(15f, 2f, 2f)) { CustomType = "camera-path" }
+            new CatalogEntry("custom:camera-path", L.T("#CAMERA_PATH"), L.T("#CUSTOM"), new Vector3(15f, 2f, 2f)) { CustomType = "camera-path" },
+            new CatalogEntry("custom:animated-camera", L.T("#ANIMATED_CAMERA"), L.T("#CUSTOM"), new Vector3(1f, 1f, 1f)) { CustomType = "animated-camera" }
         };
 
         private bool CustomObjectAvailable(CatalogEntry entry)
@@ -51,6 +52,7 @@ namespace ReMap.Standalone
             if (entry.CustomType == "speed-boost") return SpeedBoostModelsAvailable();
             if (entry.CustomType == "bubble-shield")
                 return ReMapModelAvailability.HasModel(assetLibrary?.Records, Targets, BubbleShieldModelPath);
+            if (entry.CustomType == "animated-camera") return AnimatedCameraModelsAvailable();
             return true;
         }
 
@@ -88,6 +90,7 @@ namespace ReMap.Standalone
             _ = PrepareButtonModels();
             _ = PrepareSpeedBoostModels();
             _ = PrepareBubbleShieldModel();
+            _ = PrepareAnimatedCameraModels();
         }
 
         private void SelectCustomAsset(CatalogEntry entry)
@@ -111,6 +114,7 @@ namespace ReMap.Standalone
                     entry.CustomType == "speed-boost" ? "#SPEED_BOOST_CUSTOM_HELP" :
                     entry.CustomType == "bubble-shield" ? "#BUBBLE_SHIELD_CUSTOM_HELP" :
                     entry.CustomType == "camera-path" ? "#CAMERA_PATH_CUSTOM_HELP" :
+                    entry.CustomType == "animated-camera" ? "#ANIMATED_CAMERA_CUSTOM_HELP" :
                     "#CABLE_TWO_INDEPENDENTLY_MOVABLE_ENDPOINTS");
             placeAssetButton.SetEnabled(true); RefreshCatalog();
             _ = PrepareZiplineModels();
@@ -124,6 +128,7 @@ namespace ReMap.Standalone
             _ = PrepareButtonModels();
             _ = PrepareSpeedBoostModels();
             _ = PrepareBubbleShieldModel();
+            _ = PrepareAnimatedCameraModels();
         }
 
         private void InsertCustomObject(CatalogEntry entry, Vector3 position, string parent = "")
@@ -144,6 +149,7 @@ namespace ReMap.Standalone
             else if (entry?.CustomType == "speed-boost") InsertSpeedBoost(position, parent);
             else if (entry?.CustomType == "bubble-shield") InsertBubbleShield(position, parent);
             else if (entry?.CustomType == "camera-path") InsertCameraPath(position, parent);
+            else if (entry?.CustomType == "animated-camera") InsertAnimatedCamera(position, parent);
         }
     }
 }

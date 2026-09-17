@@ -88,6 +88,13 @@ namespace ReMap.Standalone
             if (world.Any(o => o.customType == "camera-path") &&
                 !models.Contains("mdl/dev/empty_model.rmdl", StringComparer.OrdinalIgnoreCase))
                 models.Add("mdl/dev/empty_model.rmdl");
+            if (world.Any(o => o.customType == "animated-camera"))
+            {
+                if (!models.Contains(ReMapApp.AnimatedCameraBaseModelPath, StringComparer.OrdinalIgnoreCase))
+                    models.Add(ReMapApp.AnimatedCameraBaseModelPath);
+                if (!models.Contains(ReMapApp.AnimatedCameraHeadModelPath, StringComparer.OrdinalIgnoreCase))
+                    models.Add(ReMapApp.AnimatedCameraHeadModelPath);
+            }
             Vector3 originOffset = OriginOffset(document);
             bool useOriginOffset = HasOriginOffset(originOffset);
             var shared = new StringBuilder();
@@ -128,6 +135,7 @@ namespace ReMap.Standalone
             AppendButtons(server, world, false, originOffset, useOriginOffset);
             AppendSpeedBoosts(server, world, false, originOffset, useOriginOffset);
             AppendBubbleShields(server, world, false, originOffset, useOriginOffset);
+            AppendAnimatedCameras(server, world, false, originOffset, useOriginOffset);
             AppendCurvedZiplines(server, world, false, originOffset, useOriginOffset);
             AppendZiplines(server, world, false, originOffset, useOriginOffset);
 
@@ -223,6 +231,7 @@ namespace ReMap.Standalone
             AppendButtons(result, world, true, originOffset, false);
             AppendSpeedBoosts(result, world, true, originOffset, false);
             AppendBubbleShields(result, world, true, originOffset, false);
+            AppendAnimatedCameras(result, world, true, originOffset, false);
             AppendCurvedZiplines(result, world, true, originOffset, false);
             AppendZiplines(result, world, true, originOffset, false);
             return result.ToString();
@@ -663,6 +672,23 @@ namespace ReMap.Standalone
                     .Append(Number(path.cameraPathTransitionTime)).Append(", ")
                     .Append(path.cameraPathTrackTarget ? "true" : "false").Append(", ")
                     .Append(targetPosition).AppendLine(" )");
+            }
+        }
+
+        private static void AppendAnimatedCameras(StringBuilder code, List<MapObject> world, bool live,
+            Vector3 originOffset, bool symbolicOffset)
+        {
+            var cameras = world.Where(o => o.customType == "animated-camera").ToList();
+            if (!live && cameras.Count > 0) { code.AppendLine(); code.AppendLine("\t// Animated cameras"); }
+            foreach (var camera in cameras)
+            {
+                string expression = "ReMap_CreateAnimatedCamera( " +
+                    Position(camera.position, originOffset, symbolicOffset) + ", " +
+                    Vector(ApexDisplay.Angles(WorldView.ToVector(camera.rotation))) + ", " +
+                    Number(camera.animatedCameraAngleOffset) + ", " + Number(camera.animatedCameraMaxLeft) + ", " +
+                    Number(camera.animatedCameraMaxRight) + ", " + Number(camera.animatedCameraRotationTime) + ", " +
+                    Number(camera.animatedCameraTransitionTime) + " )";
+                code.Append(live ? "script " : "\t").Append(expression).AppendLine();
             }
         }
 

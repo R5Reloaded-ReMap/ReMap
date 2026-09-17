@@ -26,6 +26,7 @@ global function ReMap_CreateButton
 global function ReMap_CreateTeleportButton
 global function ReMap_CreateSpeedBoost
 global function ReMap_CreateBubbleShield
+global function ReMap_CreateAnimatedCamera
 
 global const int REMAP_DOOR_SINGLE = 0
 global const int REMAP_DOOR_DOUBLE = 1
@@ -61,6 +62,8 @@ const asset REMAP_SPEED_BOOST_ORB_MODEL = $"mdl/fx/plasma_sphere_01.rmdl"
 const asset REMAP_SPEED_BOOST_BASE_MODEL = $"mdl/fx/ar_edge_sphere_512.rmdl"
 const asset REMAP_SPEED_BOOST_FP_FX = $"P_sprint_FP"
 const asset REMAP_BUBBLE_SHIELD_MODEL = $"mdl/fx/bb_shield.rmdl"
+const asset REMAP_ANIMATED_CAMERA_BASE_MODEL = $"mdl/IMC_base/camera_imc_base_01.rmdl"
+const asset REMAP_ANIMATED_CAMERA_HEAD_MODEL = $"mdl/IMC_base/camera_imc_01.rmdl"
 
 struct
 {
@@ -342,6 +345,48 @@ entity function ReMap_CreateBubbleShield( vector origin, vector angles,
 	EmitSoundOnEntity( shield, "Gibraltar_BubbleShield_Sustain" )
 	file.props.append( shield )
 	return shield
+}
+
+entity function ReMap_CreateAnimatedCamera( vector origin, vector angles,
+	float angleOffset = 20.0, float maxLeft = 20.0, float maxRight = 40.0,
+	float rotationTime = 4.0, float transitionTime = 2.0 )
+{
+	entity mover = CreateScriptMover( origin, ZERO_VECTOR )
+	entity cameraBase = CreateEntity( "prop_dynamic" )
+	cameraBase.SetValueForModelKey( REMAP_ANIMATED_CAMERA_BASE_MODEL )
+	cameraBase.SetOrigin( origin )
+	cameraBase.SetAngles( ZERO_VECTOR )
+	cameraBase.kv.solid = SOLID_VPHYSICS
+	DispatchSpawn( cameraBase )
+	cameraBase.SetParent( mover )
+
+	entity cameraHead = CreateScriptMoverModel( REMAP_ANIMATED_CAMERA_HEAD_MODEL,
+		origin + < 16, 0, 8 >, < angleOffset, 0, 0 >, SOLID_VPHYSICS )
+	cameraHead.SetParent( mover )
+	mover.SetAngles( angles )
+	file.props.append( mover )
+	file.props.append( cameraBase )
+	file.props.append( cameraHead )
+	thread ReMap_AnimateCamera( cameraHead, maxLeft, maxRight, rotationTime, transitionTime )
+	return mover
+}
+
+void function ReMap_AnimateCamera( entity cameraHead, float maxLeft, float maxRight,
+	float rotationTime, float transitionTime )
+{
+	vector baseAngles = cameraHead.GetAngles()
+	float blendTime = rotationTime * 0.5
+	while ( IsValid( cameraHead ) )
+	{
+		cameraHead.NonPhysicsRotateTo( baseAngles + < 0, maxLeft, 0 >,
+			rotationTime, blendTime, blendTime )
+		wait rotationTime + transitionTime
+		if ( !IsValid( cameraHead ) )
+			return
+		cameraHead.NonPhysicsRotateTo( baseAngles - < 0, maxRight, 0 >,
+			rotationTime, blendTime, blendTime )
+		wait rotationTime + transitionTime
+	}
 }
 
 void function ReMap_SpeedBoostThink( entity mover, entity trigger, vector origin, vector color,

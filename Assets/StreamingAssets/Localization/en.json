@@ -4231,6 +4231,66 @@
       "text": "The camera path settings are invalid."
     },
     {
+      "key": "#ANIMATED_CAMERA",
+      "text": "Animated camera"
+    },
+    {
+      "key": "#CUSTOM_OBJECT_ANIMATED_CAMERA",
+      "text": "Custom animated camera"
+    },
+    {
+      "key": "#ANIMATED_CAMERA_COMPONENT",
+      "text": "Animated camera component"
+    },
+    {
+      "key": "#ANIMATED_CAMERA_BASE",
+      "text": "Camera base"
+    },
+    {
+      "key": "#ANIMATED_CAMERA_HEAD",
+      "text": "Camera head"
+    },
+    {
+      "key": "#ANIMATED_CAMERA_ANGLE_OFFSET",
+      "text": "Head pitch offset"
+    },
+    {
+      "key": "#ANIMATED_CAMERA_MAX_LEFT",
+      "text": "Maximum left angle"
+    },
+    {
+      "key": "#ANIMATED_CAMERA_MAX_RIGHT",
+      "text": "Maximum right angle"
+    },
+    {
+      "key": "#ANIMATED_CAMERA_ROTATION_TIME",
+      "text": "Rotation time (seconds)"
+    },
+    {
+      "key": "#ANIMATED_CAMERA_TRANSITION_TIME",
+      "text": "Pause at each side (seconds)"
+    },
+    {
+      "key": "#ANIMATED_CAMERA_CUSTOM_HELP",
+      "text": "Looping security camera. It is disabled when either camera model is absent from the selected RPAKs."
+    },
+    {
+      "key": "#ANIMATED_CAMERA_HELP",
+      "text": "The head alternates between the left and right limits, waiting at each side before returning."
+    },
+    {
+      "key": "#ANIMATED_CAMERA_CREATED",
+      "text": "Animated camera created."
+    },
+    {
+      "key": "#ANIMATED_CAMERA_PREVIEW_ERROR",
+      "text": "Could not prepare animated camera models: "
+    },
+    {
+      "key": "#INVALID_ANIMATED_CAMERA_SETTINGS",
+      "text": "The animated camera settings are invalid."
+    },
+    {
       "key": "#DEVELOPMENT_BUILD",
       "text": "Development build — debugging enabled"
     },

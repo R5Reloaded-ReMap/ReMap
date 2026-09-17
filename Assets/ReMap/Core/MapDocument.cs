@@ -119,6 +119,11 @@ namespace ReMap.Standalone.Core
         public bool cameraPathTrackTarget;
         public bool cameraPathSpacingEnabled;
         public float cameraPathSpacing;
+        public float animatedCameraAngleOffset = 20f;
+        public float animatedCameraMaxLeft = 20f;
+        public float animatedCameraMaxRight = 40f;
+        public float animatedCameraRotationTime = 4f;
+        public float animatedCameraTransitionTime = 2f;
         public bool commonAsset;
         public List<string> availableMaps = new List<string>();
         public bool allowMantle = true;
@@ -237,7 +242,8 @@ namespace ReMap.Standalone.Core
                     item.customType != "button" && item.customType != "speed-boost" &&
                     item.customType != "speed-boost-component" && item.customType != "bubble-shield" &&
                     item.customType != "camera-path" && item.customType != "camera-path-point" &&
-                    item.customType != "camera-path-target")
+                    item.customType != "camera-path-target" && item.customType != "animated-camera" &&
+                    item.customType != "animated-camera-component")
                     throw new ArgumentException(L.T("#UNKNOWN_CUSTOM_OBJECT_TYPE"));
                 if (item.customType == "zipline" && !item.isGroup)
                     throw new ArgumentException(L.T("#ZIPLINE_HIERARCHY_GROUP"));
@@ -355,6 +361,16 @@ namespace ReMap.Standalone.Core
                     !Finite(item.cameraPathSpacing) || item.cameraPathSpacing < 0f ||
                     item.cameraPathSpacing > 65535f))
                     throw new ArgumentException(L.T("#INVALID_CAMERA_PATH_SETTINGS"));
+                if (item.customType == "animated-camera" && (!item.isGroup ||
+                    !Finite(item.animatedCameraAngleOffset) || item.animatedCameraAngleOffset < -360f ||
+                    item.animatedCameraAngleOffset > 360f || !Finite(item.animatedCameraMaxLeft) ||
+                    item.animatedCameraMaxLeft < 0f || item.animatedCameraMaxLeft > 360f ||
+                    !Finite(item.animatedCameraMaxRight) || item.animatedCameraMaxRight < 0f ||
+                    item.animatedCameraMaxRight > 360f || !Finite(item.animatedCameraRotationTime) ||
+                    item.animatedCameraRotationTime < .01f || item.animatedCameraRotationTime > 3600f ||
+                    !Finite(item.animatedCameraTransitionTime) || item.animatedCameraTransitionTime < 0f ||
+                    item.animatedCameraTransitionTime > 3600f))
+                    throw new ArgumentException(L.T("#INVALID_ANIMATED_CAMERA_SETTINGS"));
                 if (!item.position.IsFinite || !item.rotation.IsFinite || !item.scale.IsFinite)
                     throw new ArgumentException(L.T("#TRANSFORMS_FINITE_NUMBERS"));
                 if (!Finite(item.fadeDistance) || item.fadeDistance < -1f)

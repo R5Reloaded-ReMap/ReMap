@@ -4231,6 +4231,66 @@
       "text": "Les paramètres de la trajectoire caméra sont invalides."
     },
     {
+      "key": "#ANIMATED_CAMERA",
+      "text": "Caméra animée"
+    },
+    {
+      "key": "#CUSTOM_OBJECT_ANIMATED_CAMERA",
+      "text": "Caméra animée personnalisée"
+    },
+    {
+      "key": "#ANIMATED_CAMERA_COMPONENT",
+      "text": "Composant de caméra animée"
+    },
+    {
+      "key": "#ANIMATED_CAMERA_BASE",
+      "text": "Socle de la caméra"
+    },
+    {
+      "key": "#ANIMATED_CAMERA_HEAD",
+      "text": "Tête de la caméra"
+    },
+    {
+      "key": "#ANIMATED_CAMERA_ANGLE_OFFSET",
+      "text": "Inclinaison de la tête"
+    },
+    {
+      "key": "#ANIMATED_CAMERA_MAX_LEFT",
+      "text": "Angle maximal à gauche"
+    },
+    {
+      "key": "#ANIMATED_CAMERA_MAX_RIGHT",
+      "text": "Angle maximal à droite"
+    },
+    {
+      "key": "#ANIMATED_CAMERA_ROTATION_TIME",
+      "text": "Durée de rotation (secondes)"
+    },
+    {
+      "key": "#ANIMATED_CAMERA_TRANSITION_TIME",
+      "text": "Pause de chaque côté (secondes)"
+    },
+    {
+      "key": "#ANIMATED_CAMERA_CUSTOM_HELP",
+      "text": "Caméra de sécurité tournant en boucle. Elle est désactivée si l’un de ses modèles manque dans les RPAK sélectionnés."
+    },
+    {
+      "key": "#ANIMATED_CAMERA_HELP",
+      "text": "La tête alterne entre les limites gauche et droite, avec une pause de chaque côté avant le retour."
+    },
+    {
+      "key": "#ANIMATED_CAMERA_CREATED",
+      "text": "Caméra animée créée."
+    },
+    {
+      "key": "#ANIMATED_CAMERA_PREVIEW_ERROR",
+      "text": "Impossible de préparer les modèles de la caméra animée : "
+    },
+    {
+      "key": "#INVALID_ANIMATED_CAMERA_SETTINGS",
+      "text": "Les paramètres de la caméra animée sont invalides."
+    },
+    {
       "key": "#DEVELOPMENT_BUILD",
       "text": "Build de développement — débogage activé"
     },
