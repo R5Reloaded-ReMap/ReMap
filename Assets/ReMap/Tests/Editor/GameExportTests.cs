@@ -7,7 +7,7 @@ namespace ReMap.Standalone.Tests
 {
     public sealed class GameExportTests
     {
-        [Test] public void AdditionalSelectedRpaksAreLoadedBeforeMapPrecaches()
+        [Test] public void AdditionalSelectedRpaksAreReservedForLevelSettings()
         {
             var document = new MapDocument { name = "Rpak load", editingMap = "mp_base" };
             var rpaks = new[] { "mp_base.rpak", "mp_extra.rpak", "mp_extra_client_perm.rpak" };
@@ -15,13 +15,9 @@ namespace ReMap.Standalone.Tests
             string code = ReMapGameScript.Generate(document, new[] { prop }, rpaks)
                 .Replace("\r\n", "\n");
             StringAssert.DoesNotContain("pak_requestload mp_base.rpak", code);
-            StringAssert.Contains("#if SERVER\n\tLoadPak( \"mp_extra.rpak\" )", code);
-            StringAssert.Contains("LoadPak( \"mp_extra_client_perm.rpak\" )\n#endif", code);
-            StringAssert.Contains("#if CLIENT\n\tLoadPak( GetLocalClientPlayer(), \"mp_extra.rpak\" )", code);
-            StringAssert.Contains("LoadPak( GetLocalClientPlayer(), \"mp_extra_client_perm.rpak\" )\n#endif", code);
+            StringAssert.DoesNotContain("LoadPak", code);
             StringAssert.DoesNotContain("ClientCommand", code);
-            Assert.That(code.IndexOf("LoadPak( \"mp_extra.rpak\" )", System.StringComparison.Ordinal),
-                Is.LessThan(code.IndexOf("PrecacheModel", System.StringComparison.Ordinal)));
+            StringAssert.Contains("PrecacheModel", code);
 
             string live = ReMapGameScript.GenerateLiveCommands(document,
                 System.Array.Empty<MapObject>(), rpaks).Replace("\r\n", "\n");
@@ -300,10 +296,13 @@ namespace ReMap.Standalone.Tests
             string platform = System.IO.Path.Combine(System.IO.Path.GetTempPath(), "ReMapR5R-" + System.Guid.NewGuid().ToString("N"));
             string scripts = System.IO.Path.Combine(platform, "scripts", "vscripts");
             string remap = System.IO.Path.Combine(scripts, "remap");
+            string settings = System.IO.Path.Combine(platform, "scripts", "levels", "settings");
             System.IO.Directory.CreateDirectory(remap);
+            System.IO.Directory.CreateDirectory(settings);
             string shared = System.IO.Path.Combine(remap, "sh_remap.nut");
             string serverMap = System.IO.Path.Combine(remap, "sv_remap_map.nut");
             string clientMap = System.IO.Path.Combine(remap, "cl_remap_map.nut");
+            string levelSettings = System.IO.Path.Combine(settings, "mp_rr_desertlands_64k_x_64k.kv");
             try
             {
                 string manifestPath = System.IO.Path.Combine(scripts, "scripts.rson");
@@ -316,13 +315,21 @@ namespace ReMap.Standalone.Tests
                 System.IO.File.WriteAllText(shared, "global const bool REMAP_LOAD_MAP = false\n// shared customization\nvoid function Sh_ReMap_PrecacheMap() {\n\tPrecacheModel( $\"mdl/dev/empty.rmdl\" )\n}\n");
                 System.IO.File.WriteAllText(serverMap, "// server customization\nvoid function Sv_ReMap_LoadMap() {}\n");
                 System.IO.File.WriteAllText(clientMap, "// client customization\nvoid function Cl_ReMap_LoadMap() {}\n");
+                System.IO.File.WriteAllText(levelSettings,
+                    "\"LevelSet\"\n{\n    \"StreamDB\" \"desertlands\"\n}\n");
                 var document = new MapDocument { gameTarget = GameTargets.R5Reloaded, editingMap = "mp_rr_desertlands_64k_x_64k" };
                 var server = new MapObject { displayName = "Server", gameModelPath = "mdl/props/server.rmdl" };
                 var client = new MapObject { displayName = "Client", gameModelPath = "mdl/props/client.rmdl", clientSide = true };
                 document.objects.Add(server); document.objects.Add(client);
 
-                string path = ReMapGameScriptInstaller.Write(platform, document, document.objects);
-                ReMapGameScriptInstaller.Write(platform, document, document.objects);
+                string path = ReMapGameScriptInstaller.Write(platform, document, document.objects,
+                    new[] { "mp_extra.rpak", "mp_existing.rpak" });
+                string settingsWithExternalEntries = System.IO.File.ReadAllText(levelSettings).Replace(
+                    "        // ReMap managed paks - begin",
+                    "        \"native.rpak\" \"0\"\n        \"mp_existing.rpak\" \"1\"\n        // ReMap managed paks - begin");
+                System.IO.File.WriteAllText(levelSettings, settingsWithExternalEntries);
+                ReMapGameScriptInstaller.Write(platform, document, document.objects,
+                    new[] { "mp_replacement.rpak", "mp_existing.rpak" });
 
                 Assert.That(path, Is.EqualTo(remap));
                 StringAssert.Contains("global const bool REMAP_LOAD_MAP = true", System.IO.File.ReadAllText(shared));
@@ -338,8 +345,18 @@ namespace ReMap.Standalone.Tests
                 StringAssert.Contains("// shared customization", System.IO.File.ReadAllText(shared));
                 StringAssert.Contains("// server customization", System.IO.File.ReadAllText(serverMap));
                 StringAssert.Contains("// client customization", System.IO.File.ReadAllText(clientMap));
+                string installedSettings = System.IO.File.ReadAllText(levelSettings);
+                StringAssert.Contains("\"native.rpak\" \"0\"", installedSettings);
+                StringAssert.Contains("\"mp_existing.rpak\" \"1\"", installedSettings);
+                StringAssert.Contains("// ReMap managed paks - begin", installedSettings);
+                StringAssert.Contains("\"mp_replacement.rpak\" \"2\"", installedSettings);
+                StringAssert.DoesNotContain("mp_extra.rpak", installedSettings);
+                Assert.That(installedSettings.Split(new[] { "mp_existing.rpak" },
+                    System.StringSplitOptions.None).Length - 1, Is.EqualTo(1));
+                StringAssert.Contains("\"StreamDB\" \"desertlands\"", installedSettings);
                 foreach (string file in new[] { shared, serverMap, clientMap })
                     Assert.That(System.IO.File.Exists(file + ".remap.bak"), Is.True, file);
+                Assert.That(System.IO.File.Exists(levelSettings + ".remap.bak"), Is.True, levelSettings);
 
                 ReMapGameScriptInstaller.Reset(platform, GameTargets.R5Reloaded);
                 string resetShared = System.IO.File.ReadAllText(shared);
@@ -355,6 +372,12 @@ namespace ReMap.Standalone.Tests
                 StringAssert.Contains("// shared customization", resetShared);
                 StringAssert.Contains("// server customization", resetServer);
                 StringAssert.Contains("// client customization", resetClient);
+                string resetSettings = System.IO.File.ReadAllText(levelSettings);
+                StringAssert.DoesNotContain("ReMap managed paks", resetSettings);
+                StringAssert.DoesNotContain("mp_replacement.rpak", resetSettings);
+                StringAssert.Contains("\"native.rpak\" \"0\"", resetSettings);
+                StringAssert.Contains("\"mp_existing.rpak\" \"1\"", resetSettings);
+                StringAssert.Contains("\"StreamDB\" \"desertlands\"", resetSettings);
                 Assert.That(System.IO.File.ReadAllText(manifestPath), Is.EqualTo(originalManifest));
                 Assert.That(System.IO.File.Exists(manifestPath + ".remap.bak"), Is.False);
             }

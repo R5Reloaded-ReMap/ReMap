@@ -39,6 +39,7 @@ namespace ReMap.Standalone
             if (document == null) throw new ArgumentNullException(nameof(document));
             string gameTarget = GameTargets.Normalize(document.gameTarget);
             string map = EditingMap(document);
+            AdditionalRpaks(map, selectedRpaks);
             var world = (worldObjects ?? throw new ArgumentNullException(nameof(worldObjects))).Where(o => o != null).ToList();
             var objects = Prepare(world);
             var serverObjects = objects.Where(o => !o.clientSide).ToList();
@@ -105,7 +106,6 @@ namespace ReMap.Standalone
             Vector3 originOffset = OriginOffset(document);
             bool useOriginOffset = HasOriginOffset(originOffset);
             var shared = new StringBuilder();
-            AppendRpakLoadRequests(shared, AdditionalRpaks(map, selectedRpaks));
             foreach (string model in models) shared.Append("\tPrecacheModel( $\"").Append(model).AppendLine("\" )");
             if (world.Any(o => o.customType == "weapon-rack"))
                 shared.AppendLine("\tPrecacheParticleSystem( $\"P_impact_shieldbreaker_sparks\" )");
@@ -276,21 +276,6 @@ namespace ReMap.Standalone
             return result.ToArray();
         }
 
-        private static void AppendRpakLoadRequests(StringBuilder code, IEnumerable<string> rpaks)
-        {
-            string[] archives = (rpaks ?? Array.Empty<string>()).ToArray();
-            if (archives.Length == 0) return;
-            code.AppendLine("#if SERVER");
-            foreach (string rpak in archives)
-                code.Append("\tLoadPak( \"").Append(rpak).AppendLine("\" )");
-            code.AppendLine("#endif");
-            code.AppendLine("#if CLIENT");
-            foreach (string rpak in archives)
-                code.Append("\tLoadPak( GetLocalClientPlayer(), \"").Append(rpak).AppendLine("\" )");
-            code.AppendLine("#endif");
-            code.AppendLine();
-        }
-
         private static void AppendClear(StringBuilder code)
         {
             code.AppendLine("\tSh_ReMap_Clear()");
@@ -316,7 +301,7 @@ namespace ReMap.Standalone
             code.AppendLine();
         }
 
-        private static string EditingMap(MapDocument document)
+        internal static string EditingMap(MapDocument document)
         {
             if (document == null) throw new ArgumentNullException(nameof(document));
             string map = (document.editingMap ?? "").Trim();
@@ -879,6 +864,8 @@ namespace ReMap.Standalone
 
     public static class ReMapGameScriptInstaller
     {
+        private const string ManagedPaksBegin = "// ReMap managed paks - begin";
+        private const string ManagedPaksEnd = "// ReMap managed paks - end";
         private static readonly string[] ServerFileNames = { "sv_remap_objects.nut", "sv_remap_ziplines.nut", ReMapGameScript.ServerMapFileName, ReMapGameScript.SharedFileName };
         private static readonly string[] ClientFileNames = { "cl_remap_objects.nut", ReMapGameScript.ClientMapFileName, ReMapGameScript.SharedFileName };
 
@@ -910,8 +897,10 @@ namespace ReMap.Standalone
             IEnumerable<MapObject> worldObjects, IEnumerable<string> selectedRpaks = null)
         {
             if (document == null) throw new ArgumentNullException(nameof(document));
+            string map = ReMapGameScript.EditingMap(document);
+            string[] rpaks = ReMapGameScript.AdditionalRpaks(map, selectedRpaks);
             return Apply(platformDirectory, document.gameTarget,
-                ReMapGameScript.BuildEdits(document, worldObjects, selectedRpaks), true);
+                ReMapGameScript.BuildEdits(document, worldObjects, selectedRpaks), true, map, rpaks);
         }
 
         public static string Reset(string platformDirectory, string gameTarget)
@@ -919,7 +908,9 @@ namespace ReMap.Standalone
             return Apply(platformDirectory, gameTarget, ReMapGameScript.ResetEdits(gameTarget), false);
         }
 
-        private static string Apply(string platformDirectory, string gameTarget, IReadOnlyList<ReMapGameScriptEdit> edits, bool loadMap)
+        private static string Apply(string platformDirectory, string gameTarget,
+            IReadOnlyList<ReMapGameScriptEdit> edits, bool loadMap, string map = null,
+            IEnumerable<string> rpaks = null)
         {
             gameTarget = GameTargets.Normalize(gameTarget);
             string remap = EnsureInstalled(platformDirectory, gameTarget);
@@ -933,12 +924,106 @@ namespace ReMap.Standalone
                     content = SetLoadMap(content, loadMap, path);
                 changed.Add(new KeyValuePair<string, string>(path, content));
             }
+            string settings = Path.Combine(Path.GetFullPath(platformDirectory), "scripts", "levels", "settings");
+            if (loadMap)
+            {
+                string path = Path.Combine(settings, map + ".kv");
+                if (!File.Exists(path))
+                {
+                    if ((rpaks ?? Array.Empty<string>()).Any())
+                        throw new FileNotFoundException(L.F("#ARG0_PLATFORM_CONTAIN_REQUIRED_ARG1",
+                            GameTargets.DisplayName(gameTarget), "scripts/levels/settings/" + map + ".kv"), path);
+                }
+                else
+                {
+                    string source = File.ReadAllText(path);
+                    string content = SetManagedPaks(source, rpaks, path);
+                    if (content != source) changed.Add(new KeyValuePair<string, string>(path, content));
+                }
+            }
+            else if (Directory.Exists(settings))
+            {
+                foreach (string path in Directory.EnumerateFiles(settings, "*.kv", SearchOption.TopDirectoryOnly))
+                {
+                    string source = File.ReadAllText(path);
+                    string content = RemoveManagedPaks(source, path);
+                    if (content != source) changed.Add(new KeyValuePair<string, string>(path, content));
+                }
+            }
             foreach (var file in changed)
             {
                 BackupOnce(file.Key);
                 File.WriteAllText(file.Key, file.Value, new UTF8Encoding(false));
             }
             return remap;
+        }
+
+        private static string SetManagedPaks(string source, IEnumerable<string> rpaks, string path)
+        {
+            string newline = source.Contains("\r\n") ? "\r\n" : "\n";
+            string withoutManaged = RemoveManagedPaks(source, path);
+            string[] archives = (rpaks ?? Array.Empty<string>())
+                .Where(rpak => !Regex.IsMatch(withoutManaged,
+                    "(?im)^[ \\t]*\"" + Regex.Escape(rpak) + "\"[ \\t]+\"[012]\"[ \\t]*(?://.*)?$"))
+                .ToArray();
+            if (archives.Length == 0) return withoutManaged;
+
+            Match pakList = Regex.Match(withoutManaged,
+                "(?m)^(?<indent>[ \\t]*)\"PakList\"[ \\t]*\\r?$[ \\t]*\\n(?<open>[ \\t]*)\\{");
+            if (pakList.Success)
+            {
+                int open = pakList.Index + pakList.Value.LastIndexOf('{');
+                int close = FindClosingBrace(withoutManaged, open, path, "PakList");
+                int closeLine = withoutManaged.LastIndexOf('\n', close);
+                closeLine = closeLine < 0 ? close : closeLine + 1;
+                string indent = pakList.Groups["open"].Value + "    ";
+                string block = ManagedPakBlock(indent, archives, newline);
+                string prefix = withoutManaged.Substring(0, closeLine).TrimEnd('\r', '\n');
+                return prefix + newline + block + newline + withoutManaged.Substring(closeLine);
+            }
+
+            Match levelSet = Regex.Match(withoutManaged,
+                "(?m)^(?<indent>[ \\t]*)\"LevelSet\"[ \\t]*\\r?$[ \\t]*\\n(?<open>[ \\t]*)\\{");
+            if (!levelSet.Success)
+                throw new InvalidDataException(path + " must contain a LevelSet block.");
+            int levelOpen = levelSet.Index + levelSet.Value.LastIndexOf('{');
+            int levelClose = FindClosingBrace(withoutManaged, levelOpen, path, "LevelSet");
+            int levelCloseLine = withoutManaged.LastIndexOf('\n', levelClose);
+            levelCloseLine = levelCloseLine < 0 ? levelClose : levelCloseLine + 1;
+            string childIndent = levelSet.Groups["open"].Value + "    ";
+            string entryIndent = childIndent + "    ";
+            string newPakList = childIndent + "\"PakList\"" + newline + childIndent + "{" + newline +
+                ManagedPakBlock(entryIndent, archives, newline) + newline + childIndent + "}";
+            string levelPrefix = withoutManaged.Substring(0, levelCloseLine).TrimEnd('\r', '\n');
+            return levelPrefix + newline + newPakList + newline + withoutManaged.Substring(levelCloseLine);
+        }
+
+        private static string ManagedPakBlock(string indent, IEnumerable<string> rpaks, string newline)
+        {
+            var result = new StringBuilder();
+            result.Append(indent).Append(ManagedPaksBegin);
+            foreach (string rpak in rpaks)
+                result.Append(newline).Append(indent).Append('"').Append(rpak).Append("\" \"2\"");
+            result.Append(newline).Append(indent).Append(ManagedPaksEnd);
+            return result.ToString();
+        }
+
+        private static string RemoveManagedPaks(string source, string path)
+        {
+            int begin = source.IndexOf(ManagedPaksBegin, StringComparison.Ordinal);
+            int end = source.IndexOf(ManagedPaksEnd, StringComparison.Ordinal);
+            if (begin < 0 && end < 0) return source;
+            if (begin < 0 || end < begin || source.IndexOf(ManagedPaksBegin,
+                    begin + ManagedPaksBegin.Length, StringComparison.Ordinal) >= 0 ||
+                source.IndexOf(ManagedPaksEnd, end + ManagedPaksEnd.Length,
+                    StringComparison.Ordinal) >= 0)
+                throw new InvalidDataException(path + " contains an invalid ReMap managed paks block.");
+            int lineStart = source.LastIndexOf('\n', begin);
+            lineStart = lineStart < 0 ? 0 : lineStart + 1;
+            int lineEnd = source.IndexOf('\n', end + ManagedPaksEnd.Length);
+            if (lineEnd < 0) lineEnd = source.Length;
+            else lineEnd++;
+            return source.Remove(lineStart, lineEnd - lineStart);
         }
 
         private static string ReplaceFunctionBody(string source, string functionName, string body, string path)

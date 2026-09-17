@@ -56,13 +56,16 @@ namespace ReMap.Standalone.Tests
         }
 
         [Test]
-        public void ExportUsesNativeZiprailNodesAndLoadsBrokenMoonRpak()
+        public void ExportUsesNativeZiprailNodesAndKeepsLiveBrokenMoonRpakLoad()
         {
             var document = Document();
             string code = ReMapGameScript.Generate(document, document.objects,
                 new[] { "mp_rr_divided_moon_mu1.rpak" });
 
-            StringAssert.Contains("pak_requestload mp_rr_divided_moon_mu1.rpak", code);
+            StringAssert.DoesNotContain("pak_requestload mp_rr_divided_moon_mu1.rpak", code);
+            StringAssert.Contains("pak_requestload mp_rr_divided_moon_mu1.rpak",
+                ReMapGameScript.GenerateLiveCommands(document, document.objects,
+                    new[] { "mp_rr_divided_moon_mu1.rpak" }));
             StringAssert.Contains("ReMap_CreateZiprail( [ <0, 0, 0>, <300, 100, 80>, <600, 0, 0> ]", code);
             StringAssert.Contains("[ REMAP_ZIPRAIL_POINT_SUPPORT, REMAP_ZIPRAIL_POINT_NONE, REMAP_ZIPRAIL_POINT_ARM ]", code);
             StringAssert.Contains("PrecacheModel( $\"mdl/props/zip_rail/zip_rail_ground_post_01.rmdl\" )", code);
@@ -70,7 +73,7 @@ namespace ReMap.Standalone.Tests
             string root = Path.GetFullPath(Path.Combine(Application.dataPath, ".."));
             string script = File.ReadAllText(Path.Combine(root,
                 "scripts/vscripts/source/sv_remap_ziplines.source.nut"));
-            StringAssert.Contains("CreateEntity( \"script_mover_train_node\" )", script);
+            StringAssert.Contains("CreateEntity( isEndpoint ? \"zipline\" : \"script_mover_train_node\" )", script);
             StringAssert.Contains("node.kv.tangent_type = 0", script);
             StringAssert.Contains("endpoint.kv.isZiprailStart = 1", script);
             StringAssert.Contains("nodes[index].LinkToEnt( nodes[index - 1] )", script);
