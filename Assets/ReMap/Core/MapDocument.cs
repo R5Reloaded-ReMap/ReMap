@@ -162,6 +162,20 @@ namespace ReMap.Standalone.Core
                 item.ziplineEndId = item.ziplineEndId ?? "";
                 item.ziplineMode = item.ziplineMode ?? "horizontal";
                 item.doorType = item.doorType ?? "single";
+                if (item.customType == "curved-zipline" && item.customProfile == "")
+                    item.customProfile = item.curvedZiplineSupport ? "arm" : "none";
+                if (item.customType == "curved-zipline")
+                    item.curvedZiplineSupport = item.customProfile != "none";
+                if (item.customType == "curved-zipline-component")
+                {
+                    var legacyParent = objects.Find(candidate => candidate.id == item.parentId);
+                    if (legacyParent?.customType == "curved-zipline")
+                    {
+                        var firstPoint = objects.Find(candidate => candidate.parentId == legacyParent.id &&
+                            candidate.customType == "curved-zipline-point" && ParsePointIndex(candidate) == 0);
+                        if (firstPoint != null) item.parentId = firstPoint.id;
+                    }
+                }
                 if (item.ziplineMode == "auto") item.ziplineMode = "horizontal";
                 if (item.customType != "" && item.customType != "zipline" && item.customType != "zipline-endpoint" &&
                     item.customType != "zipline-component" && item.customType != "door" &&
@@ -201,11 +215,22 @@ namespace ReMap.Standalone.Core
                     throw new ArgumentException(L.T("#INVALID_DOOR_TYPE"));
                 if (item.customType == "curved-zipline" && !item.isGroup)
                     throw new ArgumentException(L.T("#CURVED_ZIPLINE_HIERARCHY_GROUP"));
+                if (item.customType == "curved-zipline" && item.customProfile != "none" &&
+                    item.customProfile != "arm" && item.customProfile != "support")
+                    throw new ArgumentException(L.T("#INVALID_CURVED_ZIPLINE_SETTINGS"));
                 if (item.customType == "curved-zipline" && (item.curvedZiplineSegments < 2 ||
                     item.curvedZiplineSegments > 32 || !Finite(item.ziplineWidth) || !Finite(item.ziplineSpeed) ||
+                    !Finite(item.ziplineArmHeight) || item.ziplineArmHeight < 70f || item.ziplineArmHeight > 290f ||
                     item.ziplineWidth < .1f || item.ziplineWidth > 32f ||
                     item.ziplineSpeed < .1f || item.ziplineSpeed > 10f))
                     throw new ArgumentException(L.T("#INVALID_CURVED_ZIPLINE_SETTINGS"));
+                if (item.customType == "curved-zipline-point" && item.customProfile != "" &&
+                    item.customProfile != "none" && item.customProfile != "arm" &&
+                    item.customProfile != "support")
+                    throw new ArgumentException(L.T("#INVALID_CURVED_ZIPLINE_SETTINGS"));
+                if (item.customType == "curved-zipline-point" && (!Finite(item.ziplineArmHeight) ||
+                    item.ziplineArmHeight < 70f || item.ziplineArmHeight > 290f))
+                    throw new ArgumentException(L.T("#INVALID_ZIPLINE_ARM_HEIGHT"));
                 if (item.customType == "loot-bin" && (item.lootBinSkin < 0 || item.lootBinSkin > 3))
                     throw new ArgumentException(L.T("#INVALID_LOOT_BIN_SKIN"));
                 if (!item.position.IsFinite || !item.rotation.IsFinite || !item.scale.IsFinite)
@@ -282,15 +307,25 @@ namespace ReMap.Standalone.Core
                     if (points.Count < 2)
                         throw new ArgumentException(L.T("#CURVED_ZIPLINE_NEEDS_TWO_POINTS"));
                     for (int index = 0; index < points.Count; index++)
+                    {
                         if (ParsePointIndex(points[index]) != index)
                             throw new ArgumentException(L.T("#INVALID_CURVED_ZIPLINE_POINT"));
+                        if (points[index].customProfile == "")
+                            points[index].customProfile = index == 0 ? item.customProfile : "none";
+                    }
+                    item.customProfile = "";
+                    item.curvedZiplineSupport = false;
                 }
-                else if (item.customType == "curved-zipline-point" ||
-                    item.customType == "curved-zipline-component")
+                else if (item.customType == "curved-zipline-point")
                 {
                     var parent = objects.Find(o => o.id == item.parentId);
-                    if (parent == null || parent.customType != "curved-zipline" ||
-                        item.customType == "curved-zipline-point" && ParsePointIndex(item) < 0)
+                    if (parent == null || parent.customType != "curved-zipline" || ParsePointIndex(item) < 0)
+                        throw new ArgumentException(L.T("#INVALID_CURVED_ZIPLINE_POINT"));
+                }
+                else if (item.customType == "curved-zipline-component")
+                {
+                    var parent = objects.Find(o => o.id == item.parentId);
+                    if (parent == null || parent.customType != "curved-zipline-point")
                         throw new ArgumentException(L.T("#INVALID_CURVED_ZIPLINE_POINT"));
                 }
             }

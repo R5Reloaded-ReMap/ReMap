@@ -105,14 +105,21 @@ void function ReMap_CreateZipline( vector startOrigin, vector startAngles, vecto
 }
 
 void function ReMap_CreateCurvedZipline( array<vector> controlPoints, int segmentsPerSpan = 8,
-	bool supportArm = false, vector supportAngles = <0, 0, 0>, float width = 2.0, float speedScale = 1.0 )
+	array<int> pointProfiles = [], array<vector> pointAngles = [],
+	array<float> pointArmHeights = [], float width = 2.0, float speedScale = 1.0 )
 {
 	if ( controlPoints.len() < 2 )
 		return
 
 	array<vector> adjustedPoints = clone controlPoints
-	if ( supportArm )
-		adjustedPoints[0] = ReMap_CreateCurvedZiplineSupport( adjustedPoints[0], supportAngles )
+	for ( int index = 0; index < adjustedPoints.len(); index++ )
+	{
+		int profile = index < pointProfiles.len() ? pointProfiles[index] : REMAP_ZIPLINE_END_NONE
+		vector angles = index < pointAngles.len() ? pointAngles[index] : <0, 0, 0>
+		float armHeight = index < pointArmHeights.len() ? pointArmHeights[index] : 180.0
+		adjustedPoints[index] = ReMap_CreateCurvedZiplinePointModel(
+			profile, adjustedPoints[index], angles, armHeight )
+	}
 	array<vector> curvePoints = ReMap_BuildBezierPath( adjustedPoints, segmentsPerSpan )
 	if ( curvePoints.len() < 2 )
 		return
@@ -153,17 +160,34 @@ entity function ReMap_SetCurvedRopeProperties( entity rope, float width, float s
 	return rope
 }
 
-vector function ReMap_CreateCurvedZiplineSupport( vector origin, vector angles )
+vector function ReMap_CreateCurvedZiplinePointModel( int profile, vector origin, vector angles,
+	float armHeight )
 {
+	vector armOrigin = origin
+	if ( profile == REMAP_ZIPLINE_END_SUPPORT )
+	{
+		entity support = CreateEntity( "prop_dynamic" )
+		support.SetOrigin( origin )
+		support.SetAngles( angles )
+		support.SetValueForModelKey( REMAP_ZIPLINE_MODEL_SUPPORT )
+		support.kv.solid = 0
+		support.kv.contents = 0
+		DispatchSpawn( support )
+		file.entities.append( support )
+		armOrigin = origin + RotateVector( <4, -2.5, armHeight>, angles )
+	}
+	if ( profile != REMAP_ZIPLINE_END_ARM && profile != REMAP_ZIPLINE_END_SUPPORT )
+		return origin
+
 	entity arm = CreateEntity( "prop_dynamic" )
-	arm.SetOrigin( origin )
+	arm.SetOrigin( armOrigin )
 	arm.SetAngles( <angles.x, angles.y + 90.0, angles.z> )
 	arm.SetValueForModelKey( REMAP_ZIPLINE_MODEL_ARM )
 	arm.kv.solid = 0
 	arm.kv.contents = 0
 	DispatchSpawn( arm )
 	file.entities.append( arm )
-	return origin + RotateVector( <-58, -2, -14>, angles )
+	return armOrigin + RotateVector( <-58, -2, -14>, angles )
 }
 
 array<vector> function ReMap_BuildBezierPath( array<vector> points, int segmentsPerSpan )

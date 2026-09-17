@@ -129,21 +129,21 @@ namespace ReMap.Standalone
                 if (this == null) return;
                 var endpoints = snapshot.objects.Where(candidate =>
                     candidate.customType == "zipline-endpoint").ToArray();
-                var curvedZiplines = snapshot.objects.Where(candidate =>
-                    candidate.customType == "curved-zipline").ToArray();
+                var curvedPoints = snapshot.objects.Where(candidate =>
+                    candidate.customType == "curved-zipline-point").ToArray();
                 bool needsSync = endpoints.Any(endpoint =>
                         ZiplineComponentsNeedSync(snapshot, endpoint)) ||
-                    curvedZiplines.Any(zipline => CurvedZiplineSupportNeedsSync(snapshot, zipline));
+                    curvedPoints.Any(point => CurvedZiplineSupportNeedsSync(snapshot, point));
                 if (needsSync)
                     session.Edit(document => {
                         foreach (var endpoint in document.objects
                             .Where(candidate => candidate.customType == "zipline-endpoint").ToArray())
                             if (ZiplineComponentsNeedSync(document, endpoint))
                                 SyncZiplineComponents(document, endpoint);
-                        foreach (var zipline in document.objects
-                            .Where(candidate => candidate.customType == "curved-zipline").ToArray())
-                            if (CurvedZiplineSupportNeedsSync(document, zipline))
-                                SyncCurvedZiplineSupport(document, zipline);
+                        foreach (var point in document.objects
+                            .Where(candidate => candidate.customType == "curved-zipline-point").ToArray())
+                            if (CurvedZiplineSupportNeedsSync(document, point))
+                                SyncCurvedZiplineSupport(document, point);
                     });
                 foreach (string assetId in prepared) world.Reload(assetId);
                 if (needsSync || prepared.Count > 0) Refresh();

@@ -342,10 +342,15 @@ namespace ReMap.Standalone
                     throw new ArgumentException(L.F("#ARG0_CURVED_ZIPLINE_POINTS_MISSING", zipline.displayName));
                 string pointArray = "[ " + string.Join(", ", points.Select(point =>
                     Position(point.position, originOffset, symbolicOffset))) + " ]";
+                string profileArray = "[ " + string.Join(", ", points.Select(point =>
+                    ReMapZiplineProfiles.Find(point.customProfile).ScriptConstant)) + " ]";
+                string angleArray = "[ " + string.Join(", ", points.Select(point =>
+                    Vector(ApexDisplay.Angles(WorldView.ToVector(point.rotation))))) + " ]";
+                string heightArray = "[ " + string.Join(", ", points.Select(point =>
+                    Number(point.ziplineArmHeight))) + " ]";
                 string expression = "ReMap_CreateCurvedZipline( " + pointArray + ", " +
                     zipline.curvedZiplineSegments.ToString(CultureInfo.InvariantCulture) + ", " +
-                    (zipline.curvedZiplineSupport ? "true" : "false") + ", " +
-                    Vector(ApexDisplay.Angles(WorldView.ToVector(zipline.rotation))) + ", " +
+                    profileArray + ", " + angleArray + ", " + heightArray + ", " +
                     Number(zipline.ziplineWidth) + ", " + Number(zipline.ziplineSpeed) + " )";
                 code.Append(live ? "script " : "\t").Append(expression).AppendLine();
             }

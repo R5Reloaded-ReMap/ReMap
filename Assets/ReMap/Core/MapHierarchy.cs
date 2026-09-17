@@ -101,7 +101,12 @@ namespace ReMap.Standalone.Core
         {
             var requested = doc.objects.Single(o => o.id == id);
             if (requested.customType == "zipline-endpoint") id = requested.parentId;
-            if (requested.customType == "curved-zipline-point" || requested.customType == "curved-zipline-component")
+            if (requested.customType == "curved-zipline-component")
+            {
+                var point = doc.objects.SingleOrDefault(item => item.id == requested.parentId);
+                id = point?.customType == "curved-zipline-point" ? point.parentId : requested.parentId;
+            }
+            else if (requested.customType == "curved-zipline-point")
                 id = requested.parentId;
             var ids = Subtree(doc, id); var source = doc.objects.Where(o => ids.Contains(o.id)).ToArray();
             var mapping = source.ToDictionary(o => o.id, o => Guid.NewGuid().ToString("N"));

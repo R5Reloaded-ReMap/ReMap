@@ -97,12 +97,12 @@ namespace ReMap.Standalone
                     candidate.customType == "curved-zipline-point")
                     .OrderBy(candidate => int.TryParse(candidate.customRole, out int index) ? index : int.MaxValue)
                     .Select(candidate => instances.TryGetValue(candidate.id, out var point)
-                        ? point.transform.position : Vector3.zero).ToArray();
+                        ? point.transform.TransformPoint(ReMapZiplineProfiles.UnityOffset(
+                            ReMapZiplineProfiles.CableOffsetApex(
+                                candidate.customProfile, candidate.ziplineArmHeight)))
+                        : Vector3.zero).ToArray();
                 line.enabled = controls.Length >= 2;
                 if (!line.enabled) continue;
-                if (item.curvedZiplineSupport)
-                    controls[0] = instance.transform.TransformPoint(
-                        ReMapZiplineProfiles.UnityOffset(ReMapZiplineProfiles.ArmToCableApex));
                 var curve = CurvedZiplinePreviewPoints(controls, item.curvedZiplineSegments);
                 line.positionCount = curve.Length;
                 line.SetPositions(curve);

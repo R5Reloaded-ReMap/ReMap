@@ -13,7 +13,8 @@ namespace ReMap.Standalone.Tests
             var factory = typeof(ReMapApp).GetMethod("CreateDefaultCurvedZiplineObjects",
                 System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Static);
             var objects = (MapObject[])factory.Invoke(null, new object[] { Vector3.zero, "" });
-            objects[0].curvedZiplineSupport = true;
+            objects[1].customProfile = "support";
+            objects[2].customProfile = "arm";
             return new MapDocument {
                 name = "curve", gameTarget = GameTargets.R5Flowstate,
                 editingMap = "mp_rr_desertlands_hu", objects = objects.ToList()
@@ -28,6 +29,8 @@ namespace ReMap.Standalone.Tests
             var root = document.objects[0];
             Assert.That(root.customType, Is.EqualTo("curved-zipline"));
             Assert.That(root.curvedZiplineSegments, Is.EqualTo(8));
+            Assert.That(document.objects.Where(item => item.customType == "curved-zipline-point")
+                .Select(item => item.customProfile), Is.EqualTo(new[] { "support", "arm", "none" }));
             Assert.That(document.objects.Count(item => item.customType == "curved-zipline-point"), Is.EqualTo(3));
         }
 
@@ -48,7 +51,7 @@ namespace ReMap.Standalone.Tests
         {
             var document = Document();
             string code = ReMapGameScript.Generate(document, document.objects);
-            StringAssert.Contains("ReMap_CreateCurvedZipline( [ <0, 0, 0>, <300, 100, 80>, <600, 0, 0> ], 8, true", code);
+            StringAssert.Contains("ReMap_CreateCurvedZipline( [ <0, 0, 0>, <300, 100, 80>, <600, 0, 0> ], 8, [ REMAP_ZIPLINE_END_SUPPORT, REMAP_ZIPLINE_END_ARM, REMAP_ZIPLINE_END_NONE ], [ <0, 0, 0>, <0, 0, 0>, <0, 0, 0> ], [ 180, 180, 180 ]", code);
 
             string root = Path.GetFullPath(Path.Combine(Application.dataPath, ".."));
             string script = File.ReadAllText(Path.Combine(root,
@@ -56,9 +59,25 @@ namespace ReMap.Standalone.Tests
             StringAssert.Contains("array<vector> function ReMap_BuildBezierPath", script);
             StringAssert.Contains("arm.kv.solid = 0", script);
             StringAssert.Contains("arm.kv.contents = 0", script);
+            StringAssert.Contains("support.kv.solid = 0", script);
+            StringAssert.Contains("support.kv.contents = 0", script);
             StringAssert.DoesNotContain("MapEditor_", script);
             StringAssert.DoesNotContain("GetBezierOfPath", script);
             StringAssert.DoesNotContain("GetAllPointsOnBezier", script);
+        }
+
+        [Test]
+        public void LegacySupportBooleanMigratesToArmProfile()
+        {
+            var document = Document();
+            document.objects[0].customProfile = "";
+            document.objects[0].curvedZiplineSupport = true;
+            document.objects[1].customProfile = "";
+
+            document.Validate();
+
+            Assert.That(document.objects[1].customProfile, Is.EqualTo("arm"));
+            Assert.That(document.objects[0].customProfile, Is.Empty);
         }
 
         [Test]

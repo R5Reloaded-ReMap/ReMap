@@ -33,7 +33,8 @@ namespace ReMap.Standalone
                 assetId = "custom:curved-zipline-point:" + index.ToString(CultureInfo.InvariantCulture),
                 displayName = L.F("#CONTROL_POINT_ARG0", index + 1), isGroup = true,
                 customType = "curved-zipline-point", customRole = index.ToString(CultureInfo.InvariantCulture),
-                parentId = parentId, position = WorldView.ToData(position)
+                parentId = parentId, position = WorldView.ToData(position), customProfile = "none",
+                ziplineArmHeight = ReMapZiplineProfiles.DefaultArmHeightApex
             };
 
         private void InsertCurvedZipline(Vector3 pivot, string parent = "")
@@ -70,7 +71,11 @@ namespace ReMap.Standalone
         {
             session.Edit(document => {
                 var points = CurvedZiplinePoints(document, ziplineId);
-                if (points.Length > 2) document.objects.Remove(points[points.Length - 1]);
+                if (points.Length > 2)
+                {
+                    var removed = MapHierarchy.Subtree(document, points[points.Length - 1].id);
+                    document.objects.RemoveAll(candidate => removed.Contains(candidate.id));
+                }
             });
             selectedId = ziplineId;
             Refresh();
@@ -90,35 +95,71 @@ namespace ReMap.Standalone
             }
         }
 
-        private void SyncCurvedZiplineSupport(MapDocument document, MapObject zipline)
+        private void SyncCurvedZiplineSupport(MapDocument document, MapObject point)
         {
-            document.objects.RemoveAll(candidate => candidate.parentId == zipline.id &&
+            document.objects.RemoveAll(candidate => candidate.parentId == point.id &&
                 candidate.customType == "curved-zipline-component");
-            if (!zipline.curvedZiplineSupport) return;
-            var record = ZiplineModelRecord(ReMapZiplineProfiles.ArmModelPath);
-            document.objects.Add(new MapObject {
-                assetId = record?.Id ?? "custom:curved-zipline-component:arm",
-                displayName = L.T("#ZIPLINE_ARM"), parentId = zipline.id,
-                customType = "curved-zipline-component", customRole = "arm",
-                gameModelPath = ReMapZiplineProfiles.ArmModelPath,
-                rotation = WorldView.ToData(ReMapZiplineProfiles.ArmRotationUnity()),
-                isGroup = record == null, commonAsset = record?.IsCommon ?? false,
-                availableMaps = record?.origins.Select(origin => origin.mapId)
-                    .Where(map => map != "").Distinct().ToList() ?? new List<string>()
-            });
+            var profile = ReMapZiplineProfiles.Find(point.customProfile);
+            point.customProfile = profile.Id;
+
+            void AddComponent(string role, string label, string modelPath,
+                Vector3 position, Vector3 rotation)
+            {
+                var record = ZiplineModelRecord(modelPath);
+                document.objects.Add(new MapObject {
+                    assetId = record?.Id ?? "custom:curved-zipline-component:" + role,
+                    displayName = L.T(label), parentId = point.id,
+                    customType = "curved-zipline-component", customRole = role,
+                    gameModelPath = modelPath, position = WorldView.ToData(position),
+                    rotation = WorldView.ToData(rotation), isGroup = record == null,
+                    commonAsset = record?.IsCommon ?? false,
+                    availableMaps = record?.origins.Select(origin => origin.mapId)
+                        .Where(map => map != "").Distinct().ToList() ?? new List<string>()
+                });
+            }
+
+            if (profile.HasSupport)
+                AddComponent("support", "#ZIPLINE_SUPPORT", ReMapZiplineProfiles.SupportModelPath,
+                    Vector3.zero, Vector3.zero);
+            if (profile.HasArm)
+                AddComponent("arm", "#ZIPLINE_ARM", ReMapZiplineProfiles.ArmModelPath,
+                    ReMapZiplineProfiles.UnityOffset(ReMapZiplineProfiles.ArmOffsetApex(
+                        profile, point.ziplineArmHeight)), ReMapZiplineProfiles.ArmRotationUnity());
         }
 
-        private bool CurvedZiplineSupportNeedsSync(MapDocument document, MapObject zipline)
+        private bool CurvedZiplineSupportNeedsSync(MapDocument document, MapObject point)
         {
-            var components = document.objects.Where(candidate => candidate.parentId == zipline.id &&
+            var components = document.objects.Where(candidate => candidate.parentId == point.id &&
                 candidate.customType == "curved-zipline-component").ToArray();
-            if (!zipline.curvedZiplineSupport) return components.Length != 0;
-            if (components.Length != 1 || components[0].customRole != "arm" ||
-                !GameAssetIndex.SameModelPath(components[0].gameModelPath,
-                    ReMapZiplineProfiles.ArmModelPath)) return true;
-            var record = ZiplineModelRecord(ReMapZiplineProfiles.ArmModelPath);
-            return components[0].assetId != (record?.Id ?? "custom:curved-zipline-component:arm") ||
-                components[0].isGroup != (record == null);
+            var profile = ReMapZiplineProfiles.Find(point.customProfile);
+            int expectedCount = (profile.HasSupport ? 1 : 0) + (profile.HasArm ? 1 : 0);
+            if (components.Length != expectedCount) return true;
+
+            bool Current(string role, string modelPath, Vector3 position, Vector3 rotation)
+            {
+                var component = components.FirstOrDefault(candidate => candidate.customRole == role);
+                if (component == null || !GameAssetIndex.SameModelPath(component.gameModelPath, modelPath))
+                    return false;
+                var record = ZiplineModelRecord(modelPath);
+                bool poseMatches = Vector3.Distance(WorldView.ToVector(component.position), position) < .0001f &&
+                    Quaternion.Angle(Quaternion.Euler(WorldView.ToVector(component.rotation)),
+                        Quaternion.Euler(rotation)) < .01f;
+                return component.assetId == (record?.Id ?? "custom:curved-zipline-component:" + role) &&
+                    component.isGroup == (record == null) && poseMatches;
+            }
+
+            Vector3 armPosition = ReMapZiplineProfiles.UnityOffset(
+                ReMapZiplineProfiles.ArmOffsetApex(profile, point.ziplineArmHeight));
+            return profile.HasSupport && !Current("support", ReMapZiplineProfiles.SupportModelPath,
+                    Vector3.zero, Vector3.zero) ||
+                profile.HasArm && !Current("arm", ReMapZiplineProfiles.ArmModelPath,
+                    armPosition, ReMapZiplineProfiles.ArmRotationUnity());
+        }
+
+        private void ApplyCurvedZiplineProfile(MapDocument document, MapObject point, string profileId)
+        {
+            point.customProfile = ReMapZiplineProfiles.Find(profileId).Id;
+            SyncCurvedZiplineSupport(document, point);
         }
 
         private void BuildCurvedZiplineInspector(MapObject item, VisualElement section)
@@ -143,32 +184,6 @@ namespace ReMap.Standalone
                 session.Edit(document => document.objects.Find(candidate => candidate.id == item.id)
                     .curvedZiplineSegments = value);
                 Refresh();
-            }));
-
-            var support = CompactInspectorField(new Toggle(L.T("#START_ARM_SUPPORT")) {
-                value = item.curvedZiplineSupport
-            });
-            bool supportAvailable = ReMapModelAvailability.HasModel(assetLibrary?.Records,
-                Targets, ReMapZiplineProfiles.ArmModelPath);
-            support.SetEnabled(supportAvailable || item.curvedZiplineSupport);
-            support.tooltip = L.T("#START_ARM_SUPPORT_NO_COLLISION_HELP");
-            section.Add(support);
-            if (!supportAvailable)
-                section.Add(Label(L.F("#MODEL_NOT_IN_SELECTED_RPAKS",
-                    ReMapZiplineProfiles.ArmModelPath), "note"));
-            support.RegisterValueChangedCallback(change => Run(() => {
-                if (change.newValue && !supportAvailable)
-                {
-                    support.SetValueWithoutNotify(false);
-                    return;
-                }
-                session.Edit(document => {
-                    var zipline = document.objects.Find(candidate => candidate.id == item.id);
-                    zipline.curvedZiplineSupport = change.newValue;
-                    SyncCurvedZiplineSupport(document, zipline);
-                });
-                Refresh();
-                _ = PrepareZiplineModels();
             }));
 
             var width = CompactInspectorField(new FloatField(L.T("#CABLE_WIDTH")) {
@@ -198,6 +213,53 @@ namespace ReMap.Standalone
         {
             section.Add(Label(L.T("#CURVED_ZIPLINE_CONTROL_POINT"), "inspector-subsection-title"));
             section.Add(Label(L.T("#MOVE_CONTROL_POINT_HELP"), "inspector-inline-help"));
+            var current = ReMapZiplineProfiles.Find(item.customProfile);
+            var profiles = ReMapZiplineProfiles.All.Where(profile =>
+                ReMapModelAvailability.ZiplineProfile(assetLibrary?.Records, Targets, profile)).ToList();
+            var labels = profiles.Select(profile => L.T(profile.Label)).ToList();
+            if (!profiles.Contains(current))
+            {
+                profiles.Insert(0, current);
+                labels.Insert(0, L.F("#ARG0_UNAVAILABLE", L.T(current.Label)));
+                section.Add(Label(L.T("#ZIPLINE_SUPPORT_MODELS_UNAVAILABLE"), "note"));
+            }
+            var model = CompactInspectorField(new DropdownField(L.T("#ZIPLINE_SUPPORT"), labels,
+                Math.Max(0, profiles.IndexOf(current))));
+            model.tooltip = L.T("#START_ARM_SUPPORT_NO_COLLISION_HELP");
+            section.Add(model);
+            model.RegisterValueChangedCallback(change => Run(() => {
+                int index = Math.Max(0, labels.IndexOf(change.newValue));
+                session.Edit(document => {
+                    var point = document.objects.Find(candidate => candidate.id == item.id);
+                    if (!ReMapModelAvailability.ZiplineProfile(assetLibrary?.Records, Targets,
+                        profiles[index])) return;
+                    ApplyCurvedZiplineProfile(document, point, profiles[index].Id);
+                });
+                Refresh();
+                _ = PrepareZiplineModels();
+            }));
+
+            if (current.HasSupport)
+            {
+                var height = CompactInspectorField(new FloatField(L.T("#ARM_HEIGHT_APEX_U")) {
+                    value = item.ziplineArmHeight, isDelayed = true
+                });
+                section.Add(height);
+                height.RegisterValueChangedCallback(change => Run(() => {
+                    float clampedHeight = Mathf.Clamp(change.newValue,
+                        ReMapZiplineProfiles.MinArmHeightApex, ReMapZiplineProfiles.MaxArmHeightApex);
+                    if (!Mathf.Approximately(change.newValue, clampedHeight))
+                        height.SetValueWithoutNotify(clampedHeight);
+                    session.Edit(document => {
+                        var point = document.objects.Find(candidate => candidate.id == item.id);
+                        point.ziplineArmHeight = clampedHeight;
+                        SyncCurvedZiplineSupport(document, point);
+                    });
+                    snapshot = session.Snapshot();
+                    world.Sync(snapshot, selectedId);
+                    UpdateGizmoVisual();
+                }));
+            }
             section.Add(Button(L.T("#SELECT_CURVED_ZIPLINE"), () => Select(item.parentId)));
         }
     }
