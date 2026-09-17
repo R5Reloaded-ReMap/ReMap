@@ -75,7 +75,7 @@ namespace ReMap.Standalone.Tests
             string code = ReMapGameScript.Generate(document, document.objects);
             StringAssert.Contains("Sh_ReMap_Clear()", code);
             StringAssert.DoesNotContain("ReMap_ClearZiplines()", code);
-            StringAssert.Contains("ReMap_CreateZipline( <0, 0, 0>, <0, 0, 0>, <400, 0, 0>, <0, 0, 0>, REMAP_ZIPLINE_END_ARM, REMAP_ZIPLINE_END_SUPPORT, false, 2, 1, 180, 180, true, 0.9, 0, -1, 1, false, true, 100, 100, false, false, false )", code);
+            StringAssert.Contains("ReMap_CreateZipline( <0, 0, 0>, <0, 0, 0>, <400, 0, 0>, <0, 0, 0>, REMAP_ZIPLINE_END_ARM, REMAP_ZIPLINE_END_SUPPORT, false, 2, 1, 180, 180, false, 0.9, 0, -1, 1, false, true, 100, 100, false, false, false )", code);
             StringAssert.DoesNotContain("PrecacheModel( $\"mdl/industrial/zipline_arm.rmdl\" )", code);
             StringAssert.DoesNotContain("ReMap_CreateProp( $\"mdl/industrial/zipline_arm.rmdl\"", code);
             StringAssert.DoesNotContain("ReMap_CreateProp( $\"mdl/industrial/security_fence_post.rmdl\"", code);
@@ -88,7 +88,7 @@ namespace ReMap.Standalone.Tests
             document.gameTarget = GameTargets.R5Reloaded;
             document.Validate();
             string code = ReMapGameScript.Generate(document, document.objects);
-            StringAssert.Contains("ReMap_CreateZipline( <0, 0, 0>, <0, 0, 0>, <400, 0, 0>, <0, 0, 0>, REMAP_ZIPLINE_END_ARM, REMAP_ZIPLINE_END_SUPPORT, false, 2, 1, 180, 180, true, 0.9, 0, -1, 1, false, true, 100, 100, false, false, false )", code);
+            StringAssert.Contains("ReMap_CreateZipline( <0, 0, 0>, <0, 0, 0>, <400, 0, 0>, <0, 0, 0>, REMAP_ZIPLINE_END_ARM, REMAP_ZIPLINE_END_SUPPORT, false, 2, 1, 180, 180, false, 0.9, 0, -1, 1, false, true, 100, 100, false, false, false )", code);
         }
 
         [Test]
@@ -98,7 +98,7 @@ namespace ReMap.Standalone.Tests
             document.objects[0].ziplineMode = "vertical";
             document.objects[0].ziplinePushOffAngle = 45f;
             string code = ReMapGameScript.Generate(document, document.objects);
-            StringAssert.Contains(", true, 2, 1, 180, 180, true, 0.9, 45, -1, 1, false, true, 100, 100, false, false, false )", code);
+            StringAssert.Contains(", true, 2, 1, 180, 180, false, 0.9, 45, -1, 1, false, true, 100, 100, false, false, false )", code);
         }
         [Test]
         public void VerticalZiplineExportsNegativePushOffAngle()
@@ -107,7 +107,7 @@ namespace ReMap.Standalone.Tests
             document.objects[0].ziplineMode = "vertical";
             document.objects[0].ziplinePushOffAngle = -45f;
             string code = ReMapGameScript.Generate(document, document.objects);
-            StringAssert.Contains(", true, 2, 1, 180, 180, true, 0.9, -45, -1, 1, false, true, 100, 100, false, false, false )", code);
+            StringAssert.Contains(", true, 2, 1, 180, 180, false, 0.9, -45, -1, 1, false, true, 100, 100, false, false, false )", code);
         }
 
         [Test]

@@ -46,7 +46,7 @@ void function ReMap_ClearZiplines()
 	file.entities.clear()
 }
 
-void function ReMap_CreateZipline( vector startOrigin, vector startAngles, vector endOrigin, vector endAngles, int startProfile = REMAP_ZIPLINE_END_ARM, int endProfile = REMAP_ZIPLINE_END_ARM, bool vertical = false, float width = 2.0, float speedScale = 1.0, float startArmHeight = 180.0, float endArmHeight = 180.0, bool pushOffInDirectionX = true, float lengthScale = 1.0, float pushOffAngle = 0.0, float fadeDistance = -1.0, float ziplineScale = 1.0, bool preserveVelocity = false, bool dropToBottom = true, float startAutoDetachDistance = 100.0, float endAutoDetachDistance = 100.0, bool restPoint = false, bool detachEndOnSpawn = false, bool detachEndOnUse = false )
+void function ReMap_CreateZipline( vector startOrigin, vector startAngles, vector endOrigin, vector endAngles, int startProfile = REMAP_ZIPLINE_END_ARM, int endProfile = REMAP_ZIPLINE_END_ARM, bool vertical = false, float width = 2.0, float speedScale = 1.0, float startArmHeight = 180.0, float endArmHeight = 180.0, bool pushOffInDirectionX = false, float lengthScale = 1.0, float pushOffAngle = 0.0, float fadeDistance = -1.0, float ziplineScale = 1.0, bool preserveVelocity = false, bool dropToBottom = true, float startAutoDetachDistance = 100.0, float endAutoDetachDistance = 100.0, bool restPoint = false, bool detachEndOnSpawn = false, bool detachEndOnUse = false )
 {
 	if ( startOrigin == endOrigin )
 		return

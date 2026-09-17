@@ -71,7 +71,7 @@ namespace ReMap.Standalone.Core
         public const float DefaultZiplineEndOffsetApex = 25f;
         public float ziplineEndOffset = DefaultZiplineEndOffsetApex;
         public float ziplineArmHeight = 180f;
-        public bool ziplinePushOffInDirectionX = true;
+        public bool ziplinePushOffInDirectionX;
         public float ziplinePushOffAngle;
         public string doorType = "single";
         public bool doorGold;
