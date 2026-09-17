@@ -827,11 +827,13 @@ namespace ReMap.Standalone
 
             objectNameInput.RegisterCallback<FocusOutEvent>(_ => root.schedule.Execute(() => Run(CommitInspectorEdit)));
 
-            if (item.customType == "zipline" || item.customType == "zipline-endpoint")
+            if (item.customType == "zipline" || item.customType == "zipline-endpoint" ||
+                item.customType == "door")
             {
                 var remapSettings = InspectorSection(L.T("#REMAP_SETTINGS"), "remap-settings");
                 if (item.customType == "zipline") BuildZiplineInspector(item, remapSettings);
-                else BuildZiplineEndpointInspector(item, remapSettings);
+                else if (item.customType == "zipline-endpoint") BuildZiplineEndpointInspector(item, remapSettings);
+                else BuildDoorInspector(item, remapSettings);
                 inspector.Add(remapSettings);
             }
             if (!item.isGroup && string.IsNullOrEmpty(item.customType))
@@ -847,6 +849,7 @@ namespace ReMap.Standalone
             information.Add(worldPositionInfo); RefreshWorldPositionInfo();
             string modelPath = string.IsNullOrWhiteSpace(item.gameModelPath) ? item.assetId : item.gameModelPath;
             string typeDetails = item.customType == "zipline" ? L.T("#CUSTOM_OBJECT_ZIPLINE") :
+                item.customType == "door" ? L.T("#CUSTOM_OBJECT_DOOR") :
                 item.customType == "zipline-endpoint" ? L.T("#ZIPLINE_ATTACHMENT_POINT") :
                 item.isGroup ? L.T("#GROUP_CHILDREN_SHARE_TRANSFORM") : L.T("#MODEL");
             information.Add(CopyableInspectorValue(L.T("#OBJECT_TYPE"), typeDetails));

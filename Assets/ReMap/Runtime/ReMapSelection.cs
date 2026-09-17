@@ -85,6 +85,8 @@ namespace ReMap.Standalone
         private string VisibleSelectionTarget(string id)
         {
             var item = snapshot?.objects.Find(candidate => candidate.id == id);
+            if (item?.customType == "door-component")
+                item = snapshot.objects.Find(candidate => candidate.id == item.parentId);
             if (item?.customType == "zipline-component")
                 item = snapshot.objects.Find(candidate => candidate.id == item.parentId);
             if (item?.customType == "zipline-endpoint" && item.customRole == "start")

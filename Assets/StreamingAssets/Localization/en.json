@@ -2943,6 +2943,70 @@
       "text": "Invalid zipline component."
     },
     {
+      "key": "#DOOR",
+      "text": "Door"
+    },
+    {
+      "key": "#DOOR_PANEL",
+      "text": "Door panel"
+    },
+    {
+      "key": "#DOOR_TYPE",
+      "text": "Door type"
+    },
+    {
+      "key": "#DOOR_SINGLE",
+      "text": "Single door"
+    },
+    {
+      "key": "#DOOR_DOUBLE",
+      "text": "Double door"
+    },
+    {
+      "key": "#DOOR_VERTICAL",
+      "text": "Vertical door"
+    },
+    {
+      "key": "#DOOR_HORIZONTAL",
+      "text": "Horizontal door"
+    },
+    {
+      "key": "#GOLD_DOOR",
+      "text": "Gold door"
+    },
+    {
+      "key": "#SPAWN_OPEN",
+      "text": "Open on spawn"
+    },
+    {
+      "key": "#CUSTOM_OBJECT_DOOR",
+      "text": "Custom object · Door"
+    },
+    {
+      "key": "#DOOR_CUSTOM_HELP",
+      "text": "One interactive door object with selectable single, double, vertical or horizontal model and initial state."
+    },
+    {
+      "key": "#DOOR_CREATED",
+      "text": "Door created. Choose its type and initial state in ReMap settings."
+    },
+    {
+      "key": "#DOOR_PREVIEW_ERROR",
+      "text": "Door preview: "
+    },
+    {
+      "key": "#DOOR_HIERARCHY_GROUP",
+      "text": "A door must be a hierarchy group."
+    },
+    {
+      "key": "#INVALID_DOOR_TYPE",
+      "text": "Invalid door type."
+    },
+    {
+      "key": "#INVALID_DOOR_COMPONENTS",
+      "text": "A door does not contain the expected model panels."
+    },
+    {
       "key": "#TARGET_GAME",
       "text": "Target game"
     },

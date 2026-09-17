@@ -41,6 +41,9 @@ namespace ReMap.Standalone
             var serverObjects = objects.Where(o => !o.clientSide).ToList();
             var clientObjects = objects.Where(o => o.clientSide).ToList();
             var models = objects.Select(Model).Distinct(StringComparer.OrdinalIgnoreCase).ToList();
+            models.AddRange(world.Where(o => o.customType == "door")
+                .Select(o => ReMapDoorProfiles.Find(o.doorType).ModelPath)
+                .Where(model => !models.Contains(model, StringComparer.OrdinalIgnoreCase)));
             Vector3 originOffset = OriginOffset(document);
             bool useOriginOffset = HasOriginOffset(originOffset);
             var shared = new StringBuilder();
@@ -63,6 +66,7 @@ namespace ReMap.Standalone
                 server.AppendLine("\tentity ent");
             }
             for (int i = 0; i < serverObjects.Count; i++) AppendObject(server, serverObjects[i], originOffset, useOriginOffset);
+            AppendDoors(server, world, false, originOffset, useOriginOffset);
             AppendZiplines(server, world, false, originOffset, useOriginOffset);
 
             var client = new StringBuilder();
@@ -143,6 +147,7 @@ namespace ReMap.Standalone
             result.Append("script Sh_ReMap_Clear()\n");
             for (int i = 0; i < objects.Count; i++)
                 result.Append("script ").Append(CreateExpression(objects[i], originOffset, false)).AppendLine();
+            AppendDoors(result, world, true, originOffset, false);
             AppendZiplines(result, world, true, originOffset, false);
             return result.ToString();
         }
@@ -256,6 +261,24 @@ namespace ReMap.Standalone
             }
         }
 
+        private static void AppendDoors(StringBuilder code, List<MapObject> world, bool live,
+            Vector3 originOffset, bool symbolicOffset)
+        {
+            var doors = world.Where(o => o.customType == "door").ToList();
+            if (!live && doors.Count > 0) { code.AppendLine(); code.AppendLine("\t// Doors"); }
+            foreach (var door in doors)
+            {
+                var profile = ReMapDoorProfiles.Find(door.doorType);
+                string expression = "ReMap_CreateDoor( " +
+                    Position(door.position, originOffset, symbolicOffset) + ", " +
+                    Vector(ApexDisplay.Angles(WorldView.ToVector(door.rotation))) + ", " +
+                    profile.ScriptConstant + ", " +
+                    (door.doorGold && profile.SupportsGold ? "true" : "false") + ", " +
+                    (door.doorSpawnOpen ? "true" : "false") + " )";
+                code.Append(live ? "script " : "\t").Append(expression).AppendLine();
+            }
+        }
+
         private static Vector3 OriginOffset(MapDocument document)
         {
             if (!document.originOffset.IsFinite || !ApexCoordinates.ContainsUnity(document.originOffset))
@@ -295,6 +318,7 @@ namespace ReMap.Standalone
             FunctionName = functionName;
             Body = (body ?? "").Replace("\r\n", "\n").TrimEnd();
         }
+
     }
 
     public static class ReMapGameScriptInstaller

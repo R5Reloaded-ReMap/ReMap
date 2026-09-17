@@ -467,7 +467,8 @@ namespace ReMap.Standalone
             var result = new List<MapObject>();
             foreach (var item in document.objects)
             {
-                if (item.isGroup && item.customType != "zipline" && item.customType != "zipline-endpoint") continue;
+                if (item.isGroup && item.customType != "zipline" && item.customType != "zipline-endpoint" &&
+                    item.customType != "door") continue;
                 if (!MapHierarchy.IsEnabled(document, item.id)) continue;
                 var copy = item.Copy(); var pose = WorldPose(item.id); copy.parentId = "";
                 copy.position = pose.position; copy.rotation = pose.rotation; copy.scale = pose.scale; result.Add(copy);

@@ -317,6 +317,20 @@ namespace ReMap.Standalone
             if (ghost == null || ghostAsset != entry.Id)
             {
                 ClearPreview(); ghostAsset = entry.Id;
+                if (entry.CustomType == "door")
+                {
+                    ghost = GameObject.CreatePrimitive(PrimitiveType.Cube);
+                    ghost.name = "Door placement preview";
+                    ghost.transform.SetParent(root.transform);
+                    ghost.transform.localScale = entry.Size;
+                    ghost.GetComponent<Collider>().enabled = false;
+                    ghost.GetComponent<Renderer>().sharedMaterial = lineMaterial;
+                    var doorTint = new MaterialPropertyBlock();
+                    doorTint.SetColor("_BaseColor", new Color(.3f, .95f, .65f));
+                    ghost.GetComponent<Renderer>().SetPropertyBlock(doorTint);
+                    ghost.transform.position = position.Value + Vector3.up * entry.Size.y * .5f;
+                    return;
+                }
                 ghost = new GameObject("Zipline placement preview"); ghost.transform.SetParent(root.transform);
                 float length = Mathf.Max(1, entry.Size.y);
                 var start = GameObject.CreatePrimitive(PrimitiveType.Cylinder); start.transform.SetParent(ghost.transform, false);
@@ -335,7 +349,8 @@ namespace ReMap.Standalone
                 line.positionCount = 2; line.SetPosition(0, Vector3.up); line.SetPosition(1, Vector3.down * length);
                 line.widthMultiplier = .04f; line.numCapVertices = 4;
             }
-            ghost.transform.position = position.Value;
+            ghost.transform.position = position.Value + (entry.CustomType == "door"
+                ? Vector3.up * entry.Size.y * .5f : Vector3.zero);
         }
     }
 }

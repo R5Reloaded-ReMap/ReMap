@@ -73,6 +73,9 @@ namespace ReMap.Standalone.Core
         public float ziplineArmHeight = 180f;
         public bool ziplinePushOffInDirectionX = true;
         public float ziplinePushOffAngle;
+        public string doorType = "single";
+        public bool doorGold;
+        public bool doorSpawnOpen;
         public bool commonAsset;
         public List<string> availableMaps = new List<string>();
         public bool allowMantle = true;
@@ -155,9 +158,11 @@ namespace ReMap.Standalone.Core
                 item.ziplineStartId = item.ziplineStartId ?? "";
                 item.ziplineEndId = item.ziplineEndId ?? "";
                 item.ziplineMode = item.ziplineMode ?? "horizontal";
+                item.doorType = item.doorType ?? "single";
                 if (item.ziplineMode == "auto") item.ziplineMode = "horizontal";
                 if (item.customType != "" && item.customType != "zipline" && item.customType != "zipline-endpoint" &&
-                    item.customType != "zipline-component")
+                    item.customType != "zipline-component" && item.customType != "door" &&
+                    item.customType != "door-component")
                     throw new ArgumentException(L.T("#UNKNOWN_CUSTOM_OBJECT_TYPE"));
                 if (item.customType == "zipline" && !item.isGroup)
                     throw new ArgumentException(L.T("#ZIPLINE_HIERARCHY_GROUP"));
@@ -184,6 +189,11 @@ namespace ReMap.Standalone.Core
                 if (item.customType == "zipline-endpoint" && (!Finite(item.ziplineArmHeight) ||
                     item.ziplineArmHeight < 70f || item.ziplineArmHeight > 290f))
                     throw new ArgumentException(L.T("#INVALID_ZIPLINE_ARM_HEIGHT"));
+                if (item.customType == "door" && !item.isGroup)
+                    throw new ArgumentException(L.T("#DOOR_HIERARCHY_GROUP"));
+                if (item.customType == "door" && item.doorType != "single" && item.doorType != "double" &&
+                    item.doorType != "vertical" && item.doorType != "horizontal")
+                    throw new ArgumentException(L.T("#INVALID_DOOR_TYPE"));
                 if (!item.position.IsFinite || !item.rotation.IsFinite || !item.scale.IsFinite)
                     throw new ArgumentException(L.T("#TRANSFORMS_FINITE_NUMBERS"));
                 if (!Finite(item.fadeDistance) || item.fadeDistance < -1f)
@@ -235,6 +245,20 @@ namespace ReMap.Standalone.Core
                     var parent = objects.Find(o => o.id == item.parentId);
                     if (parent == null || parent.customType != "zipline-endpoint")
                         throw new ArgumentException(L.T("#INVALID_ZIPLINE_COMPONENT"));
+                }
+                else if (item.customType == "door")
+                {
+                    int expected = item.doorType == "double" ? 2 : 1;
+                    int components = objects.FindAll(o => o.parentId == item.id &&
+                        o.customType == "door-component").Count;
+                    if (components != expected)
+                        throw new ArgumentException(L.T("#INVALID_DOOR_COMPONENTS"));
+                }
+                else if (item.customType == "door-component")
+                {
+                    var parent = objects.Find(o => o.id == item.parentId);
+                    if (parent == null || parent.customType != "door")
+                        throw new ArgumentException(L.T("#INVALID_DOOR_COMPONENTS"));
                 }
             }
             NormalizeZiplineStartPositions();

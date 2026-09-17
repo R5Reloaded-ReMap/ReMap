@@ -2943,6 +2943,70 @@
       "text": "Composant de tyrolienne invalide."
     },
     {
+      "key": "#DOOR",
+      "text": "Porte"
+    },
+    {
+      "key": "#DOOR_PANEL",
+      "text": "Panneau de porte"
+    },
+    {
+      "key": "#DOOR_TYPE",
+      "text": "Type de porte"
+    },
+    {
+      "key": "#DOOR_SINGLE",
+      "text": "Porte simple"
+    },
+    {
+      "key": "#DOOR_DOUBLE",
+      "text": "Porte double"
+    },
+    {
+      "key": "#DOOR_VERTICAL",
+      "text": "Porte verticale"
+    },
+    {
+      "key": "#DOOR_HORIZONTAL",
+      "text": "Porte horizontale"
+    },
+    {
+      "key": "#GOLD_DOOR",
+      "text": "Porte dorée"
+    },
+    {
+      "key": "#SPAWN_OPEN",
+      "text": "Ouverte au spawn"
+    },
+    {
+      "key": "#CUSTOM_OBJECT_DOOR",
+      "text": "Objet personnalisé · Porte"
+    },
+    {
+      "key": "#DOOR_CUSTOM_HELP",
+      "text": "Un seul objet porte interactif avec modèle simple, double, vertical ou horizontal et état initial configurables."
+    },
+    {
+      "key": "#DOOR_CREATED",
+      "text": "Porte créée. Choisissez son type et son état initial dans les réglages ReMap."
+    },
+    {
+      "key": "#DOOR_PREVIEW_ERROR",
+      "text": "Aperçu de la porte : "
+    },
+    {
+      "key": "#DOOR_HIERARCHY_GROUP",
+      "text": "Une porte doit être un groupe hiérarchique."
+    },
+    {
+      "key": "#INVALID_DOOR_TYPE",
+      "text": "Type de porte invalide."
+    },
+    {
+      "key": "#INVALID_DOOR_COMPONENTS",
+      "text": "Une porte ne contient pas les panneaux de modèle attendus."
+    },
+    {
       "key": "#TARGET_GAME",
       "text": "Jeu cible"
     },

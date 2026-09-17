@@ -9,7 +9,8 @@ namespace ReMap.Standalone
     public sealed partial class ReMapApp
     {
         private CatalogEntry[] CustomCatalogEntries() => new[] {
-            new CatalogEntry("custom:zipline", L.T("#ZIPLINE"), L.T("#CUSTOM"), new Vector3(1, 10.16f, 1)) { CustomType = "zipline" }
+            new CatalogEntry("custom:zipline", L.T("#ZIPLINE"), L.T("#CUSTOM"), new Vector3(1, 10.16f, 1)) { CustomType = "zipline" },
+            new CatalogEntry("custom:door", L.T("#DOOR"), L.T("#CUSTOM"), new Vector3(1.83f, 2.44f, .15f)) { CustomType = "door" }
         };
 
         private void RenderCustomCatalog()
@@ -33,6 +34,7 @@ namespace ReMap.Standalone
             }
             if (entries.Length == 0) catalogList.Add(Label(L.T("#NO_CUSTOM_OBJECT_MATCHES_SEARCH"), "note"));
             _ = PrepareZiplineModels();
+            _ = PrepareDoorModels();
         }
 
         private void SelectCustomAsset(CatalogEntry entry)
@@ -42,14 +44,17 @@ namespace ReMap.Standalone
             if (currentThumbnail != null) Destroy(currentThumbnail);
             currentThumbnail = null; assetPreview.image = null;
             previewText.text = entry.Name + "\n" + L.T("#CATEGORY") + entry.Category + "\n\n" +
-                L.T("#CABLE_TWO_INDEPENDENTLY_MOVABLE_ENDPOINTS");
+                L.T(entry.CustomType == "door" ? "#DOOR_CUSTOM_HELP" :
+                    "#CABLE_TWO_INDEPENDENTLY_MOVABLE_ENDPOINTS");
             placeAssetButton.SetEnabled(true); RefreshCatalog();
             _ = PrepareZiplineModels();
+            _ = PrepareDoorModels();
         }
 
         private void InsertCustomObject(CatalogEntry entry, Vector3 position, string parent = "")
         {
             if (entry?.CustomType == "zipline") InsertZipline(position, parent);
+            else if (entry?.CustomType == "door") InsertDoor(position, parent);
         }
     }
 }
