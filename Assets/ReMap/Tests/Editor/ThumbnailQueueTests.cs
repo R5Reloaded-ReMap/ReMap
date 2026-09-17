@@ -30,5 +30,12 @@ namespace ReMap.Standalone.Tests {
             var result=ThumbnailQueue.Next(new[]{a,b},new[]{a},new HashSet<string>(),new HashSet<string>(),"",Array.Empty<string>(),8,"loaded.rpak");
             Assert.That(result.Select(r=>r.Id),Is.EqualTo(new[]{a.Id}));
         }
+        [Test] public void OnDemandQueueNeverFillsFromOffscreenAssets() {
+            var visible=Record("1","visible");var offscreen=Record("2","offscreen");
+            var result=ThumbnailQueue.NextVisible(new[]{visible,offscreen},new[]{visible},new HashSet<string>(),new HashSet<string>(),"",Array.Empty<string>());
+            Assert.That(result.Select(r=>r.Id),Is.EqualTo(new[]{visible.Id}));
+            result=ThumbnailQueue.NextVisible(new[]{visible,offscreen},new[]{visible},new HashSet<string>{visible.Id},new HashSet<string>(),"",Array.Empty<string>());
+            Assert.That(result,Is.Empty);
+        }
     }
 }

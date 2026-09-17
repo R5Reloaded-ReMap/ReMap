@@ -5,6 +5,11 @@ namespace ReMap.Standalone.Core
 {
     public static class ThumbnailQueue
     {
+        public static GameAssetRecord[] NextVisible(IEnumerable<GameAssetRecord> records,IEnumerable<GameAssetRecord> visible,ISet<string> ready,ISet<string> failed,string search,string[] targets,int limit=8,string preferredArchive=null) {
+            var viewport=(visible??Enumerable.Empty<GameAssetRecord>()).ToArray();
+            var ids=viewport.Select(r=>r.Id).ToHashSet();
+            return Next((records??Enumerable.Empty<GameAssetRecord>()).Where(r=>ids.Contains(r.Id)),viewport,ready,failed,search,targets,limit,preferredArchive);
+        }
         public static GameAssetRecord[] Next(IEnumerable<GameAssetRecord> records,IEnumerable<GameAssetRecord> visible,ISet<string> ready,ISet<string> failed,string search,string[] targets,int limit=8,string preferredArchive=null) {
             var eligible=records.Where(r=>r.Supports(targets)&&!ready.Contains(r.Id)&&!failed.Contains(r.Id)).ToArray();
             var ids=eligible.Select(r=>r.Id).ToHashSet();

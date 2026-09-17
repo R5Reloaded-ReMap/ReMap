@@ -115,6 +115,8 @@ The active cache has a stable, readable layout:
 The full cache path appears in Settings with an **Open cache folder** button.
 `AssetCache/Models` and `AssetCache/Textures` are shared between both games by model GUID. Switching installations does not replace a compatible model that is already cached. `AssetCache/Versions` retains older per-installation RPAK indexes so they can be restored without mixing archive metadata. The asset export folder can be changed in **Settings > Asset cache**; changing it switches to the cache at the new location without moving or deleting the previous one. Generated caches and local tools are excluded from Git.
 
+Model extraction and thumbnail rendering are demand-driven: the library prepares the visible cards plus a small scroll margin, then stops until another page or filter becomes visible. Existing thumbnails remain cached on disk.
+
 Saved projects are listed only for the active target game, with separate recovery state for R5Reloaded and R5Flowstate. A project's game target is locked after creation, so it cannot be launched against the other installation. **File > Port current map to the other game…** selects the opposite game, verifies the target RPAKs, and creates a converted copy only when every Apex model exists under the same GUID and internal model path. If conversion is blocked, a dedicated report lists every unavailable or incompatible model and no copy is created. Live rebuilding is disabled while a scene references map RPAKs absent from the active installation.
 
 New textures are limited to **1024 px** by default, configurable from 256 to 2048. Existing files are preserved. Content hashes avoid duplicate PNG copies, and runtime reference counting avoids duplicate GPU textures.

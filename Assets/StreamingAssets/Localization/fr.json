@@ -668,7 +668,7 @@
     },
     {
       "key": "#INDEX_READY_PREPARING_CACHED_THUMBNAILS",
-      "text": "Index prêt. Préparation progressive des miniatures en cache."
+      "text": "Index prêt. Les miniatures sont générées lorsque les ressources deviennent visibles."
     },
     {
       "key": "#INDEX_SOURCES_CHANGE_FILTERS",

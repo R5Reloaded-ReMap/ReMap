@@ -13,6 +13,7 @@ namespace ReMap.Standalone
     {
         private bool backgroundStopped, thumbnailLoopRunning, thumbnailPaused, indexRequested;
         private CancellationTokenSource thumbnailExport;
+        private int thumbnailIdleRevision;
         private string visibleThumbnailPage;
         private int visibleThumbnailRevision;
         private void InterruptBackgroundFor(GameAssetRecord requested=null) {
@@ -126,6 +127,7 @@ namespace ReMap.Standalone
         private async Task PrepareThumbnails()
         {
             if(thumbnailLoopRunning||assetLibrary.CacheRoot==null)return;
+            thumbnailIdleRevision++;
             thumbnailLoopRunning=true;string generation=assetLibrary.CacheRoot;ReadThumbnailState();
             try {
                 while(this!=null&&!backgroundStopped&&generation==assetLibrary.CacheRoot) {
@@ -137,7 +139,7 @@ namespace ReMap.Standalone
                     if(assetBusy||indexRequested||pendingAssetDrops>0||thumbnailPaused||SettingsOpen||IndexingOpen||inspectorDirty||libraryDragging||draggingGizmo||sceneSelectionPending||assemblyDragging){await Task.Delay(200);continue;}
                     bool continuous=assetLibrary.ContinuousPreviewsSupported;
                     int batchSize=continuous?1:assetLibrary.UsesForkFeatures?8:1;
-                    var batch=ThumbnailQueue.Next(eligible,visibleAssets,readyThumbnails,failedThumbnails,search.value,targets,batchSize,assetLibrary.PreferredPreviewArchive);
+                    var batch=ThumbnailQueue.NextVisible(eligible,visibleAssets,readyThumbnails,failedThumbnails,search.value,targets,batchSize,assetLibrary.PreferredPreviewArchive);
                     if(batch.Length==0)break;
                     // Render already exported visible models before waiting for any further archive decompression.
                     var cached=visibleAssets.Where(r=>r.Supports(targetSet)&&!readyThumbnails.Contains(r.Id)&&!failedThumbnails.Contains(r.Id)&&assetLibrary.CachedModel(r)!=null).Take(batchSize).ToArray();
@@ -177,15 +179,24 @@ namespace ReMap.Standalone
                 }
             }finally{
                 try{if(backgroundStopped||thumbnailDone+thumbnailFailed>=thumbnailTotal)await assetLibrary.ReleasePreviewSessionAsync();}
-                finally{thumbnailLoopRunning=false;UpdateThumbnailControls();}
+                finally{thumbnailLoopRunning=false;UpdateThumbnailControls();if(!backgroundStopped&&thumbnailDone+thumbnailFailed<thumbnailTotal)_=ReleaseThumbnailSessionAfterIdle(generation);}
             }
+        }
+        private async Task ReleaseThumbnailSessionAfterIdle(string generation) {
+            int revision=++thumbnailIdleRevision;
+            await Task.Delay(15000);
+            if(this==null||backgroundStopped||thumbnailLoopRunning||revision!=thumbnailIdleRevision||generation!=assetLibrary.CacheRoot)return;
+            await assetLibrary.ReleasePreviewSessionAsync();
         }
         private void UpdateThumbnailControls() {
             if(thumbnailStatusRow==null)return;
             bool complete=thumbnailTotal<=0||thumbnailDone+thumbnailFailed>=thumbnailTotal;
-            thumbnailStatusRow.style.display=complete&&thumbnailFailed==0?DisplayStyle.None:DisplayStyle.Flex;
-            if(libraryFooter!=null)libraryFooter.style.display=complete&&thumbnailFailed==0?DisplayStyle.None:DisplayStyle.Flex;
-            if(thumbnailPauseButton!=null)thumbnailPauseButton.style.display=complete?DisplayStyle.None:DisplayStyle.Flex;
+            var targetSet=new HashSet<string>(Targets,StringComparer.OrdinalIgnoreCase);
+            bool visiblePending=visibleAssets.Any(r=>r.Supports(targetSet)&&!readyThumbnails.Contains(r.Id)&&!failedThumbnails.Contains(r.Id));
+            bool show=!complete&&(thumbnailLoopRunning||visiblePending)||thumbnailFailed>0;
+            thumbnailStatusRow.style.display=show?DisplayStyle.Flex:DisplayStyle.None;
+            if(libraryFooter!=null)libraryFooter.style.display=show?DisplayStyle.Flex:DisplayStyle.None;
+            if(thumbnailPauseButton!=null)thumbnailPauseButton.style.display=!complete&&(thumbnailLoopRunning||visiblePending)?DisplayStyle.Flex:DisplayStyle.None;
         }
         private void ThumbnailFailure(GameAssetRecord entry,Exception ex) {
             string folder=assetLibrary.ModelDirectory(entry);Directory.CreateDirectory(folder);File.WriteAllText(Path.Combine(folder,"thumbnail.error.txt"),ex.Message);

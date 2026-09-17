@@ -668,7 +668,7 @@
     },
     {
       "key": "#INDEX_READY_PREPARING_CACHED_THUMBNAILS",
-      "text": "Index ready. Preparing cached thumbnails progressively."
+      "text": "Index ready. Thumbnails are generated as assets become visible."
     },
     {
       "key": "#INDEX_SOURCES_CHANGE_FILTERS",
