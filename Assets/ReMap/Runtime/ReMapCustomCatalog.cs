@@ -16,7 +16,8 @@ namespace ReMap.Standalone
             new CatalogEntry("custom:jump-pad", L.T("#JUMP_PAD"), L.T("#CUSTOM"), new Vector3(1.2f, .3f, 1.2f)) { CustomType = "jump-pad" },
             new CatalogEntry("custom:spawn-point", L.T("#SPAWN_POINT"), L.T("#CUSTOM"), new Vector3(1.22f, 1.83f, .81f)) { CustomType = "spawn-point" },
             new CatalogEntry("custom:trigger", L.T("#TRIGGER"), L.T("#CUSTOM"), new Vector3(5.08f, 2.54f, 5.08f)) { CustomType = "trigger" },
-            new CatalogEntry("custom:jump-tower", L.T("#JUMP_TOWER"), L.T("#CUSTOM"), new Vector3(3f, 50.8f, 3f)) { CustomType = "jump-tower" }
+            new CatalogEntry("custom:jump-tower", L.T("#JUMP_TOWER"), L.T("#CUSTOM"), new Vector3(3f, 50.8f, 3f)) { CustomType = "jump-tower" },
+            new CatalogEntry("custom:weapon-rack", L.T("#WEAPON_RACK"), L.T("#CUSTOM"), new Vector3(.9f, .9f, .55f)) { CustomType = "weapon-rack" }
         };
 
         private bool CustomObjectAvailable(CatalogEntry entry)
@@ -37,6 +38,9 @@ namespace ReMap.Standalone
                 return ReMapModelAvailability.HasModel(assetLibrary?.Records, Targets,
                     JumpTowerBaseModelPath) && ReMapModelAvailability.HasModel(assetLibrary?.Records, Targets,
                     JumpTowerBalloonModelPath);
+            if (entry.CustomType == "weapon-rack")
+                return ReMapModelAvailability.HasModel(assetLibrary?.Records, Targets,
+                    WeaponRackModelPath);
             return true;
         }
 
@@ -69,6 +73,7 @@ namespace ReMap.Standalone
             _ = PrepareJumpPadModel();
             _ = PrepareSpawnPointModel();
             _ = PrepareJumpTowerModels();
+            _ = PrepareWeaponRackModel();
         }
 
         private void SelectCustomAsset(CatalogEntry entry)
@@ -86,6 +91,7 @@ namespace ReMap.Standalone
                     entry.CustomType == "spawn-point" ? "#SPAWN_POINT_CUSTOM_HELP" :
                     entry.CustomType == "trigger" ? "#TRIGGER_CUSTOM_HELP" :
                     entry.CustomType == "jump-tower" ? "#JUMP_TOWER_CUSTOM_HELP" :
+                    entry.CustomType == "weapon-rack" ? "#WEAPON_RACK_CUSTOM_HELP" :
                     "#CABLE_TWO_INDEPENDENTLY_MOVABLE_ENDPOINTS");
             placeAssetButton.SetEnabled(true); RefreshCatalog();
             _ = PrepareZiplineModels();
@@ -94,6 +100,7 @@ namespace ReMap.Standalone
             _ = PrepareJumpPadModel();
             _ = PrepareSpawnPointModel();
             _ = PrepareJumpTowerModels();
+            _ = PrepareWeaponRackModel();
         }
 
         private void InsertCustomObject(CatalogEntry entry, Vector3 position, string parent = "")
@@ -108,6 +115,7 @@ namespace ReMap.Standalone
             else if (entry?.CustomType == "spawn-point") InsertSpawnPoint(position, parent);
             else if (entry?.CustomType == "trigger") InsertTrigger(position, parent);
             else if (entry?.CustomType == "jump-tower") InsertJumpTower(position, parent);
+            else if (entry?.CustomType == "weapon-rack") InsertWeaponRack(position, parent);
         }
     }
 }

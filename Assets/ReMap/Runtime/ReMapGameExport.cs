@@ -63,11 +63,16 @@ namespace ReMap.Standalone
                 if (!models.Contains(ReMapApp.JumpTowerBalloonModelPath, StringComparer.OrdinalIgnoreCase))
                     models.Add(ReMapApp.JumpTowerBalloonModelPath);
             }
+            if (world.Any(o => o.customType == "weapon-rack") &&
+                !models.Contains(ReMapApp.WeaponRackModelPath, StringComparer.OrdinalIgnoreCase))
+                models.Add(ReMapApp.WeaponRackModelPath);
             Vector3 originOffset = OriginOffset(document);
             bool useOriginOffset = HasOriginOffset(originOffset);
             var shared = new StringBuilder();
             AppendRpakLoadRequests(shared, AdditionalRpaks(map, selectedRpaks));
             foreach (string model in models) shared.Append("\tPrecacheModel( $\"").Append(model).AppendLine("\" )");
+            if (world.Any(o => o.customType == "weapon-rack"))
+                shared.AppendLine("\tPrecacheParticleSystem( $\"P_impact_shieldbreaker_sparks\" )");
 
             var server = new StringBuilder();
             server.Append("\tif ( GetMapName() != \"").Append(map).AppendLine("\" )");
@@ -92,6 +97,7 @@ namespace ReMap.Standalone
             AppendSpawnPoints(server, world, false, originOffset, useOriginOffset);
             AppendTriggers(server, world, false, originOffset, useOriginOffset);
             AppendJumpTowers(server, world, false, originOffset, useOriginOffset);
+            AppendWeaponRacks(server, world, false, originOffset, useOriginOffset);
             AppendCurvedZiplines(server, world, false, originOffset, useOriginOffset);
             AppendZiplines(server, world, false, originOffset, useOriginOffset);
 
@@ -181,6 +187,7 @@ namespace ReMap.Standalone
             AppendJumpPads(result, world, true, originOffset, false);
             AppendSpawnPoints(result, world, true, originOffset, false);
             AppendJumpTowers(result, world, true, originOffset, false);
+            AppendWeaponRacks(result, world, true, originOffset, false);
             AppendCurvedZiplines(result, world, true, originOffset, false);
             AppendZiplines(result, world, true, originOffset, false);
             return result.ToString();
@@ -465,6 +472,40 @@ namespace ReMap.Standalone
                     Number(tower.jumpTowerHeight) + " )";
                 code.Append(live ? "script " : "\t").Append(expression).AppendLine();
             }
+        }
+
+        private static void AppendWeaponRacks(StringBuilder code, List<MapObject> world, bool live,
+            Vector3 originOffset, bool symbolicOffset)
+        {
+            var racks = world.Where(o => o.customType == "weapon-rack").ToList();
+            if (!live && racks.Count > 0) { code.AppendLine(); code.AppendLine("\t// Weapon racks"); }
+            foreach (var rack in racks)
+            {
+                string weapon = WeaponRackReference(rack);
+                string expression = "ReMap_CreateWeaponRack( " +
+                    Position(rack.position, originOffset, symbolicOffset) + ", " +
+                    Vector(ApexDisplay.Angles(WorldView.ToVector(rack.rotation))) + ", \"" +
+                    weapon + "\", " + Number(rack.weaponRackRespawnTime) + " )";
+                code.Append(live ? "script " : "\t").Append(expression).AppendLine();
+            }
+        }
+
+        private static string WeaponRackReference(MapObject rack)
+        {
+            string value = rack?.weaponRackWeapon ?? "";
+            if (value.Length > 128 || !value.StartsWith("mp_weapon_", StringComparison.Ordinal))
+                throw new ArgumentException(L.T("#INVALID_WEAPON_RACK_SETTINGS"));
+            for (int index = 0; index < value.Length; index++)
+            {
+                char character = value[index];
+                if ((character >= 'a' && character <= 'z') || (character >= 'A' && character <= 'Z') ||
+                    (character >= '0' && character <= '9') || character == '_') continue;
+                throw new ArgumentException(L.T("#INVALID_WEAPON_RACK_SETTINGS"));
+            }
+            if (float.IsNaN(rack.weaponRackRespawnTime) || float.IsInfinity(rack.weaponRackRespawnTime) ||
+                rack.weaponRackRespawnTime < 0f || rack.weaponRackRespawnTime > 86400f)
+                throw new ArgumentException(L.T("#INVALID_WEAPON_RACK_SETTINGS"));
+            return value;
         }
 
         private static void AppendTriggerCallback(StringBuilder code, string variable,

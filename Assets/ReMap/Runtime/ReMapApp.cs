@@ -831,7 +831,8 @@ namespace ReMap.Standalone
                 item.customType == "door" || item.customType == "curved-zipline" ||
                 item.customType == "curved-zipline-point" || item.customType == "loot-bin" ||
                 item.customType == "jump-pad" || item.customType == "spawn-point" ||
-                item.customType == "trigger" || item.customType == "jump-tower")
+                item.customType == "trigger" || item.customType == "jump-tower" ||
+                item.customType == "weapon-rack")
             {
                 var remapSettings = InspectorSection(L.T("#REMAP_SETTINGS"), "remap-settings");
                 if (item.customType == "zipline") BuildZiplineInspector(item, remapSettings);
@@ -843,7 +844,8 @@ namespace ReMap.Standalone
                 else if (item.customType == "jump-pad") BuildJumpPadInspector(item, remapSettings);
                 else if (item.customType == "spawn-point") BuildSpawnPointInspector(item, remapSettings);
                 else if (item.customType == "trigger") BuildTriggerInspector(item, remapSettings);
-                else BuildJumpTowerInspector(item, remapSettings);
+                else if (item.customType == "jump-tower") BuildJumpTowerInspector(item, remapSettings);
+                else BuildWeaponRackInspector(item, remapSettings);
                 inspector.Add(remapSettings);
             }
             if (!item.isGroup && string.IsNullOrEmpty(item.customType))
@@ -868,6 +870,7 @@ namespace ReMap.Standalone
                 item.customType == "trigger" ? L.T("#CUSTOM_OBJECT_TRIGGER") :
                 item.customType == "jump-tower" ? L.T("#CUSTOM_OBJECT_JUMP_TOWER") :
                 item.customType == "jump-tower-component" ? L.T("#JUMP_TOWER_COMPONENT") :
+                item.customType == "weapon-rack" ? L.T("#CUSTOM_OBJECT_WEAPON_RACK") :
                 item.customType == "zipline-endpoint" ? L.T("#ZIPLINE_ATTACHMENT_POINT") :
                 item.isGroup ? L.T("#GROUP_CHILDREN_SHARE_TRANSFORM") : L.T("#MODEL");
             information.Add(CopyableInspectorValue(L.T("#OBJECT_TYPE"), typeDetails));

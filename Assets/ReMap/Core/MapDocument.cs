@@ -90,6 +90,8 @@ namespace ReMap.Standalone.Core
         public string triggerEnterCallback = "";
         public string triggerLeaveCallback = "";
         public float jumpTowerHeight = 2000f;
+        public string weaponRackWeapon = "mp_weapon_rspn101";
+        public float weaponRackRespawnTime = .5f;
         public bool commonAsset;
         public List<string> availableMaps = new List<string>();
         public bool allowMantle = true;
@@ -175,6 +177,7 @@ namespace ReMap.Standalone.Core
                 item.doorType = item.doorType ?? "single";
                 item.triggerEnterCallback = item.triggerEnterCallback ?? "";
                 item.triggerLeaveCallback = item.triggerLeaveCallback ?? "";
+                item.weaponRackWeapon = item.weaponRackWeapon ?? "mp_weapon_rspn101";
                 if (item.customType == "curved-zipline" && item.customProfile == "")
                     item.customProfile = item.curvedZiplineSupport ? "arm" : "none";
                 if (item.customType == "curved-zipline")
@@ -196,7 +199,8 @@ namespace ReMap.Standalone.Core
                     item.customType != "curved-zipline-point" && item.customType != "curved-zipline-component" &&
                     item.customType != "loot-bin" && item.customType != "jump-pad" &&
                     item.customType != "spawn-point" && item.customType != "trigger" &&
-                    item.customType != "jump-tower" && item.customType != "jump-tower-component")
+                    item.customType != "jump-tower" && item.customType != "jump-tower-component" &&
+                    item.customType != "weapon-rack")
                     throw new ArgumentException(L.T("#UNKNOWN_CUSTOM_OBJECT_TYPE"));
                 if (item.customType == "zipline" && !item.isGroup)
                     throw new ArgumentException(L.T("#ZIPLINE_HIERARCHY_GROUP"));
@@ -265,6 +269,12 @@ namespace ReMap.Standalone.Core
                 if (item.customType == "jump-tower" && (!item.isGroup || !Finite(item.jumpTowerHeight) ||
                     item.jumpTowerHeight < 128f || item.jumpTowerHeight > 65535f))
                     throw new ArgumentException(L.T("#INVALID_JUMP_TOWER_HEIGHT"));
+                if (item.customType == "weapon-rack" && (!Finite(item.weaponRackRespawnTime) ||
+                    item.weaponRackRespawnTime < 0f || item.weaponRackRespawnTime > 86400f ||
+                    item.weaponRackWeapon.Length > 128 ||
+                    !item.weaponRackWeapon.StartsWith("mp_weapon_", StringComparison.Ordinal) ||
+                    !IsScriptIdentifier(item.weaponRackWeapon)))
+                    throw new ArgumentException(L.T("#INVALID_WEAPON_RACK_SETTINGS"));
                 if (!item.position.IsFinite || !item.rotation.IsFinite || !item.scale.IsFinite)
                     throw new ArgumentException(L.T("#TRANSFORMS_FINITE_NUMBERS"));
                 if (!Finite(item.fadeDistance) || item.fadeDistance < -1f)

@@ -24,6 +24,7 @@ global function ReMap_CreateJumpPad
 global function ReMap_CreateSpawnPoint
 global function ReMap_CreateTrigger
 global function ReMap_CreateJumpTower
+global function ReMap_CreateWeaponRack
 
 global const int REMAP_DOOR_SINGLE = 0
 global const int REMAP_DOOR_DOUBLE = 1
@@ -37,6 +38,10 @@ const asset REMAP_LOOT_BIN_MODEL = $"mdl/props/loot_bin/loot_bin_01_animated.rmd
 const asset REMAP_JUMP_PAD_MODEL = $"mdl/props/octane_jump_pad/octane_jump_pad.rmdl"
 const asset REMAP_JUMP_TOWER_BASE_MODEL = $"mdl/props/zipline_balloon/zipline_balloon_base.rmdl"
 const asset REMAP_JUMP_TOWER_BALLOON_MODEL = $"mdl/props/zipline_balloon/zipline_balloon.rmdl"
+const asset REMAP_WEAPON_RACK_MODEL = $"mdl/industrial/gun_rack_arm_down.rmdl"
+const asset REMAP_WEAPON_RACK_RESPAWN_FX = $"P_impact_shieldbreaker_sparks"
+const vector REMAP_WEAPON_RACK_ITEM_OFFSET = < 0, 0, 45 >
+const vector REMAP_WEAPON_RACK_ITEM_ANGLES = < -90, 180, 0 >
 
 struct
 {
@@ -399,4 +404,55 @@ void function ReMap_CreateJumpTower( vector origin, vector angles, float height 
 		towerAngles, 200.0, 200.0, false, -1 )
 	skydiveTrigger.SetEnterCallback( ForcedSkydiveTriggerThink_EnterCallback )
 	DispatchSpawn( skydiveTrigger )
+}
+
+entity function ReMap_CreateWeaponRack( vector origin, vector angles, string weaponName,
+	float respawnTime = 0.5 )
+{
+	entity rack = CreateEntity( "prop_dynamic" )
+	rack.SetScriptName( "weaponrack_spawned" )
+	rack.SetValueForModelKey( REMAP_WEAPON_RACK_MODEL )
+	rack.SetOrigin( origin )
+	rack.SetAngles( angles )
+	rack.kv.solid = SOLID_VPHYSICS
+	rack.AllowMantle()
+	DispatchSpawn( rack )
+	file.props.append( rack )
+
+	entity weapon = ReMap_SpawnWeaponRackItem( rack, weaponName )
+	if ( IsValid( weapon ) )
+		thread ReMap_WeaponRackRespawnThread( rack, weapon, weaponName, respawnTime )
+	return rack
+}
+
+entity function ReMap_SpawnWeaponRackItem( entity rack, string weaponName )
+{
+	if ( !IsValid( rack ) || weaponName.len() == 0 )
+		return null
+
+	entity weapon = SpawnGenericLoot( weaponName,
+		rack.GetOrigin() + REMAP_WEAPON_RACK_ITEM_OFFSET,
+		rack.GetAngles() + REMAP_WEAPON_RACK_ITEM_ANGLES,
+		1, TRACE_COLLISION_GROUP_NONE, false, 0, true )
+	if ( !IsValid( weapon ) )
+		return null
+	weapon.SetParent( rack )
+	return weapon
+}
+
+void function ReMap_WeaponRackRespawnThread( entity rack, entity weapon, string weaponName,
+	float respawnTime )
+{
+	rack.EndSignal( "OnDestroy" )
+	weapon.WaitSignal( "OnItemPickup" )
+	wait respawnTime
+
+	if ( !IsValid( rack ) )
+		return
+	entity replacement = ReMap_SpawnWeaponRackItem( rack, weaponName )
+	if ( !IsValid( replacement ) )
+		return
+	StartParticleEffectInWorld( GetParticleSystemIndex( REMAP_WEAPON_RACK_RESPAWN_FX ),
+		replacement.GetOrigin(), replacement.GetAngles() )
+	thread ReMap_WeaponRackRespawnThread( rack, replacement, weaponName, respawnTime )
 }

@@ -3855,6 +3855,42 @@
       "text": "Projet non affilié à Electronic Arts, Respawn Entertainment, Valve ou Unity Technologies, et non approuvé par ces sociétés."
     },
     {
+      "key": "#WEAPON_RACK",
+      "text": "Râtelier d’armes"
+    },
+    {
+      "key": "#CUSTOM_OBJECT_WEAPON_RACK",
+      "text": "Râtelier d’armes personnalisé"
+    },
+    {
+      "key": "#WEAPON_RACK_CUSTOM_HELP",
+      "text": "Place une arme sur un râtelier physique et la restaure après son ramassage. Le modèle du râtelier doit exister dans les RPAK sélectionnés."
+    },
+    {
+      "key": "#WEAPON_RACK_CREATED",
+      "text": "Râtelier d’armes créé."
+    },
+    {
+      "key": "#WEAPON_RACK_WEAPON",
+      "text": "Arme"
+    },
+    {
+      "key": "#WEAPON_RACK_RESPAWN_TIME",
+      "text": "Délai de réapparition (secondes)"
+    },
+    {
+      "key": "#WEAPON_RACK_HELP",
+      "text": "Utilise les choix d’armes historiques de ReMap. L’arme sélectionnée est attachée au râtelier et réapparaît après son ramassage."
+    },
+    {
+      "key": "#WEAPON_RACK_PREVIEW_ERROR",
+      "text": "Impossible de préparer l’aperçu du râtelier d’armes : "
+    },
+    {
+      "key": "#INVALID_WEAPON_RACK_SETTINGS",
+      "text": "Le râtelier doit utiliser une référence mp_weapon_ valide et un délai de réapparition compris entre 0 et 86400 secondes."
+    },
+    {
       "key": "#DEVELOPMENT_BUILD",
       "text": "Build de développement — débogage activé"
     },

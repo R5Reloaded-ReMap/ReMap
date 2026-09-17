@@ -427,7 +427,7 @@ namespace ReMap.Standalone
             {
                 ClearPreview(); ghostAsset = entry.Id;
                 if (entry.CustomType == "loot-bin" || entry.CustomType == "jump-pad" ||
-                    entry.CustomType == "spawn-point")
+                    entry.CustomType == "spawn-point" || entry.CustomType == "weapon-rack")
                 {
                     ghost = GameObject.CreatePrimitive(entry.CustomType == "spawn-point"
                         ? PrimitiveType.Capsule : PrimitiveType.Cube);
@@ -531,7 +531,8 @@ namespace ReMap.Standalone
                 line.widthMultiplier = .04f; line.numCapVertices = 4;
             }
             ghost.transform.position = position.Value + (entry.CustomType == "door" || entry.CustomType == "loot-bin" ||
-                entry.CustomType == "jump-pad" || entry.CustomType == "spawn-point"
+                entry.CustomType == "jump-pad" || entry.CustomType == "spawn-point" ||
+                entry.CustomType == "weapon-rack"
                 ? Vector3.up * entry.Size.y * .5f : Vector3.zero);
         }
     }

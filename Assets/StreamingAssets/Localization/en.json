@@ -3855,6 +3855,42 @@
       "text": "Not affiliated with or endorsed by Electronic Arts, Respawn Entertainment, Valve, or Unity Technologies."
     },
     {
+      "key": "#WEAPON_RACK",
+      "text": "Weapon rack"
+    },
+    {
+      "key": "#CUSTOM_OBJECT_WEAPON_RACK",
+      "text": "Custom weapon rack"
+    },
+    {
+      "key": "#WEAPON_RACK_CUSTOM_HELP",
+      "text": "Spawns a weapon on a physical rack and restores it after pickup. The rack model must exist in the selected RPAKs."
+    },
+    {
+      "key": "#WEAPON_RACK_CREATED",
+      "text": "Weapon rack created."
+    },
+    {
+      "key": "#WEAPON_RACK_WEAPON",
+      "text": "Weapon"
+    },
+    {
+      "key": "#WEAPON_RACK_RESPAWN_TIME",
+      "text": "Respawn time (seconds)"
+    },
+    {
+      "key": "#WEAPON_RACK_HELP",
+      "text": "Uses the historical ReMap weapon choices. The selected weapon is parented to the rack and respawns after pickup."
+    },
+    {
+      "key": "#WEAPON_RACK_PREVIEW_ERROR",
+      "text": "Could not prepare the weapon rack preview: "
+    },
+    {
+      "key": "#INVALID_WEAPON_RACK_SETTINGS",
+      "text": "The weapon rack must use a valid mp_weapon_ reference and a respawn time between 0 and 86400 seconds."
+    },
+    {
       "key": "#DEVELOPMENT_BUILD",
       "text": "Development build — debugging enabled"
     },
