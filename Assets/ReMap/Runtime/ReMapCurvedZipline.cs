@@ -171,6 +171,7 @@ namespace ReMap.Standalone
             actions.Add(Button(L.T("#ADD_POINT"), () => AddCurvedZiplinePoint(item.id)));
             var remove = Button(L.T("#REMOVE_LAST_POINT"), () => RemoveCurvedZiplinePoint(item.id));
             remove.SetEnabled(points.Length > 2); actions.Add(remove);
+            actions.Add(Button(L.T("#SELECT_FIRST_POINT"), () => Select(points[0].id)));
             actions.Add(Button(L.T("#SELECT_LAST_POINT"), () => Select(points[points.Length - 1].id)));
             section.Add(actions);
 
@@ -213,6 +214,7 @@ namespace ReMap.Standalone
         {
             section.Add(Label(L.T("#CURVED_ZIPLINE_CONTROL_POINT"), "inspector-subsection-title"));
             section.Add(Label(L.T("#MOVE_CONTROL_POINT_HELP"), "inspector-inline-help"));
+            AddZiplinePointPositionLock(item, section);
             var current = ReMapZiplineProfiles.Find(item.customProfile);
             var profiles = ReMapZiplineProfiles.All.Where(profile =>
                 ReMapModelAvailability.ZiplineProfile(assetLibrary?.Records, Targets, profile)).ToList();
@@ -261,6 +263,26 @@ namespace ReMap.Standalone
                 }));
             }
             section.Add(Button(L.T("#SELECT_CURVED_ZIPLINE"), () => Select(item.parentId)));
+        }
+
+        private static bool IsLockableZiplinePoint(MapObject item) => item != null &&
+            (item.customType == "curved-zipline-point" || item.customType == "ziprail-point");
+
+        private void AddZiplinePointPositionLock(MapObject item, VisualElement section)
+        {
+            var locked = CompactInspectorField(new Toggle(L.T("#LOCK_CONTROL_POINT_POSITION")) {
+                value = item.positionLocked
+            });
+            locked.tooltip = L.T("#LOCK_CONTROL_POINT_POSITION_HELP");
+            section.Add(locked);
+            locked.RegisterValueChangedCallback(change => Run(() => {
+                CommitInspectorEdit();
+                session.Edit(document => {
+                    var point = document.objects.Find(candidate => candidate.id == item.id);
+                    if (IsLockableZiplinePoint(point)) point.positionLocked = change.newValue;
+                });
+                Refresh();
+            }));
         }
     }
 }

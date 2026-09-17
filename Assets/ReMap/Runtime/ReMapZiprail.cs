@@ -219,6 +219,7 @@ namespace ReMap.Standalone
             actions.Add(Button(L.T("#ADD_POINT"), () => AddZiprailPoint(item.id)));
             var remove = Button(L.T("#REMOVE_LAST_POINT"), () => RemoveZiprailPoint(item.id));
             remove.SetEnabled(points.Length > 2); actions.Add(remove);
+            actions.Add(Button(L.T("#SELECT_FIRST_POINT"), () => Select(points[0].id)));
             actions.Add(Button(L.T("#SELECT_LAST_POINT"), () => Select(points[points.Length - 1].id)));
             section.Add(actions);
 
@@ -271,6 +272,7 @@ namespace ReMap.Standalone
         {
             section.Add(Label(L.T("#ZIPRAIL_CONTROL_POINT"), "inspector-subsection-title"));
             section.Add(Label(L.T("#MOVE_CONTROL_POINT_HELP"), "inspector-inline-help"));
+            AddZiplinePointPositionLock(item, section);
             var current = ReMapZiprailProfiles.Find(item.customProfile);
             var profiles = ReMapZiprailProfiles.All.Where(profile =>
                 ReMapModelAvailability.ZiprailProfile(assetLibrary?.Records, Targets, profile)).ToList();

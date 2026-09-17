@@ -816,7 +816,12 @@ namespace ReMap.Standalone
 
             }
 
-            if(!string.IsNullOrEmpty(item.parentId))
+            if (item.positionLocked && IsLockableZiplinePoint(item))
+            {
+                positionInput.SetEnabled(false);
+                positionInput.tooltip = L.T("#LOCK_CONTROL_POINT_POSITION_HELP");
+            }
+            else if(!string.IsNullOrEmpty(item.parentId))
             {
                 var parent=snapshot.objects.Find(o=>o.id==item.parentId);
                 positionInput.tooltip=L.F("#RELATIVE_PARENT_ARG0_MOVING_PARENT",parent?.displayName??L.T("#GROUP_34CA0E"));
@@ -989,7 +994,7 @@ namespace ReMap.Standalone
             try
             {
                 session.Edit(doc => { var item = doc.objects.Find(o => o.id == id); if (item == null) return;
-                    item.displayName = name; item.position = WorldView.ToData(p); item.rotation = WorldView.ToData(r); item.scale = WorldView.ToData(s);
+                    item.displayName = name; if (!item.positionLocked) item.position = WorldView.ToData(p); item.rotation = WorldView.ToData(r); item.scale = WorldView.ToData(s);
                     if(lockedEndLocal!=null){var end=doc.objects.Find(o=>o.id==lockedEndLocal.id);if(end!=null)end.position=lockedEndLocal.position;} });
                 snapshot = session.Snapshot(); world.Sync(snapshot, selectedId); world.HighlightSelection(SelectionRoots());
                 undoButton?.SetEnabled(session.CanUndo); redoButton?.SetEnabled(session.CanRedo);

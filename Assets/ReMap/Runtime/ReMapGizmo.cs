@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using System.Linq;
 using ReMap.Standalone.Core;
 using UnityEngine;
 using UnityEngine.InputSystem;
@@ -48,13 +49,21 @@ namespace ReMap.Standalone
             return IsVerticalZiplineEnd(item);
         }
 
+        private bool AllSelectedPositionsLocked()
+        {
+            var roots = SelectionRoots();
+            return roots.Count > 0 && roots.All(id =>
+                snapshot?.objects.Find(item => item.id == id)?.positionLocked == true);
+        }
+
         private void UpdateGizmoVisual() {
             if(gizmoVisual==null||snapshot==null)return;
             Vector3? pivot=placing==null&&placingAssembly==null&&placingSelection==null&&selectedId!=null?(Vector3?)SelectionPivot():null;
             bool duplicate=DirectionalDuplicationActive(); bool placement=SurfacePlacementActive(); bool cornerMode=duplicate && duplicateSymmetric?.value==true;
             bool verticalEnd = ConstrainVerticalZiplineEndMovement();
+            bool positionLocked = !rotationGizmo && !scaleGizmo && AllSelectedPositionsLocked();
             var basis = verticalEnd || placement ? Quaternion.identity : duplicate ? DirectionalDuplicationBasis() : SelectionBasis();
-            int axisMask = verticalEnd ? 1 << 1 : 7;
+            int axisMask = positionLocked ? 0 : verticalEnd ? 1 << 1 : 7;
             gizmoVisual.Rebuild(world.Camera,pivot,duplicate||placement?false:rotationGizmo,basis,duplicate||placement?false:scaleGizmo,duplicate,cornerMode?CornerPivots():null,cornerTargetHandle,directionalMirrorCopy,cornerMode?CornerPlacementGuide():null,cornerOrbitTurn,cornerSideTurn,cornerObjectTurn,axisMask,placement);
             if(selectedIds.Count>1)world.HighlightSelection(SelectionRoots());
         }
@@ -172,6 +181,7 @@ namespace ReMap.Standalone
                 }
                 if(handle>=0)return true;
             }            if(inside&&placing==null&&selectedId!=null&&input.leftButton.wasPressedThisFrame) {
+                if (!rotationGizmo && !scaleGizmo && AllSelectedPositionsLocked()) return false;
                 bool verticalEnd=ConstrainVerticalZiplineEndMovement();int axis=gizmoVisual.Hit(mouse);
                 if(axis<0||(verticalEnd&&axis!=1))return false;
                 CommitInspectorEdit();var roots=SelectionRoots();dragOriginals=world.CaptureSelection(roots);dragLockedZiplineEnd=CaptureLockedZiplineEnd(roots);if(dragOriginals.Count==0)return false;

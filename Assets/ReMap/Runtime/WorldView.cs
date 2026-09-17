@@ -444,7 +444,8 @@ namespace ReMap.Standalone
         public void StoreWorldPose(MapObject item, Vector3 position, Vector3 rotation)
         {
             var parent = instances[item.id].transform.parent;
-            item.position = ToData(parent.InverseTransformPoint(position));
+            if (!item.positionLocked)
+                item.position = ToData(parent.InverseTransformPoint(position));
             item.rotation = ToData((Quaternion.Inverse(parent.rotation) * Quaternion.Euler(rotation)).eulerAngles);
         }
         public void StoreWorldPoseForParent(MapObject item, Vector3 position, Vector3 rotation)

@@ -39,9 +39,7 @@ namespace ReMap.Standalone
         private static bool HiddenHierarchyObject(MapObject item) =>
             item != null && (item.customType == "zipline-component" || item.customType == "door-component" ||
                 item.customType == "curved-zipline-component" || item.customType == "ziprail-component" ||
-                (item.customType == "zipline-endpoint" && item.customRole == "start") ||
-                (item.customType == "curved-zipline-point" && item.customRole == "0") ||
-                (item.customType == "ziprail-point" && item.customRole == "0"));
+                (item.customType == "zipline-endpoint" && item.customRole == "start"));
         private static int VisibleChildCount(IEnumerable<MapObject> items) =>
             items == null ? 0 : items.Count(item => !HiddenHierarchyObject(item));
 

@@ -2875,6 +2875,14 @@
       "text": "Keep the end at its world position while moving, rotating or scaling the start."
     },
     {
+      "key": "#LOCK_CONTROL_POINT_POSITION",
+      "text": "Lock point position"
+    },
+    {
+      "key": "#LOCK_CONTROL_POINT_POSITION_HELP",
+      "text": "Prevents this control point from being moved while keeping its rotation and model editable."
+    },
+    {
       "key": "#ARM_HEIGHT_APEX_U",
       "text": "Arm height (u)"
     },
@@ -3101,6 +3109,10 @@
     {
       "key": "#SELECT_LAST_POINT",
       "text": "Select last"
+    },
+    {
+      "key": "#SELECT_FIRST_POINT",
+      "text": "Select first"
     },
     {
       "key": "#CURVE_SEGMENTS_PER_SPAN",

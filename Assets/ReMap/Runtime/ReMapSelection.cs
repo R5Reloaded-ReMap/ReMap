@@ -89,6 +89,8 @@ namespace ReMap.Standalone
                 item = snapshot.objects.Find(candidate => candidate.id == item.parentId);
             if (item?.customType == "curved-zipline-component")
                 item = snapshot.objects.Find(candidate => candidate.id == item.parentId);
+            if (item?.customType == "ziprail-component")
+                item = snapshot.objects.Find(candidate => candidate.id == item.parentId);
             if (item?.customType == "zipline-component")
                 item = snapshot.objects.Find(candidate => candidate.id == item.parentId);
             if (item?.customType == "zipline-endpoint" && item.customRole == "start")
@@ -299,6 +301,8 @@ namespace ReMap.Standalone
             var rootPositions=SelectionRoots().Select(id=>WorldView.ToVector(world.WorldPose(id).position)).ToArray();
             multiplePositionReference=GizmoPlacement.SharedPosition(rootPositions,out multiplePositionSharedAxes);
             positionInput=new VectorInput(L.T("#APEX_MOVEMENT_U"),multiplePositionReference,1);
+            var roots = SelectionRoots();
+            positionInput.SetEnabled(!roots.All(id => snapshot.objects.Find(item => item.id == id)?.positionLocked == true));
             rotationInput=new VectorInput(L.T("#APEX_ANGLES"),Vector3.zero,2,()=>rotateSnap); scaleInput=new VectorInput(L.T("#SCALE_FACTOR_7490FA"),Vector3.one,3);
             foreach(var field in new[]{positionInput,rotationInput,scaleInput}) { inspector.Add(field); field.Changed+=PreviewInspectorEdit; field.RegisterCallback<PointerUpEvent>(_=>root.schedule.Execute(()=>Run(CommitInspectorEdit)),TrickleDown.TrickleDown); field.RegisterCallback<FocusOutEvent>(_=>root.schedule.Execute(()=>Run(CommitInspectorEdit))); }
             var actions=new VisualElement();actions.AddToClassList("inspector-actions");inspector.Add(actions);

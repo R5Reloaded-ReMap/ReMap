@@ -2875,6 +2875,14 @@
       "text": "Conserve la position mondiale de l'arrivée quand le départ est déplacé, tourné ou redimensionné."
     },
     {
+      "key": "#LOCK_CONTROL_POINT_POSITION",
+      "text": "Verrouiller la position du point"
+    },
+    {
+      "key": "#LOCK_CONTROL_POINT_POSITION_HELP",
+      "text": "Empêche le déplacement de ce point de contrôle tout en laissant sa rotation et son modèle modifiables."
+    },
+    {
       "key": "#ARM_HEIGHT_APEX_U",
       "text": "Hauteur du bras (u)"
     },
@@ -3101,6 +3109,10 @@
     {
       "key": "#SELECT_LAST_POINT",
       "text": "Sélectionner le dernier"
+    },
+    {
+      "key": "#SELECT_FIRST_POINT",
+      "text": "Sélectionner le premier"
     },
     {
       "key": "#CURVE_SEGMENTS_PER_SPAN",

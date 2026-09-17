@@ -45,6 +45,7 @@ namespace ReMap.Standalone.Core
         public string parentId = "";
         public bool isGroup;
         public bool disabled;
+        public bool positionLocked;
         public string gameModelPath = "";
         // Empty for regular props. Custom objects remain regular hierarchy nodes so they
         // inherit grouping, undo/redo, duplication and the existing transform gizmo.

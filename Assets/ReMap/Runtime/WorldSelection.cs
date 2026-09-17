@@ -7,6 +7,7 @@ namespace ReMap.Standalone
     public sealed class SelectionPose
     {
         public MapObject Local, World;
+        public bool PositionLocked;
     }
     public sealed partial class WorldView
     {
@@ -76,7 +77,10 @@ namespace ReMap.Standalone
             }
             return result;
         }
-        public List<SelectionPose> CaptureSelection(IEnumerable<string> ids) => ids.Select(id => new SelectionPose { Local = LocalPose(id), World = WorldPose(id) }).ToList();
+        public List<SelectionPose> CaptureSelection(IEnumerable<string> ids) => ids.Select(id => new SelectionPose {
+            Local = LocalPose(id), World = WorldPose(id),
+            PositionLocked = syncedZiplineDocument?.objects.Find(item => item.id == id)?.positionLocked == true
+        }).ToList();
         // Only roots are passed here. All writes happen before a single physics synchronization.
         public bool PreviewSelection(List<SelectionPose> originals, Vector3 pivot, Quaternion basis, Vector3 move, Quaternion rotation, Vector3 factors,
             SelectionPose lockedPosition = null)
@@ -91,6 +95,7 @@ namespace ReMap.Standalone
                 var t = instances[original.Local.id].transform;previousPreview.Add(new PreviewPose(t));
                 var relative = Quaternion.Inverse(basis) * (ToVector(original.World.position) - pivot);
                 var position = pivot + move + rotation * (basis * Vector3.Scale(relative, factors));
+                if (original.PositionLocked) position = ToVector(original.World.position);
                 t.SetPositionAndRotation(position, rotation * Quaternion.Euler(ToVector(original.World.rotation)));
                 t.localScale = Vector3.Scale(ToVector(original.Local.scale), factors);
             }
