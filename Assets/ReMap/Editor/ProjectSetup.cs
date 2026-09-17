@@ -73,7 +73,10 @@ namespace ReMap.Standalone.Editor
         private static void BundleOfficialRsx(string outputDirectory)
         {
             string projectRoot = Path.GetFullPath(Path.Combine(Application.dataPath, ".."));
-            string rsxRoot = Path.GetFullPath(Path.Combine(projectRoot, "..", "rsx"));
+            string configuredRsxRoot = Environment.GetEnvironmentVariable("REMAP_RSX_ROOT");
+            string rsxRoot = string.IsNullOrWhiteSpace(configuredRsxRoot)
+                ? Path.GetFullPath(Path.Combine(projectRoot, "..", "rsx"))
+                : Path.GetFullPath(configuredRsxRoot);
             string rsxLicense = Path.Combine(projectRoot, "ThirdParty", "RSX", "LICENSE");
             string executable = Path.Combine(rsxRoot, "bin", "Release", "rsx.exe");
             string sessionMarker = executable + ".remap-session-v1";
@@ -87,12 +90,14 @@ namespace ReMap.Standalone.Editor
             if (!File.Exists(rsxLicense))
                 throw new FileNotFoundException("The bundled RSX license is missing from ThirdParty/RSX.", rsxLicense);
             File.Copy(rsxLicense, Path.Combine(outputDirectory, "RSX-LICENSE.txt"), true);
-            CopyIfPresent(Path.Combine(rsxRoot, "thirdpartylegalnotices.txt"), Path.Combine(outputDirectory, "RSX-THIRD-PARTY-NOTICES.txt"));
+            CopyRequired(Path.Combine(rsxRoot, "thirdpartylegalnotices.txt"), Path.Combine(outputDirectory, "RSX-THIRD-PARTY-NOTICES.txt"));
         }
 
-        private static void CopyIfPresent(string source, string destination)
+        private static void CopyRequired(string source, string destination)
         {
-            if (File.Exists(source)) File.Copy(source, destination, true);
+            if (!File.Exists(source))
+                throw new FileNotFoundException("A required third-party notice is missing.", source);
+            File.Copy(source, destination, true);
         }
 
         private static void BuildLiveBridge(string outputDirectory)

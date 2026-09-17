@@ -14,7 +14,9 @@ Thank you for helping improve ReMap.
 1. Install Unity `6000.3.24f1` through Unity Hub.
 2. Clone this repository and open it as an existing Unity project.
 3. Open `Assets/ReMap/Workspace.unity`, or use **ReMap > Prepare and open workspace**.
-4. For RSX integration work, clone [`R5Reloaded-ReMap/rsx`](https://github.com/R5Reloaded-ReMap/rsx) beside this repository as `../rsx` and build it in Release/x64.
+4. For RSX integration work, clone [`R5Reloaded-ReMap/rsx`](https://github.com/R5Reloaded-ReMap/rsx) beside this repository as `../rsx`.
+
+Run `./Tools/Build-ReMap.ps1` from PowerShell for a Windows build. It builds RSX in Release/x64 when the expected binary or ReMap session marker is absent, then invokes the pinned Unity editor. Use `-BuildRsx Always` for a release candidate or `-ValidateOnly` to check local prerequisites without compiling.
 
 Unity generates IDE solution and project files locally; do not commit them.
 
