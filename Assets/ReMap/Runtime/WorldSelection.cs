@@ -46,7 +46,7 @@ namespace ReMap.Standalone
             UpdateCamera();
         }
         public bool SurfacePoint(Vector2 screen,float step,out Vector3 point) =>
-            SurfacePoint(screen,step,true,out point);
+            SurfacePoint(screen,step,false,out point);
         public bool SurfacePoint(Vector2 screen,float step,bool ignoreConstructionPlane,out Vector3 point) {
             point=Vector3.zero;var ray=Camera.ScreenPointToRay(screen);float nearest=Camera.farClipPlane;bool found=false;
             float constructionPlaneDistance=Camera.farClipPlane;Vector3 constructionPlanePoint=Vector3.zero;bool foundConstructionPlane=false;

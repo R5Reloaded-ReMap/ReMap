@@ -394,7 +394,7 @@ namespace ReMap.Standalone.Tests
         }
 
         [UnityTest]
-        public IEnumerator PlacementIgnoresConstructionPlaneWhenNoWorldSurfaceExists()
+        public IEnumerator PlacementFallsBackToConstructionPlaneWhenNoWorldSurfaceExists()
         {
             WorldView world = CreateWorld();
             try
@@ -407,9 +407,10 @@ namespace ReMap.Standalone.Tests
                     CustomType = "test"
                 };
 
-                bool found = world.Placement(world.Camera.pixelRect.center, entry, false, out _);
+                bool found = world.Placement(world.Camera.pixelRect.center, entry, false, out Vector3 point);
 
-                Assert.That(found, Is.False);
+                Assert.That(found, Is.True);
+                Assert.That(point.y, Is.EqualTo(0f).Within(.001f));
             }
             finally { DisposeWorld(world); }
             yield return null;
