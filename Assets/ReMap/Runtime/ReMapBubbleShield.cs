@@ -42,9 +42,10 @@ namespace ReMap.Standalone
         private void BuildBubbleShieldInspector(MapObject item, VisualElement section)
         {
             section.Add(Label(L.T("#BUBBLE_SHIELD"), "inspector-subsection-title"));
-            var color = CompactInspectorField(new Vector3Field(L.T("#BUBBLE_SHIELD_COLOR_RGB")) {
+            var color = new Vector3Field(L.T("#BUBBLE_SHIELD_COLOR_RGB")) {
                 value = WorldView.ToVector(item.bubbleShieldColor)
-            });
+            };
+            color.AddToClassList("property-field");
             section.Add(color); section.Add(Label(L.T("#BUBBLE_SHIELD_HELP"), "note"));
             color.RegisterValueChangedCallback(change => {
                 CommitInspectorEdit();

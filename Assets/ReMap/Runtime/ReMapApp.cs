@@ -588,6 +588,7 @@ namespace ReMap.Standalone
         {
             private bool dragging;
             private int pointerId=-1;
+            private VisualElement activeDragHandle;
             private float startValue;
             private CursorLockMode previousLockState;
             private bool previousCursorVisible;
@@ -599,24 +600,30 @@ namespace ReMap.Standalone
 
             public EndlessFloatField(string label):base(label)
             {
-                labelElement.RegisterCallback<PointerDownEvent>(Begin,TrickleDown.TrickleDown);
-                labelElement.RegisterCallback<PointerMoveEvent>(Move,TrickleDown.TrickleDown);
-                labelElement.RegisterCallback<PointerUpEvent>(End,TrickleDown.TrickleDown);
-                labelElement.RegisterCallback<PointerCancelEvent>(_=>Stop());
-                labelElement.RegisterCallback<PointerCaptureOutEvent>(_=>Stop());
+                AddDragHandle(labelElement);
                 RegisterCallback<DetachFromPanelEvent>(_=>Stop());
+            }
+
+            public void AddDragHandle(VisualElement handle)
+            {
+                handle.RegisterCallback<PointerDownEvent>(Begin,TrickleDown.TrickleDown);
+                handle.RegisterCallback<PointerMoveEvent>(Move,TrickleDown.TrickleDown);
+                handle.RegisterCallback<PointerUpEvent>(End,TrickleDown.TrickleDown);
+                handle.RegisterCallback<PointerCancelEvent>(_=>Stop());
+                handle.RegisterCallback<PointerCaptureOutEvent>(_=>Stop());
             }
 
             private void Begin(PointerDownEvent e)
             {
                 if(e.button!=0||dragging)return;
+                activeDragHandle=e.currentTarget as VisualElement??labelElement;
                 dragging=true;clickCandidate=true;pointerId=e.pointerId;startValue=value;
                 previousDelayed=isDelayed;isDelayed=false;
                 previousLockState=UnityEngine.Cursor.lockState;previousCursorVisible=UnityEngine.Cursor.visible;
                 var mouse=Mouse.current;restorePointer=mouse!=null;
                 if(restorePointer)restorePosition=mouse.position.ReadValue();
                 ((IValueField<float>)this).StartDragging();
-                labelElement.CapturePointer(pointerId);
+                activeDragHandle.CapturePointer(pointerId);
                 UnityEngine.Cursor.lockState=CursorLockMode.Locked;UnityEngine.Cursor.visible=false;
                 e.StopImmediatePropagation();
             }
@@ -649,7 +656,8 @@ namespace ReMap.Standalone
                 if(!dragging)return;
                 dragging=false;clickCandidate=false;
                 int releasedPointer=pointerId;pointerId=-1;
-                if(labelElement.HasPointerCapture(releasedPointer))labelElement.ReleasePointer(releasedPointer);
+                if(activeDragHandle!=null&&activeDragHandle.HasPointerCapture(releasedPointer))activeDragHandle.ReleasePointer(releasedPointer);
+                activeDragHandle=null;
                 ((IValueField<float>)this).StopDragging();
                 isDelayed=previousDelayed;
                 UnityEngine.Cursor.lockState=previousLockState;UnityEngine.Cursor.visible=previousCursorVisible;
@@ -709,6 +717,7 @@ namespace ReMap.Standalone
                 if(uniform)
                 {
                     x.labelElement.style.display=DisplayStyle.None;x.AddToClassList("uniform-scale-value");
+                    x.AddDragHandle(titleLabel);
                     y=z=null;previousDisplayed=Vector3.one*initial.x;
                 }
                 else
