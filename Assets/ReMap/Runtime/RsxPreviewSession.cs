@@ -27,7 +27,8 @@ namespace ReMap.Standalone
             this.shutdown=shutdown; Root=root;Directory.CreateDirectory(root);Directory.CreateDirectory(workingDirectory);
             log=new StreamWriter(Path.Combine(root,"session.log"),false){AutoFlush=true};
             process=new Process();
-            var arguments=new[]{"-nogui","-embedded","-export","--loadwhitelist","mdl_,matl,txtr,shdr,shds,Ptch","--parsethreads","1","--exportthreads","1","-matltextures","--remap-session",root};
+            string threads=Math.Min(4,Math.Max(1,Environment.ProcessorCount/2)).ToString();
+            var arguments=new[]{"-nogui","-embedded","-export","--loadwhitelist","mdl_,matl,txtr,shdr,shds,Ptch","--parsethreads",threads,"--exportthreads",threads,"-matltextures","--remap-session",root};
             if(File.Exists(executable+".remap-albedo-v1"))arguments=arguments.Concat(new[]{"-albedoonly"}).ToArray();
             process.StartInfo=new ProcessStartInfo{FileName=executable,Arguments=string.Join(" ",arguments.Select(Quote)),WorkingDirectory=workingDirectory,
                 UseShellExecute=false,CreateNoWindow=true,RedirectStandardInput=true,RedirectStandardOutput=true,RedirectStandardError=true,
@@ -85,6 +86,15 @@ namespace ReMap.Standalone
             string job=Guid.NewGuid().ToString("N").Substring(0,8);
             Send("EXPORT\t"+guid+"\t"+job);var reply=ReadReply();
             if(reply.Length!=4||reply[1]!="DONE"||!string.Equals(reply[2],guid,StringComparison.OrdinalIgnoreCase)||reply[3]!=job)
+                throw new IOException(L.T("#RSX_MODEL_EXPORT_FAILED")+string.Join(" ",reply));
+            return Path.Combine(Root,job);
+        }
+        internal string ExportBatch(string[] guids)
+        {
+            if(guids==null||guids.Length<2||guids.Length>8)throw new ArgumentException(L.T("#BATCH_1_8_MODELS_REQUIRED"));
+            string job=Guid.NewGuid().ToString("N").Substring(0,8);
+            Send("EXPORTBATCH\t"+job+"\t"+string.Join("\t",guids));var reply=ReadReply();
+            if(reply.Length!=3||reply[1]!="BATCHDONE"||reply[2]!=job)
                 throw new IOException(L.T("#RSX_MODEL_EXPORT_FAILED")+string.Join(" ",reply));
             return Path.Combine(Root,job);
         }

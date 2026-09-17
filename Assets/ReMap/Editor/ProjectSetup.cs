@@ -102,13 +102,17 @@ namespace ReMap.Standalone.Editor
             string rsxLicense = Path.Combine(projectRoot, "ThirdParty", "RSX", "LICENSE");
             string executable = Path.Combine(rsxRoot, "bin", "Release", "rsx.exe");
             string sessionMarker = executable + ".remap-session-v1";
+            string batchMarker = executable + ".remap-session-v2";
             if (!File.Exists(executable))
                 throw new FileNotFoundException("Build official RSX in Release/x64 before building ReMap.", executable);
             if (!File.Exists(sessionMarker))
                 throw new FileNotFoundException("Build the ReMap RSX session fork in Release/x64 before building ReMap.", sessionMarker);
+            if (!File.Exists(batchMarker))
+                throw new FileNotFoundException("Build the ReMap RSX batch session fork in Release/x64 before building ReMap.", batchMarker);
             Directory.CreateDirectory(outputDirectory);
             File.Copy(executable, Path.Combine(outputDirectory, "rsx.exe"), true);
             File.Copy(sessionMarker, Path.Combine(outputDirectory, "rsx.exe.remap-session-v1"), true);
+            File.Copy(batchMarker, Path.Combine(outputDirectory, "rsx.exe.remap-session-v2"), true);
             if (!File.Exists(rsxLicense))
                 throw new FileNotFoundException("The bundled RSX license is missing from ThirdParty/RSX.", rsxLicense);
             File.Copy(rsxLicense, Path.Combine(outputDirectory, "RSX-LICENSE.txt"), true);

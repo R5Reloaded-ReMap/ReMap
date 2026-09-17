@@ -22,13 +22,16 @@ namespace ReMap.Standalone
             foreach(var csv in Directory.GetFiles(Path.Combine(assetLibrary.CacheRoot,"index"),"*.csv"))File.Copy(csv,Path.Combine(index,Path.GetFileName(csv)));
             assetLibrary.Dispose();assetLibrary=new RsxAssetLibrary(qaRoot);await assetLibrary.IndexAsync(targets,null);
             if(!assetLibrary.ContinuousPreviewsSupported)throw new Exception("Continuous backend was not detected.");
+            if(!assetLibrary.BatchPreviewsSupported)throw new Exception("Batch backend was not detected.");
             var records=assetLibrary.Records.Where(record=>record.Supports(targets)).GroupBy(record=>assetLibrary.OriginArchive(record,targets),StringComparer.OrdinalIgnoreCase)
                 .Select(group=>group.GroupBy(record=>record.Name,StringComparer.OrdinalIgnoreCase).Select(items=>items.First()).Take(8).ToArray()).FirstOrDefault(group=>group.Length>=2);
             if(records==null)throw new Exception("No archive with at least two distinct models was indexed for the active game.");
             var timing=System.Diagnostics.Stopwatch.StartNew();
+            AssetBatchResult extracted=await assetLibrary.ExtractBatchAsync(records,targets);
             for(int i=0;i<records.Length;i++)
             {
-                var itemTime=System.Diagnostics.Stopwatch.StartNew();string path=await assetLibrary.ExtractAsync(records[i],targets);
+                var itemTime=System.Diagnostics.Stopwatch.StartNew();
+                if(!extracted.Paths.TryGetValue(records[i].Id,out string path))throw new Exception(extracted.Errors.TryGetValue(records[i].Id,out string error)?error:"Batch export did not return the model.");
                 await SharedTextureCache.Normalize(assetLibrary.ModelDirectory(records[i]),1024);
                 world.models.Prepare(records[i].Id,path);var model=world.models.Create(records[i].Id,false);
                 try{var thumbnail=ModelThumbnail.Render(model);File.WriteAllBytes(Path.Combine(assetLibrary.ModelDirectory(records[i]),"thumbnail.png"),thumbnail.EncodeToPNG());Destroy(thumbnail);}

@@ -668,7 +668,7 @@
     },
     {
       "key": "#INDEX_READY_PREPARING_CACHED_THUMBNAILS",
-      "text": "Index prêt. Les miniatures sont générées lorsque les ressources deviennent visibles."
+      "text": "Index prêt. Les miniatures sont générées en arrière-plan, avec priorité aux ressources visibles."
     },
     {
       "key": "#INDEX_SOURCES_CHANGE_FILTERS",

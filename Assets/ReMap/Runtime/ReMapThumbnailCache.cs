@@ -138,8 +138,8 @@ namespace ReMap.Standalone
                     if(thumbnailDone+thumbnailFailed>=thumbnailTotal)break;
                     if(assetBusy||indexRequested||pendingAssetDrops>0||thumbnailPaused||SettingsOpen||IndexingOpen||inspectorDirty||libraryDragging||draggingGizmo||sceneSelectionPending||assemblyDragging){await Task.Delay(200);continue;}
                     bool continuous=assetLibrary.ContinuousPreviewsSupported;
-                    int batchSize=continuous?1:assetLibrary.UsesForkFeatures?8:1;
-                    var batch=ThumbnailQueue.NextVisible(eligible,visibleAssets,readyThumbnails,failedThumbnails,search.value,targets,batchSize,assetLibrary.PreferredPreviewArchive);
+                    int batchSize=assetLibrary.BatchPreviewsSupported?8:continuous?1:assetLibrary.UsesForkFeatures?8:1;
+                    var batch=ThumbnailQueue.Next(eligible,visibleAssets,readyThumbnails,failedThumbnails,search.value,targets,batchSize,assetLibrary.PreferredPreviewArchive);
                     if(batch.Length==0)break;
                     // Render already exported visible models before waiting for any further archive decompression.
                     var cached=visibleAssets.Where(r=>r.Supports(targetSet)&&!readyThumbnails.Contains(r.Id)&&!failedThumbnails.Contains(r.Id)&&assetLibrary.CachedModel(r)!=null).Take(batchSize).ToArray();

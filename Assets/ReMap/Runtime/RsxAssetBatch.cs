@@ -18,7 +18,7 @@ namespace ReMap.Standalone
             if(entries.Length==0||entries.Length>8)throw new ArgumentException(L.T("#BATCH_1_8_MODELS_REQUIRED"));
             if(CacheRoot==null||entries.Any(e=>!e.Supports(targets)))throw new InvalidOperationException(L.T("#INDEX_COMPATIBLE_MAPS_EXTRACTION"));
             var result=new AssetBatchResult();
-            if(!UsesForkFeatures) {
+            if(!ContinuousPreviewsSupported&&!UsesForkFeatures) {
                 foreach(var entry in entries)try {result.Paths[entry.Id]=await ExtractAsync(entry,targets,cancellation);}catch(Exception ex)when(!(ex is OperationCanceledException)){result.Errors[entry.Id]=ex.Message;}
                 return result;
             }
@@ -29,13 +29,10 @@ namespace ReMap.Standalone
                 if(pending.Length==0)return result;
                 if(ContinuousPreviewsSupported)
                 {
-                    foreach(var entry in pending)
-                    {
-                        linked.Token.ThrowIfCancellationRequested();
-                        try { result.Paths[entry.Id]=await Task.Run(()=>ExtractContinuous(entry,targets),shutdown.Token); }
-                        catch(Exception ex)when(!(ex is OperationCanceledException)){result.Errors[entry.Id]=ex.Message;}
-                    }
-                    return result;
+                    string origin=OriginArchive(pending[0],targets);
+                    if(pending.Any(e=>OriginArchive(e,targets)!=origin)||pending.Select(e=>e.Name).Distinct(StringComparer.OrdinalIgnoreCase).Count()!=pending.Length)throw new ArgumentException(L.T("#BATCH_SHARE_ARCHIVE_HAVE_DISTINCT"));
+                    linked.Token.ThrowIfCancellationRequested();
+                    return await Task.Run(()=>ExtractContinuousBatch(pending,targets,result),shutdown.Token);
                 }
                 string archive=OriginArchive(pending[0],targets);
                 if(pending.Any(e=>OriginArchive(e,targets)!=archive)||pending.Select(e=>e.Name).Distinct(StringComparer.OrdinalIgnoreCase).Count()!=pending.Length)throw new ArgumentException(L.T("#BATCH_SHARE_ARCHIVE_HAVE_DISTINCT"));
