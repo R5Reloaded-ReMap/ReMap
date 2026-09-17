@@ -54,6 +54,9 @@ namespace ReMap.Standalone
             assetLibrary?.Records.FirstOrDefault(candidate => GameAssetIndex.SameModelPath(
                 candidate.modelPath, modelPath) && candidate.Supports(Targets));
 
+        private bool DoorProfileAvailable(ReMapDoorProfile profile) =>
+            ReMapModelAvailability.DoorProfile(assetLibrary?.Records, Targets, profile);
+
         private MapObject CreateDoorComponent(MapObject door, string role, string modelPath,
             Vector3 localPosition, Vector3 localRotation)
         {
@@ -116,6 +119,7 @@ namespace ReMap.Standalone
         {
             var objects = CreateDefaultDoorObjects(pivot, parent);
             var door = objects[0];
+            door.doorType = ReMapDoorProfiles.All.First(DoorProfileAvailable).Id;
             session.Edit(document => {
                 document.objects.AddRange(objects);
                 SyncDoorComponents(document, door);
@@ -130,15 +134,24 @@ namespace ReMap.Standalone
         private void BuildDoorInspector(MapObject item, VisualElement section)
         {
             section.Add(Label(L.T("#DOOR"), "inspector-subsection-title"));
-            var profiles = ReMapDoorProfiles.All;
+            var current = ReMapDoorProfiles.Find(item.doorType);
+            var profiles = ReMapDoorProfiles.All.Where(DoorProfileAvailable).ToList();
             var labels = profiles.Select(profile => L.T(profile.Label)).ToList();
-            int selected = Math.Max(0, Array.FindIndex(profiles, profile => profile.Id == item.doorType));
+            bool currentAvailable = profiles.Contains(current);
+            if (!currentAvailable)
+            {
+                profiles.Insert(0, current);
+                labels.Insert(0, L.F("#ARG0_UNAVAILABLE", L.T(current.Label)));
+                section.Add(Label(L.F("#MODEL_NOT_IN_SELECTED_RPAKS", current.ModelPath), "note"));
+            }
+            int selected = Math.Max(0, profiles.IndexOf(current));
             var type = CompactInspectorField(new DropdownField(L.T("#DOOR_TYPE"), labels, selected));
             section.Add(type);
             type.RegisterValueChangedCallback(change => Run(() => {
                 int index = Math.Max(0, labels.IndexOf(change.newValue));
                 session.Edit(document => {
                     var door = document.objects.Find(candidate => candidate.id == item.id);
+                    if (!DoorProfileAvailable(profiles[index])) return;
                     door.doorType = profiles[index].Id;
                     SyncDoorComponents(document, door);
                 });
@@ -146,7 +159,7 @@ namespace ReMap.Standalone
                 _ = PrepareDoorModels();
             }));
 
-            if (profiles[selected].SupportsGold)
+            if (current.SupportsGold)
             {
                 var gold = CompactInspectorField(new Toggle(L.T("#GOLD_DOOR")) { value = item.doorGold });
                 section.Add(gold);

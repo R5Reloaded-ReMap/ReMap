@@ -148,9 +148,20 @@ namespace ReMap.Standalone
             var support = CompactInspectorField(new Toggle(L.T("#START_ARM_SUPPORT")) {
                 value = item.curvedZiplineSupport
             });
+            bool supportAvailable = ReMapModelAvailability.HasModel(assetLibrary?.Records,
+                Targets, ReMapZiplineProfiles.ArmModelPath);
+            support.SetEnabled(supportAvailable || item.curvedZiplineSupport);
             support.tooltip = L.T("#START_ARM_SUPPORT_NO_COLLISION_HELP");
             section.Add(support);
+            if (!supportAvailable)
+                section.Add(Label(L.F("#MODEL_NOT_IN_SELECTED_RPAKS",
+                    ReMapZiplineProfiles.ArmModelPath), "note"));
             support.RegisterValueChangedCallback(change => Run(() => {
+                if (change.newValue && !supportAvailable)
+                {
+                    support.SetValueWithoutNotify(false);
+                    return;
+                }
                 session.Edit(document => {
                     var zipline = document.objects.Find(candidate => candidate.id == item.id);
                     zipline.curvedZiplineSupport = change.newValue;

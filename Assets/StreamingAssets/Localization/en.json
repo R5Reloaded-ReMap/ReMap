@@ -1847,6 +1847,22 @@
       "text": "RPAK:"
     },
     {
+      "key": "#CUSTOM_OBJECT_MODELS_UNAVAILABLE",
+      "text": "This object's required models are not available in the selected RPAKs."
+    },
+    {
+      "key": "#ARG0_UNAVAILABLE",
+      "text": "{0} (unavailable)"
+    },
+    {
+      "key": "#MODEL_NOT_IN_SELECTED_RPAKS",
+      "text": "Model unavailable in the selected RPAKs: {0}"
+    },
+    {
+      "key": "#ZIPLINE_SUPPORT_MODELS_UNAVAILABLE",
+      "text": "This support option uses models that are unavailable in the selected RPAKs."
+    },
+    {
       "key": "#LOADING_PREVIEW",
       "text": "Loading preview…"
     },

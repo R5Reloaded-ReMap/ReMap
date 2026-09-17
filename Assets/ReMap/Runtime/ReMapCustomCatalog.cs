@@ -15,6 +15,17 @@ namespace ReMap.Standalone
             new CatalogEntry("custom:loot-bin", L.T("#LOOT_BIN"), L.T("#CUSTOM"), new Vector3(2.1f, 1.25f, 1.05f)) { CustomType = "loot-bin" }
         };
 
+        private bool CustomObjectAvailable(CatalogEntry entry)
+        {
+            if (entry == null) return false;
+            if (entry.CustomType == "door")
+                return ReMapModelAvailability.Door(assetLibrary?.Records, Targets);
+            if (entry.CustomType == "loot-bin")
+                return ReMapModelAvailability.HasModel(assetLibrary?.Records, Targets,
+                    LootBinModelPath);
+            return true;
+        }
+
         private void RenderCustomCatalog()
         {
             ClearRenderedCatalog(); ConfigureFlowCatalog();
@@ -25,9 +36,12 @@ namespace ReMap.Standalone
             pageState.text = L.F("#ARG0_CUSTOM_OBJECTS", entries.Length);
             foreach (var entry in entries)
             {
+                bool available = CustomObjectAvailable(entry);
                 var card = Button("", () => { if (!suppressCardClick) SelectCustomAsset(entry); }, "game-card");
-                RegisterDragSource(card, entry, null);
-                card.tooltip = L.T("#DOUBLE_CLICK_PLACE_DRAG_SCENE");
+                if (available) RegisterDragSource(card, entry, null);
+                card.SetEnabled(available);
+                card.tooltip = available ? L.T("#DOUBLE_CLICK_PLACE_DRAG_SCENE") :
+                    L.T("#CUSTOM_OBJECT_MODELS_UNAVAILABLE");
                 var image = new VisualElement(); image.AddToClassList("card-image");
                 image.Add(Label(entry.CustomType == "curved-zipline" ? "●╮●╰●" : "●━━━━●", "custom-card-symbol")); card.Add(image);
                 card.Add(Label(entry.Name, "card-name")); card.Add(Label(entry.Category, "card-category"));
@@ -42,6 +56,7 @@ namespace ReMap.Standalone
 
         private void SelectCustomAsset(CatalogEntry entry)
         {
+            if (!CustomObjectAvailable(entry)) return;
             CommitInspectorEdit(); CancelPlacement(); SetLibraryDetails(true);
             previewEntry = entry; lastPreviewRequest = null; retryPreviewButton.SetEnabled(false);
             if (currentThumbnail != null) Destroy(currentThumbnail);
@@ -59,6 +74,8 @@ namespace ReMap.Standalone
 
         private void InsertCustomObject(CatalogEntry entry, Vector3 position, string parent = "")
         {
+            if (!CustomObjectAvailable(entry))
+                throw new InvalidOperationException(L.T("#CUSTOM_OBJECT_MODELS_UNAVAILABLE"));
             if (entry?.CustomType == "zipline") InsertZipline(position, parent);
             else if (entry?.CustomType == "door") InsertDoor(position, parent);
             else if (entry?.CustomType == "curved-zipline") InsertCurvedZipline(position, parent);

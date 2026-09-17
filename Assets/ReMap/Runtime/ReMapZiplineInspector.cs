@@ -24,22 +24,31 @@ namespace ReMap.Standalone
         private void AddZiplineSupportField(
             VisualElement section, MapObject endpoint, string label)
         {
-            var profiles = ReMapZiplineProfiles.All;
+            var current = ReMapZiplineProfiles.Find(endpoint.customProfile);
+            var profiles = ReMapZiplineProfiles.All.Where(profile =>
+                ReMapModelAvailability.ZiplineProfile(assetLibrary?.Records, Targets, profile)).ToList();
             var labels = profiles.Select(profile => L.T(profile.Label)).ToList();
-            int selected = Math.Max(0, Array.FindIndex(
-                profiles, profile => profile.Id == endpoint.customProfile));
+            if (!profiles.Contains(current))
+            {
+                profiles.Insert(0, current);
+                labels.Insert(0, L.F("#ARG0_UNAVAILABLE", L.T(current.Label)));
+                section.Add(Label(L.T("#ZIPLINE_SUPPORT_MODELS_UNAVAILABLE"), "note"));
+            }
+            int selected = Math.Max(0, profiles.IndexOf(current));
             var support = CompactInspectorField(new DropdownField(label, labels, selected));
             section.Add(support);
             support.RegisterValueChangedCallback(change => Run(() => {
                 int index = Math.Max(0, labels.IndexOf(change.newValue));
                 session.Edit(document => {
                     var edited = document.objects.Find(candidate => candidate.id == endpoint.id);
+                    if (!ReMapModelAvailability.ZiplineProfile(assetLibrary?.Records, Targets,
+                        profiles[index])) return;
                     ApplyZiplineProfile(document, edited, profiles[index].Id);
                 });
                 Refresh();
                 _ = PrepareZiplineModels();
             }));
-            if (!profiles[selected].HasSupport) return;
+            if (!current.HasSupport) return;
 
             var height = CompactInspectorField(new FloatField(L.T("#ARM_HEIGHT_APEX_U")) {
                 value = endpoint.ziplineArmHeight, isDelayed = true

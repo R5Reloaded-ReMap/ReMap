@@ -304,7 +304,7 @@ namespace ReMap.Standalone
         }
         private bool Incompatible(MapObject item) => item.assetId.StartsWith("apex:", StringComparison.Ordinal) && !AssetCompatibility.Supports(item.commonAsset, item.availableMaps, Targets);
         private bool CanPlace(CatalogEntry entry) => entry != null && entry.SupportsGame(snapshot.gameTarget) &&
-            (entry.CustomType != null || entry.GameAsset?.Supports(Targets) == true);
+            (entry.CustomType != null ? CustomObjectAvailable(entry) : entry.GameAsset?.Supports(Targets) == true);
         private string[] displayedTargets;
         private void RefreshAssetTargets()
         {

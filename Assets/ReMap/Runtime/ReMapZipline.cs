@@ -1,5 +1,6 @@
 using ReMap.Standalone.Core;
 using System;
+using System.Linq;
 using UnityEngine;
 
 namespace ReMap.Standalone
@@ -19,6 +20,9 @@ namespace ReMap.Standalone
             var zipline = objects[0];
             var start = objects[1];
             var end = objects[2];
+            var defaultStart = ReMapZiplineProfiles.All.Last(profile =>
+                ReMapModelAvailability.ZiplineProfile(assetLibrary?.Records, Targets, profile));
+            start.customProfile = defaultStart.Id;
             session.Edit(document => {
                 document.objects.Add(zipline);
                 document.objects.Add(start);
