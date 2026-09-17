@@ -33,16 +33,47 @@ namespace ReMap.Standalone.Core
         }
         public bool IsCommon => origins.Any(o => o.mapId == "");
         public bool Supports(IEnumerable<string> maps) => AssetCompatibility.Supports(IsCommon, origins.Select(o => o.mapId), maps);
-        public bool Supports(ISet<string> maps) => IsCommon || (maps != null && origins.Any(o => maps.Contains(o.mapId)));
+        public bool Supports(ISet<string> maps) => AssetCompatibility.Supports(IsCommon, origins.Select(o => o.mapId), maps);
     }
     public static class AssetCompatibility
     {
+        private static readonly string[] MapVariantSuffixes = {
+            "_mu1", "_mu2", "_mu3", "_mu4", "_hu", "_night", "_tt"
+        };
+
+        public static string BaseMapId(string mapId)
+        {
+            string value = mapId ?? "";
+            foreach (string suffix in MapVariantSuffixes)
+                if (value.EndsWith(suffix, StringComparison.OrdinalIgnoreCase))
+                    return value.Substring(0, value.Length - suffix.Length);
+            return value;
+        }
+
+        public static string[] ExpandTargets(IEnumerable<string> targets, IEnumerable<string> available)
+        {
+            var known = new HashSet<string>((available ?? Array.Empty<string>()).Where(map =>
+                !string.IsNullOrWhiteSpace(map)), StringComparer.OrdinalIgnoreCase);
+            var result = new List<string>();
+            var added = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+            foreach (string target in (targets ?? Array.Empty<string>()).Where(map =>
+                !string.IsNullOrWhiteSpace(map)).Distinct(StringComparer.OrdinalIgnoreCase))
+            {
+                string baseMap = BaseMapId(target);
+                if (!string.Equals(baseMap, target, StringComparison.OrdinalIgnoreCase) &&
+                    known.Contains(baseMap) && added.Add(baseMap)) result.Add(baseMap);
+                if (known.Contains(target) && added.Add(target)) result.Add(target);
+            }
+            return result.ToArray();
+        }
+
         public static bool Supports(bool common, IEnumerable<string> available, IEnumerable<string> targets)
         {
             if (common) return true;
             var known = new HashSet<string>(available ?? Array.Empty<string>(), StringComparer.OrdinalIgnoreCase);
             // Selected maps describe RPaks loaded together by the played level.
-            return (targets ?? Array.Empty<string>()).Any(known.Contains);
+            return (targets ?? Array.Empty<string>()).Any(target => known.Contains(target) ||
+                known.Contains(BaseMapId(target)));
         }
     }
     public static class MapPortCompatibility

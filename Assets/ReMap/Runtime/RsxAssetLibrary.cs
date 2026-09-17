@@ -369,7 +369,7 @@ namespace ReMap.Standalone
             CancellationToken cancellation = default)
         {
             if (!Configured) throw new InvalidOperationException(L.T("#CONFIGURE_SELECTED_GAME_FOLDER_SETTINGS"));
-            targets = KeepAvailableTargets(targets, Maps.Select(m => m.Id));
+            targets = ResolveMapTargets(targets);
             using var linked = CancellationTokenSource.CreateLinkedTokenSource(shutdown.Token, cancellation);
             await worker.WaitAsync(linked.Token);
             try
@@ -410,6 +410,16 @@ namespace ReMap.Standalone
             var known = new HashSet<string>(available ?? Array.Empty<string>(), StringComparer.OrdinalIgnoreCase);
             return (targets ?? Array.Empty<string>()).Where(known.Contains).Distinct(StringComparer.OrdinalIgnoreCase).ToArray();
         }
+        public static string[] ExpandAvailableTargets(IEnumerable<string> targets, IEnumerable<string> available) =>
+            AssetCompatibility.ExpandTargets(targets, available);
+        public string[] ResolveMapTargets(IEnumerable<string> targets)
+        {
+            IEnumerable<string> available = Maps.Select(map => map.Id);
+            if (!string.IsNullOrEmpty(PakDirectory) && Directory.Exists(PakDirectory))
+                available = available.Concat(MapIdsFromArchives(Directory.EnumerateFiles(PakDirectory,
+                    "*.rpak", SearchOption.TopDirectoryOnly).Select(Path.GetFileName)));
+            return ExpandAvailableTargets(targets, available);
+        }
         public static string[] FindMissingTargets(IEnumerable<string> targets, IEnumerable<string> available)
         {
             var known = new HashSet<string>(available ?? Array.Empty<string>(), StringComparer.OrdinalIgnoreCase);
@@ -427,17 +437,32 @@ namespace ReMap.Standalone
         public static string[] SelectMapArchives(IEnumerable<string> targets,
             IEnumerable<string> availableArchives)
         {
-            var available = new HashSet<string>(availableArchives ?? Array.Empty<string>(),
+            string[] archiveNames = (availableArchives ?? Array.Empty<string>()).Select(Path.GetFileName).ToArray();
+            var available = new HashSet<string>(archiveNames,
                 StringComparer.OrdinalIgnoreCase);
             var result = new List<string>();
-            foreach (string map in (targets ?? Array.Empty<string>()).Where(map =>
-                !string.IsNullOrWhiteSpace(map)).Distinct(StringComparer.OrdinalIgnoreCase))
+            foreach (string map in ExpandAvailableTargets(targets, MapIdsFromArchives(archiveNames)))
                 foreach (string suffix in new[] { ".rpak", "_client_perm.rpak", "_client_temp.rpak" })
                 {
                     string archive = map + suffix;
                     if (available.Contains(archive)) result.Add(archive);
                 }
             return result.ToArray();
+        }
+        public static string[] MapIdsFromArchives(IEnumerable<string> availableArchives)
+        {
+            var result = new List<string>();
+            foreach (string archive in availableArchives ?? Array.Empty<string>())
+            {
+                string name = Path.GetFileName(archive) ?? "";
+                foreach (string suffix in new[] { "_client_perm.rpak", "_client_temp.rpak", ".rpak" })
+                    if (name.EndsWith(suffix, StringComparison.OrdinalIgnoreCase))
+                    {
+                        result.Add(name.Substring(0, name.Length - suffix.Length));
+                        break;
+                    }
+            }
+            return result.Distinct(StringComparer.OrdinalIgnoreCase).ToArray();
         }
         public string ModelDirectory(GameAssetRecord entry) => Path.Combine(CacheRoot, "Models", entry.guid);
         public string CachedModel(GameAssetRecord entry)

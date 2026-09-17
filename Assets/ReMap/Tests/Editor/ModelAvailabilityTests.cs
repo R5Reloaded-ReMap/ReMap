@@ -34,14 +34,14 @@ namespace ReMap.Standalone.Tests
         }
 
         [Test]
-        public void ZiprailModelChoicesRequireTheBrokenMoonRpak()
+        public void ZiprailModelChoicesUseTheBrokenMoonBaseRpakForVariants()
         {
             var records = new[] {
-                Record("mdl/props/zip_rail/zip_rail_building_claw_01.rmdl", "mp_rr_divided_moon_mu1"),
-                Record("mdl/props/zip_rail/zip_rail_cord_end_01.rmdl", "mp_rr_divided_moon_mu1"),
-                Record("mdl/props/zip_rail/zip_rail_ground_base_01.rmdl", "mp_rr_divided_moon_mu1"),
-                Record("mdl/props/zip_rail/zip_rail_ground_post_01.rmdl", "mp_rr_divided_moon_mu1"),
-                Record("mdl/props/zip_rail/zip_rail_ground_post_top_01.rmdl", "mp_rr_divided_moon_mu1")
+                Record("mdl/props/zip_rail/zip_rail_building_claw_01.rmdl", "mp_rr_divided_moon"),
+                Record("mdl/props/zip_rail/zip_rail_cord_end_01.rmdl", "mp_rr_divided_moon"),
+                Record("mdl/props/zip_rail/zip_rail_ground_base_01.rmdl", "mp_rr_divided_moon"),
+                Record("mdl/props/zip_rail/zip_rail_ground_post_01.rmdl", "mp_rr_divided_moon"),
+                Record("mdl/props/zip_rail/zip_rail_ground_post_top_01.rmdl", "mp_rr_divided_moon")
             };
             Assert.That(ReMapModelAvailability.ZiprailProfile(
                 System.Array.Empty<GameAssetRecord>(), System.Array.Empty<string>(),
@@ -52,6 +52,8 @@ namespace ReMap.Standalone.Tests
                 new[] { "mp_rr_divided_moon_mu1" }, "arm"), Is.True);
             Assert.That(ReMapModelAvailability.ZiprailProfile(records,
                 new[] { "mp_rr_divided_moon_mu1" }, "support"), Is.True);
+            Assert.That(ReMapModelAvailability.ZiprailProfile(records,
+                new[] { "mp_rr_divided_moon" }, "support"), Is.True);
         }
 
         [Test]

@@ -19,6 +19,47 @@ namespace ReMap.Standalone.Tests
             }));
         }
 
+        [Test] public void SelectedVariantArchivesIncludeTheExistingBaseMapFirst()
+        {
+            var result = RsxAssetLibrary.SelectMapArchives(
+                new[] { "mp_rr_divided_moon_mu1" },
+                new[] {
+                    "mp_rr_divided_moon.rpak",
+                    "mp_rr_divided_moon_client_perm.rpak",
+                    "mp_rr_divided_moon_mu1.rpak",
+                    "mp_rr_divided_moon_mu1_client_temp.rpak",
+                    "mp_rr_divided_moon_mu2.rpak",
+                    "mp_rr_divided_moonlight.rpak"
+                });
+            Assert.That(result, Is.EqualTo(new[] {
+                "mp_rr_divided_moon.rpak",
+                "mp_rr_divided_moon_client_perm.rpak",
+                "mp_rr_divided_moon_mu1.rpak",
+                "mp_rr_divided_moon_mu1_client_temp.rpak"
+            }));
+        }
+
+        [TestCase("mp_rr_divided_moon_mu1", "mp_rr_divided_moon")]
+        [TestCase("mp_rr_divided_moon_mu4", "mp_rr_divided_moon")]
+        [TestCase("mp_rr_desertlands_hu", "mp_rr_desertlands")]
+        [TestCase("mp_rr_olympus_night", "mp_rr_olympus")]
+        [TestCase("mp_rr_canyonlands_tt", "mp_rr_canyonlands")]
+        [TestCase("mp_rr_divided_moonlight", "mp_rr_divided_moonlight")]
+        public void BaseMapIdOnlyRecognizesKnownVariantSuffixes(string variant, string expected)
+        {
+            Assert.That(AssetCompatibility.BaseMapId(variant), Is.EqualTo(expected));
+        }
+
+        [Test] public void BaseMapAssetsSupportVariantsButVariantAssetsStaySpecific()
+        {
+            Assert.That(AssetCompatibility.Supports(false, new[] { "mp_rr_divided_moon" },
+                new[] { "mp_rr_divided_moon_mu1" }), Is.True);
+            Assert.That(AssetCompatibility.Supports(false, new[] { "mp_rr_divided_moon_mu1" },
+                new[] { "mp_rr_divided_moon" }), Is.False);
+            Assert.That(AssetCompatibility.Supports(false, new[] { "mp_rr_divided_moon_mu1" },
+                new[] { "mp_rr_divided_moon_mu2" }), Is.False);
+        }
+
         private static GameAssetRecord Record(string guid, string name, string map, string archive) => new GameAssetRecord {
             guid = guid, modelPath = name, origins = new List<AssetOrigin> { new AssetOrigin { mapId = map, archive = archive } }
         };

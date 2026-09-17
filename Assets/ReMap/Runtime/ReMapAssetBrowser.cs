@@ -85,7 +85,7 @@ namespace ReMap.Standalone
                 mapChoices.Add(toggle); mapToggles.Add(id, toggle);
             }
         }
-        private string[] Targets => RsxAssetLibrary.KeepAvailableTargets(snapshot?.targetMaps, assetLibrary.Maps.Select(map => map.Id));
+        private string[] Targets => assetLibrary.ResolveMapTargets(snapshot?.targetMaps);
         private string MissingMapSourcesMessage()
         {
             string[] missing = RsxAssetLibrary.FindMissingTargets(snapshot?.targetMaps, assetLibrary.Maps.Select(map => map.Id));
