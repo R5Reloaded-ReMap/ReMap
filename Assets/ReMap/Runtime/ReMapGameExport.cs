@@ -437,7 +437,7 @@ namespace ReMap.Standalone
                 string angleArray = "[ " + string.Join(", ", points.Select(point =>
                     Vector(ApexDisplay.Angles(WorldView.ToVector(point.rotation))))) + " ]";
                 string heightArray = "[ " + string.Join(", ", points.Select(point =>
-                    Number(point.ziplineArmHeight))) + " ]";
+                    FloatLiteral(point.ziplineArmHeight))) + " ]";
                 string expression = "ReMap_CreateCurvedZipline( " + pointArray + ", " +
                     zipline.curvedZiplineSegments.ToString(CultureInfo.InvariantCulture) + ", " +
                     profileArray + ", " + angleArray + ", " + heightArray + ", " +
@@ -466,7 +466,7 @@ namespace ReMap.Standalone
                 string angleArray = "[ " + string.Join(", ", points.Select(point =>
                     Vector(ApexDisplay.Angles(WorldView.ToVector(point.rotation))))) + " ]";
                 string heightArray = "[ " + string.Join(", ", points.Select(point =>
-                    Number(point.ziplineArmHeight))) + " ]";
+                    FloatLiteral(point.ziplineArmHeight))) + " ]";
                 string expression = "ReMap_CreateZiprail( " + pointArray + ", " + profileArray +
                     ", " + angleArray + ", " + heightArray + ", " +
                     Number(ziprail.ziplineWidth) + ", " + Number(ziprail.ziplineSpeed) + ", " +
@@ -852,6 +852,11 @@ namespace ReMap.Standalone
             double rounded = Math.Round(value, 4, MidpointRounding.AwayFromZero);
             if (Math.Abs(rounded) < 0.00005) rounded = 0;
             return rounded.ToString("0.####", CultureInfo.InvariantCulture);
+        }
+        private static string FloatLiteral(float value)
+        {
+            string number = Number(value);
+            return number.IndexOf('.') >= 0 ? number : number + ".0";
         }
         private static bool Nearly(float a, float b) => Math.Abs(a - b) <= Math.Max(0.0001f, Math.Max(Math.Abs(a), Math.Abs(b)) * 0.0001f);
     }

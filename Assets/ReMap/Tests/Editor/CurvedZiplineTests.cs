@@ -51,7 +51,7 @@ namespace ReMap.Standalone.Tests
         {
             var document = Document();
             string code = ReMapGameScript.Generate(document, document.objects);
-            StringAssert.Contains("ReMap_CreateCurvedZipline( [ <0, 0, 0>, <300, 100, 80>, <600, 0, 0> ], 8, [ REMAP_ZIPLINE_END_SUPPORT, REMAP_ZIPLINE_END_ARM, REMAP_ZIPLINE_END_NONE ], [ <0, 0, 0>, <0, 0, 0>, <0, 0, 0> ], [ 180, 180, 180 ]", code);
+            StringAssert.Contains("ReMap_CreateCurvedZipline( [ <0, 0, 0>, <300, 100, 80>, <600, 0, 0> ], 8, [ REMAP_ZIPLINE_END_SUPPORT, REMAP_ZIPLINE_END_ARM, REMAP_ZIPLINE_END_NONE ], [ <0, 0, 0>, <0, 0, 0>, <0, 0, 0> ], [ 180.0, 180.0, 180.0 ]", code);
 
             string root = Path.GetFullPath(Path.Combine(Application.dataPath, ".."));
             string script = File.ReadAllText(Path.Combine(root,

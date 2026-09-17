@@ -46,6 +46,16 @@ namespace ReMap.Standalone.Tests
         }
 
         [Test]
+        public void ExportUsesFloatSupportHeightArray()
+        {
+            var document = Document();
+
+            string code = ReMapGameScript.Generate(document, document.objects);
+
+            StringAssert.Contains("[ 320.0, 320.0, 320.0 ], 1.75, 1.75", code);
+        }
+
+        [Test]
         public void ExportUsesNativeZiprailNodesAndLoadsBrokenMoonRpak()
         {
             var document = Document();
