@@ -122,11 +122,15 @@ namespace ReMap.Standalone
             Vector3 delta = end - start;
             float distance = delta.magnitude;
             float horizontal = new Vector2(delta.x, delta.z).magnitude;
-            float slack = Mathf.Max(0f, 1f - Mathf.Clamp(lengthScale, 0f, 1.2f));
-            // Apex computes the final rope shape natively. This preview follows the intent of
-            // the legacy editor prototype: distance * (1 - lengthScale) minus a small dead zone.
-            float sag = vertical || distance < .0001f ? 0f : Mathf.Max(0f,
-                distance * slack - 16f * ApexCoordinates.MetersPerUnit) * horizontal / distance;
+            // Apex computes its cable shape natively. Approximate a uniformly loaded cable with
+            // y = gL² / 8H: Earth gravity supplies the load and lengthScale controls an empirical
+            // horizontal tension. Squaring it makes loose values visibly softer while 1 stays taut,
+            // but never perfectly straight as it is in game.
+            const float gravity = 9.81f;
+            const float referenceTension = 1200f;
+            float tension = Mathf.Max(.1f, Mathf.Clamp(lengthScale, 0f, 1.2f));
+            float sag = vertical || distance < .0001f ? 0f :
+                gravity * horizontal * horizontal / (8f * referenceTension * tension * tension);
             sag = Mathf.Min(sag, distance * .35f);
             for (int index = 0; index <= segments; index++)
             {
