@@ -1863,6 +1863,10 @@
       "text": "This support option uses models that are unavailable in the selected RPAKs."
     },
     {
+      "key": "#INVALID_RPAK_FILE_NAME_ARG0",
+      "text": "Invalid RPAK file name: {0}"
+    },
+    {
       "key": "#LOADING_PREVIEW",
       "text": "Loading preview…"
     },

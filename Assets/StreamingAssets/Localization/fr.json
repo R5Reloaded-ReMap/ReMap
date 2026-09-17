@@ -1863,6 +1863,10 @@
       "text": "Cette option de support utilise des modèles indisponibles dans les RPAK sélectionnés."
     },
     {
+      "key": "#INVALID_RPAK_FILE_NAME_ARG0",
+      "text": "Nom de fichier RPAK invalide : {0}"
+    },
+    {
       "key": "#LOADING_PREVIEW",
       "text": "Chargement de l’aperçu…"
     },

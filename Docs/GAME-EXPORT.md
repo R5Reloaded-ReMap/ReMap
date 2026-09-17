@@ -56,6 +56,8 @@ The app preserves the surrounding files and replaces only these function bodies:
 - `Sv_ReMap_LoadMap()` in `sv_remap_map.nut`;
 - `Cl_ReMap_LoadMap()` in `cl_remap_map.nut`.
 
+Every selected map source is resolved to the exact RPAK files that exist in the active installation. The edited map's own archives are left to the normal level loader. Additional main, `_client_perm`, and `_client_temp` archives are emitted as SDK `pak_requestload` commands before generated model precaches; missing archive variants are never guessed or emitted. Live rebuild commands request the same additional archives before recreating the map.
+
 Build enables `REMAP_LOAD_MAP`; Reset restores the default empty map functions, the placeholder precache, and disables `REMAP_LOAD_MAP`. This keeps custom comments and future surrounding file changes intact. The app never edits `scripts.rson`; add and maintain the required `SERVER` and `CLIENT` entries manually.
 
 When replacing an existing generated map, ReMap creates a one-time `.remap.bak` backup of each edited map module.

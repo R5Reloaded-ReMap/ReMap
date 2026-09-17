@@ -7,6 +7,31 @@ namespace ReMap.Standalone.Tests
 {
     public sealed class GameExportTests
     {
+        [Test] public void AdditionalSelectedRpaksAreLoadedBeforeMapPrecaches()
+        {
+            var document = new MapDocument { name = "Rpak load", editingMap = "mp_base" };
+            var rpaks = new[] { "mp_base.rpak", "mp_extra.rpak", "mp_extra_client_perm.rpak" };
+            var prop = new MapObject { gameModelPath = "mdl/props/test.rmdl" };
+            string code = ReMapGameScript.Generate(document, new[] { prop }, rpaks)
+                .Replace("\r\n", "\n");
+            StringAssert.DoesNotContain("pak_requestload mp_base.rpak", code);
+            StringAssert.Contains("ServerCommand( \"pak_requestload mp_extra.rpak\" )", code);
+            StringAssert.Contains("ClientCommand( \"pak_requestload mp_extra_client_perm.rpak\" )", code);
+            Assert.That(code.IndexOf("pak_requestload mp_extra.rpak", System.StringComparison.Ordinal),
+                Is.LessThan(code.IndexOf("PrecacheModel", System.StringComparison.Ordinal)));
+
+            string live = ReMapGameScript.GenerateLiveCommands(document,
+                System.Array.Empty<MapObject>(), rpaks).Replace("\r\n", "\n");
+            StringAssert.StartsWith("pak_requestload mp_extra.rpak\npak_requestload mp_extra_client_perm.rpak\n", live);
+        }
+
+        [Test] public void UnsafeRpakNamesAreRejected()
+        {
+            var document = new MapDocument { name = "Rpak load", editingMap = "mp_base" };
+            Assert.Throws<System.ArgumentException>(() => ReMapGameScript.Generate(document,
+                System.Array.Empty<MapObject>(), new[] { "../other.rpak" }));
+        }
+
         [Test]
         public void GeneratesApexPropAndScriptProperties()
         {

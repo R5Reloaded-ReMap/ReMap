@@ -9,6 +9,16 @@ namespace ReMap.Standalone.Tests
 {
     public sealed class AssetLibraryTests
     {
+        [Test] public void SelectedMapArchivesContainOnlyExistingExactFiles()
+        {
+            var result = RsxAssetLibrary.SelectMapArchives(
+                new[] { "mp_alpha", "mp_beta", "mp_alpha" },
+                new[] { "mp_alpha.rpak", "mp_alpha_client_perm.rpak", "mp_beta.rpak", "unrelated.rpak" });
+            Assert.That(result, Is.EqualTo(new[] {
+                "mp_alpha.rpak", "mp_alpha_client_perm.rpak", "mp_beta.rpak"
+            }));
+        }
+
         private static GameAssetRecord Record(string guid, string name, string map, string archive) => new GameAssetRecord {
             guid = guid, modelPath = name, origins = new List<AssetOrigin> { new AssetOrigin { mapId = map, archive = archive } }
         };

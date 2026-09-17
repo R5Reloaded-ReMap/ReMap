@@ -383,6 +383,30 @@ namespace ReMap.Standalone
             var known = new HashSet<string>(available ?? Array.Empty<string>(), StringComparer.OrdinalIgnoreCase);
             return (targets ?? Array.Empty<string>()).Where(target => !known.Contains(target)).Distinct(StringComparer.OrdinalIgnoreCase).ToArray();
         }
+
+        public string[] SelectedMapArchives(IEnumerable<string> targets)
+        {
+            if (string.IsNullOrEmpty(PakDirectory) || !Directory.Exists(PakDirectory))
+                return Array.Empty<string>();
+            return SelectMapArchives(targets, Directory.EnumerateFiles(PakDirectory, "*.rpak",
+                SearchOption.TopDirectoryOnly).Select(Path.GetFileName));
+        }
+
+        public static string[] SelectMapArchives(IEnumerable<string> targets,
+            IEnumerable<string> availableArchives)
+        {
+            var available = new HashSet<string>(availableArchives ?? Array.Empty<string>(),
+                StringComparer.OrdinalIgnoreCase);
+            var result = new List<string>();
+            foreach (string map in (targets ?? Array.Empty<string>()).Where(map =>
+                !string.IsNullOrWhiteSpace(map)).Distinct(StringComparer.OrdinalIgnoreCase))
+                foreach (string suffix in new[] { ".rpak", "_client_perm.rpak", "_client_temp.rpak" })
+                {
+                    string archive = map + suffix;
+                    if (available.Contains(archive)) result.Add(archive);
+                }
+            return result.ToArray();
+        }
         public string ModelDirectory(GameAssetRecord entry) => Path.Combine(CacheRoot, "Models", entry.guid);
         public string CachedModel(GameAssetRecord entry)
         {
