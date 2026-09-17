@@ -129,14 +129,21 @@ namespace ReMap.Standalone
                 if (this == null) return;
                 var endpoints = snapshot.objects.Where(candidate =>
                     candidate.customType == "zipline-endpoint").ToArray();
+                var curvedZiplines = snapshot.objects.Where(candidate =>
+                    candidate.customType == "curved-zipline").ToArray();
                 bool needsSync = endpoints.Any(endpoint =>
-                    ZiplineComponentsNeedSync(snapshot, endpoint));
+                        ZiplineComponentsNeedSync(snapshot, endpoint)) ||
+                    curvedZiplines.Any(zipline => CurvedZiplineSupportNeedsSync(snapshot, zipline));
                 if (needsSync)
                     session.Edit(document => {
                         foreach (var endpoint in document.objects
                             .Where(candidate => candidate.customType == "zipline-endpoint").ToArray())
                             if (ZiplineComponentsNeedSync(document, endpoint))
                                 SyncZiplineComponents(document, endpoint);
+                        foreach (var zipline in document.objects
+                            .Where(candidate => candidate.customType == "curved-zipline").ToArray())
+                            if (CurvedZiplineSupportNeedsSync(document, zipline))
+                                SyncCurvedZiplineSupport(document, zipline);
                     });
                 foreach (string assetId in prepared) world.Reload(assetId);
                 if (needsSync || prepared.Count > 0) Refresh();

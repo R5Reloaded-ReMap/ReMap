@@ -10,7 +10,8 @@ namespace ReMap.Standalone
     {
         private CatalogEntry[] CustomCatalogEntries() => new[] {
             new CatalogEntry("custom:zipline", L.T("#ZIPLINE"), L.T("#CUSTOM"), new Vector3(1, 10.16f, 1)) { CustomType = "zipline" },
-            new CatalogEntry("custom:door", L.T("#DOOR"), L.T("#CUSTOM"), new Vector3(1.83f, 2.44f, .15f)) { CustomType = "door" }
+            new CatalogEntry("custom:door", L.T("#DOOR"), L.T("#CUSTOM"), new Vector3(1.83f, 2.44f, .15f)) { CustomType = "door" },
+            new CatalogEntry("custom:curved-zipline", L.T("#CURVED_ZIPLINE"), L.T("#CUSTOM"), new Vector3(15.24f, 2.04f, 2.54f)) { CustomType = "curved-zipline" }
         };
 
         private void RenderCustomCatalog()
@@ -27,7 +28,7 @@ namespace ReMap.Standalone
                 RegisterDragSource(card, entry, null);
                 card.tooltip = L.T("#DOUBLE_CLICK_PLACE_DRAG_SCENE");
                 var image = new VisualElement(); image.AddToClassList("card-image");
-                image.Add(Label("●━━━━●", "custom-card-symbol")); card.Add(image);
+                image.Add(Label(entry.CustomType == "curved-zipline" ? "●╮●╰●" : "●━━━━●", "custom-card-symbol")); card.Add(image);
                 card.Add(Label(entry.Name, "card-name")); card.Add(Label(entry.Category, "card-category"));
                 if (previewEntry?.Id == entry.Id) card.AddToClassList("selected");
                 catalogList.Add(card);
@@ -45,6 +46,7 @@ namespace ReMap.Standalone
             currentThumbnail = null; assetPreview.image = null;
             previewText.text = entry.Name + "\n" + L.T("#CATEGORY") + entry.Category + "\n\n" +
                 L.T(entry.CustomType == "door" ? "#DOOR_CUSTOM_HELP" :
+                    entry.CustomType == "curved-zipline" ? "#CURVED_ZIPLINE_CUSTOM_HELP" :
                     "#CABLE_TWO_INDEPENDENTLY_MOVABLE_ENDPOINTS");
             placeAssetButton.SetEnabled(true); RefreshCatalog();
             _ = PrepareZiplineModels();
@@ -55,6 +57,7 @@ namespace ReMap.Standalone
         {
             if (entry?.CustomType == "zipline") InsertZipline(position, parent);
             else if (entry?.CustomType == "door") InsertDoor(position, parent);
+            else if (entry?.CustomType == "curved-zipline") InsertCurvedZipline(position, parent);
         }
     }
 }

@@ -67,6 +67,7 @@ namespace ReMap.Standalone
             }
             for (int i = 0; i < serverObjects.Count; i++) AppendObject(server, serverObjects[i], originOffset, useOriginOffset);
             AppendDoors(server, world, false, originOffset, useOriginOffset);
+            AppendCurvedZiplines(server, world, false, originOffset, useOriginOffset);
             AppendZiplines(server, world, false, originOffset, useOriginOffset);
 
             var client = new StringBuilder();
@@ -148,6 +149,7 @@ namespace ReMap.Standalone
             for (int i = 0; i < objects.Count; i++)
                 result.Append("script ").Append(CreateExpression(objects[i], originOffset, false)).AppendLine();
             AppendDoors(result, world, true, originOffset, false);
+            AppendCurvedZiplines(result, world, true, originOffset, false);
             AppendZiplines(result, world, true, originOffset, false);
             return result.ToString();
         }
@@ -275,6 +277,30 @@ namespace ReMap.Standalone
                     profile.ScriptConstant + ", " +
                     (door.doorGold && profile.SupportsGold ? "true" : "false") + ", " +
                     (door.doorSpawnOpen ? "true" : "false") + " )";
+                code.Append(live ? "script " : "\t").Append(expression).AppendLine();
+            }
+        }
+
+        private static void AppendCurvedZiplines(StringBuilder code, List<MapObject> world, bool live,
+            Vector3 originOffset, bool symbolicOffset)
+        {
+            var ziplines = world.Where(o => o.customType == "curved-zipline").ToList();
+            if (!live && ziplines.Count > 0) { code.AppendLine(); code.AppendLine("\t// Curved ziplines"); }
+            foreach (var zipline in ziplines)
+            {
+                var points = world.Where(o => o.parentId == zipline.id &&
+                    o.customType == "curved-zipline-point")
+                    .OrderBy(o => int.TryParse(o.customRole, out int index) ? index : int.MaxValue)
+                    .ToList();
+                if (points.Count < 2)
+                    throw new ArgumentException(L.F("#ARG0_CURVED_ZIPLINE_POINTS_MISSING", zipline.displayName));
+                string pointArray = "[ " + string.Join(", ", points.Select(point =>
+                    Position(point.position, originOffset, symbolicOffset))) + " ]";
+                string expression = "ReMap_CreateCurvedZipline( " + pointArray + ", " +
+                    zipline.curvedZiplineSegments.ToString(CultureInfo.InvariantCulture) + ", " +
+                    (zipline.curvedZiplineSupport ? "true" : "false") + ", " +
+                    Vector(ApexDisplay.Angles(WorldView.ToVector(zipline.rotation))) + ", " +
+                    Number(zipline.ziplineWidth) + ", " + Number(zipline.ziplineSpeed) + " )";
                 code.Append(live ? "script " : "\t").Append(expression).AppendLine();
             }
         }

@@ -1,5 +1,7 @@
 using ReMap.Standalone.Core;
+using System;
 using System.Collections.Generic;
+using System.Linq;
 using UnityEngine;
 
 namespace ReMap.Standalone
@@ -24,7 +26,11 @@ namespace ReMap.Standalone
             foreach (var item in document.objects)
             {
                 if (!instances.TryGetValue(item.id, out var instance)) continue;
-                if (item.customType == "zipline-endpoint") EnsureZiplineMarker(instance, item);
+                if (item.customType == "zipline-endpoint" || item.customType == "curved-zipline-point")
+                    EnsureZiplineMarker(instance, item);
+                if (item.customType == "curved-zipline-component")
+                    foreach (var collider in instance.GetComponentsInChildren<Collider>(true))
+                        collider.enabled = false;
             }
             foreach (var item in document.objects)
             {
@@ -75,6 +81,32 @@ namespace ReMap.Standalone
                     UpdateZiplinePushArrow(instance, false, Vector3.zero, Vector3.right);
                 }
             }
+            foreach (var item in document.objects)
+            {
+                if (item.customType != "curved-zipline" || !instances.TryGetValue(item.id, out var instance))
+                    continue;
+                var line = instance.GetComponent<LineRenderer>();
+                if (line == null)
+                {
+                    line = instance.AddComponent<LineRenderer>();
+                    line.useWorldSpace = true; line.numCapVertices = 4;
+                }
+                line.sharedMaterial = ZiplineCableMaterial();
+                line.widthMultiplier = Mathf.Max(.1f, item.ziplineWidth) * ApexCoordinates.MetersPerUnit;
+                var controls = document.objects.Where(candidate => candidate.parentId == item.id &&
+                    candidate.customType == "curved-zipline-point")
+                    .OrderBy(candidate => int.TryParse(candidate.customRole, out int index) ? index : int.MaxValue)
+                    .Select(candidate => instances.TryGetValue(candidate.id, out var point)
+                        ? point.transform.position : Vector3.zero).ToArray();
+                line.enabled = controls.Length >= 2;
+                if (!line.enabled) continue;
+                if (item.curvedZiplineSupport)
+                    controls[0] = instance.transform.TransformPoint(
+                        ReMapZiplineProfiles.UnityOffset(ReMapZiplineProfiles.ArmToCableApex));
+                var curve = CurvedZiplinePreviewPoints(controls, item.curvedZiplineSegments);
+                line.positionCount = curve.Length;
+                line.SetPositions(curve);
+            }
         }
 
         private void EnsureZiplineMarker(GameObject instance, MapObject item)
@@ -92,8 +124,43 @@ namespace ReMap.Standalone
             else marker = markerTransform.gameObject;
             marker.transform.position = ZiplineCableAnchor(instance, item);
             var tint = new MaterialPropertyBlock();
-            tint.SetColor("_BaseColor", item.customRole == "start" ? new Color(.25f, 1f, .55f) : new Color(1f, .58f, .2f));
+            bool start = item.customRole == "start" || item.customType == "curved-zipline-point" && item.customRole == "0";
+            tint.SetColor("_BaseColor", start ? new Color(.25f, 1f, .55f) :
+                item.customType == "curved-zipline-point" ? new Color(.2f, .75f, 1f) : new Color(1f, .58f, .2f));
             marker.GetComponent<Renderer>().SetPropertyBlock(tint);
+        }
+
+        public static Vector3[] CurvedZiplinePreviewPoints(IReadOnlyList<Vector3> controls, int segmentsPerSpan)
+        {
+            if (controls == null || controls.Count < 2) return Array.Empty<Vector3>();
+            segmentsPerSpan = Mathf.Clamp(segmentsPerSpan, 2, 32);
+            var tangents = new Vector3[controls.Count];
+            tangents[0] = (controls[1] - controls[0]) * .5f;
+            tangents[tangents.Length - 1] = (controls[controls.Count - 1] -
+                controls[controls.Count - 2]) * .5f;
+            for (int index = 1; index < controls.Count - 1; index++)
+            {
+                Vector3 direction = controls[index + 1] - controls[index - 1];
+                float length = Mathf.Min(Vector3.Distance(controls[index - 1], controls[index]),
+                    Vector3.Distance(controls[index], controls[index + 1])) * .5f;
+                tangents[index] = direction.sqrMagnitude < .000001f
+                    ? Vector3.zero : direction.normalized * length;
+            }
+
+            var result = new List<Vector3>((controls.Count - 1) * segmentsPerSpan + 1) { controls[0] };
+            for (int span = 0; span < controls.Count - 1; span++)
+            {
+                Vector3 p0 = controls[span], p1 = p0 + tangents[span];
+                Vector3 p3 = controls[span + 1], p2 = p3 - tangents[span + 1];
+                for (int segment = 1; segment <= segmentsPerSpan; segment++)
+                {
+                    float t = segment / (float)segmentsPerSpan;
+                    Vector3 a = Vector3.Lerp(p0, p1, t), b = Vector3.Lerp(p1, p2, t);
+                    Vector3 c = Vector3.Lerp(p2, p3, t);
+                    result.Add(Vector3.Lerp(Vector3.Lerp(a, b, t), Vector3.Lerp(b, c, t), t));
+                }
+            }
+            return result.ToArray();
         }
 
         private static Vector3 ZiplineCableAnchor(GameObject instance, MapObject item)
@@ -317,6 +384,28 @@ namespace ReMap.Standalone
             if (ghost == null || ghostAsset != entry.Id)
             {
                 ClearPreview(); ghostAsset = entry.Id;
+                if (entry.CustomType == "curved-zipline")
+                {
+                    ghost = new GameObject("Curved zipline placement preview");
+                    ghost.transform.SetParent(root.transform);
+                    var controls = new[] { Vector3.zero, new Vector3(3.8f, 1.2f, 1.5f), new Vector3(7.6f, 0f, 0f) };
+                    foreach (var control in controls)
+                    {
+                        var marker = GameObject.CreatePrimitive(PrimitiveType.Sphere);
+                        marker.transform.SetParent(ghost.transform, false);
+                        marker.transform.localPosition = control;
+                        marker.transform.localScale = Vector3.one * .18f;
+                        marker.GetComponent<Collider>().enabled = false;
+                        marker.GetComponent<Renderer>().sharedMaterial = lineMaterial;
+                    }
+                    var curveLine = ghost.AddComponent<LineRenderer>();
+                    curveLine.sharedMaterial = lineMaterial; curveLine.useWorldSpace = false;
+                    var curve = CurvedZiplinePreviewPoints(controls, 8);
+                    curveLine.positionCount = curve.Length; curveLine.SetPositions(curve);
+                    curveLine.widthMultiplier = .04f; curveLine.numCapVertices = 4;
+                    ghost.transform.position = position.Value;
+                    return;
+                }
                 if (entry.CustomType == "door")
                 {
                     ghost = GameObject.CreatePrimitive(PrimitiveType.Cube);

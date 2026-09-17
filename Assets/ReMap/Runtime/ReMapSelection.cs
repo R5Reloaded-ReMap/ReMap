@@ -87,6 +87,9 @@ namespace ReMap.Standalone
             var item = snapshot?.objects.Find(candidate => candidate.id == id);
             if (item?.customType == "door-component")
                 item = snapshot.objects.Find(candidate => candidate.id == item.parentId);
+            if (item?.customType == "curved-zipline-component" ||
+                item?.customType == "curved-zipline-point" && item.customRole == "0")
+                item = snapshot.objects.Find(candidate => candidate.id == item.parentId);
             if (item?.customType == "zipline-component")
                 item = snapshot.objects.Find(candidate => candidate.id == item.parentId);
             if (item?.customType == "zipline-endpoint" && item.customRole == "start")

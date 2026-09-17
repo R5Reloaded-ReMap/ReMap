@@ -828,12 +828,15 @@ namespace ReMap.Standalone
             objectNameInput.RegisterCallback<FocusOutEvent>(_ => root.schedule.Execute(() => Run(CommitInspectorEdit)));
 
             if (item.customType == "zipline" || item.customType == "zipline-endpoint" ||
-                item.customType == "door")
+                item.customType == "door" || item.customType == "curved-zipline" ||
+                item.customType == "curved-zipline-point")
             {
                 var remapSettings = InspectorSection(L.T("#REMAP_SETTINGS"), "remap-settings");
                 if (item.customType == "zipline") BuildZiplineInspector(item, remapSettings);
                 else if (item.customType == "zipline-endpoint") BuildZiplineEndpointInspector(item, remapSettings);
-                else BuildDoorInspector(item, remapSettings);
+                else if (item.customType == "door") BuildDoorInspector(item, remapSettings);
+                else if (item.customType == "curved-zipline") BuildCurvedZiplineInspector(item, remapSettings);
+                else BuildCurvedZiplinePointInspector(item, remapSettings);
                 inspector.Add(remapSettings);
             }
             if (!item.isGroup && string.IsNullOrEmpty(item.customType))
@@ -850,6 +853,8 @@ namespace ReMap.Standalone
             string modelPath = string.IsNullOrWhiteSpace(item.gameModelPath) ? item.assetId : item.gameModelPath;
             string typeDetails = item.customType == "zipline" ? L.T("#CUSTOM_OBJECT_ZIPLINE") :
                 item.customType == "door" ? L.T("#CUSTOM_OBJECT_DOOR") :
+                item.customType == "curved-zipline" ? L.T("#CUSTOM_OBJECT_CURVED_ZIPLINE") :
+                item.customType == "curved-zipline-point" ? L.T("#CURVED_ZIPLINE_CONTROL_POINT") :
                 item.customType == "zipline-endpoint" ? L.T("#ZIPLINE_ATTACHMENT_POINT") :
                 item.isGroup ? L.T("#GROUP_CHILDREN_SHARE_TRANSFORM") : L.T("#MODEL");
             information.Add(CopyableInspectorValue(L.T("#OBJECT_TYPE"), typeDetails));
@@ -988,7 +993,20 @@ namespace ReMap.Standalone
 
             CommitInspectorEdit(); if (selectedId == null) return;
 
-            var ids = MapSelection.Branches(snapshot, SelectionRoots()); session.Edit(doc => doc.objects.RemoveAll(o => ids.Contains(o.id))); selectedId = null; Refresh();
+            var ids = MapSelection.Branches(snapshot, SelectionRoots());
+            foreach (var zipline in snapshot.objects.Where(item => item.customType == "curved-zipline" && !ids.Contains(item.id)))
+            {
+                var points = snapshot.objects.Where(item => item.parentId == zipline.id &&
+                    item.customType == "curved-zipline-point").Select(item => item.id).ToArray();
+                if (points.Count(id => !ids.Contains(id)) < 2)
+                    ids.RemoveWhere(points.Contains);
+            }
+            session.Edit(doc => {
+                doc.objects.RemoveAll(o => ids.Contains(o.id));
+                foreach (var zipline in doc.objects.Where(item => item.customType == "curved-zipline").ToArray())
+                    NormalizeCurvedZiplinePoints(doc, zipline.id);
+            });
+            selectedId = null; Refresh();
 
         }
 

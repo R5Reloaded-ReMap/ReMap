@@ -468,9 +468,11 @@ namespace ReMap.Standalone
             foreach (var item in document.objects)
             {
                 if (item.isGroup && item.customType != "zipline" && item.customType != "zipline-endpoint" &&
-                    item.customType != "door") continue;
+                    item.customType != "door" && item.customType != "curved-zipline" &&
+                    item.customType != "curved-zipline-point") continue;
                 if (!MapHierarchy.IsEnabled(document, item.id)) continue;
-                var copy = item.Copy(); var pose = WorldPose(item.id); copy.parentId = "";
+                var copy = item.Copy(); var pose = WorldPose(item.id);
+                copy.parentId = item.customType == "curved-zipline-point" ? item.parentId : "";
                 copy.position = pose.position; copy.rotation = pose.rotation; copy.scale = pose.scale; result.Add(copy);
             }
             return result;

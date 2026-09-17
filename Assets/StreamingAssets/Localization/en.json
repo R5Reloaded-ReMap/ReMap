@@ -3007,6 +3007,86 @@
       "text": "A door does not contain the expected model panels."
     },
     {
+      "key": "#CURVED_ZIPLINE",
+      "text": "Curved zipline"
+    },
+    {
+      "key": "#CUSTOM_OBJECT_CURVED_ZIPLINE",
+      "text": "Custom object · Curved zipline"
+    },
+    {
+      "key": "#CURVED_ZIPLINE_CUSTOM_HELP",
+      "text": "A rideable Bézier zipline. Add and move control points, and optionally show a collision-free start arm."
+    },
+    {
+      "key": "#CONTROL_POINT_ARG0",
+      "text": "Control point {0}"
+    },
+    {
+      "key": "#ARG0_CONTROL_POINTS",
+      "text": "{0} control points"
+    },
+    {
+      "key": "#ADD_POINT",
+      "text": "Add point"
+    },
+    {
+      "key": "#REMOVE_LAST_POINT",
+      "text": "Remove last"
+    },
+    {
+      "key": "#SELECT_LAST_POINT",
+      "text": "Select last"
+    },
+    {
+      "key": "#CURVE_SEGMENTS_PER_SPAN",
+      "text": "Curve segments per span"
+    },
+    {
+      "key": "#START_ARM_SUPPORT",
+      "text": "Start arm support"
+    },
+    {
+      "key": "#START_ARM_SUPPORT_NO_COLLISION_HELP",
+      "text": "Adds the zipline arm at the first point. Its collision is disabled in the editor and in Apex."
+    },
+    {
+      "key": "#CURVED_ZIPLINE_CONTROL_POINT",
+      "text": "Curved zipline control point"
+    },
+    {
+      "key": "#MOVE_CONTROL_POINT_HELP",
+      "text": "Move this point with the gizmo; the Bézier cable updates immediately."
+    },
+    {
+      "key": "#SELECT_CURVED_ZIPLINE",
+      "text": "Select curved zipline"
+    },
+    {
+      "key": "#CURVED_ZIPLINE_CREATED",
+      "text": "Curved zipline created. Move its control points or add more from ReMap settings."
+    },
+    {
+      "key": "#CURVED_ZIPLINE_HIERARCHY_GROUP",
+      "text": "A curved zipline must be a hierarchy group."
+    },
+    {
+      "key": "#INVALID_CURVED_ZIPLINE_SETTINGS",
+      "text": "Invalid curved zipline segment count, width or speed."
+    },
+    {
+      "key": "#CURVED_ZIPLINE_NEEDS_TWO_POINTS",
+      "text": "A curved zipline needs at least two control points."
+    },
+    {
+      "key": "#INVALID_CURVED_ZIPLINE_POINT",
+      "text": "Invalid curved zipline control point."
+    },
+    {
+      "key": "#ARG0_CURVED_ZIPLINE_POINTS_MISSING",
+      "text": "{0}: curved zipline control points are missing."
+    },
+    {
       "key": "#TARGET_GAME",
       "text": "Target game"
     },

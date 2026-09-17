@@ -3007,6 +3007,86 @@
       "text": "Une porte ne contient pas les panneaux de modèle attendus."
     },
     {
+      "key": "#CURVED_ZIPLINE",
+      "text": "Zipline incurvée"
+    },
+    {
+      "key": "#CUSTOM_OBJECT_CURVED_ZIPLINE",
+      "text": "Objet personnalisé · Zipline incurvée"
+    },
+    {
+      "key": "#CURVED_ZIPLINE_CUSTOM_HELP",
+      "text": "Une zipline Bézier utilisable. Ajoutez et déplacez ses points de contrôle, avec un bras de départ sans collision facultatif."
+    },
+    {
+      "key": "#CONTROL_POINT_ARG0",
+      "text": "Point de contrôle {0}"
+    },
+    {
+      "key": "#ARG0_CONTROL_POINTS",
+      "text": "{0} points de contrôle"
+    },
+    {
+      "key": "#ADD_POINT",
+      "text": "Ajouter un point"
+    },
+    {
+      "key": "#REMOVE_LAST_POINT",
+      "text": "Retirer le dernier"
+    },
+    {
+      "key": "#SELECT_LAST_POINT",
+      "text": "Sélectionner le dernier"
+    },
+    {
+      "key": "#CURVE_SEGMENTS_PER_SPAN",
+      "text": "Segments de courbe par tronçon"
+    },
+    {
+      "key": "#START_ARM_SUPPORT",
+      "text": "Bras de support au départ"
+    },
+    {
+      "key": "#START_ARM_SUPPORT_NO_COLLISION_HELP",
+      "text": "Ajoute le bras de zipline au premier point. Sa collision est désactivée dans l’éditeur et dans Apex."
+    },
+    {
+      "key": "#CURVED_ZIPLINE_CONTROL_POINT",
+      "text": "Point de contrôle de zipline incurvée"
+    },
+    {
+      "key": "#MOVE_CONTROL_POINT_HELP",
+      "text": "Déplacez ce point avec le gizmo ; le câble Bézier est mis à jour immédiatement."
+    },
+    {
+      "key": "#SELECT_CURVED_ZIPLINE",
+      "text": "Sélectionner la zipline incurvée"
+    },
+    {
+      "key": "#CURVED_ZIPLINE_CREATED",
+      "text": "Zipline incurvée créée. Déplacez ses points ou ajoutez-en dans les réglages ReMap."
+    },
+    {
+      "key": "#CURVED_ZIPLINE_HIERARCHY_GROUP",
+      "text": "Une zipline incurvée doit être un groupe hiérarchique."
+    },
+    {
+      "key": "#INVALID_CURVED_ZIPLINE_SETTINGS",
+      "text": "Nombre de segments, largeur ou vitesse de zipline incurvée invalide."
+    },
+    {
+      "key": "#CURVED_ZIPLINE_NEEDS_TWO_POINTS",
+      "text": "Une zipline incurvée nécessite au moins deux points de contrôle."
+    },
+    {
+      "key": "#INVALID_CURVED_ZIPLINE_POINT",
+      "text": "Point de contrôle de zipline incurvée invalide."
+    },
+    {
+      "key": "#ARG0_CURVED_ZIPLINE_POINTS_MISSING",
+      "text": "{0} : les points de contrôle de la zipline incurvée sont manquants."
+    },
+    {
       "key": "#TARGET_GAME",
       "text": "Jeu cible"
     },

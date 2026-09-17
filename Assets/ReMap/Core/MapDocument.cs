@@ -76,6 +76,8 @@ namespace ReMap.Standalone.Core
         public string doorType = "single";
         public bool doorGold;
         public bool doorSpawnOpen;
+        public int curvedZiplineSegments = 8;
+        public bool curvedZiplineSupport;
         public bool commonAsset;
         public List<string> availableMaps = new List<string>();
         public bool allowMantle = true;
@@ -162,7 +164,8 @@ namespace ReMap.Standalone.Core
                 if (item.ziplineMode == "auto") item.ziplineMode = "horizontal";
                 if (item.customType != "" && item.customType != "zipline" && item.customType != "zipline-endpoint" &&
                     item.customType != "zipline-component" && item.customType != "door" &&
-                    item.customType != "door-component")
+                    item.customType != "door-component" && item.customType != "curved-zipline" &&
+                    item.customType != "curved-zipline-point" && item.customType != "curved-zipline-component")
                     throw new ArgumentException(L.T("#UNKNOWN_CUSTOM_OBJECT_TYPE"));
                 if (item.customType == "zipline" && !item.isGroup)
                     throw new ArgumentException(L.T("#ZIPLINE_HIERARCHY_GROUP"));
@@ -194,6 +197,13 @@ namespace ReMap.Standalone.Core
                 if (item.customType == "door" && item.doorType != "single" && item.doorType != "double" &&
                     item.doorType != "vertical" && item.doorType != "horizontal")
                     throw new ArgumentException(L.T("#INVALID_DOOR_TYPE"));
+                if (item.customType == "curved-zipline" && !item.isGroup)
+                    throw new ArgumentException(L.T("#CURVED_ZIPLINE_HIERARCHY_GROUP"));
+                if (item.customType == "curved-zipline" && (item.curvedZiplineSegments < 2 ||
+                    item.curvedZiplineSegments > 32 || !Finite(item.ziplineWidth) || !Finite(item.ziplineSpeed) ||
+                    item.ziplineWidth < .1f || item.ziplineWidth > 32f ||
+                    item.ziplineSpeed < .1f || item.ziplineSpeed > 10f))
+                    throw new ArgumentException(L.T("#INVALID_CURVED_ZIPLINE_SETTINGS"));
                 if (!item.position.IsFinite || !item.rotation.IsFinite || !item.scale.IsFinite)
                     throw new ArgumentException(L.T("#TRANSFORMS_FINITE_NUMBERS"));
                 if (!Finite(item.fadeDistance) || item.fadeDistance < -1f)
@@ -260,12 +270,33 @@ namespace ReMap.Standalone.Core
                     if (parent == null || parent.customType != "door")
                         throw new ArgumentException(L.T("#INVALID_DOOR_COMPONENTS"));
                 }
+                else if (item.customType == "curved-zipline")
+                {
+                    var points = objects.FindAll(o => o.parentId == item.id &&
+                        o.customType == "curved-zipline-point");
+                    points.Sort((a, b) => ParsePointIndex(a).CompareTo(ParsePointIndex(b)));
+                    if (points.Count < 2)
+                        throw new ArgumentException(L.T("#CURVED_ZIPLINE_NEEDS_TWO_POINTS"));
+                    for (int index = 0; index < points.Count; index++)
+                        if (ParsePointIndex(points[index]) != index)
+                            throw new ArgumentException(L.T("#INVALID_CURVED_ZIPLINE_POINT"));
+                }
+                else if (item.customType == "curved-zipline-point" ||
+                    item.customType == "curved-zipline-component")
+                {
+                    var parent = objects.Find(o => o.id == item.parentId);
+                    if (parent == null || parent.customType != "curved-zipline" ||
+                        item.customType == "curved-zipline-point" && ParsePointIndex(item) < 0)
+                        throw new ArgumentException(L.T("#INVALID_CURVED_ZIPLINE_POINT"));
+                }
             }
             NormalizeZiplineStartPositions();
             ApexCoordinates.ValidateWorld(this);
         }
 
         private static bool Finite(float value) => !float.IsNaN(value) && !float.IsInfinity(value);
+        private static int ParsePointIndex(MapObject item) =>
+            int.TryParse(item?.customRole, out int index) ? index : -1;
         private void NormalizeZiplineStartPositions()
         {
             foreach (var zipline in objects)
