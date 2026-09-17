@@ -4043,6 +4043,66 @@
       "text": "Les paramètres du bouton sont invalides."
     },
     {
+      "key": "#SPEED_BOOST",
+      "text": "Boost de vitesse"
+    },
+    {
+      "key": "#CUSTOM_OBJECT_SPEED_BOOST",
+      "text": "Boost de vitesse personnalisé"
+    },
+    {
+      "key": "#SPEED_BOOST_COMPONENT",
+      "text": "Composant d’aperçu du boost"
+    },
+    {
+      "key": "#SPEED_BOOST_ORB",
+      "text": "Orbe du boost"
+    },
+    {
+      "key": "#SPEED_BOOST_BASE",
+      "text": "Socle du boost"
+    },
+    {
+      "key": "#SPEED_BOOST_COLOR_RGB",
+      "text": "Couleur (RVB 0–255)"
+    },
+    {
+      "key": "#SPEED_BOOST_RESPAWN_TIME",
+      "text": "Délai de réapparition (secondes)"
+    },
+    {
+      "key": "#SPEED_BOOST_STRENGTH",
+      "text": "Force du boost"
+    },
+    {
+      "key": "#SPEED_BOOST_DURATION",
+      "text": "Durée du boost (secondes)"
+    },
+    {
+      "key": "#SPEED_BOOST_FADE_TIME",
+      "text": "Durée du fondu (secondes)"
+    },
+    {
+      "key": "#SPEED_BOOST_CUSTOM_HELP",
+      "text": "Boost de vitesse réapparaissable. Il est désactivé si l’un de ses deux modèles manque dans les RPAK sélectionnés."
+    },
+    {
+      "key": "#SPEED_BOOST_HELP",
+      "text": "Le fondu ne peut pas dépasser la durée du boost. La couleur utilise les mêmes valeurs 0–255 que rendercolor dans Apex."
+    },
+    {
+      "key": "#SPEED_BOOST_CREATED",
+      "text": "Boost de vitesse créé."
+    },
+    {
+      "key": "#SPEED_BOOST_PREVIEW_ERROR",
+      "text": "Impossible de préparer les modèles du boost : "
+    },
+    {
+      "key": "#INVALID_SPEED_BOOST_SETTINGS",
+      "text": "Les paramètres du boost de vitesse sont invalides."
+    },
+    {
       "key": "#DEVELOPMENT_BUILD",
       "text": "Build de développement — débogage activé"
     },

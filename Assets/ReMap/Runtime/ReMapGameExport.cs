@@ -75,6 +75,13 @@ namespace ReMap.Standalone
             if (world.Any(o => o.customType == "button" && o.buttonMode == "invisible") &&
                 !models.Contains(ReMapApp.ButtonArrowModelPath, StringComparer.OrdinalIgnoreCase))
                 models.Add(ReMapApp.ButtonArrowModelPath);
+            if (world.Any(o => o.customType == "speed-boost"))
+            {
+                if (!models.Contains(ReMapApp.SpeedBoostOrbModelPath, StringComparer.OrdinalIgnoreCase))
+                    models.Add(ReMapApp.SpeedBoostOrbModelPath);
+                if (!models.Contains(ReMapApp.SpeedBoostBaseModelPath, StringComparer.OrdinalIgnoreCase))
+                    models.Add(ReMapApp.SpeedBoostBaseModelPath);
+            }
             Vector3 originOffset = OriginOffset(document);
             bool useOriginOffset = HasOriginOffset(originOffset);
             var shared = new StringBuilder();
@@ -84,6 +91,8 @@ namespace ReMap.Standalone
                 shared.AppendLine("\tPrecacheParticleSystem( $\"P_impact_shieldbreaker_sparks\" )");
             if (world.Any(o => o.customType == "respawn-heal"))
                 shared.AppendLine("\tPrecacheParticleSystem( $\"P_LL_med_drone_jet_ctr_loop\" )");
+            if (world.Any(o => o.customType == "speed-boost"))
+                shared.AppendLine("\tPrecacheParticleSystem( $\"P_sprint_FP\" )");
 
             var server = new StringBuilder();
             server.Append("\tif ( GetMapName() != \"").Append(map).AppendLine("\" )");
@@ -111,6 +120,7 @@ namespace ReMap.Standalone
             AppendWeaponRacks(server, world, false, originOffset, useOriginOffset);
             AppendRespawnHeals(server, world, false, originOffset, useOriginOffset);
             AppendButtons(server, world, false, originOffset, useOriginOffset);
+            AppendSpeedBoosts(server, world, false, originOffset, useOriginOffset);
             AppendCurvedZiplines(server, world, false, originOffset, useOriginOffset);
             AppendZiplines(server, world, false, originOffset, useOriginOffset);
 
@@ -203,6 +213,7 @@ namespace ReMap.Standalone
             AppendWeaponRacks(result, world, true, originOffset, false);
             AppendRespawnHeals(result, world, true, originOffset, false);
             AppendButtons(result, world, true, originOffset, false);
+            AppendSpeedBoosts(result, world, true, originOffset, false);
             AppendCurvedZiplines(result, world, true, originOffset, false);
             AppendZiplines(result, world, true, originOffset, false);
             return result.ToString();
@@ -583,6 +594,22 @@ namespace ReMap.Standalone
             code.AppendLine("\t{");
             foreach (string line in callback.Split('\n')) code.Append("\t\t").AppendLine(line);
             code.AppendLine("\t} )");
+        }
+
+        private static void AppendSpeedBoosts(StringBuilder code, List<MapObject> world, bool live,
+            Vector3 originOffset, bool symbolicOffset)
+        {
+            var boosts = world.Where(o => o.customType == "speed-boost").ToList();
+            if (!live && boosts.Count > 0) { code.AppendLine(); code.AppendLine("\t// Speed boosts"); }
+            foreach (var boost in boosts)
+            {
+                string expression = "ReMap_CreateSpeedBoost( " +
+                    Position(boost.position, originOffset, symbolicOffset) + ", " +
+                    Vector(WorldView.ToVector(boost.speedBoostColor)) + ", " +
+                    Number(boost.speedBoostRespawnTime) + ", " + Number(boost.speedBoostStrength) + ", " +
+                    Number(boost.speedBoostDuration) + ", " + Number(boost.speedBoostFadeTime) + " )";
+                code.Append(live ? "script " : "\t").Append(expression).AppendLine();
+            }
         }
 
         private static void AppendTriggerCallback(StringBuilder code, string variable,

@@ -108,6 +108,11 @@ namespace ReMap.Standalone.Core
         public int buttonMessageType = 4;
         public float buttonMessageDuration = 5f;
         public string buttonToken = "#FS_STRING_VAR";
+        public Float3 speedBoostColor = new Float3(255f, 255f, 255f);
+        public float speedBoostRespawnTime = 5f;
+        public float speedBoostStrength = .35f;
+        public float speedBoostDuration = 3f;
+        public float speedBoostFadeTime;
         public bool commonAsset;
         public List<string> availableMaps = new List<string>();
         public bool allowMantle = true;
@@ -223,7 +228,8 @@ namespace ReMap.Standalone.Core
                     item.customType != "spawn-point" && item.customType != "trigger" &&
                     item.customType != "jump-tower" && item.customType != "jump-tower-component" &&
                     item.customType != "weapon-rack" && item.customType != "respawn-heal" &&
-                    item.customType != "button")
+                    item.customType != "button" && item.customType != "speed-boost" &&
+                    item.customType != "speed-boost-component")
                     throw new ArgumentException(L.T("#UNKNOWN_CUSTOM_OBJECT_TYPE"));
                 if (item.customType == "zipline" && !item.isGroup)
                     throw new ArgumentException(L.T("#ZIPLINE_HIERARCHY_GROUP"));
@@ -316,6 +322,17 @@ namespace ReMap.Standalone.Core
                     item.buttonCallback.IndexOf('\0') >= 0 || item.buttonMessage.IndexOf('\0') >= 0 ||
                     item.buttonSubMessage.IndexOf('\0') >= 0 || item.buttonToken.IndexOf('\0') >= 0))
                     throw new ArgumentException(L.T("#INVALID_BUTTON_SETTINGS"));
+                if (item.customType == "speed-boost" && (!item.isGroup || !item.speedBoostColor.IsFinite ||
+                    item.speedBoostColor.x < 0f || item.speedBoostColor.x > 255f ||
+                    item.speedBoostColor.y < 0f || item.speedBoostColor.y > 255f ||
+                    item.speedBoostColor.z < 0f || item.speedBoostColor.z > 255f ||
+                    !Finite(item.speedBoostRespawnTime) || item.speedBoostRespawnTime < 0f ||
+                    item.speedBoostRespawnTime > 86400f || !Finite(item.speedBoostStrength) ||
+                    item.speedBoostStrength < 0f || item.speedBoostStrength > 100f ||
+                    !Finite(item.speedBoostDuration) || item.speedBoostDuration < .05f ||
+                    item.speedBoostDuration > 3600f || !Finite(item.speedBoostFadeTime) ||
+                    item.speedBoostFadeTime < 0f || item.speedBoostFadeTime > item.speedBoostDuration))
+                    throw new ArgumentException(L.T("#INVALID_SPEED_BOOST_SETTINGS"));
                 if (!item.position.IsFinite || !item.rotation.IsFinite || !item.scale.IsFinite)
                     throw new ArgumentException(L.T("#TRANSFORMS_FINITE_NUMBERS"));
                 if (!Finite(item.fadeDistance) || item.fadeDistance < -1f)

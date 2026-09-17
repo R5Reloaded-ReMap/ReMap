@@ -4043,6 +4043,66 @@
       "text": "The button settings are invalid."
     },
     {
+      "key": "#SPEED_BOOST",
+      "text": "Speed boost"
+    },
+    {
+      "key": "#CUSTOM_OBJECT_SPEED_BOOST",
+      "text": "Custom speed boost"
+    },
+    {
+      "key": "#SPEED_BOOST_COMPONENT",
+      "text": "Speed boost preview component"
+    },
+    {
+      "key": "#SPEED_BOOST_ORB",
+      "text": "Boost orb"
+    },
+    {
+      "key": "#SPEED_BOOST_BASE",
+      "text": "Boost base"
+    },
+    {
+      "key": "#SPEED_BOOST_COLOR_RGB",
+      "text": "Color (RGB 0–255)"
+    },
+    {
+      "key": "#SPEED_BOOST_RESPAWN_TIME",
+      "text": "Respawn time (seconds)"
+    },
+    {
+      "key": "#SPEED_BOOST_STRENGTH",
+      "text": "Boost strength"
+    },
+    {
+      "key": "#SPEED_BOOST_DURATION",
+      "text": "Boost duration (seconds)"
+    },
+    {
+      "key": "#SPEED_BOOST_FADE_TIME",
+      "text": "Fade time (seconds)"
+    },
+    {
+      "key": "#SPEED_BOOST_CUSTOM_HELP",
+      "text": "Respawning speed pickup. It is disabled when either visual model is absent from the selected RPAKs."
+    },
+    {
+      "key": "#SPEED_BOOST_HELP",
+      "text": "Fade time cannot exceed boost duration. Color uses the same 0–255 values as Apex rendercolor."
+    },
+    {
+      "key": "#SPEED_BOOST_CREATED",
+      "text": "Speed boost created."
+    },
+    {
+      "key": "#SPEED_BOOST_PREVIEW_ERROR",
+      "text": "Could not prepare speed boost models: "
+    },
+    {
+      "key": "#INVALID_SPEED_BOOST_SETTINGS",
+      "text": "The speed boost settings are invalid."
+    },
+    {
       "key": "#DEVELOPMENT_BUILD",
       "text": "Development build — debugging enabled"
     },

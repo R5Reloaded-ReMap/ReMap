@@ -19,7 +19,8 @@ namespace ReMap.Standalone
             new CatalogEntry("custom:jump-tower", L.T("#JUMP_TOWER"), L.T("#CUSTOM"), new Vector3(3f, 50.8f, 3f)) { CustomType = "jump-tower" },
             new CatalogEntry("custom:weapon-rack", L.T("#WEAPON_RACK"), L.T("#CUSTOM"), new Vector3(.9f, .9f, .55f)) { CustomType = "weapon-rack" },
             new CatalogEntry("custom:respawn-heal", L.T("#RESPAWN_HEAL"), L.T("#CUSTOM"), new Vector3(.5f, .5f, .5f)) { CustomType = "respawn-heal" },
-            new CatalogEntry("custom:button", L.T("#BUTTON"), L.T("#CUSTOM"), new Vector3(.8f, 1.2f, .8f)) { CustomType = "button" }
+            new CatalogEntry("custom:button", L.T("#BUTTON"), L.T("#CUSTOM"), new Vector3(.8f, 1.2f, .8f)) { CustomType = "button" },
+            new CatalogEntry("custom:speed-boost", L.T("#SPEED_BOOST"), L.T("#CUSTOM"), new Vector3(1.5f, 1.3f, 1.5f)) { CustomType = "speed-boost" }
         };
 
         private bool CustomObjectAvailable(CatalogEntry entry)
@@ -45,6 +46,7 @@ namespace ReMap.Standalone
                     WeaponRackModelPath);
             if (entry.CustomType == "respawn-heal") return RespawnHealAnyModelAvailable();
             if (entry.CustomType == "button") return ButtonModeAvailable("visible");
+            if (entry.CustomType == "speed-boost") return SpeedBoostModelsAvailable();
             return true;
         }
 
@@ -80,6 +82,7 @@ namespace ReMap.Standalone
             _ = PrepareWeaponRackModel();
             _ = PrepareRespawnHealModels();
             _ = PrepareButtonModels();
+            _ = PrepareSpeedBoostModels();
         }
 
         private void SelectCustomAsset(CatalogEntry entry)
@@ -100,6 +103,7 @@ namespace ReMap.Standalone
                     entry.CustomType == "weapon-rack" ? "#WEAPON_RACK_CUSTOM_HELP" :
                     entry.CustomType == "respawn-heal" ? "#RESPAWN_HEAL_CUSTOM_HELP" :
                     entry.CustomType == "button" ? "#BUTTON_CUSTOM_HELP" :
+                    entry.CustomType == "speed-boost" ? "#SPEED_BOOST_CUSTOM_HELP" :
                     "#CABLE_TWO_INDEPENDENTLY_MOVABLE_ENDPOINTS");
             placeAssetButton.SetEnabled(true); RefreshCatalog();
             _ = PrepareZiplineModels();
@@ -111,6 +115,7 @@ namespace ReMap.Standalone
             _ = PrepareWeaponRackModel();
             _ = PrepareRespawnHealModels();
             _ = PrepareButtonModels();
+            _ = PrepareSpeedBoostModels();
         }
 
         private void InsertCustomObject(CatalogEntry entry, Vector3 position, string parent = "")
@@ -128,6 +133,7 @@ namespace ReMap.Standalone
             else if (entry?.CustomType == "weapon-rack") InsertWeaponRack(position, parent);
             else if (entry?.CustomType == "respawn-heal") InsertRespawnHeal(position, parent);
             else if (entry?.CustomType == "button") InsertButton(position, parent);
+            else if (entry?.CustomType == "speed-boost") InsertSpeedBoost(position, parent);
         }
     }
 }

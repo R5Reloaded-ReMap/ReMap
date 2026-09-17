@@ -28,6 +28,7 @@ global function ReMap_CreateWeaponRack
 global function ReMap_CreateRespawnHeal
 global function ReMap_CreateButton
 global function ReMap_CreateTeleportButton
+global function ReMap_CreateSpeedBoost
 
 global const int REMAP_DOOR_SINGLE = 0
 global const int REMAP_DOOR_DOUBLE = 1
@@ -59,6 +60,9 @@ const asset REMAP_HEAL_IDLE_FX = $"P_LL_med_drone_jet_ctr_loop"
 const string REMAP_HEAL_ACTIVE_SOUND = "Lifeline_Drone_Healing_1P"
 const asset REMAP_BUTTON_PANEL_MODEL = $"mdl/props/global_access_panel_button/global_access_panel_button_console_w_stand.rmdl"
 const asset REMAP_BUTTON_ARROW_MODEL = $"mdl/weapons/bullets/damage_arrow.rmdl"
+const asset REMAP_SPEED_BOOST_ORB_MODEL = $"mdl/fx/plasma_sphere_01.rmdl"
+const asset REMAP_SPEED_BOOST_BASE_MODEL = $"mdl/fx/ar_edge_sphere_512.rmdl"
+const asset REMAP_SPEED_BOOST_FP_FX = $"P_sprint_FP"
 
 struct
 {
@@ -254,6 +258,90 @@ void function ReMap_CreateTeleportButton( vector origin, vector angles, bool up,
 		ent.SetAngles( direction )
 		ent.SetVelocity( ZERO_VECTOR )
 	} )
+}
+
+void function ReMap_CreateSpeedBoost( vector origin, vector color = < 255, 255, 255 >,
+	float respawnTime = 5.0, float strength = 0.35, float duration = 3.0,
+	float fadeTime = 0.0 )
+{
+	entity mover = CreateScriptMover( origin, ZERO_VECTOR )
+	file.props.append( mover )
+
+	for ( int index = 0; index < 5; index++ )
+	{
+		entity orb = CreateEntity( "prop_dynamic" )
+		orb.SetValueForModelKey( REMAP_SPEED_BOOST_ORB_MODEL )
+		orb.SetOrigin( origin + < 0, 0, 50 > )
+		orb.SetAngles( < 0, index * 60, 0 > )
+		orb.SetModelScale( 0.5 )
+		orb.kv.solid = 0
+		orb.kv.rendercolor = VectorToString( color )
+		orb.kv.fadedist = 20000
+		orb.SetParent( mover )
+		DispatchSpawn( orb )
+		file.props.append( orb )
+	}
+
+	entity base = CreateEntity( "prop_dynamic" )
+	base.SetValueForModelKey( REMAP_SPEED_BOOST_BASE_MODEL )
+	base.SetOrigin( origin )
+	base.SetAngles( ZERO_VECTOR )
+	base.SetModelScale( 0.1 )
+	base.kv.solid = 0
+	base.kv.rendercolor = VectorToString( color )
+	base.kv.fadedist = 20000
+	base.SetParent( mover )
+	DispatchSpawn( base )
+	file.props.append( base )
+
+	entity trigger = CreateEntity( "trigger_cylinder" )
+	trigger.SetRadius( 30 )
+	trigger.SetAboveHeight( 30 )
+	trigger.SetBelowHeight( 30 )
+	trigger.SetOrigin( origin + < 0, 0, 50 > )
+	trigger.SetAngles( ZERO_VECTOR )
+	trigger.SetParent( mover )
+	DispatchSpawn( trigger )
+	file.props.append( trigger )
+	thread ReMap_SpeedBoostThink( mover, trigger, origin, color, respawnTime,
+		strength, duration, fadeTime )
+}
+
+void function ReMap_SpeedBoostThink( entity mover, entity trigger, vector origin, vector color,
+	float respawnTime, float strength, float duration, float fadeTime )
+{
+	while ( IsValid( trigger ) )
+	{
+		foreach ( entity touchingEnt in trigger.GetTouchingEntities() )
+		{
+			if ( !IsValid( touchingEnt ) || !touchingEnt.IsPlayer() )
+				continue
+			StatusEffect_AddTimed( touchingEnt, eStatusEffect.speed_boost,
+				strength, duration, fadeTime )
+			thread ReMap_PlaySpeedBoostFx( touchingEnt, duration )
+			if ( IsValid( mover ) )
+				mover.Destroy()
+			wait respawnTime
+			ReMap_CreateSpeedBoost( origin, color, respawnTime, strength, duration, fadeTime )
+			return
+		}
+		wait 0.1
+	}
+}
+
+void function ReMap_PlaySpeedBoostFx( entity player, float duration )
+{
+	if ( !IsValid( player ) )
+		return
+	player.EndSignal( "OnDeath" )
+	player.EndSignal( "OnDestroy" )
+	entity fx = PlayLoopFXOnEntity( REMAP_SPEED_BOOST_FP_FX, player )
+	OnThreadEnd( function() : ( fx )
+	{
+		if ( IsValid( fx ) )
+			fx.Destroy()
+	} )
+	wait duration
 }
 
 entity function ReMap_CreateJumpPad( vector origin, vector angles, bool allowMantle = true, float fadeDistance = 50000.0, int realmId = -1, float scale = 1.0, float launchVelocity = 1000.0, float forwardScale = 1.7, float radius = 45.0, bool doubleJump = true )
