@@ -16,6 +16,7 @@ namespace ReMap.Standalone
         private const string SoundMarkerName = "__remap_sound_marker";
         private const string LocationPairMarkerName = "__remap_location_pair_marker";
         private const string TextInfoPanelMarkerName = "__remap_text_info_panel_marker";
+        private const string WindowHintMarkerName = "__remap_window_hint_marker";
         private MapDocument syncedZiplineDocument;
         private Material ziplineCableMaterial, ziplineDetachMaterial;
 
@@ -43,6 +44,7 @@ namespace ReMap.Standalone
                     EnsureSoundMarker(instance, item);
                 if (item.customType == "location-pair") EnsureLocationPairMarker(instance, item);
                 if (item.customType == "text-info-panel") EnsureTextInfoPanelMarker(instance, item);
+                if (item.customType == "window-hint") EnsureWindowHintMarker(instance, item);
             }
             foreach (var item in document.objects)
             {
@@ -284,6 +286,29 @@ namespace ReMap.Standalone
             marker.transform.localScale = new Vector3(.08f, 1.2f * scale, 2.4f * scale);
             var tint = new MaterialPropertyBlock();
             tint.SetColor("_BaseColor", new Color(.25f, .75f, 1f, .65f));
+            marker.GetComponent<Renderer>().SetPropertyBlock(tint);
+        }
+
+        private void EnsureWindowHintMarker(GameObject instance, MapObject item)
+        {
+            var existing = instance.transform.Find(WindowHintMarkerName);
+            GameObject marker;
+            if (existing == null)
+            {
+                marker = GameObject.CreatePrimitive(PrimitiveType.Cube);
+                marker.name = WindowHintMarkerName; marker.transform.SetParent(instance.transform, false);
+                marker.GetComponent<Collider>().enabled = false;
+                marker.GetComponent<Renderer>().sharedMaterial = lineMaterial;
+                instanceIds[marker] = item.id;
+            }
+            else marker = existing.gameObject;
+            marker.transform.localPosition = Vector3.zero;
+            marker.transform.localRotation = Quaternion.identity;
+            marker.transform.localScale = new Vector3(
+                item.windowHintHalfWidth * 2f * ApexCoordinates.MetersPerUnit,
+                item.windowHintHalfHeight * 2f * ApexCoordinates.MetersPerUnit, .08f);
+            var tint = new MaterialPropertyBlock();
+            tint.SetColor("_BaseColor", new Color(1f, .55f, .15f, .35f));
             marker.GetComponent<Renderer>().SetPropertyBlock(tint);
         }
 
@@ -637,6 +662,20 @@ namespace ReMap.Standalone
                     var panelTint = new MaterialPropertyBlock();
                     panelTint.SetColor("_BaseColor", new Color(.25f, .75f, 1f, .65f));
                     ghost.GetComponent<Renderer>().SetPropertyBlock(panelTint);
+                    ghost.transform.position = position.Value;
+                    return;
+                }
+                if (entry.CustomType == "window-hint")
+                {
+                    ghost = GameObject.CreatePrimitive(PrimitiveType.Cube);
+                    ghost.name = "Window hint placement preview";
+                    ghost.transform.SetParent(root.transform);
+                    ghost.transform.localScale = entry.Size;
+                    ghost.GetComponent<Collider>().enabled = false;
+                    ghost.GetComponent<Renderer>().sharedMaterial = lineMaterial;
+                    var hintTint = new MaterialPropertyBlock();
+                    hintTint.SetColor("_BaseColor", new Color(1f, .55f, .15f, .35f));
+                    ghost.GetComponent<Renderer>().SetPropertyBlock(hintTint);
                     ghost.transform.position = position.Value;
                     return;
                 }

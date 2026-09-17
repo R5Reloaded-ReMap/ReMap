@@ -4419,6 +4419,38 @@
       "text": "The text info panel settings are invalid."
     },
     {
+      "key": "#WINDOW_HINT",
+      "text": "Window hint"
+    },
+    {
+      "key": "#CUSTOM_OBJECT_WINDOW_HINT",
+      "text": "Window hint"
+    },
+    {
+      "key": "#WINDOW_HINT_HALF_HEIGHT",
+      "text": "Half height (Apex u)"
+    },
+    {
+      "key": "#WINDOW_HINT_HALF_WIDTH",
+      "text": "Half width (Apex u)"
+    },
+    {
+      "key": "#WINDOW_HINT_CUSTOM_HELP",
+      "text": "Creates a native func_window_hint used by Apex traversal. It does not require a model or an additional RPAK."
+    },
+    {
+      "key": "#WINDOW_HINT_HELP",
+      "text": "Move and rotate the rectangle over a traversable opening. Its native right vector is derived automatically from the object rotation."
+    },
+    {
+      "key": "#WINDOW_HINT_CREATED",
+      "text": "Window hint created."
+    },
+    {
+      "key": "#INVALID_WINDOW_HINT_SETTINGS",
+      "text": "The window hint dimensions are invalid."
+    },
+    {
       "key": "#DEVELOPMENT_BUILD",
       "text": "Development build — debugging enabled"
     },

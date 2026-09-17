@@ -35,6 +35,7 @@ global function ReMap_CreateSound
 global function ReMap_NewLocPair
 global function ReMap_RegisterTextInfoPanelCallbacks
 global function ReMap_CreateTextInfoPanel
+global function ReMap_CreateWindowHint
 
 global const int REMAP_DOOR_SINGLE = 0
 global const int REMAP_DOOR_DOUBLE = 1
@@ -140,6 +141,18 @@ void function ReMap_ClearTextInfoPanels()
 			if ( IsValid( player ) )
 				Remote_CallFunction_NonReplay( player, "Dev_DestroyTextInfoPanelWithID", expect int( panel[0] ) )
 	file.textInfoPanels.clear()
+}
+
+entity function ReMap_CreateWindowHint( vector origin, float halfHeight, float halfWidth, vector right )
+{
+	entity hint = CreateEntity( "func_window_hint" )
+	hint.kv.origin = origin.x + " " + origin.y + " " + origin.z
+	hint.kv.halfheight = halfHeight
+	hint.kv.halfwidth = halfWidth
+	hint.kv.right = right.x + " " + right.y + " " + right.z
+	DispatchSpawn( hint )
+	file.props.append( hint )
+	return hint
 }
 
 entity function ReMap_CreateProp( asset model, vector origin, vector angles, bool allowMantle = true, float fadeDistance = 50000.0, int realmId = -1, float scale = 1.0 )

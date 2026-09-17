@@ -4419,6 +4419,38 @@
       "text": "Les réglages du panneau d’information sont invalides."
     },
     {
+      "key": "#WINDOW_HINT",
+      "text": "Indication de fenêtre"
+    },
+    {
+      "key": "#CUSTOM_OBJECT_WINDOW_HINT",
+      "text": "Indication de fenêtre"
+    },
+    {
+      "key": "#WINDOW_HINT_HALF_HEIGHT",
+      "text": "Demi-hauteur (u Apex)"
+    },
+    {
+      "key": "#WINDOW_HINT_HALF_WIDTH",
+      "text": "Demi-largeur (u Apex)"
+    },
+    {
+      "key": "#WINDOW_HINT_CUSTOM_HELP",
+      "text": "Crée un func_window_hint natif utilisé par les déplacements d’Apex. Il ne nécessite aucun modèle ni RPAK supplémentaire."
+    },
+    {
+      "key": "#WINDOW_HINT_HELP",
+      "text": "Placez et orientez le rectangle sur une ouverture franchissable. Son vecteur right natif est calculé automatiquement depuis la rotation de l’objet."
+    },
+    {
+      "key": "#WINDOW_HINT_CREATED",
+      "text": "Indication de fenêtre créée."
+    },
+    {
+      "key": "#INVALID_WINDOW_HINT_SETTINGS",
+      "text": "Les dimensions de l’indication de fenêtre sont invalides."
+    },
+    {
       "key": "#DEVELOPMENT_BUILD",
       "text": "Build de développement — débogage activé"
     },

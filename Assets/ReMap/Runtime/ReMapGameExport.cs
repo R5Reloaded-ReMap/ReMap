@@ -138,6 +138,7 @@ namespace ReMap.Standalone
             AppendSounds(server, world, false, originOffset, useOriginOffset);
             AppendLocationPairs(server, world, false, originOffset, useOriginOffset);
             AppendTextInfoPanels(server, world, false, originOffset, useOriginOffset);
+            AppendWindowHints(server, world, false, originOffset, useOriginOffset);
             AppendAnimatedCameras(server, world, false, originOffset, useOriginOffset);
             AppendCurvedZiplines(server, world, false, originOffset, useOriginOffset);
             AppendZiplines(server, world, false, originOffset, useOriginOffset);
@@ -237,6 +238,7 @@ namespace ReMap.Standalone
             AppendSounds(result, world, true, originOffset, false);
             AppendLocationPairs(result, world, true, originOffset, false);
             AppendTextInfoPanels(result, world, true, originOffset, false);
+            AppendWindowHints(result, world, true, originOffset, false);
             AppendAnimatedCameras(result, world, true, originOffset, false);
             AppendCurvedZiplines(result, world, true, originOffset, false);
             AppendZiplines(result, world, true, originOffset, false);
@@ -748,6 +750,28 @@ namespace ReMap.Standalone
                     Number(panel.textInfoPanelScale) + " )";
                 code.Append(live ? "script " : "\t").Append(expression).AppendLine();
             }
+        }
+
+        private static void AppendWindowHints(StringBuilder code, List<MapObject> world, bool live,
+            Vector3 originOffset, bool symbolicOffset)
+        {
+            var hints = world.Where(o => o.customType == "window-hint").ToList();
+            if (!live && hints.Count > 0) { code.AppendLine(); code.AppendLine("\t// Window hints"); }
+            foreach (var hint in hints)
+            {
+                Vector3 right = WindowHintRight(WorldView.ToVector(hint.rotation));
+                string expression = "ReMap_CreateWindowHint( " +
+                    Position(hint.position, originOffset, symbolicOffset) + ", " +
+                    Number(hint.windowHintHalfHeight) + ", " + Number(hint.windowHintHalfWidth) + ", " +
+                    Vector(right) + " )";
+                code.Append(live ? "script " : "\t").Append(expression).AppendLine();
+            }
+        }
+
+        internal static Vector3 WindowHintRight(Vector3 unityEuler)
+        {
+            Vector3 unityRight = Quaternion.Euler(unityEuler) * Vector3.right;
+            return new Vector3(unityRight.z, unityRight.x, -unityRight.y);
         }
 
         private static void AppendTriggerCallback(StringBuilder code, string variable,

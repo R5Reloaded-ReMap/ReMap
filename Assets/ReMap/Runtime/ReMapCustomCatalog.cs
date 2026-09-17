@@ -26,7 +26,8 @@ namespace ReMap.Standalone
             new CatalogEntry("custom:animated-camera", L.T("#ANIMATED_CAMERA"), L.T("#CUSTOM"), new Vector3(1f, 1f, 1f)) { CustomType = "animated-camera" },
             new CatalogEntry("custom:sound", L.T("#SOUND"), L.T("#CUSTOM"), new Vector3(1f, 1f, 1f)) { CustomType = "sound" },
             new CatalogEntry("custom:new-location-pair", L.T("#NEW_LOCATION_PAIR"), L.T("#CUSTOM"), new Vector3(1f, 1f, 1f)) { CustomType = "location-pair" },
-            new CatalogEntry("custom:text-info-panel", L.T("#TEXT_INFO_PANEL"), L.T("#CUSTOM"), new Vector3(2.4f, 1.2f, .1f)) { CustomType = "text-info-panel" }
+            new CatalogEntry("custom:text-info-panel", L.T("#TEXT_INFO_PANEL"), L.T("#CUSTOM"), new Vector3(2.4f, 1.2f, .1f)) { CustomType = "text-info-panel" },
+            new CatalogEntry("custom:window-hint", L.T("#WINDOW_HINT"), L.T("#CUSTOM"), new Vector3(3.6576f, 3.2512f, .08f)) { CustomType = "window-hint" }
         };
 
         private bool CustomObjectAvailable(CatalogEntry entry)
@@ -121,6 +122,7 @@ namespace ReMap.Standalone
                     entry.CustomType == "sound" ? "#SOUND_CUSTOM_HELP" :
                     entry.CustomType == "location-pair" ? "#LOCATION_PAIR_CUSTOM_HELP" :
                     entry.CustomType == "text-info-panel" ? "#TEXT_INFO_PANEL_CUSTOM_HELP" :
+                    entry.CustomType == "window-hint" ? "#WINDOW_HINT_CUSTOM_HELP" :
                     "#CABLE_TWO_INDEPENDENTLY_MOVABLE_ENDPOINTS");
             placeAssetButton.SetEnabled(true); RefreshCatalog();
             _ = PrepareZiplineModels();
@@ -159,6 +161,7 @@ namespace ReMap.Standalone
             else if (entry?.CustomType == "sound") InsertSound(position, parent);
             else if (entry?.CustomType == "location-pair") InsertLocationPair(position, parent);
             else if (entry?.CustomType == "text-info-panel") InsertTextInfoPanel(position, parent);
+            else if (entry?.CustomType == "window-hint") InsertWindowHint(position, parent);
         }
     }
 }

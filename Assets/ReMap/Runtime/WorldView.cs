@@ -478,7 +478,7 @@ namespace ReMap.Standalone
                     item.customType != "camera-path-point" && item.customType != "camera-path-target" &&
                     item.customType != "animated-camera" && item.customType != "sound" &&
                     item.customType != "sound-point" && item.customType != "location-pair" &&
-                    item.customType != "text-info-panel") continue;
+                    item.customType != "text-info-panel" && item.customType != "window-hint") continue;
                 if (!MapHierarchy.IsEnabled(document, item.id)) continue;
                 var copy = item.Copy(); var pose = WorldPose(item.id);
                 copy.parentId = item.customType == "curved-zipline-point" ||

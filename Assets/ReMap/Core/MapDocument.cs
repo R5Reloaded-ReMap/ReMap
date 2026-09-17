@@ -133,6 +133,8 @@ namespace ReMap.Standalone.Core
         public string textInfoPanelDescription = "";
         public bool textInfoPanelShowPin = true;
         public float textInfoPanelScale = 1f;
+        public float windowHintHalfHeight = 64f;
+        public float windowHintHalfWidth = 72f;
         public bool commonAsset;
         public List<string> availableMaps = new List<string>();
         public bool allowMantle = true;
@@ -257,7 +259,7 @@ namespace ReMap.Standalone.Core
                     item.customType != "camera-path-target" && item.customType != "animated-camera" &&
                     item.customType != "animated-camera-component" && item.customType != "sound" &&
                     item.customType != "sound-point" && item.customType != "location-pair" &&
-                    item.customType != "text-info-panel")
+                    item.customType != "text-info-panel" && item.customType != "window-hint")
                     throw new ArgumentException(L.T("#UNKNOWN_CUSTOM_OBJECT_TYPE"));
                 if (item.customType == "zipline" && !item.isGroup)
                     throw new ArgumentException(L.T("#ZIPLINE_HIERARCHY_GROUP"));
@@ -400,6 +402,11 @@ namespace ReMap.Standalone.Core
                     !Finite(item.textInfoPanelScale) || item.textInfoPanelScale < .01f ||
                     item.textInfoPanelScale > 100f))
                     throw new ArgumentException(L.T("#INVALID_TEXT_INFO_PANEL_SETTINGS"));
+                if (item.customType == "window-hint" && (!item.isGroup ||
+                    !Finite(item.windowHintHalfHeight) || !Finite(item.windowHintHalfWidth) ||
+                    item.windowHintHalfHeight < .01f || item.windowHintHalfHeight > 65535f ||
+                    item.windowHintHalfWidth < .01f || item.windowHintHalfWidth > 65535f))
+                    throw new ArgumentException(L.T("#INVALID_WINDOW_HINT_SETTINGS"));
                 if (!item.position.IsFinite || !item.rotation.IsFinite || !item.scale.IsFinite)
                     throw new ArgumentException(L.T("#TRANSFORMS_FINITE_NUMBERS"));
                 if (!Finite(item.fadeDistance) || item.fadeDistance < -1f)
