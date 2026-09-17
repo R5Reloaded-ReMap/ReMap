@@ -42,6 +42,7 @@ namespace ReMap.Standalone
                     ConfigureZiplineComponentColliders(instance, item);
                     EnsureZiplineModelSelection(instance, item.id);
                 }
+                if (item.customType == "door") EnsureDoorOpeningArrow(instance, item);
                 if (item.customType == "trigger") EnsureTriggerVisual(instance, item);
                 if (item.customType == "camera-path-point" || item.customType == "camera-path-target")
                     EnsureCameraPathMarker(instance, item);
