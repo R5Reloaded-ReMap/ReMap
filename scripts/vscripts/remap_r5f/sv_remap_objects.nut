@@ -19,6 +19,7 @@
 global function ReMap_ClearProps
 global function ReMap_CreateProp
 global function ReMap_CreateDoor
+global function ReMap_CreateLootBin
 
 global const int REMAP_DOOR_SINGLE = 0
 global const int REMAP_DOOR_DOUBLE = 1
@@ -28,6 +29,7 @@ global const int REMAP_DOOR_HORIZONTAL = 3
 const asset REMAP_DOOR_MODEL_SINGLE = $"mdl/door/canyonlands_door_single_02.rmdl"
 const asset REMAP_DOOR_MODEL_VERTICAL = $"mdl/door/door_canyonlands_large_01_animated.rmdl"
 const asset REMAP_DOOR_MODEL_HORIZONTAL = $"mdl/door/door_256x256x8_elevatorstyle02_animated.rmdl"
+const asset REMAP_LOOT_BIN_MODEL = $"mdl/props/loot_bin/loot_bin_01_animated.rmdl"
 
 struct
 {
@@ -159,4 +161,21 @@ void function ReMap_OpenPlainDoorAtSpawn( entity door )
 	door.e.isOpen = true
 	GradeFlagsSet( door, eGradeFlags.IS_OPEN )
 	door.SetUsePrompts( "#SURVIVAL_CLOSE_DOOR", "#SURVIVAL_CLOSE_DOOR" )
+}
+
+entity function ReMap_CreateLootBin( vector origin, vector angles, int skin = 0 )
+{
+	entity lootBin = CreateEntity( "prop_dynamic" )
+	if ( Gamemode() == eGamemodes.fs_infected )
+		lootBin.SetScriptName( MYSTERY_BOX_SCRIPT_NAME )
+	else
+		lootBin.SetScriptName( LOOT_BIN_SCRIPTNAME )
+	lootBin.SetValueForModelKey( REMAP_LOOT_BIN_MODEL )
+	lootBin.SetOrigin( origin )
+	lootBin.SetAngles( angles )
+	lootBin.kv.solid = SOLID_VPHYSICS
+	DispatchSpawn( lootBin )
+	lootBin.SetSkin( skin )
+	file.props.append( lootBin )
+	return lootBin
 }

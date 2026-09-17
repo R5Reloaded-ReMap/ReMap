@@ -78,6 +78,7 @@ namespace ReMap.Standalone.Core
         public bool doorSpawnOpen;
         public int curvedZiplineSegments = 8;
         public bool curvedZiplineSupport;
+        public int lootBinSkin;
         public bool commonAsset;
         public List<string> availableMaps = new List<string>();
         public bool allowMantle = true;
@@ -165,7 +166,8 @@ namespace ReMap.Standalone.Core
                 if (item.customType != "" && item.customType != "zipline" && item.customType != "zipline-endpoint" &&
                     item.customType != "zipline-component" && item.customType != "door" &&
                     item.customType != "door-component" && item.customType != "curved-zipline" &&
-                    item.customType != "curved-zipline-point" && item.customType != "curved-zipline-component")
+                    item.customType != "curved-zipline-point" && item.customType != "curved-zipline-component" &&
+                    item.customType != "loot-bin")
                     throw new ArgumentException(L.T("#UNKNOWN_CUSTOM_OBJECT_TYPE"));
                 if (item.customType == "zipline" && !item.isGroup)
                     throw new ArgumentException(L.T("#ZIPLINE_HIERARCHY_GROUP"));
@@ -204,6 +206,8 @@ namespace ReMap.Standalone.Core
                     item.ziplineWidth < .1f || item.ziplineWidth > 32f ||
                     item.ziplineSpeed < .1f || item.ziplineSpeed > 10f))
                     throw new ArgumentException(L.T("#INVALID_CURVED_ZIPLINE_SETTINGS"));
+                if (item.customType == "loot-bin" && (item.lootBinSkin < 0 || item.lootBinSkin > 3))
+                    throw new ArgumentException(L.T("#INVALID_LOOT_BIN_SKIN"));
                 if (!item.position.IsFinite || !item.rotation.IsFinite || !item.scale.IsFinite)
                     throw new ArgumentException(L.T("#TRANSFORMS_FINITE_NUMBERS"));
                 if (!Finite(item.fadeDistance) || item.fadeDistance < -1f)

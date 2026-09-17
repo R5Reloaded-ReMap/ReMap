@@ -44,6 +44,9 @@ namespace ReMap.Standalone
             models.AddRange(world.Where(o => o.customType == "door")
                 .Select(o => ReMapDoorProfiles.Find(o.doorType).ModelPath)
                 .Where(model => !models.Contains(model, StringComparer.OrdinalIgnoreCase)));
+            if (world.Any(o => o.customType == "loot-bin") &&
+                !models.Contains(ReMapApp.LootBinModelPath, StringComparer.OrdinalIgnoreCase))
+                models.Add(ReMapApp.LootBinModelPath);
             Vector3 originOffset = OriginOffset(document);
             bool useOriginOffset = HasOriginOffset(originOffset);
             var shared = new StringBuilder();
@@ -67,6 +70,7 @@ namespace ReMap.Standalone
             }
             for (int i = 0; i < serverObjects.Count; i++) AppendObject(server, serverObjects[i], originOffset, useOriginOffset);
             AppendDoors(server, world, false, originOffset, useOriginOffset);
+            AppendLootBins(server, world, false, originOffset, useOriginOffset);
             AppendCurvedZiplines(server, world, false, originOffset, useOriginOffset);
             AppendZiplines(server, world, false, originOffset, useOriginOffset);
 
@@ -149,6 +153,7 @@ namespace ReMap.Standalone
             for (int i = 0; i < objects.Count; i++)
                 result.Append("script ").Append(CreateExpression(objects[i], originOffset, false)).AppendLine();
             AppendDoors(result, world, true, originOffset, false);
+            AppendLootBins(result, world, true, originOffset, false);
             AppendCurvedZiplines(result, world, true, originOffset, false);
             AppendZiplines(result, world, true, originOffset, false);
             return result.ToString();
@@ -301,6 +306,21 @@ namespace ReMap.Standalone
                     (zipline.curvedZiplineSupport ? "true" : "false") + ", " +
                     Vector(ApexDisplay.Angles(WorldView.ToVector(zipline.rotation))) + ", " +
                     Number(zipline.ziplineWidth) + ", " + Number(zipline.ziplineSpeed) + " )";
+                code.Append(live ? "script " : "\t").Append(expression).AppendLine();
+            }
+        }
+
+        private static void AppendLootBins(StringBuilder code, List<MapObject> world, bool live,
+            Vector3 originOffset, bool symbolicOffset)
+        {
+            var lootBins = world.Where(o => o.customType == "loot-bin").ToList();
+            if (!live && lootBins.Count > 0) { code.AppendLine(); code.AppendLine("\t// Loot bins"); }
+            foreach (var lootBin in lootBins)
+            {
+                string expression = "ReMap_CreateLootBin( " +
+                    Position(lootBin.position, originOffset, symbolicOffset) + ", " +
+                    Vector(ApexDisplay.Angles(WorldView.ToVector(lootBin.rotation))) + ", " +
+                    lootBin.lootBinSkin.ToString(CultureInfo.InvariantCulture) + " )";
                 code.Append(live ? "script " : "\t").Append(expression).AppendLine();
             }
         }

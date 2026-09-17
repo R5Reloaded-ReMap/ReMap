@@ -3087,6 +3087,50 @@
       "text": "{0}: curved zipline control points are missing."
     },
     {
+      "key": "#LOOT_BIN",
+      "text": "Loot bin"
+    },
+    {
+      "key": "#CUSTOM_OBJECT_LOOT_BIN",
+      "text": "Custom object · Loot bin"
+    },
+    {
+      "key": "#LOOT_BIN_CUSTOM_HELP",
+      "text": "An interactive Apex loot bin with its original four skin variants."
+    },
+    {
+      "key": "#LOOT_BIN_SKIN",
+      "text": "Loot bin skin"
+    },
+    {
+      "key": "#LOOT_BIN_DEFAULT",
+      "text": "Default"
+    },
+    {
+      "key": "#LOOT_BIN_BLUE",
+      "text": "Blue"
+    },
+    {
+      "key": "#LOOT_BIN_GOLD",
+      "text": "Gold"
+    },
+    {
+      "key": "#LOOT_BIN_YELLOW",
+      "text": "Yellow"
+    },
+    {
+      "key": "#LOOT_BIN_CREATED",
+      "text": "Loot bin created. Choose its skin in ReMap settings."
+    },
+    {
+      "key": "#LOOT_BIN_PREVIEW_ERROR",
+      "text": "Loot bin preview: "
+    },
+    {
+      "key": "#INVALID_LOOT_BIN_SKIN",
+      "text": "Loot bin skin must be between 0 and 3."
+    },
+    {
       "key": "#TARGET_GAME",
       "text": "Target game"
     },

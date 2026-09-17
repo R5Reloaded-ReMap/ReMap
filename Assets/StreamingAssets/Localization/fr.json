@@ -3087,6 +3087,50 @@
       "text": "{0} : les points de contrôle de la zipline incurvée sont manquants."
     },
     {
+      "key": "#LOOT_BIN",
+      "text": "Coffre de loot"
+    },
+    {
+      "key": "#CUSTOM_OBJECT_LOOT_BIN",
+      "text": "Objet personnalisé · Coffre de loot"
+    },
+    {
+      "key": "#LOOT_BIN_CUSTOM_HELP",
+      "text": "Un coffre de loot Apex interactif avec ses quatre variantes de skin d’origine."
+    },
+    {
+      "key": "#LOOT_BIN_SKIN",
+      "text": "Skin du coffre"
+    },
+    {
+      "key": "#LOOT_BIN_DEFAULT",
+      "text": "Par défaut"
+    },
+    {
+      "key": "#LOOT_BIN_BLUE",
+      "text": "Bleu"
+    },
+    {
+      "key": "#LOOT_BIN_GOLD",
+      "text": "Doré"
+    },
+    {
+      "key": "#LOOT_BIN_YELLOW",
+      "text": "Jaune"
+    },
+    {
+      "key": "#LOOT_BIN_CREATED",
+      "text": "Coffre de loot créé. Choisissez son skin dans les réglages ReMap."
+    },
+    {
+      "key": "#LOOT_BIN_PREVIEW_ERROR",
+      "text": "Aperçu du coffre de loot : "
+    },
+    {
+      "key": "#INVALID_LOOT_BIN_SKIN",
+      "text": "Le skin du coffre de loot doit être compris entre 0 et 3."
+    },
+    {
       "key": "#TARGET_GAME",
       "text": "Jeu cible"
     },

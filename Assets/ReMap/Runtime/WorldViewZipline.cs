@@ -384,6 +384,17 @@ namespace ReMap.Standalone
             if (ghost == null || ghostAsset != entry.Id)
             {
                 ClearPreview(); ghostAsset = entry.Id;
+                if (entry.CustomType == "loot-bin")
+                {
+                    ghost = GameObject.CreatePrimitive(PrimitiveType.Cube);
+                    ghost.name = "Loot bin placement preview";
+                    ghost.transform.SetParent(root.transform);
+                    ghost.transform.localScale = entry.Size;
+                    ghost.GetComponent<Collider>().enabled = false;
+                    ghost.GetComponent<Renderer>().sharedMaterial = lineMaterial;
+                    ghost.transform.position = position.Value + Vector3.up * entry.Size.y * .5f;
+                    return;
+                }
                 if (entry.CustomType == "curved-zipline")
                 {
                     ghost = new GameObject("Curved zipline placement preview");
@@ -438,7 +449,7 @@ namespace ReMap.Standalone
                 line.positionCount = 2; line.SetPosition(0, Vector3.up); line.SetPosition(1, Vector3.down * length);
                 line.widthMultiplier = .04f; line.numCapVertices = 4;
             }
-            ghost.transform.position = position.Value + (entry.CustomType == "door"
+            ghost.transform.position = position.Value + (entry.CustomType == "door" || entry.CustomType == "loot-bin"
                 ? Vector3.up * entry.Size.y * .5f : Vector3.zero);
         }
     }
