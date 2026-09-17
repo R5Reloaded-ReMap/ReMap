@@ -798,7 +798,7 @@ namespace ReMap.Standalone
         internal static Vector3 WindowHintRight(Vector3 unityEuler)
         {
             Vector3 unityRight = Quaternion.Euler(unityEuler) * Vector3.right;
-            return ApexDisplay.Axes(unityRight).normalized;
+            return new Vector3(unityRight.z, unityRight.x, -unityRight.y);
         }
 
         private static void AppendTriggerCallback(StringBuilder code, string variable,
