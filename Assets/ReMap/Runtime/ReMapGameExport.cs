@@ -282,10 +282,7 @@ namespace ReMap.Standalone
             if (archives.Length == 0) return;
             code.AppendLine("#if SERVER");
             foreach (string rpak in archives)
-                code.Append("\tServerCommand( \"pak_requestload ").Append(rpak).AppendLine("\" )");
-            code.AppendLine("#elseif CLIENT");
-            foreach (string rpak in archives)
-                code.Append("\tClientCommand( \"pak_requestload ").Append(rpak).AppendLine("\" )");
+                code.Append("\tLoadPak( \"").Append(rpak).AppendLine("\" )");
             code.AppendLine("#endif");
             code.AppendLine();
         }

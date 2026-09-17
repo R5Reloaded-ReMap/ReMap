@@ -15,9 +15,10 @@ namespace ReMap.Standalone.Tests
             string code = ReMapGameScript.Generate(document, new[] { prop }, rpaks)
                 .Replace("\r\n", "\n");
             StringAssert.DoesNotContain("pak_requestload mp_base.rpak", code);
-            StringAssert.Contains("ServerCommand( \"pak_requestload mp_extra.rpak\" )", code);
-            StringAssert.Contains("ClientCommand( \"pak_requestload mp_extra_client_perm.rpak\" )", code);
-            Assert.That(code.IndexOf("pak_requestload mp_extra.rpak", System.StringComparison.Ordinal),
+            StringAssert.Contains("#if SERVER\n\tLoadPak( \"mp_extra.rpak\" )", code);
+            StringAssert.Contains("LoadPak( \"mp_extra_client_perm.rpak\" )\n#endif", code);
+            StringAssert.DoesNotContain("ClientCommand", code);
+            Assert.That(code.IndexOf("LoadPak( \"mp_extra.rpak\" )", System.StringComparison.Ordinal),
                 Is.LessThan(code.IndexOf("PrecacheModel", System.StringComparison.Ordinal)));
 
             string live = ReMapGameScript.GenerateLiveCommands(document,
