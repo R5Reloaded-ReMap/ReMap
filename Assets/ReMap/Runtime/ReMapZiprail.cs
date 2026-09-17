@@ -82,6 +82,27 @@ namespace ReMap.Standalone
             Refresh();
         }
 
+        private void AddZiprailPointAfter(string pointId)
+        {
+            string createdId = null;
+            session.Edit(document => {
+                var selected = document.objects.Find(candidate => candidate.id == pointId);
+                if (selected?.customType != "ziprail-point") return;
+                var points = ZiprailPoints(document, selected.parentId);
+                int selectedIndex = Array.FindIndex(points, candidate => candidate.id == pointId);
+                if (selectedIndex < 0) return;
+                int insertionIndex = selectedIndex + 1;
+                Vector3 position = InsertedControlPointPosition(points, selectedIndex);
+                for (int index = insertionIndex; index < points.Length; index++)
+                    SetZiprailPointIndex(points[index], index + 1);
+                var point = CreateZiprailPoint(selected.parentId, insertionIndex, position);
+                document.objects.Add(point); createdId = point.id;
+                NormalizeZiprailPoints(document, selected.parentId);
+            });
+            if (createdId == null) return;
+            selectedId = createdId; RevealHierarchy(createdId); Refresh();
+        }
+
         private void RemoveZiprailPoint(string ziprailId)
         {
             session.Edit(document => {
@@ -101,11 +122,14 @@ namespace ReMap.Standalone
                 .OrderBy(candidate => int.TryParse(candidate.customRole, out int index)
                     ? index : int.MaxValue).ToArray();
             for (int index = 0; index < points.Length; index++)
-            {
-                points[index].customRole = index.ToString(CultureInfo.InvariantCulture);
-                points[index].assetId = "custom:ziprail-point:" + points[index].customRole;
-                points[index].displayName = L.F("#CONTROL_POINT_ARG0", index + 1);
-            }
+                SetZiprailPointIndex(points[index], index);
+        }
+
+        private static void SetZiprailPointIndex(MapObject point, int index)
+        {
+            point.customRole = index.ToString(CultureInfo.InvariantCulture);
+            point.assetId = "custom:ziprail-point:" + point.customRole;
+            point.displayName = L.F("#CONTROL_POINT_ARG0", index + 1);
         }
 
         private GameAssetRecord ZiprailModelRecord(string modelPath) =>
@@ -321,6 +345,8 @@ namespace ReMap.Standalone
                     UpdateGizmoVisual();
                 }));
             }
+            section.Add(Button(L.T("#ADD_POINT_AFTER_SELECTED"), () =>
+                AddZiprailPointAfter(item.id)));
             section.Add(Button(L.T("#SELECT_ZIPLINE"), () => Select(item.parentId)));
         }
     }

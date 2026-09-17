@@ -205,7 +205,7 @@ namespace ReMap.Standalone
         public string Pick(Vector2 screenPosition)
         {
             string selected = null; float nearest = float.PositiveInfinity;
-            foreach (var hit in Physics.RaycastAll(Camera.ScreenPointToRay(screenPosition), Camera.farClipPlane, ~(1 << 31), QueryTriggerInteraction.Ignore))
+            foreach (var hit in Physics.RaycastAll(Camera.ScreenPointToRay(screenPosition), Camera.farClipPlane, ~(1 << 31), QueryTriggerInteraction.Collide))
             {
                 string id = null;
                 for (var current = hit.collider.transform; current != null && id == null; current = current.parent)

@@ -3103,6 +3103,10 @@
       "text": "Add point"
     },
     {
+      "key": "#ADD_POINT_AFTER_SELECTED",
+      "text": "Add point after this one"
+    },
+    {
       "key": "#REMOVE_LAST_POINT",
       "text": "Remove last"
     },

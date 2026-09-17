@@ -67,6 +67,39 @@ namespace ReMap.Standalone
             Refresh();
         }
 
+        private void AddCurvedZiplinePointAfter(string pointId)
+        {
+            string createdId = null;
+            session.Edit(document => {
+                var selected = document.objects.Find(candidate => candidate.id == pointId);
+                if (selected?.customType != "curved-zipline-point") return;
+                var points = CurvedZiplinePoints(document, selected.parentId);
+                int selectedIndex = Array.FindIndex(points, candidate => candidate.id == pointId);
+                if (selectedIndex < 0) return;
+                int insertionIndex = selectedIndex + 1;
+                Vector3 position = InsertedControlPointPosition(points, selectedIndex);
+                for (int index = insertionIndex; index < points.Length; index++)
+                    SetCurvedZiplinePointIndex(points[index], index + 1);
+                var point = CreateCurvedZiplinePoint(selected.parentId, insertionIndex, position);
+                document.objects.Add(point); createdId = point.id;
+                NormalizeCurvedZiplinePoints(document, selected.parentId);
+            });
+            if (createdId == null) return;
+            selectedId = createdId; RevealHierarchy(createdId); Refresh();
+        }
+
+        internal static Vector3 InsertedControlPointPosition(IReadOnlyList<MapObject> points,
+            int selectedIndex)
+        {
+            Vector3 selected = WorldView.ToVector(points[selectedIndex].position);
+            if (selectedIndex + 1 < points.Count)
+                return Vector3.Lerp(selected,
+                    WorldView.ToVector(points[selectedIndex + 1].position), .5f);
+            if (selectedIndex > 0)
+                return selected + selected - WorldView.ToVector(points[selectedIndex - 1].position);
+            return selected + Vector3.right * 5f;
+        }
+
         private void RemoveCurvedZiplinePoint(string ziplineId)
         {
             session.Edit(document => {
@@ -88,11 +121,14 @@ namespace ReMap.Standalone
                 .OrderBy(candidate => int.TryParse(candidate.customRole, out int index) ? index : int.MaxValue)
                 .ToArray();
             for (int index = 0; index < points.Length; index++)
-            {
-                points[index].customRole = index.ToString(CultureInfo.InvariantCulture);
-                points[index].assetId = "custom:curved-zipline-point:" + points[index].customRole;
-                points[index].displayName = L.F("#CONTROL_POINT_ARG0", index + 1);
-            }
+                SetCurvedZiplinePointIndex(points[index], index);
+        }
+
+        private static void SetCurvedZiplinePointIndex(MapObject point, int index)
+        {
+            point.customRole = index.ToString(CultureInfo.InvariantCulture);
+            point.assetId = "custom:curved-zipline-point:" + point.customRole;
+            point.displayName = L.F("#CONTROL_POINT_ARG0", index + 1);
         }
 
         private void SyncCurvedZiplineSupport(MapDocument document, MapObject point)
@@ -262,6 +298,8 @@ namespace ReMap.Standalone
                     UpdateGizmoVisual();
                 }));
             }
+            section.Add(Button(L.T("#ADD_POINT_AFTER_SELECTED"), () =>
+                AddCurvedZiplinePointAfter(item.id)));
             section.Add(Button(L.T("#SELECT_CURVED_ZIPLINE"), () => Select(item.parentId)));
         }
 

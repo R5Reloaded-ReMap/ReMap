@@ -1,8 +1,10 @@
+using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
 using NUnit.Framework;
 using ReMap.Standalone.Core;
 using UnityEngine;
+using UnityEngine.TestTools;
 
 namespace ReMap.Standalone.Tests
 {
@@ -37,6 +39,67 @@ namespace ReMap.Standalone.Tests
             document.objects.Add(point);
             var restored = JsonUtility.FromJson<MapDocument>(JsonUtility.ToJson(document));
             Assert.That(restored.objects.Single().positionLocked, Is.True);
+        }
+
+        [Test] public void InsertedPointUsesTheFollowingSpanMidpoint()
+        {
+            var points = Create("CreateDefaultZiprailObjects")
+                .Where(item => item.customType == "ziprail-point").ToArray();
+            var method = typeof(ReMapApp).GetMethod("InsertedControlPointPosition",
+                BindingFlags.Static | BindingFlags.NonPublic | BindingFlags.Public);
+            Vector3 position = (Vector3)method.Invoke(null, new object[] { points, 0 });
+            Assert.That(position, Is.EqualTo(Vector3.Lerp(
+                WorldView.ToVector(points[0].position), WorldView.ToVector(points[1].position), .5f)));
+        }
+
+        [Test] public void InsertedPointAfterTheEndContinuesTheLastSpan()
+        {
+            var points = Create("CreateDefaultCurvedZiplineObjects")
+                .Where(item => item.customType == "curved-zipline-point").ToArray();
+            var method = typeof(ReMapApp).GetMethod("InsertedControlPointPosition",
+                BindingFlags.Static | BindingFlags.NonPublic | BindingFlags.Public);
+            Vector3 last = WorldView.ToVector(points[2].position);
+            Vector3 previous = WorldView.ToVector(points[1].position);
+            Vector3 position = (Vector3)method.Invoke(null, new object[] { points, 2 });
+            Assert.That(position, Is.EqualTo(last + last - previous));
+        }
+
+        [Test] public void ZiprailPreviewCreatesTriggerHitboxesForPointsAndCable()
+        {
+            var world = new WorldView(Shader.Find("Universal Render Pipeline/Lit"),
+                Shader.Find("ReMap/WorkspaceGrid"),
+                Shader.Find("Universal Render Pipeline/Unlit"));
+            try
+            {
+                var objects = Create("CreateDefaultZiprailObjects");
+                var document = new MapDocument { gameTarget = GameTargets.R5Flowstate };
+                document.objects.AddRange(objects);
+                world.Sync(document, null);
+                Physics.SyncTransforms();
+
+                var field = typeof(WorldView).GetField("instances",
+                    BindingFlags.Instance | BindingFlags.NonPublic);
+                var instances = (Dictionary<string, GameObject>)field.GetValue(world);
+                var point = objects.Single(item => item.customType == "ziprail-point" &&
+                    item.customRole == "1");
+                var marker = instances[point.id].transform.Find("__remap_zipline_endpoint");
+                var markerCollider = marker.GetComponent<SphereCollider>();
+                Assert.That(markerCollider.enabled && markerCollider.isTrigger, Is.True);
+
+                var ziprail = objects.Single(item => item.customType == "ziprail");
+                var cable = instances[ziprail.id].transform.Find("__remap_zipline_cable_selection");
+                Assert.That(cable, Is.Not.Null);
+                Assert.That(cable.GetComponentsInChildren<CapsuleCollider>()
+                    .All(collider => collider.enabled && collider.isTrigger), Is.True);
+                Assert.That(cable.GetComponentsInChildren<CapsuleCollider>().Length, Is.GreaterThan(0));
+            }
+            finally
+            {
+                bool previous = LogAssert.ignoreFailingMessages;
+                LogAssert.ignoreFailingMessages = true;
+                try { world.Dispose(); }
+                finally { LogAssert.ignoreFailingMessages = previous; }
+            }
         }
     }
 }

@@ -11,6 +11,8 @@ namespace ReMap.Standalone
         private const string ZiplineMarkerName = "__remap_zipline_endpoint";
         private const string ZiplineDetachStartName = "__remap_zipline_detach_start";
         private const string ZiplineDetachEndName = "__remap_zipline_detach_end";
+        private const string ZiplineCableSelectionName = "__remap_zipline_cable_selection";
+        private const string ZiplineModelSelectionName = "__remap_zipline_model_selection";
         private const string TriggerPreviewName = "__remap_trigger_volume";
         private const string CameraPathMarkerName = "__remap_camera_path_marker";
         private const string SoundMarkerName = "__remap_sound_marker";
@@ -36,8 +38,11 @@ namespace ReMap.Standalone
                     item.customType == "ziprail-point")
                     EnsureZiplineMarker(instance, item);
                 if (item.customType == "curved-zipline-component" || item.customType == "ziprail-component")
+                {
                     foreach (var collider in instance.GetComponentsInChildren<Collider>(true))
                         collider.enabled = false;
+                    EnsureZiplineModelSelection(instance, item.id);
+                }
                 if (item.customType == "trigger") EnsureTriggerVisual(instance, item);
                 if (item.customType == "camera-path-point" || item.customType == "camera-path-target")
                     EnsureCameraPathMarker(instance, item);
@@ -84,6 +89,7 @@ namespace ReMap.Standalone
                         item.ziplineLengthScale, item.ziplineMode == "vertical");
                     line.positionCount = cablePoints.Length;
                     line.SetPositions(cablePoints);
+                    UpdateZiplineCableSelection(instance, item.id, cablePoints);
                     UpdateZiplineDetachGuides(instance, startAnchor, endAnchor,
                         item.ziplineAutoDetachStart, item.ziplineAutoDetachEnd);
                     Vector3 pushDirection = ZiplinePushDirection(item.ziplinePushOffAngle);
@@ -92,6 +98,7 @@ namespace ReMap.Standalone
                 }
                 else
                 {
+                    UpdateZiplineCableSelection(instance, item.id, Array.Empty<Vector3>());
                     UpdateZiplineDetachGuides(instance, Vector3.zero, Vector3.zero, 0f, 0f);
                     UpdateZiplinePushArrow(instance, false, Vector3.zero, Vector3.right);
                 }
@@ -117,10 +124,12 @@ namespace ReMap.Standalone
                                 candidate.customProfile, candidate.ziplineArmHeight)))
                         : Vector3.zero).ToArray();
                 line.enabled = controls.Length >= 2;
-                if (!line.enabled) continue;
+                if (!line.enabled) { UpdateZiplineCableSelection(instance, item.id,
+                    Array.Empty<Vector3>()); continue; }
                 var curve = CurvedZiplinePreviewPoints(controls, item.curvedZiplineSegments);
                 line.positionCount = curve.Length;
                 line.SetPositions(curve);
+                UpdateZiplineCableSelection(instance, item.id, curve);
             }
             foreach (var item in document.objects)
             {
@@ -141,10 +150,12 @@ namespace ReMap.Standalone
                     .Select(candidate => instances.TryGetValue(candidate.id, out var point)
                         ? point.transform.position : Vector3.zero).ToArray();
                 line.enabled = controls.Length >= 2;
-                if (!line.enabled) continue;
+                if (!line.enabled) { UpdateZiplineCableSelection(instance, item.id,
+                    Array.Empty<Vector3>()); continue; }
                 var curve = ZiprailPreviewPoints(controls, item.curvedZiplineSegments);
                 line.positionCount = curve.Length;
                 line.SetPositions(curve);
+                UpdateZiplineCableSelection(instance, item.id, curve);
             }
             foreach (var item in document.objects)
             {
@@ -345,7 +356,8 @@ namespace ReMap.Standalone
             {
                 marker = GameObject.CreatePrimitive(PrimitiveType.Sphere); marker.name = ZiplineMarkerName;
                 marker.transform.SetParent(instance.transform, false); marker.transform.localScale = Vector3.one * .18f;
-                marker.GetComponent<Collider>().enabled = false;
+                var selection = marker.GetComponent<SphereCollider>();
+                selection.radius = 1.2f; selection.isTrigger = true; selection.enabled = true;
                 marker.GetComponent<Renderer>().sharedMaterial = lineMaterial;
                 instanceIds[marker] = item.id;
             }
@@ -359,6 +371,84 @@ namespace ReMap.Standalone
             tint.SetColor("_BaseColor", start ? new Color(.25f, 1f, .55f) :
                 railPoint ? new Color(.2f, .75f, 1f) : new Color(1f, .58f, .2f));
             marker.GetComponent<Renderer>().SetPropertyBlock(tint);
+        }
+
+        private void EnsureZiplineModelSelection(GameObject instance, string id)
+        {
+            var selection = instance.transform.Find(ZiplineModelSelectionName);
+            GameObject hitbox;
+            if (selection == null)
+            {
+                hitbox = new GameObject(ZiplineModelSelectionName);
+                hitbox.transform.SetParent(instance.transform, false);
+                var collider = hitbox.AddComponent<BoxCollider>(); collider.isTrigger = true;
+                instanceIds[hitbox] = id;
+            }
+            else hitbox = selection.gameObject;
+
+            Bounds localBounds = default; bool found = false;
+            Matrix4x4 worldToLocal = instance.transform.worldToLocalMatrix;
+            foreach (var renderer in instance.GetComponentsInChildren<Renderer>(true))
+            {
+                if (renderer.gameObject == hitbox || renderer is LineRenderer) continue;
+                Bounds worldBounds = renderer.bounds;
+                for (int corner = 0; corner < 8; corner++)
+                {
+                    Vector3 world = worldBounds.center + Vector3.Scale(worldBounds.extents,
+                        new Vector3((corner & 1) == 0 ? -1 : 1,
+                            (corner & 2) == 0 ? -1 : 1, (corner & 4) == 0 ? -1 : 1));
+                    Vector3 local = worldToLocal.MultiplyPoint3x4(world);
+                    if (!found) { localBounds = new Bounds(local, Vector3.zero); found = true; }
+                    else localBounds.Encapsulate(local);
+                }
+            }
+            hitbox.SetActive(found);
+            if (!found) return;
+            var box = hitbox.GetComponent<BoxCollider>(); box.enabled = true; box.isTrigger = true;
+            box.center = localBounds.center;
+            box.size = Vector3.Max(localBounds.size, Vector3.one * .15f);
+        }
+
+        private void UpdateZiplineCableSelection(GameObject instance, string id,
+            IReadOnlyList<Vector3> points)
+        {
+            var holderTransform = instance.transform.Find(ZiplineCableSelectionName);
+            GameObject holder;
+            if (holderTransform == null)
+            {
+                holder = new GameObject(ZiplineCableSelectionName);
+                holder.transform.SetParent(instance.transform, false);
+            }
+            else holder = holderTransform.gameObject;
+            int segmentCount = Math.Max(0, (points?.Count ?? 0) - 1);
+            holder.SetActive(segmentCount > 0);
+            Matrix4x4 worldToLocal = instance.transform.worldToLocalMatrix;
+            for (int index = 0; index < segmentCount; index++)
+            {
+                GameObject segment;
+                if (index < holder.transform.childCount)
+                    segment = holder.transform.GetChild(index).gameObject;
+                else
+                {
+                    segment = new GameObject("segment_" + index);
+                    segment.transform.SetParent(holder.transform, false);
+                    var collider = segment.AddComponent<CapsuleCollider>();
+                    collider.direction = 2; collider.isTrigger = true;
+                    instanceIds[segment] = id;
+                }
+                segment.SetActive(true);
+                Vector3 start = worldToLocal.MultiplyPoint3x4(points[index]);
+                Vector3 end = worldToLocal.MultiplyPoint3x4(points[index + 1]);
+                Vector3 delta = end - start;
+                segment.transform.localPosition = (start + end) * .5f;
+                segment.transform.localRotation = delta.sqrMagnitude > .000001f
+                    ? Quaternion.FromToRotation(Vector3.forward, delta) : Quaternion.identity;
+                var capsule = segment.GetComponent<CapsuleCollider>();
+                capsule.enabled = true; capsule.isTrigger = true; capsule.radius = .12f;
+                capsule.height = Mathf.Max(.24f, delta.magnitude + .24f);
+            }
+            for (int index = segmentCount; index < holder.transform.childCount; index++)
+                holder.transform.GetChild(index).gameObject.SetActive(false);
         }
 
         public static Vector3[] ZiprailPreviewPoints(IReadOnlyList<Vector3> controls, int segmentsPerSpan)
