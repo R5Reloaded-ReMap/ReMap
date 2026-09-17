@@ -87,10 +87,20 @@ namespace ReMap.Standalone
             scroll.Add(Label(L.T("#NEW_EXPORTS_KEEP_ALBEDO_TEXTURES"), "note"));
             scroll.Add(Label(L.T("#ASSET_CACHE"), "section-title"));
             scroll.Add(Label(L.T("#COMPATIBLE_MODELS_TEXTURES_SHARED_BETWEEN"), "note"));
-            var cachePath = new TextField(L.T("#CACHE_FOLDER")) { value = assetLibrary.CacheDirectory, isReadOnly = true }; cachePath.AddToClassList("settings-field"); scroll.Add(cachePath);
+            var cachePath = new TextField(L.T("#ASSET_EXPORT_FOLDER")) { value = assetLibrary.AssetExportDirectory, isDelayed = true }; cachePath.AddToClassList("settings-field"); scroll.Add(cachePath);
+            scroll.Add(Label(L.T("#ASSET_EXPORT_FOLDER_HELP"), "note"));
+            scroll.Add(Button(L.T("#SAVE_ASSET_EXPORT_FOLDER"), () => {
+                assetLibrary.ConfigureAssetExportDirectory(cachePath.value);
+                cachePath.SetValueWithoutNotify(assetLibrary.AssetExportDirectory);
+                CancelPlacement(); previewEntry = null; lastPreviewRequest = null; previewFailures.Clear();
+                world.models.ForgetPrepared();
+                foreach (var id in snapshot.objects.Where(item => item.assetId.StartsWith("apex:", StringComparison.Ordinal)).Select(item => item.assetId).Distinct()) world.Reload(id);
+                if (currentThumbnail != null) Destroy(currentThumbnail); currentThumbnail = null; assetPreview.image = null;
+                Refresh(); SetStatus(L.T("#ASSET_EXPORT_FOLDER_SAVED"));
+            }));
             scroll.Add(Button(L.T("#OPEN_CACHE_FOLDER"), () => {
-                Directory.CreateDirectory(assetLibrary.CacheDirectory);
-                Process.Start(new ProcessStartInfo { FileName = assetLibrary.CacheDirectory, UseShellExecute = true });
+                Directory.CreateDirectory(assetLibrary.AssetExportDirectory);
+                Process.Start(new ProcessStartInfo { FileName = assetLibrary.AssetExportDirectory, UseShellExecute = true });
             }));
             scroll.Add(Label(L.T("#MAP_REFERENCE_DISPLAY"), "section-title"));
             var showMainBsp = new Toggle(L.T("#SHOW_MAIN_BSP")) { value = assetLibrary.Settings.showMainBsp };

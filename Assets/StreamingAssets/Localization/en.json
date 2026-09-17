@@ -1895,6 +1895,22 @@
       "text": "Cache folder"
     },
     {
+      "key": "#ASSET_EXPORT_FOLDER",
+      "text": "Asset export folder"
+    },
+    {
+      "key": "#ASSET_EXPORT_FOLDER_HELP",
+      "text": "Extracted models, textures, indexes, and temporary export files are stored here. Changing this path does not move or delete the previous folder."
+    },
+    {
+      "key": "#SAVE_ASSET_EXPORT_FOLDER",
+      "text": "Save asset export folder"
+    },
+    {
+      "key": "#ASSET_EXPORT_FOLDER_SAVED",
+      "text": "Asset export folder saved. Run indexing to load assets from this location."
+    },
+    {
       "key": "#OPEN_CACHE_FOLDER",
       "text": "Open cache folder"
     },

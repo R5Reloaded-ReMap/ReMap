@@ -34,6 +34,7 @@ namespace ReMap.Standalone
         // These fields remain only so older local JSON settings can be read. ReMap always uses its bundled official RSX.
         public string rsxExecutable = "", rsxBackend = "official";
         public string rconAddress = "[::ffff:127.0.0.1]:37015", rconKey = "", rconPassword = "";
+        public string assetExportDirectory = "";
         public int textureLimit = 1024;
         public string[] lastTargetMaps = Array.Empty<string>();
         public string[] lastR5ReloadedTargetMaps = Array.Empty<string>();
@@ -49,7 +50,16 @@ namespace ReMap.Standalone
         public List<MapSource> Maps { get; private set; } = new List<MapSource>();
         public List<GameAssetRecord> Records { get; private set; } = new List<GameAssetRecord>();
         public string CacheRoot { get; private set; }
-        public string CacheDirectory => Path.Combine(LocalRoot, "AssetCache");
+        public string CacheDirectory
+        {
+            get
+            {
+                try { return ResolveAssetExportDirectory(LocalRoot, Settings.assetExportDirectory); }
+                catch (Exception exception) when (exception is ArgumentException || exception is NotSupportedException || exception is PathTooLongException)
+                { return Path.GetFullPath(Path.Combine(LocalRoot, "AssetCache")); }
+            }
+        }
+        public string AssetExportDirectory => CacheDirectory;
         public string TargetGame => GameTargets.Normalize(Settings.targetGame);
         public string GameDirectory => Settings.gameDirectory ?? "";
         public string PlatformDirectory => Settings.platformDirectory ?? "";
@@ -112,6 +122,28 @@ namespace ReMap.Standalone
             PakDirectory = FindPakDirectory(Settings.gameDirectory);
             previewSession?.Dispose(); previewSession = null; Records.Clear(); CacheRoot = null; DiscoverMaps();
             SaveSettings();
+        }
+        public void ConfigureAssetExportDirectory(string directory)
+        {
+            if (worker.CurrentCount == 0) throw new InvalidOperationException(L.T("#WAIT_RSX_OPERATION_FINISH"));
+            string previous = CacheDirectory;
+            string resolved = ResolveAssetExportDirectory(LocalRoot, directory);
+            Directory.CreateDirectory(resolved);
+            string defaultDirectory = ResolveAssetExportDirectory(LocalRoot, "");
+            Settings.assetExportDirectory = string.Equals(resolved, defaultDirectory, StringComparison.OrdinalIgnoreCase) ? "" : resolved;
+            if (!string.Equals(previous, resolved, StringComparison.OrdinalIgnoreCase))
+            {
+                previewSession?.Dispose(); previewSession = null; Records.Clear(); CacheRoot = null;
+            }
+            SaveSettings();
+        }
+        public static string ResolveAssetExportDirectory(string localRoot, string directory)
+        {
+            string root = Path.GetFullPath(localRoot ?? throw new ArgumentNullException(nameof(localRoot)));
+            string value = CleanPath(directory);
+            return value.Length == 0
+                ? Path.GetFullPath(Path.Combine(root, "AssetCache"))
+                : Path.GetFullPath(Path.IsPathRooted(value) ? value : Path.Combine(root, value));
         }
         public void SelectTarget(string targetGame, bool save = true)
         {

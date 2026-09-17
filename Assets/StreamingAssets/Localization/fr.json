@@ -1895,6 +1895,22 @@
       "text": "Dossier du cache"
     },
     {
+      "key": "#ASSET_EXPORT_FOLDER",
+      "text": "Dossier d’exportation des ressources"
+    },
+    {
+      "key": "#ASSET_EXPORT_FOLDER_HELP",
+      "text": "Les modèles, textures, index et fichiers d’exportation temporaires sont stockés ici. Changer ce chemin ne déplace ni ne supprime l’ancien dossier."
+    },
+    {
+      "key": "#SAVE_ASSET_EXPORT_FOLDER",
+      "text": "Enregistrer le dossier d’exportation"
+    },
+    {
+      "key": "#ASSET_EXPORT_FOLDER_SAVED",
+      "text": "Dossier d’exportation enregistré. Lancez l’indexation pour charger les ressources depuis cet emplacement."
+    },
+    {
       "key": "#OPEN_CACHE_FOLDER",
       "text": "Ouvrir le dossier du cache"
     },

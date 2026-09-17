@@ -149,6 +149,43 @@ namespace ReMap.Standalone.Tests
             }
             finally { if (Directory.Exists(root)) Directory.Delete(root, true); }
         }
+        [Test] public void AssetExportDirectoryCanBeChangedAndSurvivesRestart()
+        {
+            string root = Path.Combine(Path.GetTempPath(), "ReMapExportRoot-" + Guid.NewGuid().ToString("N"));
+            string export = Path.Combine(Path.GetTempPath(), "ReMapAssetExport-" + Guid.NewGuid().ToString("N"));
+            Directory.CreateDirectory(root);
+            try
+            {
+                using (var library = new RsxAssetLibrary(root))
+                {
+                    Assert.That(library.AssetExportDirectory, Is.EqualTo(Path.Combine(root, "AssetCache")));
+                    library.ConfigureAssetExportDirectory(export);
+                    Assert.That(library.AssetExportDirectory, Is.EqualTo(export));
+                    Assert.That(Directory.Exists(export), Is.True);
+                }
+
+                using (var restored = new RsxAssetLibrary(root))
+                {
+                    Assert.That(restored.AssetExportDirectory, Is.EqualTo(export));
+                    restored.ConfigureAssetExportDirectory("");
+                    Assert.That(restored.AssetExportDirectory, Is.EqualTo(Path.Combine(root, "AssetCache")));
+                }
+
+                using (var reset = new RsxAssetLibrary(root))
+                    Assert.That(reset.AssetExportDirectory, Is.EqualTo(Path.Combine(root, "AssetCache")));
+            }
+            finally
+            {
+                if (Directory.Exists(root)) Directory.Delete(root, true);
+                if (Directory.Exists(export)) Directory.Delete(export, true);
+            }
+        }
+        [Test] public void RelativeAssetExportDirectoryIsResolvedFromLocalRoot()
+        {
+            string root = Path.Combine(Path.GetTempPath(), "ReMapExportRelative-" + Guid.NewGuid().ToString("N"));
+            Assert.That(RsxAssetLibrary.ResolveAssetExportDirectory(root, Path.Combine("exports", "assets")),
+                Is.EqualTo(Path.Combine(root, "exports", "assets")));
+        }
         [Test] public void CastRejectsNodeOutsideFileAndTruncation()
         {
             using (var stream = new MemoryStream())
