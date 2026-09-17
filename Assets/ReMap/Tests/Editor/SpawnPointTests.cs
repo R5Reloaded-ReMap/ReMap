@@ -15,7 +15,7 @@ namespace ReMap.Standalone.Tests
             };
             document.objects.Add(new MapObject {
                 assetId = "custom:spawn-point", displayName = "Player spawn", customType = "spawn-point",
-                gameModelPath = ReMapApp.SpawnPointModelPath,
+                gameModelPath = "mdl/dev/mp_spawn.rmdl",
                 position = ApexCoordinates.ToUnity(new Float3(10, 20, 30)), spawnPointTeam = 3
             });
             document.Validate();

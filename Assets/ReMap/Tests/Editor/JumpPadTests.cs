@@ -15,7 +15,7 @@ namespace ReMap.Standalone.Tests
             };
             document.objects.Add(new MapObject {
                 assetId = "custom:jump-pad", displayName = "Jump pad", customType = "jump-pad",
-                gameModelPath = ReMapApp.JumpPadModelPath,
+                gameModelPath = "mdl/props/octane_jump_pad/octane_jump_pad.rmdl",
                 position = ApexCoordinates.ToUnity(new Float3(10, 20, 30)),
                 jumpPadLaunchVelocity = 1250f, jumpPadForwardScale = 1.5f,
                 jumpPadRadius = 52f, jumpPadDoubleJump = false

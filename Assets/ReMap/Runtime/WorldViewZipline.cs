@@ -384,10 +384,12 @@ namespace ReMap.Standalone
             if (ghost == null || ghostAsset != entry.Id)
             {
                 ClearPreview(); ghostAsset = entry.Id;
-                if (entry.CustomType == "loot-bin")
+                if (entry.CustomType == "loot-bin" || entry.CustomType == "jump-pad" ||
+                    entry.CustomType == "spawn-point")
                 {
-                    ghost = GameObject.CreatePrimitive(PrimitiveType.Cube);
-                    ghost.name = "Loot bin placement preview";
+                    ghost = GameObject.CreatePrimitive(entry.CustomType == "spawn-point"
+                        ? PrimitiveType.Capsule : PrimitiveType.Cube);
+                    ghost.name = entry.Name + " placement preview";
                     ghost.transform.SetParent(root.transform);
                     ghost.transform.localScale = entry.Size;
                     ghost.GetComponent<Collider>().enabled = false;
@@ -449,7 +451,8 @@ namespace ReMap.Standalone
                 line.positionCount = 2; line.SetPosition(0, Vector3.up); line.SetPosition(1, Vector3.down * length);
                 line.widthMultiplier = .04f; line.numCapVertices = 4;
             }
-            ghost.transform.position = position.Value + (entry.CustomType == "door" || entry.CustomType == "loot-bin"
+            ghost.transform.position = position.Value + (entry.CustomType == "door" || entry.CustomType == "loot-bin" ||
+                entry.CustomType == "jump-pad" || entry.CustomType == "spawn-point"
                 ? Vector3.up * entry.Size.y * .5f : Vector3.zero);
         }
     }
