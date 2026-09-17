@@ -8,7 +8,7 @@ namespace ReMap.Standalone.Tests
     public sealed class WindowHintTests
     {
         [Test]
-        public void SavesValidatesAndExportsLegacyDimensionsAndRightVector()
+        public void SavesValidatesAndExportsDimensionsAndRightVector()
         {
             var document = new MapDocument { name = "window", editingMap = "mp_rr_desertlands_hu" };
             document.objects.Add(new MapObject {
@@ -20,20 +20,20 @@ namespace ReMap.Standalone.Tests
             document.Validate();
             var restored = new UnityMapCodec().Decode(new UnityMapCodec().Encode(document));
             string code = ReMapGameScript.Generate(restored, restored.objects);
-            StringAssert.Contains("ReMap_CreateWindowHint( <10, 20, 30>, 80, 96, <0, 1, 0> )", code);
+            StringAssert.Contains("ReMap_CreateWindowHint( <10, 20, 30>, 80, 96, <1, 0, 0> )", code);
             StringAssert.Contains("script ReMap_CreateWindowHint( <10, 20, 30>",
                 ReMapGameScript.GenerateLiveCommands(restored, restored.objects));
         }
 
         [Test]
-        public void RightVectorMatchesLegacyUnityAxisConversion()
+        public void RightVectorFollowsTheDisplayedLocalWidthAxis()
         {
             var document = new MapDocument { editingMap = "mp_rr_desertlands_hu" };
             document.objects.Add(new MapObject {
                 assetId = "custom:window-hint", displayName = "Window", customType = "window-hint",
                 isGroup = true, rotation = WorldView.ToData(ApexDisplay.UnityAngles(new Vector3(0, 90, 0)))
             });
-            StringAssert.Contains("<1, 0, 0> )", ReMapGameScript.Generate(document, document.objects));
+            StringAssert.Contains("<0, 1, 0> )", ReMapGameScript.Generate(document, document.objects));
         }
 
         [Test]

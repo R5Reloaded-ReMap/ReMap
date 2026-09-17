@@ -38,6 +38,7 @@ namespace ReMap.Standalone.Tests
             StringAssert.Contains("\"model\" \"mdl/props/crate.rmdl\"", result.Script);
             StringAssert.Contains("\"renderamt\" \"128\"", result.Script);
             StringAssert.Contains("\"classname\" \"func_window_hint\"", result.Script);
+            StringAssert.Contains("\"right\" \"1 0 0\"", result.Script);
             StringAssert.Contains("\"classname\" \"ambient_generic\"", result.Sound);
             StringAssert.Contains("\"polyline_segment_0\"", result.Sound);
             StringAssert.Contains("\"teamnumber\" \"7\"", result.Spawn);
