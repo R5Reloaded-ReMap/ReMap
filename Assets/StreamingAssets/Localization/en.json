@@ -3151,6 +3151,46 @@
       "text": "Loot bin skin must be between 0 and 3."
     },
     {
+      "key": "#JUMP_PAD",
+      "text": "Jump pad"
+    },
+    {
+      "key": "#CUSTOM_OBJECT_JUMP_PAD",
+      "text": "Custom object · Jump pad"
+    },
+    {
+      "key": "#JUMP_PAD_CUSTOM_HELP",
+      "text": "An Octane jump pad with configurable launch force, forward momentum, trigger radius and double jump."
+    },
+    {
+      "key": "#JUMP_PAD_LAUNCH_VELOCITY",
+      "text": "Launch velocity"
+    },
+    {
+      "key": "#JUMP_PAD_FORWARD_SCALE",
+      "text": "Forward momentum"
+    },
+    {
+      "key": "#JUMP_PAD_RADIUS",
+      "text": "Trigger radius"
+    },
+    {
+      "key": "#JUMP_PAD_DOUBLE_JUMP",
+      "text": "Enable double jump"
+    },
+    {
+      "key": "#JUMP_PAD_CREATED",
+      "text": "Jump pad created. Configure its launch in ReMap settings."
+    },
+    {
+      "key": "#JUMP_PAD_PREVIEW_ERROR",
+      "text": "Jump pad preview: "
+    },
+    {
+      "key": "#INVALID_JUMP_PAD_SETTINGS",
+      "text": "Invalid jump pad launch velocity, forward momentum or trigger radius."
+    },
+    {
       "key": "#TARGET_GAME",
       "text": "Target game"
     },

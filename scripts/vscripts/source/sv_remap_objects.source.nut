@@ -16,6 +16,7 @@ global function ReMap_ClearProps
 global function ReMap_CreateProp
 global function ReMap_CreateDoor
 global function ReMap_CreateLootBin
+global function ReMap_CreateJumpPad
 
 global const int REMAP_DOOR_SINGLE = 0
 global const int REMAP_DOOR_DOUBLE = 1
@@ -26,6 +27,7 @@ const asset REMAP_DOOR_MODEL_SINGLE = $"mdl/door/canyonlands_door_single_02.rmdl
 const asset REMAP_DOOR_MODEL_VERTICAL = $"mdl/door/door_canyonlands_large_01_animated.rmdl"
 const asset REMAP_DOOR_MODEL_HORIZONTAL = $"mdl/door/door_256x256x8_elevatorstyle02_animated.rmdl"
 const asset REMAP_LOOT_BIN_MODEL = $"mdl/props/loot_bin/loot_bin_01_animated.rmdl"
+const asset REMAP_JUMP_PAD_MODEL = $"mdl/props/octane_jump_pad/octane_jump_pad.rmdl"
 
 struct
 {
@@ -181,4 +183,125 @@ entity function ReMap_CreateLootBin( vector origin, vector angles, int skin = 0 
 	lootBin.SetSkin( skin )
 	file.props.append( lootBin )
 	return lootBin
+}
+
+entity function ReMap_CreateJumpPad( vector origin, vector angles, bool allowMantle = true,
+	float fadeDistance = 50000.0, int realmId = -1, float scale = 1.0,
+	float launchVelocity = 1000.0, float forwardScale = 1.7, float radius = 45.0,
+	bool doubleJump = true )
+{
+	entity jumpPad = ReMap_CreateProp( REMAP_JUMP_PAD_MODEL, origin, angles, allowMantle,
+		fadeDistance, realmId, scale )
+	jumpPad.SetScriptName( "remap_jump_pad" )
+	jumpPad.kv.contents = CONTENTS_HITBOX | CONTENTS_BULLETCLIP
+	PlayAnimNoWait( jumpPad, "prop_octane_jump_pad_deploy_idle" )
+
+	entity trigger = CreateEntity( "trigger_cylinder_heavy" )
+	trigger.SetOwner( jumpPad )
+	trigger.SetRadius( radius * scale )
+	trigger.SetAboveHeight( 32.0 * scale )
+	trigger.SetBelowHeight( 16.0 * scale )
+	trigger.SetOrigin( origin )
+	trigger.SetAngles( angles )
+	trigger.SetTriggerType( TT_JUMP_PAD )
+	trigger.SetLaunchScaleValues( launchVelocity, forwardScale )
+	trigger.SetViewPunchValues( 15.0, 4.0, 0.0 )
+	trigger.UsePointCollision()
+	trigger.kv.triggerFilterNonCharacter = "0"
+	trigger.s.remapDoubleJump <- doubleJump
+	DispatchSpawn( trigger )
+	trigger.SetEnterCallback( ReMap_OnJumpPadEnter )
+	trigger.SetParent( jumpPad )
+	trigger.RemoveFromAllRealms()
+	trigger.AddToOtherEntitysRealms( jumpPad )
+	file.props.append( trigger )
+	return jumpPad
+}
+
+void function ReMap_OnJumpPadEnter( entity trigger, entity ent )
+{
+	if ( !IsValid( ent ) || !ent.IsPlayer() )
+		return
+
+	entity jumpPad = trigger.GetOwner()
+	if ( IsValid( jumpPad ) )
+		PlayAnimNoWait( jumpPad, "prop_octane_jump_pad_deploy_trans" )
+
+	ent.kv.gravity = 0.75
+	JumpPadPushEnt( trigger, ent, trigger.GetOrigin(), trigger.GetAngles() )
+	thread ReMap_RestoreJumpPadGravity( ent )
+	if ( trigger.s.remapDoubleJump )
+		thread ReMap_GiveJumpPadDoubleJump( ent )
+}
+
+void function ReMap_RestoreJumpPadGravity( entity player )
+{
+	player.EndSignal( "OnDeath" )
+	player.EndSignal( "OnDestroy" )
+	OnThreadEnd( function() : ( player )
+	{
+		if ( IsValid( player ) )
+			player.kv.gravity = 1.0
+	} )
+
+	WaitFrame()
+	while ( IsValid( player ) && !player.IsOnGround() && !player.IsZiplining() )
+		WaitFrame()
+}
+
+void function ReMap_GiveJumpPadDoubleJump( entity player )
+{
+	if ( !IsValid( player ) || !player.IsPlayer() )
+		return
+
+	player.EndSignal( "OnDeath" )
+	player.EndSignal( "OnDestroy" )
+	wait 0.1
+	if ( !IsValid( player ) || player.IsOnGround() )
+		return
+
+	asset storedSettings = player.GetPlayerSettings()
+	array< string > storedMods = clone player.GetPlayerSettingsMods()
+	array< string > newMods = clone storedMods
+	bool alreadyEnabled = false
+	foreach ( string mod in newMods )
+	{
+		if ( mod == "enable_doublejump" )
+			alreadyEnabled = true
+	}
+	if ( !alreadyEnabled )
+		newMods.append( "enable_doublejump" )
+
+	int health = player.GetHealth()
+	int shields = player.GetShieldHealth()
+	player.SetPlayerSettingsWithMods( storedSettings, newMods )
+	player.SetHealth( health )
+	player.SetShieldHealth( shields )
+	AddButtonPressedPlayerInputCallback( player, IN_JUMP, ReMap_ConsumeJumpPadDoubleJump )
+
+	OnThreadEnd( function() : ( player, storedSettings, storedMods )
+	{
+		if ( !IsValid( player ) )
+			return
+		RemoveButtonPressedPlayerInputCallback( player, IN_JUMP, ReMap_ConsumeJumpPadDoubleJump )
+		if ( IsAlive( player ) )
+		{
+			int currentHealth = player.GetHealth()
+			int currentShields = player.GetShieldHealth()
+			player.SetPlayerSettingsWithMods( storedSettings, storedMods )
+			player.SetHealth( currentHealth )
+			player.SetShieldHealth( currentShields )
+		}
+	} )
+
+	while ( IsValid( player ) && !player.IsOnGround() && !player.IsZiplining() )
+		WaitFrame()
+}
+
+void function ReMap_ConsumeJumpPadDoubleJump( entity player )
+{
+	if ( !IsValid( player ) || !IsAlive( player ) )
+		return
+	player.ConsumeDoubleJump()
+	RemoveButtonPressedPlayerInputCallback( player, IN_JUMP, ReMap_ConsumeJumpPadDoubleJump )
 }

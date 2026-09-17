@@ -79,6 +79,10 @@ namespace ReMap.Standalone.Core
         public int curvedZiplineSegments = 8;
         public bool curvedZiplineSupport;
         public int lootBinSkin;
+        public float jumpPadLaunchVelocity = 1000f;
+        public float jumpPadForwardScale = 1.7f;
+        public float jumpPadRadius = 45f;
+        public bool jumpPadDoubleJump = true;
         public bool commonAsset;
         public List<string> availableMaps = new List<string>();
         public bool allowMantle = true;
@@ -181,7 +185,7 @@ namespace ReMap.Standalone.Core
                     item.customType != "zipline-component" && item.customType != "door" &&
                     item.customType != "door-component" && item.customType != "curved-zipline" &&
                     item.customType != "curved-zipline-point" && item.customType != "curved-zipline-component" &&
-                    item.customType != "loot-bin")
+                    item.customType != "loot-bin" && item.customType != "jump-pad")
                     throw new ArgumentException(L.T("#UNKNOWN_CUSTOM_OBJECT_TYPE"));
                 if (item.customType == "zipline" && !item.isGroup)
                     throw new ArgumentException(L.T("#ZIPLINE_HIERARCHY_GROUP"));
@@ -233,6 +237,12 @@ namespace ReMap.Standalone.Core
                     throw new ArgumentException(L.T("#INVALID_ZIPLINE_ARM_HEIGHT"));
                 if (item.customType == "loot-bin" && (item.lootBinSkin < 0 || item.lootBinSkin > 3))
                     throw new ArgumentException(L.T("#INVALID_LOOT_BIN_SKIN"));
+                if (item.customType == "jump-pad" && (!Finite(item.jumpPadLaunchVelocity) ||
+                    !Finite(item.jumpPadForwardScale) || !Finite(item.jumpPadRadius) ||
+                    item.jumpPadLaunchVelocity < 100f || item.jumpPadLaunchVelocity > 5000f ||
+                    item.jumpPadForwardScale < .1f || item.jumpPadForwardScale > 10f ||
+                    item.jumpPadRadius < 1f || item.jumpPadRadius > 512f))
+                    throw new ArgumentException(L.T("#INVALID_JUMP_PAD_SETTINGS"));
                 if (!item.position.IsFinite || !item.rotation.IsFinite || !item.scale.IsFinite)
                     throw new ArgumentException(L.T("#TRANSFORMS_FINITE_NUMBERS"));
                 if (!Finite(item.fadeDistance) || item.fadeDistance < -1f)

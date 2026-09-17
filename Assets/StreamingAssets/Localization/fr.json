@@ -3151,6 +3151,46 @@
       "text": "Le skin du coffre de loot doit être compris entre 0 et 3."
     },
     {
+      "key": "#JUMP_PAD",
+      "text": "Tremplin"
+    },
+    {
+      "key": "#CUSTOM_OBJECT_JUMP_PAD",
+      "text": "Objet personnalisé · Tremplin"
+    },
+    {
+      "key": "#JUMP_PAD_CUSTOM_HELP",
+      "text": "Un tremplin d’Octane dont la force, l’élan avant, le rayon de déclenchement et le double saut sont réglables."
+    },
+    {
+      "key": "#JUMP_PAD_LAUNCH_VELOCITY",
+      "text": "Vitesse de propulsion"
+    },
+    {
+      "key": "#JUMP_PAD_FORWARD_SCALE",
+      "text": "Élan vers l’avant"
+    },
+    {
+      "key": "#JUMP_PAD_RADIUS",
+      "text": "Rayon de déclenchement"
+    },
+    {
+      "key": "#JUMP_PAD_DOUBLE_JUMP",
+      "text": "Activer le double saut"
+    },
+    {
+      "key": "#JUMP_PAD_CREATED",
+      "text": "Tremplin créé. Configurez sa propulsion dans les réglages ReMap."
+    },
+    {
+      "key": "#JUMP_PAD_PREVIEW_ERROR",
+      "text": "Aperçu du tremplin : "
+    },
+    {
+      "key": "#INVALID_JUMP_PAD_SETTINGS",
+      "text": "Vitesse de propulsion, élan avant ou rayon du tremplin invalide."
+    },
+    {
       "key": "#TARGET_GAME",
       "text": "Jeu cible"
     },

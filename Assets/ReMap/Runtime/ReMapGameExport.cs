@@ -50,6 +50,9 @@ namespace ReMap.Standalone
             if (world.Any(o => o.customType == "loot-bin") &&
                 !models.Contains(ReMapApp.LootBinModelPath, StringComparer.OrdinalIgnoreCase))
                 models.Add(ReMapApp.LootBinModelPath);
+            if (world.Any(o => o.customType == "jump-pad") &&
+                !models.Contains(ReMapApp.JumpPadModelPath, StringComparer.OrdinalIgnoreCase))
+                models.Add(ReMapApp.JumpPadModelPath);
             Vector3 originOffset = OriginOffset(document);
             bool useOriginOffset = HasOriginOffset(originOffset);
             var shared = new StringBuilder();
@@ -75,6 +78,7 @@ namespace ReMap.Standalone
             for (int i = 0; i < serverObjects.Count; i++) AppendObject(server, serverObjects[i], originOffset, useOriginOffset);
             AppendDoors(server, world, false, originOffset, useOriginOffset);
             AppendLootBins(server, world, false, originOffset, useOriginOffset);
+            AppendJumpPads(server, world, false, originOffset, useOriginOffset);
             AppendCurvedZiplines(server, world, false, originOffset, useOriginOffset);
             AppendZiplines(server, world, false, originOffset, useOriginOffset);
 
@@ -161,6 +165,7 @@ namespace ReMap.Standalone
                 result.Append("script ").Append(CreateExpression(objects[i], originOffset, false)).AppendLine();
             AppendDoors(result, world, true, originOffset, false);
             AppendLootBins(result, world, true, originOffset, false);
+            AppendJumpPads(result, world, true, originOffset, false);
             AppendCurvedZiplines(result, world, true, originOffset, false);
             AppendZiplines(result, world, true, originOffset, false);
             return result.ToString();
@@ -367,6 +372,28 @@ namespace ReMap.Standalone
                     Position(lootBin.position, originOffset, symbolicOffset) + ", " +
                     Vector(ApexDisplay.Angles(WorldView.ToVector(lootBin.rotation))) + ", " +
                     lootBin.lootBinSkin.ToString(CultureInfo.InvariantCulture) + " )";
+                code.Append(live ? "script " : "\t").Append(expression).AppendLine();
+            }
+        }
+
+        private static void AppendJumpPads(StringBuilder code, List<MapObject> world, bool live,
+            Vector3 originOffset, bool symbolicOffset)
+        {
+            var jumpPads = world.Where(o => o.customType == "jump-pad").ToList();
+            if (!live && jumpPads.Count > 0) { code.AppendLine(); code.AppendLine("\t// Jump pads"); }
+            foreach (var jumpPad in jumpPads)
+            {
+                if (!Nearly(jumpPad.scale.x, jumpPad.scale.y) || !Nearly(jumpPad.scale.x, jumpPad.scale.z))
+                    throw new ArgumentException(L.F("#ARG0_APEX_PROPS_SUPPORT_UNIFORM", jumpPad.displayName));
+                string expression = "ReMap_CreateJumpPad( " +
+                    Position(jumpPad.position, originOffset, symbolicOffset) + ", " +
+                    Vector(ApexDisplay.Angles(WorldView.ToVector(jumpPad.rotation))) + ", " +
+                    (jumpPad.allowMantle ? "true" : "false") + ", " +
+                    Number(jumpPad.fadeDistance) + ", " +
+                    jumpPad.realmId.ToString(CultureInfo.InvariantCulture) + ", " +
+                    Number(jumpPad.scale.x) + ", " + Number(jumpPad.jumpPadLaunchVelocity) + ", " +
+                    Number(jumpPad.jumpPadForwardScale) + ", " + Number(jumpPad.jumpPadRadius) + ", " +
+                    (jumpPad.jumpPadDoubleJump ? "true" : "false") + " )";
                 code.Append(live ? "script " : "\t").Append(expression).AppendLine();
             }
         }
