@@ -687,6 +687,12 @@ namespace ReMap.Standalone
                 field?.SetEnabled(enabled);
             }
 
+            public void SetDelayed(bool delayed)
+            {
+                x.isDelayed = delayed;
+                if (!uniform) { y.isDelayed = delayed; z.isDelayed = delayed; }
+            }
+
             public void Change(Vector3 v) { Set(v); Changed?.Invoke(); }
 
             public VectorInput(string title, Vector3 initial, int kind=0, Func<float> angleStep=null)
@@ -776,7 +782,7 @@ namespace ReMap.Standalone
 
         {
 
-            inspector.Clear();worldPositionInfo=null; positionInput = rotationInput = scaleInput = null; objectNameInput = null; inspectorLockedZiplineEnd=null;
+            inspector.Clear();worldPositionInfo=null; positionInput = rotationInput = scaleInput = null; objectNameInput = null; inspectorLockedZiplineEnd=null; jumpTowerHeightInput=null;
 
             var item = snapshot?.objects.Find(o => o.id == selectedId); inspectorEditingId = item?.id;
 
@@ -795,7 +801,7 @@ namespace ReMap.Standalone
 
             positionInput = new VectorInput(L.T("#LOCAL_APEX_POSITION_U"), WorldView.ToVector(item.position),1);
 
-            if (IsVerticalZiplineEnd(item))
+            if (IsVerticalOnlyMoveTarget(item))
             {
                 positionInput.SetAxisEnabled(0, false);
                 positionInput.SetAxisEnabled(1, false);
@@ -803,6 +809,19 @@ namespace ReMap.Standalone
             rotationInput = new VectorInput(L.T("#LOCAL_APEX_ANGLES"), WorldView.ToVector(item.rotation),2,()=>rotateSnap);
 
             scaleInput = new VectorInput(L.T("#SCALE"), WorldView.ToVector(item.scale),3);
+
+            if (IsJumpTowerBalloon(item))
+            {
+                positionInput.SetDelayed(false);
+                rotationInput.SetEnabled(false);
+                scaleInput.SetEnabled(false);
+            }
+            else if (item.customType == "jump-tower")
+            {
+                rotationInput.SetAxisEnabled(0, false);
+                rotationInput.SetAxisEnabled(2, false);
+                scaleInput.SetEnabled(false);
+            }
 
             foreach (var field in new[] { positionInput, rotationInput, scaleInput })
 
@@ -816,7 +835,7 @@ namespace ReMap.Standalone
 
             }
 
-            if (item.positionLocked && IsLockableZiplinePoint(item))
+            if (item.positionLocked && (IsLockableZiplinePoint(item) || IsJumpTowerBalloon(item)))
             {
                 positionInput.SetEnabled(false);
                 positionInput.tooltip = L.T("#LOCK_CONTROL_POINT_POSITION_HELP");
@@ -838,6 +857,7 @@ namespace ReMap.Standalone
                 item.customType == "ziprail-point" || item.customType == "loot-bin" ||
                 item.customType == "jump-pad" || item.customType == "spawn-point" ||
                 item.customType == "trigger" || item.customType == "jump-tower" ||
+                item.customType == "jump-tower-component" ||
                 item.customType == "weapon-rack" || item.customType == "respawn-heal" ||
                 item.customType == "button" || item.customType == "speed-boost" ||
                 item.customType == "bubble-shield" || item.customType == "camera-path" ||
@@ -859,6 +879,8 @@ namespace ReMap.Standalone
                 else if (item.customType == "spawn-point") BuildSpawnPointInspector(item, remapSettings);
                 else if (item.customType == "trigger") BuildTriggerInspector(item, remapSettings);
                 else if (item.customType == "jump-tower") BuildJumpTowerInspector(item, remapSettings);
+                else if (item.customType == "jump-tower-component")
+                    BuildJumpTowerBalloonInspector(item, remapSettings);
                 else if (item.customType == "weapon-rack") BuildWeaponRackInspector(item, remapSettings);
                 else if (item.customType == "respawn-heal") BuildRespawnHealInspector(item, remapSettings);
                 else if (item.customType == "button") BuildButtonInspector(item, remapSettings);
@@ -967,7 +989,7 @@ namespace ReMap.Standalone
             if (!WorldView.ToData(p).IsFinite || !WorldView.ToData(r).IsFinite || !WorldView.ToData(s).IsFinite || s.x < .01f || s.y < .01f || s.z < .01f) return;
 
             if(inspectorLockedZiplineEnd==null)inspectorLockedZiplineEnd=CaptureLockedZiplineEnd(SelectionRoots());
-            inspectorDirty = true; if(!world.SetLocalPreview(inspectorEditingId, p, r, s, inspectorLockedZiplineEnd))SetStatus(ApexCoordinates.LimitMessage);RefreshWorldPositionInfo(); UpdateGizmoVisual();
+            inspectorDirty = true; if(!world.SetLocalPreview(inspectorEditingId, p, r, s, inspectorLockedZiplineEnd))SetStatus(ApexCoordinates.LimitMessage);RefreshWorldPositionInfo();SyncJumpTowerHeightInput();UpdateGizmoVisual();
 
         }
 
@@ -995,6 +1017,8 @@ namespace ReMap.Standalone
             {
                 session.Edit(doc => { var item = doc.objects.Find(o => o.id == id); if (item == null) return;
                     item.displayName = name; if (!item.positionLocked) item.position = WorldView.ToData(p); item.rotation = WorldView.ToData(r); item.scale = WorldView.ToData(s);
+                    if (IsJumpTowerBalloon(item)) SyncJumpTowerHeightFromBalloon(doc, item);
+                    else if (item.customType == "jump-tower") NormalizeJumpTowerRotation(item);
                     if(lockedEndLocal!=null){var end=doc.objects.Find(o=>o.id==lockedEndLocal.id);if(end!=null)end.position=lockedEndLocal.position;} });
                 snapshot = session.Snapshot(); world.Sync(snapshot, selectedId); world.HighlightSelection(SelectionRoots());
                 undoButton?.SetEnabled(session.CanUndo); redoButton?.SetEnabled(session.CanRedo);
@@ -1032,7 +1056,7 @@ namespace ReMap.Standalone
             if (selectedId == null || selectedId != inspectorEditingId || positionInput == null) return;
 
             if (selectedIds.Count > 1) return;
-            RefreshWorldPositionInfo();var pose = world.LocalPose(selectedId); positionInput.Set(WorldView.ToVector(pose.position)); rotationInput.Set(WorldView.ToVector(pose.rotation)); scaleInput.Set(WorldView.ToVector(pose.scale));
+            RefreshWorldPositionInfo();var pose = world.LocalPose(selectedId); positionInput.Set(WorldView.ToVector(pose.position)); rotationInput.Set(WorldView.ToVector(pose.rotation)); scaleInput.Set(WorldView.ToVector(pose.scale));SyncJumpTowerHeightInput();
 
         }
 

@@ -207,9 +207,18 @@ namespace ReMap.Standalone
                 }
                 line.sharedMaterial = ZiplineCableMaterial(); line.widthMultiplier = .05f;
                 line.positionCount = 2;
-                line.SetPosition(0, instance.transform.TransformPoint(ReMapZiplineProfiles.UnityOffset(
-                    new Vector3(-1.75f, -2.75f, item.jumpTowerHeight))));
-                line.SetPosition(1, instance.transform.TransformPoint(ReMapZiplineProfiles.UnityOffset(
+                var towerBase = document.objects.Find(candidate => candidate.parentId == item.id &&
+                    candidate.customType == "jump-tower-component" && candidate.customRole == "base");
+                var balloon = document.objects.Find(candidate => candidate.parentId == item.id &&
+                    candidate.customType == "jump-tower-component" && candidate.customRole == "balloon");
+                var baseTransform = towerBase != null && instances.TryGetValue(towerBase.id, out var baseInstance)
+                    ? baseInstance.transform : instance.transform;
+                var balloonTransform = balloon != null && instances.TryGetValue(balloon.id, out var balloonInstance)
+                    ? balloonInstance.transform : instance.transform;
+                var topOffset = ReMapZiplineProfiles.UnityOffset(new Vector3(-1.75f, -2.75f,
+                    balloonTransform == instance.transform ? item.jumpTowerHeight : 0f));
+                line.SetPosition(0, balloonTransform.TransformPoint(topOffset));
+                line.SetPosition(1, baseTransform.TransformPoint(ReMapZiplineProfiles.UnityOffset(
                     new Vector3(-1.75f, -2.75f, 64f))));
             }
         }

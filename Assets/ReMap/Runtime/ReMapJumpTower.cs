@@ -12,34 +12,97 @@ namespace ReMap.Standalone
     {
         internal const string JumpTowerBaseModelPath = "mdl/props/zipline_balloon/zipline_balloon_base.rmdl";
         internal const string JumpTowerBalloonModelPath = "mdl/props/zipline_balloon/zipline_balloon.rmdl";
+        internal const float JumpTowerMinimumHeight = 1000f;
+        private const float JumpTowerMaximumHeight = 65535f;
         private bool preparingJumpTowerModels;
+        private FloatField jumpTowerHeightInput;
+
+        private static bool IsJumpTowerBalloon(MapObject item) => item != null &&
+            item.customType == "jump-tower-component" && item.customRole == "balloon";
+
+        private static float ClampJumpTowerHeight(float height) =>
+            Mathf.Clamp(height, JumpTowerMinimumHeight, JumpTowerMaximumHeight);
+
+        private static void NormalizeJumpTowerRotation(MapObject tower)
+        {
+            var apex = ApexDisplay.Angles(WorldView.ToVector(tower.rotation));
+            tower.rotation = WorldView.ToData(ApexDisplay.UnityAngles(
+                new Vector3(0f, apex.y, 0f)));
+            tower.scale = new Float3(1f, 1f, 1f);
+        }
+
+        private static void SyncJumpTowerHeightFromBalloon(MapDocument document,
+            MapObject balloon)
+        {
+            if (!IsJumpTowerBalloon(balloon)) return;
+            var tower = document.objects.Find(candidate => candidate.id == balloon.parentId &&
+                candidate.customType == "jump-tower");
+            if (tower == null) return;
+            float height = ClampJumpTowerHeight(
+                WorldView.ToVector(balloon.position).y / ApexCoordinates.MetersPerUnit);
+            tower.jumpTowerHeight = height;
+            balloon.position = WorldView.ToData(Vector3.up * height *
+                ApexCoordinates.MetersPerUnit);
+        }
 
         private GameAssetRecord JumpTowerModelRecord(string path) => assetLibrary?.Records.FirstOrDefault(candidate =>
             GameAssetIndex.SameModelPath(candidate.modelPath, path) && candidate.Supports(Targets));
 
         private MapObject CreateJumpTowerComponent(MapObject tower, string role, string modelPath, Vector3 position)
         {
+            var component = new MapObject();
+            ConfigureJumpTowerComponent(component, tower, role, modelPath, position);
+            return component;
+        }
+
+        private void ConfigureJumpTowerComponent(MapObject component, MapObject tower,
+            string role, string modelPath, Vector3 position)
+        {
             var record = JumpTowerModelRecord(modelPath);
-            return new MapObject {
-                assetId = record?.Id ?? "custom:jump-tower-component:" + role,
-                displayName = role == "base" ? L.T("#JUMP_TOWER_BASE") : L.T("#JUMP_TOWER_BALLOON"),
-                customType = "jump-tower-component", customRole = role, parentId = tower.id,
-                gameModelPath = modelPath, position = WorldView.ToData(position),
-                isGroup = record == null, commonAsset = record?.IsCommon ?? false,
-                availableMaps = record?.origins.Select(origin => origin.mapId)
-                    .Where(map => map != "").Distinct().ToList() ?? new List<string>()
-            };
+            component.assetId = record?.Id ?? "custom:jump-tower-component:" + role;
+            component.displayName = role == "base" ? L.T("#JUMP_TOWER_BASE") :
+                L.T("#JUMP_TOWER_BALLOON");
+            component.customType = "jump-tower-component";
+            component.customRole = role;
+            component.parentId = tower.id;
+            component.gameModelPath = modelPath;
+            component.position = WorldView.ToData(position);
+            component.rotation = default;
+            component.scale = new Float3(1f, 1f, 1f);
+            component.isGroup = record == null;
+            component.commonAsset = record?.IsCommon ?? false;
+            component.availableMaps = record?.origins.Select(origin => origin.mapId)
+                .Where(map => map != "").Distinct().ToList() ?? new List<string>();
         }
 
         private void SyncJumpTowerComponents(MapDocument document, MapObject tower)
         {
-            document.objects.RemoveAll(candidate => candidate.parentId == tower.id &&
-                candidate.customType == "jump-tower-component");
+            tower.jumpTowerHeight = ClampJumpTowerHeight(tower.jumpTowerHeight);
+            NormalizeJumpTowerRotation(tower);
             tower.assetId = "custom:jump-tower"; tower.gameModelPath = ""; tower.isGroup = true;
             tower.commonAsset = false; tower.availableMaps = new List<string>();
-            document.objects.Add(CreateJumpTowerComponent(tower, "base", JumpTowerBaseModelPath, Vector3.zero));
-            document.objects.Add(CreateJumpTowerComponent(tower, "balloon", JumpTowerBalloonModelPath,
-                Vector3.up * tower.jumpTowerHeight * ApexCoordinates.MetersPerUnit));
+            var components = document.objects.Where(candidate => candidate.parentId == tower.id &&
+                candidate.customType == "jump-tower-component").ToArray();
+
+            MapObject Ensure(string role, string path, Vector3 position)
+            {
+                var component = components.FirstOrDefault(candidate => candidate.customRole == role);
+                if (component == null)
+                {
+                    component = CreateJumpTowerComponent(tower, role, path, position);
+                    document.objects.Add(component);
+                }
+                else ConfigureJumpTowerComponent(component, tower, role, path, position);
+                return component;
+            }
+
+            var towerBase = Ensure("base", JumpTowerBaseModelPath, Vector3.zero);
+            towerBase.positionLocked = true;
+            var balloon = Ensure("balloon", JumpTowerBalloonModelPath,
+                Vector3.up * tower.jumpTowerHeight * ApexCoordinates.MetersPerUnit);
+            var retained = new HashSet<string> { towerBase.id, balloon.id };
+            document.objects.RemoveAll(candidate => candidate.parentId == tower.id &&
+                candidate.customType == "jump-tower-component" && !retained.Contains(candidate.id));
         }
 
         internal MapObject[] CreateJumpTower(Vector3 position, string parent = "")
@@ -67,19 +130,85 @@ namespace ReMap.Standalone
         {
             section.Add(Label(L.T("#JUMP_TOWER"), "inspector-subsection-title"));
             var height = CompactInspectorField(new FloatField(L.T("#JUMP_TOWER_HEIGHT_APEX_U")) {
-                value = item.jumpTowerHeight, isDelayed = true
+                value = item.jumpTowerHeight, isDelayed = false
             });
+            jumpTowerHeightInput = height;
+            var balloon = snapshot.objects.Find(candidate => candidate.parentId == item.id &&
+                IsJumpTowerBalloon(candidate));
+            height.SetEnabled(balloon?.positionLocked != true);
             section.Add(height);
             section.Add(Label(L.T("#JUMP_TOWER_HELP"), "note"));
-            height.RegisterValueChangedCallback(change => {
+            height.RegisterValueChangedCallback(change => Run(() => {
+                float value = ClampJumpTowerHeight(change.newValue);
+                if (!Mathf.Approximately(value, change.newValue))
+                    height.SetValueWithoutNotify(value);
                 CommitInspectorEdit();
                 session.Edit(document => {
                     var tower = document.objects.Find(candidate => candidate.id == item.id);
-                    tower.jumpTowerHeight = Mathf.Clamp(change.newValue, 128f, 65535f);
+                    tower.jumpTowerHeight = value;
                     SyncJumpTowerComponents(document, tower);
                 });
-                Refresh();
+                snapshot = session.Snapshot();
+                world.Sync(snapshot, selectedId);
+                UpdateGizmoVisual();
+            }));
+        }
+
+        private void BuildJumpTowerBalloonInspector(MapObject item, VisualElement section)
+        {
+            if (!IsJumpTowerBalloon(item)) return;
+            var tower = snapshot.objects.Find(candidate => candidate.id == item.parentId &&
+                candidate.customType == "jump-tower");
+            if (tower == null) return;
+            section.Add(Label(L.T("#JUMP_TOWER_BALLOON"), "inspector-subsection-title"));
+            var height = CompactInspectorField(new FloatField(L.T("#JUMP_TOWER_HEIGHT_APEX_U")) {
+                value = tower.jumpTowerHeight, isDelayed = false
             });
+            jumpTowerHeightInput = height;
+            height.SetEnabled(!item.positionLocked);
+            section.Add(height);
+            height.RegisterValueChangedCallback(change => Run(() => {
+                float value = ClampJumpTowerHeight(change.newValue);
+                if (!Mathf.Approximately(value, change.newValue))
+                    height.SetValueWithoutNotify(value);
+                CommitInspectorEdit();
+                session.Edit(document => {
+                    var editedTower = document.objects.Find(candidate => candidate.id == tower.id);
+                    editedTower.jumpTowerHeight = value;
+                    SyncJumpTowerComponents(document, editedTower);
+                });
+                snapshot = session.Snapshot();
+                world.Sync(snapshot, selectedId);
+                SyncInspectorValues();
+                UpdateGizmoVisual();
+            }));
+
+            var locked = CompactInspectorField(new Toggle(L.T("#LOCK_CONTROL_POINT_POSITION")) {
+                value = item.positionLocked
+            });
+            locked.tooltip = L.T("#LOCK_CONTROL_POINT_POSITION_HELP");
+            section.Add(locked);
+            locked.RegisterValueChangedCallback(change => Run(() => {
+                CommitInspectorEdit();
+                session.Edit(document => {
+                    var balloon = document.objects.Find(candidate => candidate.id == item.id);
+                    if (IsJumpTowerBalloon(balloon)) balloon.positionLocked = change.newValue;
+                });
+                Refresh();
+            }));
+        }
+
+        private void SyncJumpTowerHeightInput()
+        {
+            if (jumpTowerHeightInput == null || selectedId == null || snapshot == null) return;
+            var selected = snapshot.objects.Find(candidate => candidate.id == selectedId);
+            float height;
+            if (IsJumpTowerBalloon(selected))
+                height = WorldView.ToVector(world.LocalPose(selected.id).position).y /
+                    ApexCoordinates.MetersPerUnit;
+            else if (selected?.customType == "jump-tower") height = selected.jumpTowerHeight;
+            else return;
+            jumpTowerHeightInput.SetValueWithoutNotify(ClampJumpTowerHeight(height));
         }
 
         private bool JumpTowerComponentsNeedSync(MapDocument document, MapObject tower)

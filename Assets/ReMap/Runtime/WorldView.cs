@@ -437,6 +437,18 @@ namespace ReMap.Standalone
                 lockedTransform = lockedInstance.transform; lockedBefore = new PreviewPose(lockedTransform);
             }
             t.localPosition = position; t.localRotation = Quaternion.Euler(rotation); t.localScale = scale;
+            var previewItem = syncedZiplineDocument?.objects.Find(item => item.id == id);
+            if (previewItem?.customType == "jump-tower-component" && previewItem.customRole == "balloon")
+            {
+                var local = t.localPosition;
+                local.x = 0f; local.z = 0f;
+                local.y = Mathf.Clamp(local.y,
+                    ReMapApp.JumpTowerMinimumHeight * ApexCoordinates.MetersPerUnit,
+                    ApexCoordinates.MaxUnityCoord);
+                t.localPosition = local;
+                t.localRotation = Quaternion.identity;
+                t.localScale = Vector3.one;
+            }
             if (lockedTransform != null) lockedTransform.position = ToVector(lockedPosition.World.position);
             bool valid=WithinWorldLimits();if(!valid){before.Restore();if(lockedTransform!=null)lockedBefore.Restore();}
             selectionBounds.Clear(); Physics.SyncTransforms(); RefreshZiplineVisuals(); Highlight(id);return valid;

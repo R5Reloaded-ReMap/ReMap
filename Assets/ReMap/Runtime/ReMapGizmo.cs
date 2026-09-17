@@ -42,11 +42,14 @@ namespace ReMap.Standalone
         private void SetScaleGizmo() {CommitInspectorEdit();CancelPlacement();rotationGizmo=false;scaleGizmo=true;ShowScaleModeNotice();viewport.Focus();}
         private void ShowScaleModeNotice(){string warning=L.T("#GAME_SCALING_PROP_DYNAMIC_SCALE");mode.AddToClassList("mode-warning");mode.text=L.T("#SCALE_PROPORTIONS_LINKED")+" · "+warning;SetStatus(warning);}
         private void OnApplicationFocus(bool focused) {if(!focused){world?.CancelNavigation();CancelSceneSelection();CancelGizmoDrag();EndLibraryDrag();EndLayoutResize();}}
-        private bool ConstrainVerticalZiplineEndMovement()
+        private bool IsVerticalOnlyMoveTarget(MapObject item) =>
+            IsVerticalZiplineEnd(item) || IsJumpTowerBalloon(item);
+
+        private bool ConstrainVerticalMovement()
         {
             if (rotationGizmo || scaleGizmo || DirectionalDuplicationActive() || SurfacePlacementActive() || selectedIds.Count != 1) return false;
             var item = snapshot?.objects.Find(candidate => candidate.id == selectedId);
-            return IsVerticalZiplineEnd(item);
+            return IsVerticalOnlyMoveTarget(item);
         }
 
         private bool AllSelectedPositionsLocked()
@@ -60,10 +63,17 @@ namespace ReMap.Standalone
             if(gizmoVisual==null||snapshot==null)return;
             Vector3? pivot=placing==null&&placingAssembly==null&&placingSelection==null&&selectedId!=null?(Vector3?)SelectionPivot():null;
             bool duplicate=DirectionalDuplicationActive(); bool placement=SurfacePlacementActive(); bool cornerMode=duplicate && duplicateSymmetric?.value==true;
-            bool verticalEnd = ConstrainVerticalZiplineEndMovement();
+            bool verticalEnd = ConstrainVerticalMovement();
             bool positionLocked = !rotationGizmo && !scaleGizmo && AllSelectedPositionsLocked();
+            var selected = selectedIds.Count == 1 ?
+                snapshot.objects.Find(item => item.id == selectedId) : null;
+            bool derivedTowerTop = IsJumpTowerBalloon(selected);
+            bool jumpTowerRoot = selected?.customType == "jump-tower";
+            bool jumpTowerYaw = rotationGizmo && jumpTowerRoot;
             var basis = verticalEnd || placement ? Quaternion.identity : duplicate ? DirectionalDuplicationBasis() : SelectionBasis();
-            int axisMask = positionLocked ? 0 : verticalEnd ? 1 << 1 : 7;
+            int axisMask = positionLocked || derivedTowerTop && (rotationGizmo || scaleGizmo) ||
+                jumpTowerRoot && scaleGizmo ? 0 :
+                verticalEnd || jumpTowerYaw ? 1 << 1 : 7;
             gizmoVisual.Rebuild(world.Camera,pivot,duplicate||placement?false:rotationGizmo,basis,duplicate||placement?false:scaleGizmo,duplicate,cornerMode?CornerPivots():null,cornerTargetHandle,directionalMirrorCopy,cornerMode?CornerPlacementGuide():null,cornerOrbitTurn,cornerSideTurn,cornerObjectTurn,axisMask,placement);
             if(selectedIds.Count>1)world.HighlightSelection(SelectionRoots());
         }
@@ -121,6 +131,17 @@ namespace ReMap.Standalone
                         if(snap)amount=MapSession.Snap(amount,moveSnap);move=dragDirection*amount;
                     }
                     if(selectedIds.Count>1)positionInput?.Set(move);
+                }
+                if(!rotationGizmo&&!scaleGizmo&&dragOriginals.Count==1)
+                {
+                    var dragged=snapshot.objects.Find(item=>item.id==dragOriginals[0].Local.id);
+                    if(IsJumpTowerBalloon(dragged))
+                    {
+                        float originalHeight=WorldView.ToVector(dragOriginals[0].Local.position).y;
+                        float minimum=JumpTowerMinimumHeight*ApexCoordinates.MetersPerUnit;
+                        float maximum=JumpTowerMaximumHeight*ApexCoordinates.MetersPerUnit;
+                        move=new Vector3(0f,Mathf.Clamp(originalHeight+move.y,minimum,maximum)-originalHeight,0f);
+                    }
                 }
                 if(!world.PreviewSelection(dragOriginals,dragPivot,dragBasis,move,rotation,factors,dragLockedZiplineEnd))SetStatus(ApexCoordinates.LimitMessage);
                 world.HighlightSelection(SelectionRoots());SyncInspectorValues();UpdateGizmoVisual();return true;
@@ -182,7 +203,7 @@ namespace ReMap.Standalone
                 if(handle>=0)return true;
             }            if(inside&&placing==null&&selectedId!=null&&input.leftButton.wasPressedThisFrame) {
                 if (!rotationGizmo && !scaleGizmo && AllSelectedPositionsLocked()) return false;
-                bool verticalEnd=ConstrainVerticalZiplineEndMovement();int axis=gizmoVisual.Hit(mouse);
+                bool verticalEnd=ConstrainVerticalMovement();int axis=gizmoVisual.Hit(mouse);
                 if(axis<0||(verticalEnd&&axis!=1))return false;
                 CommitInspectorEdit();var roots=SelectionRoots();dragOriginals=world.CaptureSelection(roots);dragLockedZiplineEnd=CaptureLockedZiplineEnd(roots);if(dragOriginals.Count==0)return false;
                 draggingGizmo=true;dragAxis=axis;gizmoVisual.ActiveAxis=axis;dragBasis=verticalEnd?Quaternion.identity:SelectionBasis();

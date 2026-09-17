@@ -344,7 +344,7 @@ namespace ReMap.Standalone.Core
                     item.triggerEnterCallback.IndexOf('\0') >= 0 || item.triggerLeaveCallback.IndexOf('\0') >= 0))
                     throw new ArgumentException(L.T("#INVALID_TRIGGER_SETTINGS"));
                 if (item.customType == "jump-tower" && (!item.isGroup || !Finite(item.jumpTowerHeight) ||
-                    item.jumpTowerHeight < 128f || item.jumpTowerHeight > 65535f))
+                    item.jumpTowerHeight < 1000f || item.jumpTowerHeight > 65535f))
                     throw new ArgumentException(L.T("#INVALID_JUMP_TOWER_HEIGHT"));
                 if (item.customType == "weapon-rack" && (!Finite(item.weaponRackRespawnTime) ||
                     item.weaponRackRespawnTime < 0f || item.weaponRackRespawnTime > 86400f ||

@@ -93,6 +93,8 @@ namespace ReMap.Standalone
                 item = snapshot.objects.Find(candidate => candidate.id == item.parentId);
             if (item?.customType == "zipline-component")
                 item = snapshot.objects.Find(candidate => candidate.id == item.parentId);
+            if (item?.customType == "jump-tower-component" && item.customRole == "base")
+                item = snapshot.objects.Find(candidate => candidate.id == item.parentId);
             if (item?.customType == "zipline-endpoint" && item.customRole == "start")
                 item = snapshot.objects.Find(candidate => candidate.id == item.parentId);
             return item?.id ?? id;
@@ -267,7 +269,11 @@ namespace ReMap.Standalone
             return false;
         }
         private void MoveSelection(Vector3 delta) {
-            CommitInspectorEdit(); var roots = SelectionRoots(); var originals=world.CaptureSelection(roots);
+            CommitInspectorEdit(); var roots = SelectionRoots();
+            if(roots.Count==1&&IsVerticalOnlyMoveTarget(snapshot.objects.Find(item=>item.id==roots[0])))
+                delta=Vector3.up*delta.y;
+            if(delta==Vector3.zero)return;
+            var originals=world.CaptureSelection(roots);
             var lockedEnd=CaptureLockedZiplineEnd(roots);
             if(!world.PreviewSelection(originals,Vector3.zero,Quaternion.identity,delta,Quaternion.identity,Vector3.one,lockedEnd)) {SetStatus(ApexCoordinates.LimitMessage);return;}
             CommitSelectionPreview(IncludeLockedPosition(originals,lockedEnd)); Refresh();
@@ -325,7 +331,7 @@ namespace ReMap.Standalone
         private void CommitSelectionPreview(List<SelectionPose> originals) {
             var poses=originals.ToDictionary(o=>o.Local.id,o=>world.LocalPose(o.Local.id));
             bool changed=originals.Any(o=> {var p=poses[o.Local.id];return Vector3.Distance(WorldView.ToVector(p.position),WorldView.ToVector(o.Local.position))>.00001f||Quaternion.Angle(Quaternion.Euler(WorldView.ToVector(p.rotation)),Quaternion.Euler(WorldView.ToVector(o.Local.rotation)))>.0001f||Vector3.Distance(WorldView.ToVector(p.scale),WorldView.ToVector(o.Local.scale))>.00001f;});
-            if(changed)session.Edit(doc=> {foreach(var item in doc.objects)if(poses.TryGetValue(item.id,out var p)){item.position=p.position;item.rotation=p.rotation;item.scale=p.scale;}});
+            if(changed)session.Edit(doc=> {foreach(var item in doc.objects)if(poses.TryGetValue(item.id,out var p)){item.position=p.position;item.rotation=p.rotation;item.scale=p.scale;if(IsJumpTowerBalloon(item))SyncJumpTowerHeightFromBalloon(doc,item);else if(item.customType=="jump-tower")NormalizeJumpTowerRotation(item);}});
         }
         private SelectionPose CaptureLockedZiplineEnd(IReadOnlyList<string> roots) {
             if(roots==null||roots.Count!=1||snapshot==null)return null;

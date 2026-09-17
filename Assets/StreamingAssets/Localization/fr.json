@@ -3376,7 +3376,7 @@
     },
     {
       "key": "#INVALID_JUMP_TOWER_HEIGHT",
-      "text": "La hauteur de la tour de saut doit être comprise entre 128 et 65535 unités Apex."
+      "text": "La hauteur de la tour de saut doit être comprise entre 1000 et 65535 unités Apex."
     },
     {
       "key": "#TARGET_GAME",

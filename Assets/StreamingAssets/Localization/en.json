@@ -3376,7 +3376,7 @@
     },
     {
       "key": "#INVALID_JUMP_TOWER_HEIGHT",
-      "text": "Jump tower height must be between 128 and 65535 Apex units."
+      "text": "Jump tower height must be between 1000 and 65535 Apex units."
     },
     {
       "key": "#TARGET_GAME",
