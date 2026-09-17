@@ -1,4 +1,5 @@
 using System;
+using System.IO;
 using System.Linq;
 using ReMap.Standalone.Core;
 using UnityEngine;
@@ -63,6 +64,59 @@ namespace ReMap.Standalone
             return true;
         }
 
+        private static string CustomThumbnailSymbol(string type) =>
+            type == "curved-zipline" || type == "ziprail" ? "●╮●╰●" :
+            type == "door" ? "▥" :
+            type == "trigger" ? "◌" :
+            type == "camera-path" || type == "animated-camera" ? "◉—●" :
+            type == "sound" ? "◖)))" :
+            type == "location-pair" ? "◆ ⇄ ◆" :
+            type == "text-info-panel" ? "▤" :
+            type == "window-hint" ? "▣" : "●━━━━●";
+
+        private GameAssetRecord CustomThumbnailRecord(CatalogEntry entry)
+        {
+            if (entry == null || assetLibrary?.Records == null) return null;
+            GameAssetRecord first = null;
+            foreach (string path in CustomThumbnailModelPaths(entry.CustomType))
+            {
+                var record = assetLibrary.Records.FirstOrDefault(candidate =>
+                    GameAssetIndex.SameModelPath(candidate.modelPath, path) &&
+                    candidate.Supports(Targets));
+                if (record == null) continue;
+                first = first ?? record;
+                if (assetLibrary.CacheRoot != null && File.Exists(Path.Combine(
+                    assetLibrary.ModelDirectory(record), "thumbnail.png"))) return record;
+            }
+            return first;
+        }
+
+        private Texture2D LoadCustomThumbnail(GameAssetRecord record)
+        {
+            if (record == null || assetLibrary?.CacheRoot == null) return null;
+            string path = Path.Combine(assetLibrary.ModelDirectory(record), "thumbnail.png");
+            if (!File.Exists(path)) return null;
+            var texture = new Texture2D(2, 2);
+            try
+            {
+                if (ImageConversion.LoadImage(texture, File.ReadAllBytes(path), true)) return texture;
+            }
+            catch (Exception exception)
+            {
+                Debug.LogWarning(L.T("#THUMBNAIL_CACHE") + exception.Message);
+            }
+            Destroy(texture);
+            return null;
+        }
+
+        private void RefreshSelectedCustomThumbnail()
+        {
+            if (currentThumbnail != null || previewEntry == null ||
+                !previewEntry.Id.StartsWith("custom:", StringComparison.Ordinal)) return;
+            currentThumbnail = LoadCustomThumbnail(CustomThumbnailRecord(previewEntry));
+            assetPreview.image = currentThumbnail;
+        }
+
         private void RenderCustomCatalog()
         {
             ClearRenderedCatalog(); ConfigureFlowCatalog();
@@ -79,14 +133,29 @@ namespace ReMap.Standalone
                 card.SetEnabled(available);
                 card.tooltip = available ? L.T("#DOUBLE_CLICK_PLACE_DRAG_SCENE") :
                     L.T("#CUSTOM_OBJECT_MODELS_UNAVAILABLE");
-                var image = new VisualElement(); image.AddToClassList("card-image");
-                image.Add(Label(entry.CustomType == "curved-zipline" || entry.CustomType == "ziprail"
-                    ? "●╮●╰●" : "●━━━━●", "custom-card-symbol")); card.Add(image);
+                var image = new Image { scaleMode = ScaleMode.ScaleToFit };
+                image.AddToClassList("card-image");
+                var thumbnailRecord = CustomThumbnailRecord(entry);
+                if (thumbnailRecord != null) visibleAssets.Add(thumbnailRecord);
+                var thumbnail = LoadCustomThumbnail(thumbnailRecord);
+                if (thumbnail != null)
+                {
+                    pageThumbnails.Add(thumbnail); image.image = thumbnail;
+                    if (ThumbnailMissingAlbedo(thumbnailRecord))
+                        image.Add(Label("!", "card-warning"));
+                }
+                else image.Add(Label(thumbnailRecord == null
+                    ? CustomThumbnailSymbol(entry.CustomType)
+                    : ThumbnailStatus(thumbnailRecord), thumbnailRecord == null
+                        ? "custom-card-symbol" : "card-placeholder"));
+                card.Add(image);
                 card.Add(Label(entry.Name, "card-name")); card.Add(Label(entry.Category, "card-category"));
                 if (previewEntry?.Id == entry.Id) card.AddToClassList("selected");
                 catalogList.Add(card);
             }
             if (entries.Length == 0) catalogList.Add(Label(L.T("#NO_CUSTOM_OBJECT_MATCHES_SEARCH"), "note"));
+            PrioritizeVisibleThumbnails();
+            RefreshSelectedCustomThumbnail();
             _ = PrepareZiplineModels();
             _ = PrepareZiprailModels();
             _ = PrepareDoorModels();
@@ -130,6 +199,7 @@ namespace ReMap.Standalone
                     entry.CustomType == "text-info-panel" ? "#TEXT_INFO_PANEL_CUSTOM_HELP" :
                     entry.CustomType == "window-hint" ? "#WINDOW_HINT_CUSTOM_HELP" :
                     "#CABLE_TWO_INDEPENDENTLY_MOVABLE_ENDPOINTS");
+            RefreshSelectedCustomThumbnail();
             placeAssetButton.SetEnabled(true); RefreshCatalog();
             _ = PrepareZiplineModels();
             _ = PrepareZiprailModels();
