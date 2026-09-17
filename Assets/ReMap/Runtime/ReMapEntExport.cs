@@ -63,6 +63,15 @@ namespace ReMap.Standalone
                 scriptCount += AppendDoor(script, item, offset);
             }
 
+            var byId = world.ToDictionary(item => item.id, StringComparer.Ordinal);
+            foreach (var item in world.Where(item => item.customType == "zipline"))
+                scriptCount += AppendZipline(script, item, byId, offset);
+            foreach (var item in world.Where(item => item.customType == "curved-zipline"))
+                scriptCount += AppendCurvedZipline(script, item, world, offset);
+            if (GameTargets.Normalize(document.gameTarget) == GameTargets.R5Flowstate)
+                foreach (var item in world.Where(item => item.customType == "ziprail"))
+                    scriptCount += AppendZiprail(script, item, world, offset);
+
             foreach (var item in world.Where(item => item.customType == "loot-bin"))
             {
                 AppendAnimatedProp(script, item, offset, ReMapApp.LootBinModelPath,
@@ -124,7 +133,10 @@ namespace ReMap.Standalone
 
             var represented = new HashSet<string>(StringComparer.Ordinal)
             {
-                "", "door", "door-component", "loot-bin", "window-hint", "sound", "sound-point", "spawn-point"
+                "", "door", "door-component", "loot-bin", "window-hint", "sound", "sound-point", "spawn-point",
+                "zipline", "zipline-endpoint", "zipline-component",
+                "curved-zipline", "curved-zipline-point", "curved-zipline-component",
+                "ziprail", "ziprail-point", "ziprail-component"
             };
             foreach (var item in world.Where(item => item.customType.Length > 0 && !represented.Contains(item.customType) &&
                 !item.customType.EndsWith("-component", StringComparison.Ordinal) &&
@@ -219,6 +231,274 @@ namespace ReMap.Standalone
             }
             AppendAnimatedProp(output, door, offset, profile.ModelPath, "survival_door_plain", 0);
             return 1;
+        }
+
+        private static int AppendZipline(StringBuilder output, MapObject zipline,
+            IReadOnlyDictionary<string, MapObject> byId, Vector3 offset)
+        {
+            if (!byId.TryGetValue(zipline.ziplineStartId, out var start) ||
+                !byId.TryGetValue(zipline.ziplineEndId, out var end))
+                throw new ArgumentException(L.F("#ARG0_ZIPLINE_ENDPOINTS_MISSING", zipline.displayName));
+            bool vertical = zipline.ziplineMode == "vertical";
+            int count = AppendZiplinePointModels(output, start,
+                ReMapZiplineProfiles.Find(start.customProfile), start.ziplineArmHeight, offset, true,
+                out Vector3 startCable);
+            Vector3 endCable;
+            if (vertical) endCable = WorldView.ToVector(end.position);
+            else count += AppendZiplinePointModels(output, end,
+                ReMapZiplineProfiles.Find(end.customProfile), end.ziplineArmHeight, offset, true,
+                out endCable);
+            if (vertical) endCable = new Vector3(startCable.x, endCable.y, startCable.z);
+
+            Vector3 startApex = ApexDisplay.Position(startCable + offset);
+            Vector3 endApex = ApexDisplay.Position(endCable + offset);
+            Vector3 startAngles = vertical ? new Vector3(0, zipline.ziplinePushOffAngle, 0) :
+                DirectionAngles(endApex - startApex);
+            Vector3 endAngles = vertical ? startAngles : DirectionAngles(startApex - endApex);
+            string startGuid = LinkGuid(zipline.id, 0), endGuid = LinkGuid(zipline.id, 1);
+
+            AppendEntity(output,
+                Pair("ZiplinePushOffInDirectionX", Bool(zipline.ziplinePushOffInDirectionX)),
+                Pair("origin", VectorValue(endApex)), Pair("angles", VectorValue(endAngles)),
+                Pair("link_guid", endGuid), Pair("ZiplineVertical", Bool(vertical)),
+                Pair("ZiplineLengthScale", Number(zipline.ziplineLengthScale)),
+                Pair("ZiplineAutoDetachDistance", Number(zipline.ziplineAutoDetachEnd)),
+                Pair("classname", "zipline_end"));
+
+            var fields = new List<KeyValuePair<string, string>>();
+            if (zipline.ziplineRestPoint)
+            {
+                fields.Add(Pair("_zipline_rest_point_1", VectorValue(endApex)));
+                fields.Add(Pair("_zipline_rest_point_0", VectorValue(startApex)));
+            }
+            fields.Add(Pair("ZiplinePreserveVelocity", Bool(zipline.ziplinePreserveVelocity)));
+            fields.Add(Pair("ZiplineFadeDistance", Number(zipline.ziplineFadeDistance)));
+            fields.Add(Pair("ZiplineDropToBottom", Bool(zipline.ziplineDropToBottom)));
+            fields.Add(Pair("Width", Number(zipline.ziplineWidth)));
+            fields.Add(Pair("Material", "cable/zipline.vmt"));
+            fields.Add(Pair("gamemode_survival", "1"));
+            fields.Add(Pair("gamemode_freedm", "1"));
+            fields.Add(Pair("gamemode_control", "1"));
+            fields.Add(Pair("gamemode_arenas", "1"));
+            fields.Add(Pair("DetachEndOnUse", Bool(zipline.ziplineDetachEndOnUse)));
+            fields.Add(Pair("DetachEndOnSpawn", Bool(zipline.ziplineDetachEndOnSpawn)));
+            fields.Add(Pair("scale", Number(zipline.ziplineScale)));
+            fields.Add(Pair("angles", VectorValue(startAngles)));
+            fields.Add(Pair("origin", VectorValue(startApex)));
+            fields.Add(Pair("link_to_guid_0", endGuid));
+            fields.Add(Pair("link_guid", startGuid));
+            fields.Add(Pair("ZiplineVertical", Bool(vertical)));
+            fields.Add(Pair("ZiplineVersion", "3"));
+            fields.Add(Pair("ZiplineSpeedScale", Number(zipline.ziplineSpeed)));
+            fields.Add(Pair("ZiplinePushOffInDirectionX", Bool(zipline.ziplinePushOffInDirectionX)));
+            fields.Add(Pair("ZiplineLengthScale", Number(zipline.ziplineLengthScale)));
+            fields.Add(Pair("ZiplineAutoDetachDistance", Number(zipline.ziplineAutoDetachStart)));
+            fields.Add(Pair("classname", "zipline"));
+            AppendEntity(output, fields.ToArray());
+            return count + 2;
+        }
+
+        private static int AppendCurvedZipline(StringBuilder output, MapObject zipline,
+            List<MapObject> world, Vector3 offset)
+        {
+            var points = world.Where(item => item.customType == "curved-zipline-point" &&
+                item.parentId == zipline.id).OrderBy(PointIndex).ToList();
+            if (points.Count < 2)
+                throw new ArgumentException(L.F("#ARG0_CURVED_ZIPLINE_POINTS_MISSING", zipline.displayName));
+            var adjusted = new List<Vector3>();
+            int count = 0;
+            foreach (var point in points)
+            {
+                count += AppendZiplinePointModels(output, point,
+                    ReMapZiplineProfiles.Find(point.customProfile), point.ziplineArmHeight,
+                    offset, false, out Vector3 cable);
+                adjusted.Add(cable);
+            }
+            List<Vector3> curve = BezierPath(adjusted, zipline.curvedZiplineSegments);
+            for (int index = 0; index < curve.Count; index++)
+            {
+                var fields = new List<KeyValuePair<string, string>>
+                {
+                    Pair("MoveSpeed", Number(64f * zipline.ziplineSpeed)), Pair("Slack", "25"),
+                    Pair("Subdiv", "2"), Pair("Width", Number(zipline.ziplineWidth)), Pair("Type", "0"),
+                    Pair("TextureScale", "1"), Pair("PositionInterpolator", "2"),
+                    Pair("RopeMaterial", "cable/zipline.vmt"), Pair("Zipline", "1"),
+                    Pair("ZiplineAutoDetachDistance", "150"), Pair("ZiplineSagEnable", "0"),
+                    Pair("ZiplineSagHeight", "50"), Pair("fadedist", "50000"),
+                    Pair("origin", VectorValue(ApexDisplay.Position(curve[index] + offset))),
+                    Pair("link_guid", LinkGuid(zipline.id, index))
+                };
+                if (index + 1 < curve.Count)
+                    fields.Add(Pair("link_to_guid_0", LinkGuid(zipline.id, index + 1)));
+                fields.Add(Pair("classname", index == 0 ? "move_rope" : "keyframe_rope"));
+                AppendEntity(output, fields.ToArray());
+            }
+            return count + curve.Count;
+        }
+
+        private static int AppendZiprail(StringBuilder output, MapObject ziprail,
+            List<MapObject> world, Vector3 offset)
+        {
+            var points = world.Where(item => item.customType == "ziprail-point" &&
+                item.parentId == ziprail.id).OrderBy(PointIndex).ToList();
+            if (points.Count < 2)
+                throw new ArgumentException(L.F("#ARG0_ZIPRAIL_POINTS_MISSING", ziprail.displayName));
+            int count = 0;
+            foreach (var point in points)
+            {
+                var profile = ReMapZiprailProfiles.Find(point.customProfile);
+                foreach (var component in ReMapZiprailProfiles.Components(profile, point.ziplineArmHeight))
+                {
+                    MapObject transformed = TransformUnity(point, component.Position, component.Rotation);
+                    AppendNativeProp(output, transformed, offset, component.ModelPath, false);
+                    count++;
+                }
+            }
+
+            for (int index = 0; index < points.Count; index++)
+            {
+                bool endpoint = index == 0 || index == points.Count - 1;
+                var fields = new List<KeyValuePair<string, string>>();
+                if (endpoint)
+                {
+                    Vector3 current = ApexDisplay.Position(WorldView.ToVector(points[index].position) + offset);
+                    int adjacent = index == 0 ? 1 : index - 1;
+                    Vector3 other = ApexDisplay.Position(WorldView.ToVector(points[adjacent].position) + offset);
+                    fields.Add(Pair("ziprailMountReverseDistance", "200"));
+                    fields.Add(Pair("ZiplineVertical", "0"));
+                    fields.Add(Pair("ZiplinePushOffInDirectionX", "0"));
+                    fields.Add(Pair("ZiplinePreserveVelocity", "0"));
+                    fields.Add(Pair("ZiplineLengthScale", "1"));
+                    fields.Add(Pair("ZiplineFadeDistance", "-1"));
+                    fields.Add(Pair("ZiplineDropToBottom", "1"));
+                    fields.Add(Pair("useAutoDetachSpeed", "0"));
+                    fields.Add(Pair("useZiprailAutoDetachSpeed", (index == 0 ? ziprail.ziplineAutoDetachStart :
+                        ziprail.ziplineAutoDetachEnd) > 0 ? "1" : "0"));
+                    fields.Add(Pair("Material", "cable/zipline.vmt"));
+                    fields.Add(Pair("gamemode_survival", "1"));
+                    fields.Add(Pair("gamemode_freedm", "1"));
+                    fields.Add(Pair("gamemode_control", "1"));
+                    fields.Add(Pair("gamemode_arenas", "1"));
+                    fields.Add(Pair("DetachEndOnUse", "0"));
+                    fields.Add(Pair("DetachEndOnSpawn", "0"));
+                    fields.Add(Pair("scale", "1"));
+                    fields.Add(Pair("angles", VectorValue(DirectionAngles(current - other))));
+                    fields.Add(Pair("ZiplineVersion", "3"));
+                    fields.Add(Pair("ZiplineSpeedScale", Number(ziprail.ziplineSpeed)));
+                    fields.Add(Pair("ZiplineAutoDetachDistance", Number(index == 0 ?
+                        ziprail.ziplineAutoDetachStart : ziprail.ziplineAutoDetachEnd)));
+                    fields.Add(Pair("Width", Number(ziprail.ziplineWidth)));
+                    fields.Add(Pair("isZiprailStart", "1"));
+                }
+                else
+                {
+                    fields.Add(Pair("tangent_type", "0"));
+                    fields.Add(Pair("perfect_circular_rotation", "0"));
+                    fields.Add(Pair("num_smooth_points", "-1"));
+                }
+                fields.Add(Pair("origin", Position(points[index].position, offset)));
+                if (index > 0) fields.Add(Pair("link_to_guid_0", LinkGuid(ziprail.id, index - 1)));
+                fields.Add(Pair("link_guid", LinkGuid(ziprail.id, index)));
+                fields.Add(Pair("script_name", "script_control_omit_zipline"));
+                fields.Add(Pair("classname", endpoint ? "zipline" : "script_mover_train_node"));
+                AppendEntity(output, fields.ToArray());
+            }
+            return count + points.Count;
+        }
+
+        private static int AppendZiplinePointModels(StringBuilder output, MapObject point,
+            ReMapZiplineProfile profile, float height, Vector3 offset, bool collision,
+            out Vector3 cablePosition)
+        {
+            int count = 0;
+            Vector3 localCable = Vector3.zero;
+            if (profile.HasSupport)
+            {
+                AppendNativeProp(output, point, offset, ReMapZiplineProfiles.SupportModelPath, collision);
+                MapObject arm = Transform(point, new Vector3(4, -2.5f, height),
+                    ReMapZiplineProfiles.ArmRotationApex);
+                AppendNativeProp(output, arm, offset, ReMapZiplineProfiles.ArmModelPath, collision);
+                localCable = new Vector3(4, -2.5f, height) + ReMapZiplineProfiles.ArmToCableApex;
+                count += 2;
+            }
+            else if (profile.HasArm)
+            {
+                MapObject arm = Transform(point, Vector3.zero, ReMapZiplineProfiles.ArmRotationApex);
+                AppendNativeProp(output, arm, offset, ReMapZiplineProfiles.ArmModelPath, collision);
+                localCable = ReMapZiplineProfiles.ArmToCableApex;
+                count++;
+            }
+            Vector3 position = WorldView.ToVector(point.position);
+            Quaternion rotation = Quaternion.Euler(WorldView.ToVector(point.rotation));
+            cablePosition = position + rotation * ApexDisplay.UnityPosition(localCable);
+            return count;
+        }
+
+        private static void AppendNativeProp(StringBuilder output, MapObject item, Vector3 offset,
+            string model, bool collision)
+        {
+            var fields = new List<KeyValuePair<string, string>>
+            {
+                Pair("StartDisabled", "0"), Pair("spawnflags", "0"),
+                Pair("solid", collision ? "6" : "0"),
+                Pair("collide_titan", collision ? "1" : "0"), Pair("collide_ai", collision ? "1" : "0"),
+                Pair("scale", "1"), Pair("angles", Angles(item.rotation)),
+                Pair("origin", Position(item.position, offset)), Pair("model", model),
+                Pair("ClientSide", "0")
+            };
+            if (!collision) fields.Add(Pair("contents", "0"));
+            fields.Add(Pair("classname", "prop_dynamic"));
+            AppendEntity(output, fields.ToArray());
+        }
+
+        private static MapObject TransformUnity(MapObject source, Vector3 localPosition, Vector3 localRotation)
+        {
+            Vector3 position = WorldView.ToVector(source.position);
+            Quaternion rotation = Quaternion.Euler(WorldView.ToVector(source.rotation));
+            return new MapObject
+            {
+                id = source.id, position = WorldView.ToData(position + rotation * localPosition),
+                rotation = WorldView.ToData((rotation * Quaternion.Euler(localRotation)).eulerAngles)
+            };
+        }
+
+        private static List<Vector3> BezierPath(IReadOnlyList<Vector3> points, int segmentsPerSpan)
+        {
+            segmentsPerSpan = Math.Max(2, Math.Min(32, segmentsPerSpan));
+            var tangents = new List<Vector3> { (points[1] - points[0]) * .5f };
+            for (int index = 1; index < points.Count - 1; index++)
+            {
+                Vector3 direction = points[index + 1] - points[index - 1];
+                float length = Math.Min(Vector3.Distance(points[index - 1], points[index]),
+                    Vector3.Distance(points[index], points[index + 1])) * .5f;
+                tangents.Add(direction.magnitude < .001f ? Vector3.zero : direction.normalized * length);
+            }
+            tangents.Add((points[points.Count - 1] - points[points.Count - 2]) * .5f);
+            var result = new List<Vector3> { points[0] };
+            for (int span = 0; span < points.Count - 1; span++)
+            {
+                Vector3 p0 = points[span], p1 = p0 + tangents[span];
+                Vector3 p3 = points[span + 1], p2 = p3 - tangents[span + 1];
+                for (int segment = 1; segment <= segmentsPerSpan; segment++)
+                {
+                    float t = segment / (float)segmentsPerSpan;
+                    Vector3 a = Vector3.LerpUnclamped(p0, p1, t);
+                    Vector3 b = Vector3.LerpUnclamped(p1, p2, t);
+                    Vector3 c = Vector3.LerpUnclamped(p2, p3, t);
+                    result.Add(Vector3.LerpUnclamped(Vector3.LerpUnclamped(a, b, t),
+                        Vector3.LerpUnclamped(b, c, t), t));
+                }
+            }
+            return result;
+        }
+
+        private static Vector3 DirectionAngles(Vector3 direction)
+        {
+            if (direction.sqrMagnitude < .000001f) return Vector3.zero;
+            direction.Normalize();
+            float planar = Mathf.Sqrt(direction.x * direction.x + direction.y * direction.y);
+            return new Vector3(-Mathf.Atan2(direction.z, planar) * Mathf.Rad2Deg,
+                Mathf.Atan2(direction.y, direction.x) * Mathf.Rad2Deg, 0);
         }
 
         private static MapObject Transform(MapObject source, Vector3 apexPosition, Vector3 apexRotation)
@@ -319,8 +599,8 @@ namespace ReMap.Standalone
         private static string LinkGuid(string id, int index)
         {
             string value = (id ?? "").Replace("-", "");
-            if (value.Length < 12 || !value.Take(12).All(Uri.IsHexDigit)) value = Guid.NewGuid().ToString("N");
-            return value.Substring(0, 12).ToLowerInvariant() + index.ToString("x4", CultureInfo.InvariantCulture);
+            if (value.Length < 8 || !value.Take(8).All(Uri.IsHexDigit)) value = Guid.NewGuid().ToString("N");
+            return value.Substring(0, 8).ToLowerInvariant() + ((uint)index).ToString("x8", CultureInfo.InvariantCulture);
         }
 
         private static string Safe(string value)

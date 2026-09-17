@@ -76,5 +76,70 @@ namespace ReMap.Standalone.Tests
                 StringSplitOptions.None).Length - 1, Is.EqualTo(2));
             StringAssert.Contains("\"link_to_guid_0\"", result.Script);
         }
+
+        [Test]
+        public void ClassicZiplineExportsNativeEndpointsAndGameplaySettings()
+        {
+            var start = new MapObject
+            {
+                customType = "zipline-endpoint", customProfile = "support", ziplineArmHeight = 200
+            };
+            var end = new MapObject
+            {
+                customType = "zipline-endpoint", customProfile = "arm", position = new Float3(0, 0, 10)
+            };
+            var zipline = new MapObject
+            {
+                customType = "zipline", isGroup = true, ziplineStartId = start.id, ziplineEndId = end.id,
+                ziplineWidth = 3, ziplineSpeed = 1.5f, ziplineRestPoint = true,
+                ziplinePreserveVelocity = true, ziplineDetachEndOnUse = true
+            };
+            ReMapEntFragments result = ReMapEntExporter.Generate(Document(), new[] { zipline, start, end });
+            Assert.That(result.ScriptEntityCount, Is.EqualTo(5));
+            StringAssert.Contains("\"classname\" \"zipline_end\"", result.Script);
+            StringAssert.Contains("\"classname\" \"zipline\"", result.Script);
+            StringAssert.Contains("\"ZiplineSpeedScale\" \"1.5\"", result.Script);
+            StringAssert.Contains("\"ZiplinePreserveVelocity\" \"1\"", result.Script);
+            StringAssert.Contains("\"_zipline_rest_point_1\"", result.Script);
+        }
+
+        [Test]
+        public void CurvedZiplineBakesBezierRopesAndCollisionFreeVisualSupports()
+        {
+            var curve = new MapObject { customType = "curved-zipline", isGroup = true, curvedZiplineSegments = 4 };
+            var first = new MapObject { customType = "curved-zipline-point", parentId = curve.id,
+                customRole = "0", customProfile = "support", ziplineArmHeight = 180 };
+            var middle = new MapObject { customType = "curved-zipline-point", parentId = curve.id,
+                customRole = "1", customProfile = "none", position = new Float3(2, 2, 4) };
+            var last = new MapObject { customType = "curved-zipline-point", parentId = curve.id,
+                customRole = "2", customProfile = "arm", position = new Float3(4, 0, 8) };
+            ReMapEntFragments result = ReMapEntExporter.Generate(Document(), new[] { curve, first, middle, last });
+            Assert.That(result.ScriptEntityCount, Is.EqualTo(12));
+            StringAssert.Contains("\"classname\" \"move_rope\"", result.Script);
+            StringAssert.Contains("\"classname\" \"keyframe_rope\"", result.Script);
+            StringAssert.Contains("\"PositionInterpolator\" \"2\"", result.Script);
+            StringAssert.Contains("\"solid\" \"0\"", result.Script);
+            StringAssert.Contains("\"contents\" \"0\"", result.Script);
+        }
+
+        [Test]
+        public void R5FlowstateZiprailExportsNativeTrainNodeChainAndModels()
+        {
+            var document = Document(); document.gameTarget = GameTargets.R5Flowstate;
+            var rail = new MapObject { customType = "ziprail", isGroup = true, ziplineSpeed = 1.75f };
+            var first = new MapObject { customType = "ziprail-point", parentId = rail.id,
+                customRole = "0", customProfile = "support", ziplineArmHeight = 320 };
+            var middle = new MapObject { customType = "ziprail-point", parentId = rail.id,
+                customRole = "1", customProfile = "none", position = new Float3(2, 1, 4) };
+            var last = new MapObject { customType = "ziprail-point", parentId = rail.id,
+                customRole = "2", customProfile = "arm", position = new Float3(4, 0, 8) };
+            ReMapEntFragments result = ReMapEntExporter.Generate(document, new[] { rail, first, middle, last });
+            Assert.That(result.ScriptEntityCount, Is.EqualTo(9));
+            StringAssert.Contains("\"classname\" \"script_mover_train_node\"", result.Script);
+            StringAssert.Contains("\"script_name\" \"script_control_omit_zipline\"", result.Script);
+            StringAssert.Contains("mdl/props/zip_rail/zip_rail_ground_post_01.rmdl", result.Script);
+            Assert.That(result.Script.Split(new[] { "\"isZiprailStart\" \"1\"" },
+                StringSplitOptions.None).Length - 1, Is.EqualTo(2));
+        }
     }
 }
