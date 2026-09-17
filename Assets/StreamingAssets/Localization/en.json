@@ -2063,6 +2063,10 @@
       "text": "An .ent value contains a quote, line break, or null character."
     },
     {
+      "key": "#ENT_SOURCE_MUST_BE_ORIGINAL",
+      "text": "Select the original map .ent files, not a previously generated ReMap bundle."
+    },
+    {
       "key": "#COPY_LIVE_COMMANDS",
       "text": "Copy live commands"
     },

@@ -1,6 +1,8 @@
 using NUnit.Framework;
 using ReMap.Standalone.Core;
 using System;
+using System.IO;
+using System.Text;
 
 namespace ReMap.Standalone.Tests
 {
@@ -140,6 +142,37 @@ namespace ReMap.Standalone.Tests
             StringAssert.Contains("mdl/props/zip_rail/zip_rail_ground_post_01.rmdl", result.Script);
             Assert.That(result.Script.Split(new[] { "\"isZiprailStart\" \"1\"" },
                 StringSplitOptions.None).Length - 1, Is.EqualTo(2));
+        }
+
+        [Test]
+        public void WritesFiveMergedCopiesAndRejectsGeneratedBundleAsItsOwnSource()
+        {
+            string root = Path.Combine(Path.GetTempPath(), "ReMapEnt-" + Guid.NewGuid().ToString("N"));
+            Directory.CreateDirectory(root);
+            try
+            {
+                const string map = "mp_rr_divided_moon";
+                const string original = "ENTITIES02 num_models=28\n{\n\"classname\" \"info_player_start\"\n}\n\0";
+                foreach (string kind in new[] { "env", "fx", "script", "snd", "spawn" })
+                    File.WriteAllText(Path.Combine(root, map + "_" + kind + ".ent"), original,
+                        new UTF8Encoding(false));
+                var prop = new MapObject { gameModelPath = "mdl/props/export_test.rmdl" };
+                string output = ReMapEntExporter.WriteMergedBundle(
+                    Path.Combine(root, map + "_script.ent"), Document(), new[] { prop });
+
+                foreach (string kind in new[] { "env", "fx", "script", "snd", "spawn" })
+                    Assert.That(File.Exists(Path.Combine(output, map + "_" + kind + ".ent")), Is.True, kind);
+                string script = File.ReadAllText(Path.Combine(output, map + "_script.ent"));
+                StringAssert.Contains("mdl/props/export_test.rmdl", script);
+                Assert.That(script[script.Length - 1], Is.EqualTo('\0'));
+                Assert.That(File.Exists(Path.Combine(output, "ReMap-ENT-report.txt")), Is.True);
+                Assert.Throws<InvalidDataException>(() => ReMapEntExporter.WriteMergedBundle(
+                    Path.Combine(output, map + "_script.ent"), Document(), new[] { prop }));
+            }
+            finally
+            {
+                if (Directory.Exists(root)) Directory.Delete(root, true);
+            }
         }
     }
 }

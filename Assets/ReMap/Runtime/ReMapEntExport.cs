@@ -157,6 +157,8 @@ namespace ReMap.Standalone
         {
             if (string.IsNullOrWhiteSpace(selectedSourceEnt)) throw new ArgumentNullException(nameof(selectedSourceEnt));
             string sourceDirectory = Path.GetDirectoryName(Path.GetFullPath(selectedSourceEnt));
+            if (File.Exists(Path.Combine(sourceDirectory, "ReMap-ENT-report.txt")))
+                throw new InvalidDataException(L.T("#ENT_SOURCE_MUST_BE_ORIGINAL"));
             string map = ValidateMapName(document?.editingMap);
             foreach (string kind in LumpKinds)
             {

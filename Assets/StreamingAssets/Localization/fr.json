@@ -2063,6 +2063,10 @@
       "text": "Une valeur .ent contient un guillemet, un saut de ligne ou un caractère nul."
     },
     {
+      "key": "#ENT_SOURCE_MUST_BE_ORIGINAL",
+      "text": "Sélectionnez les .ent originaux de la carte, pas un bundle ReMap déjà généré."
+    },
+    {
       "key": "#COPY_LIVE_COMMANDS",
       "text": "Copier les commandes live"
     },
