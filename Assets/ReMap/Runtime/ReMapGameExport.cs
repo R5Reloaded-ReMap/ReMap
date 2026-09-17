@@ -284,6 +284,10 @@ namespace ReMap.Standalone
             foreach (string rpak in archives)
                 code.Append("\tLoadPak( \"").Append(rpak).AppendLine("\" )");
             code.AppendLine("#endif");
+            code.AppendLine("#if CLIENT");
+            foreach (string rpak in archives)
+                code.Append("\tLoadPak( GetLocalClientPlayer(), \"").Append(rpak).AppendLine("\" )");
+            code.AppendLine("#endif");
             code.AppendLine();
         }
 

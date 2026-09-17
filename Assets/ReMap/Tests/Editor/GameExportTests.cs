@@ -17,6 +17,8 @@ namespace ReMap.Standalone.Tests
             StringAssert.DoesNotContain("pak_requestload mp_base.rpak", code);
             StringAssert.Contains("#if SERVER\n\tLoadPak( \"mp_extra.rpak\" )", code);
             StringAssert.Contains("LoadPak( \"mp_extra_client_perm.rpak\" )\n#endif", code);
+            StringAssert.Contains("#if CLIENT\n\tLoadPak( GetLocalClientPlayer(), \"mp_extra.rpak\" )", code);
+            StringAssert.Contains("LoadPak( GetLocalClientPlayer(), \"mp_extra_client_perm.rpak\" )\n#endif", code);
             StringAssert.DoesNotContain("ClientCommand", code);
             Assert.That(code.IndexOf("LoadPak( \"mp_extra.rpak\" )", System.StringComparison.Ordinal),
                 Is.LessThan(code.IndexOf("PrecacheModel", System.StringComparison.Ordinal)));
