@@ -4151,6 +4151,86 @@
       "text": "Les paramètres du bouclier bulle sont invalides."
     },
     {
+      "key": "#CAMERA_PATH",
+      "text": "Trajectoire de caméra"
+    },
+    {
+      "key": "#CUSTOM_OBJECT_CAMERA_PATH",
+      "text": "Trajectoire de caméra personnalisée"
+    },
+    {
+      "key": "#CAMERA_PATH_POINT",
+      "text": "Point de trajectoire caméra"
+    },
+    {
+      "key": "#CAMERA_PATH_TARGET",
+      "text": "Cible suivie par la caméra"
+    },
+    {
+      "key": "#CAMERA_POINT_ARG0",
+      "text": "Point caméra {0}"
+    },
+    {
+      "key": "#ARG0_CAMERA_POINTS",
+      "text": "{0} points caméra"
+    },
+    {
+      "key": "#CAMERA_PATH_TRANSITION_TIME",
+      "text": "Durée par transition (secondes)"
+    },
+    {
+      "key": "#CAMERA_PATH_FOV",
+      "text": "Champ de vision"
+    },
+    {
+      "key": "#CAMERA_PATH_TRACK_TARGET",
+      "text": "Suivre la cible"
+    },
+    {
+      "key": "#CAMERA_PATH_ENABLE_SPACING",
+      "text": "Forcer l’espacement des points"
+    },
+    {
+      "key": "#CAMERA_PATH_SPACING",
+      "text": "Espacement des points (u Apex)"
+    },
+    {
+      "key": "#CAMERA_PATH_CUSTOM_HELP",
+      "text": "Caméra cinématique côté client se déplaçant entre des points ordonnés. L’export live n’est pas pris en charge."
+    },
+    {
+      "key": "#CAMERA_PATH_HELP",
+      "text": "Orientez chaque point pour viser avec la caméra, ou activez le suivi puis déplacez la cible rose."
+    },
+    {
+      "key": "#CAMERA_PATH_POINT_HELP",
+      "text": "Déplacez et orientez ce point pour définir la pose de la caméra."
+    },
+    {
+      "key": "#CAMERA_PATH_TARGET_HELP",
+      "text": "Lorsque le suivi est actif, la caméra vise cette cible depuis chaque point de la trajectoire."
+    },
+    {
+      "key": "#SELECT_CAMERA_PATH",
+      "text": "Sélectionner la trajectoire"
+    },
+    {
+      "key": "#CAMERA_PATH_CREATED",
+      "text": "Trajectoire de caméra créée."
+    },
+    {
+      "key": "#ARG0_CAMERA_PATH_POINTS_MISSING",
+      "text": "{0} : au moins deux points de trajectoire sont requis."
+    },
+    {
+      "key": "#ARG0_CAMERA_PATH_TARGET_MISSING",
+      "text": "{0} : la cible suivie par la caméra est manquante."
+    },
+    {
+      "key": "#INVALID_CAMERA_PATH_SETTINGS",
+      "text": "Les paramètres de la trajectoire caméra sont invalides."
+    },
+    {
       "key": "#DEVELOPMENT_BUILD",
       "text": "Build de développement — débogage activé"
     },

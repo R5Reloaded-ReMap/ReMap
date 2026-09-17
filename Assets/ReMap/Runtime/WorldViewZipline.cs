@@ -12,6 +12,7 @@ namespace ReMap.Standalone
         private const string ZiplineDetachStartName = "__remap_zipline_detach_start";
         private const string ZiplineDetachEndName = "__remap_zipline_detach_end";
         private const string TriggerPreviewName = "__remap_trigger_volume";
+        private const string CameraPathMarkerName = "__remap_camera_path_marker";
         private MapDocument syncedZiplineDocument;
         private Material ziplineCableMaterial, ziplineDetachMaterial;
 
@@ -33,6 +34,8 @@ namespace ReMap.Standalone
                     foreach (var collider in instance.GetComponentsInChildren<Collider>(true))
                         collider.enabled = false;
                 if (item.customType == "trigger") EnsureTriggerVisual(instance, item);
+                if (item.customType == "camera-path-point" || item.customType == "camera-path-target")
+                    EnsureCameraPathMarker(instance, item);
             }
             foreach (var item in document.objects)
             {
@@ -111,6 +114,25 @@ namespace ReMap.Standalone
             }
             foreach (var item in document.objects)
             {
+                if (item.customType != "camera-path" || !instances.TryGetValue(item.id, out var instance))
+                    continue;
+                var line = instance.GetComponent<LineRenderer>();
+                if (line == null)
+                {
+                    line = instance.AddComponent<LineRenderer>();
+                    line.useWorldSpace = true; line.numCapVertices = 4;
+                }
+                line.sharedMaterial = ZiplineCableMaterial(); line.widthMultiplier = .035f;
+                var points = document.objects.Where(candidate => candidate.parentId == item.id &&
+                    candidate.customType == "camera-path-point")
+                    .OrderBy(candidate => int.TryParse(candidate.customRole, out int index) ? index : int.MaxValue)
+                    .Select(candidate => instances.TryGetValue(candidate.id, out var point) ? point.transform.position : Vector3.zero)
+                    .ToArray();
+                line.enabled = points.Length >= 2;
+                if (line.enabled) { line.positionCount = points.Length; line.SetPositions(points); }
+            }
+            foreach (var item in document.objects)
+            {
                 if (item.customType != "jump-tower" || !instances.TryGetValue(item.id, out var instance))
                     continue;
                 var line = instance.GetComponent<LineRenderer>();
@@ -126,6 +148,26 @@ namespace ReMap.Standalone
                 line.SetPosition(1, instance.transform.TransformPoint(ReMapZiplineProfiles.UnityOffset(
                     new Vector3(-1.75f, -2.75f, 64f))));
             }
+        }
+
+        private void EnsureCameraPathMarker(GameObject instance, MapObject item)
+        {
+            var existing = instance.transform.Find(CameraPathMarkerName);
+            GameObject marker;
+            if (existing == null)
+            {
+                marker = GameObject.CreatePrimitive(item.customType == "camera-path-target" ? PrimitiveType.Cube : PrimitiveType.Sphere);
+                marker.name = CameraPathMarkerName; marker.transform.SetParent(instance.transform, false);
+                marker.transform.localScale = Vector3.one * (item.customType == "camera-path-target" ? .28f : .2f);
+                marker.GetComponent<Collider>().enabled = false;
+                marker.GetComponent<Renderer>().sharedMaterial = lineMaterial;
+                instanceIds[marker] = item.id;
+            }
+            else marker = existing.gameObject;
+            var tint = new MaterialPropertyBlock();
+            tint.SetColor("_BaseColor", item.customType == "camera-path-target" ?
+                new Color(1f, .25f, .65f) : new Color(1f, .82f, .18f));
+            marker.GetComponent<Renderer>().SetPropertyBlock(tint);
         }
 
         private void EnsureTriggerVisual(GameObject instance, MapObject item)

@@ -474,10 +474,13 @@ namespace ReMap.Standalone
                     item.customType != "trigger" && item.customType != "jump-tower" &&
                     item.customType != "weapon-rack" && item.customType != "respawn-heal" &&
                     item.customType != "button" && item.customType != "speed-boost" &&
-                    item.customType != "bubble-shield") continue;
+                    item.customType != "bubble-shield" && item.customType != "camera-path" &&
+                    item.customType != "camera-path-point" && item.customType != "camera-path-target") continue;
                 if (!MapHierarchy.IsEnabled(document, item.id)) continue;
                 var copy = item.Copy(); var pose = WorldPose(item.id);
-                copy.parentId = item.customType == "curved-zipline-point" ? item.parentId : "";
+                copy.parentId = item.customType == "curved-zipline-point" ||
+                    item.customType == "camera-path-point" || item.customType == "camera-path-target"
+                    ? item.parentId : "";
                 copy.position = pose.position; copy.rotation = pose.rotation; copy.scale = pose.scale; result.Add(copy);
             }
             return result;

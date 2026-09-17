@@ -85,6 +85,9 @@ namespace ReMap.Standalone
             if (world.Any(o => o.customType == "bubble-shield") &&
                 !models.Contains(ReMapApp.BubbleShieldModelPath, StringComparer.OrdinalIgnoreCase))
                 models.Add(ReMapApp.BubbleShieldModelPath);
+            if (world.Any(o => o.customType == "camera-path") &&
+                !models.Contains("mdl/dev/empty_model.rmdl", StringComparer.OrdinalIgnoreCase))
+                models.Add("mdl/dev/empty_model.rmdl");
             Vector3 originOffset = OriginOffset(document);
             bool useOriginOffset = HasOriginOffset(originOffset);
             var shared = new StringBuilder();
@@ -153,6 +156,7 @@ namespace ReMap.Standalone
                 foreach (var property in item.scriptProperties ?? new List<ScriptProperty>())
                     AppendProperty(client, "ent", property, "\t", true);
             }
+            AppendCameraPaths(client, world, originOffset, useOriginOffset);
             return new[]
             {
                 new ReMapGameScriptEdit(SharedFileName, "Sh_ReMap_PrecacheMap", shared.ToString().TrimEnd()),
@@ -631,6 +635,34 @@ namespace ReMap.Standalone
                     Vector(ApexDisplay.Angles(WorldView.ToVector(shield.rotation))) + ", " +
                     Number(shield.scale.x) + ", " + Vector(WorldView.ToVector(shield.bubbleShieldColor)) + " )";
                 code.Append(live ? "script " : "\t").Append(expression).AppendLine();
+            }
+        }
+
+        private static void AppendCameraPaths(StringBuilder code, List<MapObject> world,
+            Vector3 originOffset, bool symbolicOffset)
+        {
+            var paths = world.Where(o => o.customType == "camera-path").ToList();
+            if (paths.Count > 0) { code.AppendLine(); code.AppendLine("\t// Camera paths"); }
+            foreach (var path in paths)
+            {
+                var points = world.Where(o => o.parentId == path.id && o.customType == "camera-path-point")
+                    .OrderBy(o => int.TryParse(o.customRole, out int index) ? index : int.MaxValue).ToList();
+                if (points.Count < 2)
+                    throw new ArgumentException(L.F("#ARG0_CAMERA_PATH_POINTS_MISSING", path.displayName));
+                var target = world.FirstOrDefault(o => o.parentId == path.id && o.customType == "camera-path-target");
+                if (path.cameraPathTrackTarget && target == null)
+                    throw new ArgumentException(L.F("#ARG0_CAMERA_PATH_TARGET_MISSING", path.displayName));
+                string positions = "[ " + string.Join(", ", points.Select(point =>
+                    Position(point.position, originOffset, symbolicOffset))) + " ]";
+                string angles = "[ " + string.Join(", ", points.Select(point =>
+                    Vector(ApexDisplay.Angles(WorldView.ToVector(point.rotation))))) + " ]";
+                string targetPosition = target == null ? "ZERO_VECTOR" :
+                    Position(target.position, originOffset, symbolicOffset);
+                code.Append("\tReMap_CreateCameraPath( ").Append(positions).Append(", ").Append(angles)
+                    .Append(", ").Append(Number(path.cameraPathFov)).Append(", ")
+                    .Append(Number(path.cameraPathTransitionTime)).Append(", ")
+                    .Append(path.cameraPathTrackTarget ? "true" : "false").Append(", ")
+                    .Append(targetPosition).AppendLine(" )");
             }
         }
 

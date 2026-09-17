@@ -4151,6 +4151,86 @@
       "text": "The bubble shield settings are invalid."
     },
     {
+      "key": "#CAMERA_PATH",
+      "text": "Camera path"
+    },
+    {
+      "key": "#CUSTOM_OBJECT_CAMERA_PATH",
+      "text": "Custom camera path"
+    },
+    {
+      "key": "#CAMERA_PATH_POINT",
+      "text": "Camera path point"
+    },
+    {
+      "key": "#CAMERA_PATH_TARGET",
+      "text": "Camera tracking target"
+    },
+    {
+      "key": "#CAMERA_POINT_ARG0",
+      "text": "Camera point {0}"
+    },
+    {
+      "key": "#ARG0_CAMERA_POINTS",
+      "text": "{0} camera points"
+    },
+    {
+      "key": "#CAMERA_PATH_TRANSITION_TIME",
+      "text": "Transition time per point (seconds)"
+    },
+    {
+      "key": "#CAMERA_PATH_FOV",
+      "text": "Field of view"
+    },
+    {
+      "key": "#CAMERA_PATH_TRACK_TARGET",
+      "text": "Track target"
+    },
+    {
+      "key": "#CAMERA_PATH_ENABLE_SPACING",
+      "text": "Force point spacing"
+    },
+    {
+      "key": "#CAMERA_PATH_SPACING",
+      "text": "Point spacing (Apex u)"
+    },
+    {
+      "key": "#CAMERA_PATH_CUSTOM_HELP",
+      "text": "Client-side cinematic camera moving through ordered control points. Live export is not supported."
+    },
+    {
+      "key": "#CAMERA_PATH_HELP",
+      "text": "Rotate individual points to aim the camera, or enable target tracking and move the pink target marker."
+    },
+    {
+      "key": "#CAMERA_PATH_POINT_HELP",
+      "text": "Move and rotate this control point to define the camera pose."
+    },
+    {
+      "key": "#CAMERA_PATH_TARGET_HELP",
+      "text": "When target tracking is enabled, the camera continuously aims at this marker from every path point."
+    },
+    {
+      "key": "#SELECT_CAMERA_PATH",
+      "text": "Select camera path"
+    },
+    {
+      "key": "#CAMERA_PATH_CREATED",
+      "text": "Camera path created."
+    },
+    {
+      "key": "#ARG0_CAMERA_PATH_POINTS_MISSING",
+      "text": "{0}: at least two camera path points are required."
+    },
+    {
+      "key": "#ARG0_CAMERA_PATH_TARGET_MISSING",
+      "text": "{0}: the camera tracking target is missing."
+    },
+    {
+      "key": "#INVALID_CAMERA_PATH_SETTINGS",
+      "text": "The camera path settings are invalid."
+    },
+    {
       "key": "#DEVELOPMENT_BUILD",
       "text": "Development build — debugging enabled"
     },

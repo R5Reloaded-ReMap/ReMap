@@ -18,6 +18,7 @@
 
 global function ReMap_ClearClientProps
 global function ReMap_CreateClientProp
+global function ReMap_CreateCameraPath
 
 struct
 {
@@ -41,4 +42,48 @@ entity function ReMap_CreateClientProp( asset model, vector origin, vector angle
 	prop.SetModelScale( scale )
 	file.props.append( prop )
 	return prop
+}
+
+void function ReMap_CreateCameraPath( array<vector> points, array<vector> angles,
+	float fov = 120.0, float transitionTime = 8.0, bool trackTarget = false,
+	vector target = ZERO_VECTOR )
+{
+	if ( points.len() < 2 || points.len() != angles.len() )
+		return
+	thread ReMap_RunCameraPath( points, angles, fov, transitionTime, trackTarget, target )
+}
+
+void function ReMap_RunCameraPath( array<vector> points, array<vector> angles,
+	float fov, float transitionTime, bool trackTarget, vector target )
+{
+	entity player = GetLocalClientPlayer()
+	if ( !IsValid( player ) )
+		return
+	vector initialAngles = trackTarget ? VectorToAngles( target - points[0] ) : angles[0]
+	entity camera = CreateClientSidePointCamera( points[0], initialAngles, fov )
+	entity mover = CreateClientsideScriptMover( $"mdl/dev/empty_model.rmdl", points[0], initialAngles )
+	camera.SetParent( mover )
+	file.props.append( camera )
+	file.props.append( mover )
+	player.SetMenuCameraEntity( camera )
+
+	OnThreadEnd( function() : ( player, camera, mover )
+	{
+		if ( IsValid( player ) )
+			player.ClearMenuCameraEntity()
+		if ( IsValid( camera ) )
+			camera.Destroy()
+		if ( IsValid( mover ) )
+			mover.Destroy()
+	} )
+
+	for ( int index = 1; index < points.len(); index++ )
+	{
+		if ( !IsValid( mover ) )
+			return
+		vector destinationAngles = trackTarget ? VectorToAngles( target - points[index] ) : angles[index]
+		mover.NonPhysicsMoveTo( points[index], transitionTime, 0, 0 )
+		mover.NonPhysicsRotateTo( destinationAngles, transitionTime, 0, 0 )
+		wait transitionTime
+	}
 }
