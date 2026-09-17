@@ -1,0 +1,1 @@
+{"name":"ReMap.Tests","references":["ReMap.Core","ReMap.Runtime"],"includePlatforms":["Editor"],"optionalUnityReferences":["TestAssemblies"]}

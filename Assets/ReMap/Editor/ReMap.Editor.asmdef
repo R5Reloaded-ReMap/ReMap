@@ -1,0 +1,1 @@
+{"name":"ReMap.Editor","references":["ReMap.Runtime","ReMap.Core"],"includePlatforms":["Editor"]}

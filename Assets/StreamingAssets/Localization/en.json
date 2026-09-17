@@ -1,0 +1,3430 @@
+{
+  "language": "en",
+  "name": "English",
+  "entries": [
+    {
+      "key": "#APEX_ANGLES_P_Y_R",
+      "text": "\nAngles P / Y / R (°): "
+    },
+    {
+      "key": "#APEX_DIMENSIONS_X_Y_Z",
+      "text": "\nDimensions X / Y / Z (u): "
+    },
+    {
+      "key": "#DISABLED_PARENT_GROUP",
+      "text": "\nDisabled by a parent group"
+    },
+    {
+      "key": "#DISTANCE_BETWEEN_PIVOTS",
+      "text": "\nDistance between pivots: "
+    },
+    {
+      "key": "#NO_ACTIVE_GEOMETRY",
+      "text": "\nNo active geometry."
+    },
+    {
+      "key": "#PERSONAL_ASSEMBLY",
+      "text": "\nPersonal assembly"
+    },
+    {
+      "key": "#WORLD_APEX_PIVOT_U",
+      "text": "\nWorld pivot (u): "
+    },
+    {
+      "key": "#APEX_U_DELTA_X_Y",
+      "text": " u\nΔ X / Y / Z: "
+    },
+    {
+      "key": "#MESSAGE",
+      "text": " and "
+    },
+    {
+      "key": "#ASSEMBLIES",
+      "text": " assemblies · "
+    },
+    {
+      "key": "#COPY",
+      "text": " copy"
+    },
+    {
+      "key": "#ITEMS",
+      "text": " items · "
+    },
+    {
+      "key": "#LOADED_MODELS",
+      "text": " loaded models"
+    },
+    {
+      "key": "#MATERIAL_S_UNRESOLVED_ALBEDO",
+      "text": " material(s) with unresolved albedo"
+    },
+    {
+      "key": "#MODELS",
+      "text": " models"
+    },
+    {
+      "key": "#MODELS_2F546B",
+      "text": " models · "
+    },
+    {
+      "key": "#OBJECTS",
+      "text": " objects · "
+    },
+    {
+      "key": "#ROOTS",
+      "text": " roots"
+    },
+    {
+      "key": "#SELECTED_ITEMS",
+      "text": " selected items"
+    },
+    {
+      "key": "#ESCAPE_FINISH",
+      "text": " · Escape to finish"
+    },
+    {
+      "key": "#EDITING_REMAINS_AVAILABLE",
+      "text": " · editing remains available"
+    },
+    {
+      "key": "#EXTRACTING",
+      "text": " · extracting "
+    },
+    {
+      "key": "#EXTRACTING_ARG0_MODELS",
+      "text": " · extracting {0} models"
+    },
+    {
+      "key": "#GROUP",
+      "text": " · group"
+    },
+    {
+      "key": "#PAUSED",
+      "text": " · paused"
+    },
+    {
+      "key": "#PREPARING_ARG0",
+      "text": " · preparing {0}"
+    },
+    {
+      "key": "#WAITING_CURRENT_EXTRACTION",
+      "text": " · waiting for the current extraction"
+    },
+    {
+      "key": "#ARG0_FAILED",
+      "text": " · {0} failed"
+    },
+    {
+      "key": "#LOG",
+      "text": "). Log: "
+    },
+    {
+      "key": "#GROUP_861228",
+      "text": "+ Group"
+    },
+    {
+      "key": "#SUBGROUP",
+      "text": "+ Subgroup"
+    },
+    {
+      "key": "#PREVIEW_LOADS_ONE_MODEL_TIME",
+      "text": ". Preview loads one model at a time."
+    },
+    {
+      "key": "#4_SHAPES",
+      "text": "4 shapes"
+    },
+    {
+      "key": "#EXPECTED_VALUE_BETWEEN",
+      "text": ": expected a value between "
+    },
+    {
+      "key": "#BATCH_1_8_MODELS_REQUIRED",
+      "text": "A batch of 1 to 8 models is required."
+    },
+    {
+      "key": "#MAP_MAY_CONTAIN_MOST_10",
+      "text": "A map may contain at most 10,000 objects."
+    },
+    {
+      "key": "#ACTUAL_GEOMETRY",
+      "text": "Actual geometry · "
+    },
+    {
+      "key": "#ACTUAL_GEOMETRY_ARG0_MATERIAL_S",
+      "text": "Actual geometry · {0} material(s) with unresolved albedo"
+    },
+    {
+      "key": "#ADD_Z_ROTATION",
+      "text": "Add Z rotation"
+    },
+    {
+      "key": "#ADJUST_SELECTION",
+      "text": "Adjust selection"
+    },
+    {
+      "key": "#ASSEMBLY_HAVE_EXACTLY_ONE_ROOT",
+      "text": "An assembly must have exactly one root group."
+    },
+    {
+      "key": "#APEX_ANGLES",
+      "text": "Angles (°)"
+    },
+    {
+      "key": "#APEX_CLEARANCE_U",
+      "text": "Clearance (u)"
+    },
+    {
+      "key": "#APEX_GAP_STEP_U",
+      "text": "Gap / step (u)"
+    },
+    {
+      "key": "#APEX_HORIZONTAL_STEP_U",
+      "text": "Horizontal step (u)"
+    },
+    {
+      "key": "#APEX_MOVEMENT_U",
+      "text": "Movement (u)"
+    },
+    {
+      "key": "#APEX_UNITS_X_Y_HORIZONTAL",
+      "text": "X / Y horizontal, Z up. World limits: ±65,535 u."
+    },
+    {
+      "key": "#APEX_VERTICAL_STEP_U",
+      "text": "Vertical step (u)"
+    },
+    {
+      "key": "#APEX_X_Y_HORIZONTAL_Z",
+      "text": "X / Y horizontal · Z up\nWorld limits: −65,535 to +65,535 u\nDrag an axis label to adjust live · F: frame"
+    },
+    {
+      "key": "#APEX_X_Y_HORIZONTAL_Z_415865",
+      "text": "X / Y horizontal · Z up · Default grid: 64 u\nRight mouse + WASD/ZQSD: fly · Wheel: zoom\nMiddle click: smooth focus · Alt + left drag: orbit around focus\nMiddle drag: pan · F: frame selection"
+    },
+    {
+      "key": "#APPLY",
+      "text": "Apply"
+    },
+    {
+      "key": "#ARCHIVES_CHANGED_CATALOG_UPDATE_CLOSE",
+      "text": "Archives changed. The catalog will update when you close Settings."
+    },
+    {
+      "key": "#ARCHIVES_CHANGED_DROP_CANCELED",
+      "text": "Archives changed: drop canceled."
+    },
+    {
+      "key": "#ASSEMBLIES_228174",
+      "text": "Assemblies"
+    },
+    {
+      "key": "#ASSEMBLY",
+      "text": "Assembly"
+    },
+    {
+      "key": "#ASSEMBLY_NAME_LETTERS_NUMBERS_HYPHENS",
+      "text": "Assembly name: letters, numbers, hyphens and underscores"
+    },
+    {
+      "key": "#ASSEMBLY_SAVED",
+      "text": "Assembly saved: "
+    },
+    {
+      "key": "#ASSEMBLY_765658",
+      "text": "Assembly: "
+    },
+    {
+      "key": "#BUILD_AREA",
+      "text": "BUILD AREA"
+    },
+    {
+      "key": "#BLOCK",
+      "text": "Block"
+    },
+    {
+      "key": "#CAST_PROPERTY_TOO_LARGE",
+      "text": "CAST property is too large."
+    },
+    {
+      "key": "#CAST_STATIC_MESHES_MISSING_TOO",
+      "text": "CAST static meshes are missing or too numerous."
+    },
+    {
+      "key": "#CAST_STRING_TOO_LONG",
+      "text": "CAST string is too long."
+    },
+    {
+      "key": "#CAST_VERTEX_INDEX_OUT_BOUNDS",
+      "text": "CAST vertex index out of bounds."
+    },
+    {
+      "key": "#CANNOT_MOVE_GROUP",
+      "text": "Cannot move to this location"
+    },
+    {
+      "key": "#CAPTURE_REQUIRES_VISIBLE_WINDOW",
+      "text": "Capture requires a visible window."
+    },
+    {
+      "key": "#CENTER",
+      "text": "Center"
+    },
+    {
+      "key": "#CENTER_SELECTION_BOUNDS_ACTIVE_OBJECT",
+      "text": "Center of the selection bounds or active object pivot"
+    },
+    {
+      "key": "#CHOOSE_1_100_ROWS_COLUMNS",
+      "text": "Choose 1 to 100 rows/columns, with at least two cells."
+    },
+    {
+      "key": "#CHOOSE_SHAPE_LIBRARY_CLICK_SCENE",
+      "text": "Choose a shape in the library, then click in the scene to place it."
+    },
+    {
+      "key": "#CHOOSE_MAPS_SETTINGS_INDEX",
+      "text": "Choose maps in Settings, then Index."
+    },
+    {
+      "key": "#CHOOSE_START_SELECT_END",
+      "text": "Choose the start, then select the end."
+    },
+    {
+      "key": "#CLEAR_MEASUREMENT",
+      "text": "Clear measurement"
+    },
+    {
+      "key": "#CLICK_MODEL_LOAD_PREVIEW",
+      "text": "Click a model to load its preview."
+    },
+    {
+      "key": "#CLICK_SCENE_PLACE",
+      "text": "Click in the scene to place « "
+    },
+    {
+      "key": "#CLICK_SCENE_PLACE_ARG0",
+      "text": "Click in the scene to place « {0} »."
+    },
+    {
+      "key": "#CLICK_PLACE_SCENE_DRAG_SCENE",
+      "text": "Click then place in the scene, or drag into the scene / a group."
+    },
+    {
+      "key": "#CLOSE_PANEL_REOPEN_VIEW",
+      "text": "Close this panel · reopen it from View"
+    },
+    {
+      "key": "#COLLISION_GEOMETRY_MISSING",
+      "text": "Collision geometry is missing."
+    },
+    {
+      "key": "#COLUMNS",
+      "text": "Columns"
+    },
+    {
+      "key": "#CONSTRUCTION",
+      "text": "Construction"
+    },
+    {
+      "key": "#CONSTRUCTION_TOOLS",
+      "text": "Construction tools…"
+    },
+    {
+      "key": "#COPIES_CREATED",
+      "text": "Copies created."
+    },
+    {
+      "key": "#COPY_CREATED_SELECTED_USE_BUTTON",
+      "text": "Copy created and selected. Use the button again to extend the series."
+    },
+    {
+      "key": "#COPY_INFORMATION",
+      "text": "Copy information"
+    },
+    {
+      "key": "#CREATE_GRID_WALL",
+      "text": "Create a grid / wall"
+    },
+    {
+      "key": "#CREATE_GROUP_SCENE_ROOT",
+      "text": "Create a group at the scene root"
+    },
+    {
+      "key": "#CREATE_GROUP",
+      "text": "Create in a group"
+    },
+    {
+      "key": "#CREATE_INSIDE",
+      "text": "Create inside « "
+    },
+    {
+      "key": "#CREATE_ROOT_GROUP",
+      "text": "Create root group"
+    },
+    {
+      "key": "#CREATE_SUBGROUP",
+      "text": "Create subgroup"
+    },
+    {
+      "key": "#CUBE",
+      "text": "Cube"
+    },
+    {
+      "key": "#CYCLIC_OVERLY_DEEP_HIERARCHY_MAXIMUM",
+      "text": "Cyclic or overly deep hierarchy (maximum 64 levels)."
+    },
+    {
+      "key": "#DELETE",
+      "text": "Delete"
+    },
+    {
+      "key": "#DEMO_SHAPES",
+      "text": "Demo shapes"
+    },
+    {
+      "key": "#DIRECTIONAL_DUPLICATION",
+      "text": "Directional duplication"
+    },
+    {
+      "key": "#DISABLE",
+      "text": "Disable"
+    },
+    {
+      "key": "#DRAG_ORGANIZE_RIGHT_CLICK_ACTIONS",
+      "text": "Drag to the top/bottom to reorder, center to nest · right click: actions · F2: rename"
+    },
+    {
+      "key": "#DRAG_RESIZE_DOUBLE_CLICK_DEFAULT",
+      "text": "Drag to resize · double-click for default size"
+    },
+    {
+      "key": "#DROP_HERE_MOVE_OBJECT_GROUP",
+      "text": "Drop here to move an object or group out of its parent"
+    },
+    {
+      "key": "#DROP_SCENE",
+      "text": "Drop in the scene"
+    },
+    {
+      "key": "#DROP_GROUP_SCENE",
+      "text": "Drop onto an object or into the scene"
+    },
+    {
+      "key": "#DROP_ONTO_CONSTRUCTION_SURFACE",
+      "text": "Drop onto a construction surface."
+    },
+    {
+      "key": "#DROP_ONTO_SURFACE",
+      "text": "Drop onto a surface."
+    },
+    {
+      "key": "#DUPLICATE",
+      "text": "Duplicate"
+    },
+    {
+      "key": "#DUPLICATE_PLACEMENT",
+      "text": "Duplicate placement"
+    },
+    {
+      "key": "#EDGE_EDGE",
+      "text": "Edge to edge"
+    },
+    {
+      "key": "#EDGE_EDGE_GAP_BETWEEN_COPIES",
+      "text": "Edge to edge: gap between copies. Otherwise: distance between pivots."
+    },
+    {
+      "key": "#EMPTY_MAP_UNDO_RESTORES_PREVIOUS",
+      "text": "Empty map. Undo restores the previous map."
+    },
+    {
+      "key": "#EMPTY_SAVE_FILE",
+      "text": "Empty save file."
+    },
+    {
+      "key": "#ENABLE",
+      "text": "Enable"
+    },
+    {
+      "key": "#ENABLE_SELECTION_USE_TOOL",
+      "text": "Enable the selection to use this tool."
+    },
+    {
+      "key": "#ENTER_POSITIVE_STEP_SELECT_VISIBLE",
+      "text": "Enter a positive step or select a visible object."
+    },
+    {
+      "key": "#EXPAND_COLLAPSE_GROUP",
+      "text": "Expand / collapse group"
+    },
+    {
+      "key": "#COLLAPSE_ALL_FOLDERS",
+      "text": "Collapse all folders"
+    },
+    {
+      "key": "#EXPAND_ALL_FOLDERS",
+      "text": "Expand all folders"
+    },
+    {
+      "key": "#TRANSFORM",
+      "text": "Transform"
+    },
+    {
+      "key": "#REMAP_SETTINGS",
+      "text": "ReMap settings"
+    },
+    {
+      "key": "#GAME_SCRIPTS",
+      "text": "Game Scripts"
+    },
+    {
+      "key": "#SCRIPT_OPTIONS",
+      "text": "Options (.kv / .e / .s)"
+    },
+    {
+      "key": "#COPYABLE_INFORMATION",
+      "text": "Informations"
+    },
+    {
+      "key": "#WORLD_ORIGIN",
+      "text": "World origin"
+    },
+    {
+      "key": "#LOCAL_POSITION",
+      "text": "Local Origin"
+    },
+    {
+      "key": "#LOCAL_ANGLES",
+      "text": "Local angles"
+    },
+    {
+      "key": "#MODEL_PATH",
+      "text": "Model"
+    },
+    {
+      "key": "#OBJECT_TYPE",
+      "text": "Type"
+    },
+    {
+      "key": "#DIMENSIONS",
+      "text": "Dimensions"
+    },
+    {
+      "key": "#EXPECTED_CAST_V1_FORMAT",
+      "text": "Expected CAST v1 format."
+    },
+    {
+      "key": "#EXPORT_MISSING",
+      "text": "Export missing."
+    },
+    {
+      "key": "#EXPORT_PATH_OUTSIDE_CACHE",
+      "text": "Export path is outside the cache."
+    },
+    {
+      "key": "#EXTRACTING_DROP",
+      "text": "Extracting for drop: "
+    },
+    {
+      "key": "#EXTRACTING_627835",
+      "text": "Extracting: "
+    },
+    {
+      "key": "#EXTRACTING_ARG0_EDITING_REMAINS_AVAILABLE",
+      "text": "Extracting: {0} · editing remains available"
+    },
+    {
+      "key": "#EXTRACTING_B5C67A",
+      "text": "Extracting…"
+    },
+    {
+      "key": "#FAILED_RETRY",
+      "text": "Failed · retry"
+    },
+    {
+      "key": "#FILE_NAME_LETTERS_NUMBERS_HYPHENS",
+      "text": "File name: letters, numbers, hyphens and underscores only."
+    },
+    {
+      "key": "#FLOWSTATE_RSX_BUILT_CAST",
+      "text": "Flowstate RSX built for CAST"
+    },
+    {
+      "key": "#FLOWSTATE_INSTALLATION",
+      "text": "Flowstate installation"
+    },
+    {
+      "key": "#FRAME_F",
+      "text": "Frame · F"
+    },
+    {
+      "key": "#GAME_FOLDER",
+      "text": "Game folder"
+    },
+    {
+      "key": "#GAME_MODELS",
+      "text": "Game models"
+    },
+    {
+      "key": "#GAP_STEP",
+      "text": "Gap / step"
+    },
+    {
+      "key": "#GEOMETRY_ALBEDO_LOADED",
+      "text": "Geometry and albedo loaded"
+    },
+    {
+      "key": "#GLOBAL",
+      "text": "Global"
+    },
+    {
+      "key": "#GRID",
+      "text": "Grid "
+    },
+    {
+      "key": "#GRID_CREATED_GROUP_ORIGINAL_FIRST",
+      "text": "Grid created in a group; the original is the first cell."
+    },
+    {
+      "key": "#GROUND_PLACEMENT_VARIATIONS_PROCESS_ACTIVE",
+      "text": "Ground placement and variations: process each active model, including subgroups. Unchecked: transform the whole group."
+    },
+    {
+      "key": "#GROUND_XY",
+      "text": "Ground · XY"
+    },
+    {
+      "key": "#GROUP_34CA0E",
+      "text": "Group"
+    },
+    {
+      "key": "#GROUP_CTRL_G",
+      "text": "Group    Ctrl+G"
+    },
+    {
+      "key": "#GROUP_B5548E",
+      "text": "Group ("
+    },
+    {
+      "key": "#GROUP_SELECTION_CTRL_G_MEASURING",
+      "text": "Group the selection (Ctrl+G) before measuring grid spacing."
+    },
+    {
+      "key": "#GROUP_SELECTION_CTRL_G_CREATE",
+      "text": "Group the selection (Ctrl+G), then create a grid from that assembly."
+    },
+    {
+      "key": "#GROUP_CTRL_G_EAE33B",
+      "text": "Group · Ctrl+G"
+    },
+    {
+      "key": "#GROUP_CHILDREN_SHARE_TRANSFORM",
+      "text": "Group · children share its transform"
+    },
+    {
+      "key": "#HIERARCHY",
+      "text": "Hierarchy"
+    },
+    {
+      "key": "#HORIZONTAL_STEP",
+      "text": "Horizontal step"
+    },
+    {
+      "key": "#INCLUDE_Z_0_PLANE",
+      "text": "Include the Z = 0 plane"
+    },
+    {
+      "key": "#INCLUDE_ITEM_CHILDREN_SCENE_GAME",
+      "text": "Include this item and its children in the scene and game output"
+    },
+    {
+      "key": "#INCONSISTENT_CAST_NODE_LENGTH",
+      "text": "Inconsistent CAST node length."
+    },
+    {
+      "key": "#INDEX",
+      "text": "Index"
+    },
+    {
+      "key": "#INDEX_A7F8DD",
+      "text": "Index "
+    },
+    {
+      "key": "#INDEX_ARCHIVES_CLOSE",
+      "text": "Index archives and close"
+    },
+    {
+      "key": "#INDEX_ARCHIVES_EXTRACTION",
+      "text": "Index archives before extraction."
+    },
+    {
+      "key": "#INDEX_COMPATIBLE_MAPS_EXTRACTION",
+      "text": "Index compatible maps before extraction."
+    },
+    {
+      "key": "#INDEX_INCOMPLETE_UNAVAILABLE",
+      "text": "Index incomplete / unavailable"
+    },
+    {
+      "key": "#INDEX_READY_PREPARING_CACHED_THUMBNAILS",
+      "text": "Index ready. Preparing cached thumbnails progressively."
+    },
+    {
+      "key": "#INDEX_SOURCES_CHANGE_FILTERS",
+      "text": "Index the sources or change the filters."
+    },
+    {
+      "key": "#BEFORE",
+      "text": "Before: "
+    },
+    {
+      "key": "#AFTER",
+      "text": "After: "
+    },
+    {
+      "key": "#INSIDE",
+      "text": "Inside: "
+    },
+    {
+      "key": "#INTERFACE",
+      "text": "Interface"
+    },
+    {
+      "key": "#AUTO_COLLAPSE_OTHER_FOLDERS",
+      "text": "Automatically close other folders"
+    },
+    {
+      "key": "#AUTO_COLLAPSE_OTHER_FOLDERS_HELP",
+      "text": "Keep only the folders containing the current selection open."
+    },
+    {
+      "key": "#INVALID_CAST_GEOMETRY",
+      "text": "Invalid CAST geometry."
+    },
+    {
+      "key": "#INVALID_CAST_STRING",
+      "text": "Invalid CAST string."
+    },
+    {
+      "key": "#INVALID_CAST_STRUCTURE",
+      "text": "Invalid CAST structure."
+    },
+    {
+      "key": "#INVALID_PNG",
+      "text": "Invalid PNG."
+    },
+    {
+      "key": "#INVALID_RSX_ARGUMENT",
+      "text": "Invalid RSX argument."
+    },
+    {
+      "key": "#INVALID_RSX_SESSION_ARGUMENT",
+      "text": "Invalid RSX session argument."
+    },
+    {
+      "key": "#INVALID_ARCHIVE_PATH",
+      "text": "Invalid archive path."
+    },
+    {
+      "key": "#INVALID_ASSET_GUID",
+      "text": "Invalid asset GUID."
+    },
+    {
+      "key": "#INVALID_CACHE_PATH",
+      "text": "Invalid cache path."
+    },
+    {
+      "key": "#INVALID_FILE_NAME",
+      "text": "Invalid file name."
+    },
+    {
+      "key": "#INVALID_MAP_NAME_1_128",
+      "text": "Invalid map name (1 to 128 characters)."
+    },
+    {
+      "key": "#INVALID_MODEL_REFERENCE",
+      "text": "Invalid model reference."
+    },
+    {
+      "key": "#INVALID_OBJECT_NAME",
+      "text": "Invalid object name."
+    },
+    {
+      "key": "#INVALID_DUPLICATE_OBJECT_ID",
+      "text": "Invalid or duplicate object ID."
+    },
+    {
+      "key": "#INVALID_SPACING",
+      "text": "Invalid spacing."
+    },
+    {
+      "key": "#INVALID_TARGET_MAP_LIST",
+      "text": "Invalid target map list."
+    },
+    {
+      "key": "#INVALID_TRANSFORM_FINITE_VALUES_POSITIVE",
+      "text": "Invalid transform: finite values and positive scale factors required."
+    },
+    {
+      "key": "#LOADING_ASSETS",
+      "text": "LOADING ASSETS"
+    },
+    {
+      "key": "#LANGUAGE",
+      "text": "Language"
+    },
+    {
+      "key": "#LANGUAGE_CHANGES_TAKE_EFFECT_NEXT",
+      "text": "Language changes take effect the next time you start the app."
+    },
+    {
+      "key": "#LANGUAGE_SAVED_RESTART_APP_APPLY",
+      "text": "Language saved. Restart the app to apply it; save your map first."
+    },
+    {
+      "key": "#LIBRARY",
+      "text": "Library"
+    },
+    {
+      "key": "#LOADED_ARCHIVES",
+      "text": "Loaded archives"
+    },
+    {
+      "key": "#LOCAL",
+      "text": "Local"
+    },
+    {
+      "key": "#LOCAL_APEX_ANGLES",
+      "text": "Local Angles"
+    },
+    {
+      "key": "#LOCAL_APEX_POSITION_U",
+      "text": "Local Origin"
+    },
+    {
+      "key": "#LOCAL_FILE_NAME",
+      "text": "Local file name"
+    },
+    {
+      "key": "#LOCAL_SCALE_CENTER_UNIFORM",
+      "text": "Local scale · center: uniform"
+    },
+    {
+      "key": "#MAP",
+      "text": "Map"
+    },
+    {
+      "key": "#MAP_OPENED_INDEX_SOURCES_RESTORE",
+      "text": "Map opened. Index the sources to restore cached game models."
+    },
+    {
+      "key": "#MARGIN",
+      "text": "Margin"
+    },
+    {
+      "key": "#MATCH_OBJECT_DIMENSIONS",
+      "text": "Match object dimensions"
+    },
+    {
+      "key": "#MATERIAL_DEFINITION_MISSING_MODEL",
+      "text": "Material definition is missing from the model."
+    },
+    {
+      "key": "#MAX_Z_ROTATION",
+      "text": "Max Z rotation (°)"
+    },
+    {
+      "key": "#MAX_FACTOR",
+      "text": "Max factor"
+    },
+    {
+      "key": "#MAXIMIZE",
+      "text": "Maximize"
+    },
+    {
+      "key": "#MAXIMIZE_RESTORE_SCENE",
+      "text": "Maximize / restore scene"
+    },
+    {
+      "key": "#MAXIMUM",
+      "text": "Maximum"
+    },
+    {
+      "key": "#MAXIMUM_GREATER_THAN_EQUAL_MINIMUM",
+      "text": "Maximum must be greater than or equal to minimum."
+    },
+    {
+      "key": "#MAXIMUM_SIZE",
+      "text": "Maximum size"
+    },
+    {
+      "key": "#MEASURE_INFORMATION",
+      "text": "Measure / information"
+    },
+    {
+      "key": "#MIN_Z_ROTATION",
+      "text": "Min Z rotation (°)"
+    },
+    {
+      "key": "#MIN_FACTOR",
+      "text": "Min factor"
+    },
+    {
+      "key": "#MINIMUM",
+      "text": "Minimum"
+    },
+    {
+      "key": "#MISSING_INVALID_RSX_INDEX",
+      "text": "Missing or invalid RSX index: "
+    },
+    {
+      "key": "#MISSING_TEXTURE",
+      "text": "Missing texture"
+    },
+    {
+      "key": "#MODEL_TOO_LARGE_PROTOTYPE",
+      "text": "Model is too large for this prototype."
+    },
+    {
+      "key": "#MODEL",
+      "text": "Model: "
+    },
+    {
+      "key": "#MOVE_ROTATE_USING_WORLD_ACTIVE",
+      "text": "Move and rotate using world or active object axes. Scale uses local axes."
+    },
+    {
+      "key": "#MOVE_DUPLICATE_CLICK_SURFACE_ESCAPE",
+      "text": "Move the duplicate, then click a surface · Escape to cancel."
+    },
+    {
+      "key": "#MOVE_CANCELED_CHOOSE_VALID_GROUP",
+      "text": "Move canceled: choose a valid object or the Scene root."
+    },
+    {
+      "key": "#MOVE_ROOT",
+      "text": "Move to root"
+    },
+    {
+      "key": "#MOVE_W",
+      "text": "Move · W"
+    },
+    {
+      "key": "#MOVEMENT",
+      "text": "Movement"
+    },
+    {
+      "key": "#MULTIPLY_SCALE",
+      "text": "Multiply scale"
+    },
+    {
+      "key": "#NAME",
+      "text": "Name"
+    },
+    {
+      "key": "#NEW",
+      "text": "New"
+    },
+    {
+      "key": "#NEW_EXPORTS_KEEP_ALBEDO_TEXTURES",
+      "text": "New exports keep albedo textures, including alpha. Shared PNG cache; existing textures are preserved."
+    },
+    {
+      "key": "#NEW_MAP",
+      "text": "New map"
+    },
+    {
+      "key": "#NEW_TEXTURES_PNGS_SHARED_CONTENT",
+      "text": "New textures only. PNGs shared by content; thumbnails kept on disk."
+    },
+    {
+      "key": "#NO_ALBEDO_BINDING_MATCHING_COLOR",
+      "text": "No albedo binding or matching color texture."
+    },
+    {
+      "key": "#NO_CHANGE_CHECK_SELECTION_SURFACES",
+      "text": "No change. Check the selection and surfaces below."
+    },
+    {
+      "key": "#NO_OBJECTS_CREATE_GROUP_DROP",
+      "text": "No objects\nCreate a group or drop a model here."
+    },
+    {
+      "key": "#NO_SELECTION",
+      "text": "No selection"
+    },
+    {
+      "key": "#NON_FINITE_CAST_VALUE",
+      "text": "Non-finite CAST value."
+    },
+    {
+      "key": "#NON_FINITE_CAST_VERTEX",
+      "text": "Non-finite CAST vertex."
+    },
+    {
+      "key": "#OBJECT",
+      "text": "Object"
+    },
+    {
+      "key": "#OBJECT_AXES",
+      "text": "Object axes"
+    },
+    {
+      "key": "#Z_0_PLANE",
+      "text": "On the Z = 0 plane"
+    },
+    {
+      "key": "#SURFACE_BELOW",
+      "text": "On the surface below"
+    },
+    {
+      "key": "#ONE_OPERATION_ONE_UNDO_STEP",
+      "text": "One operation = one Undo step."
+    },
+    {
+      "key": "#OPEN",
+      "text": "Open"
+    },
+    {
+      "key": "#PATHS_SAVED",
+      "text": "Paths saved."
+    },
+    {
+      "key": "#PAUSE_THUMBNAILS",
+      "text": "Pause thumbnails"
+    },
+    {
+      "key": "#PILLAR",
+      "text": "Pillar"
+    },
+    {
+      "key": "#PITCH",
+      "text": "Pitch"
+    },
+    {
+      "key": "#PIVOT",
+      "text": "Pivot"
+    },
+    {
+      "key": "#PLACE",
+      "text": "Place"
+    },
+    {
+      "key": "#PLACE_DUPLICATE",
+      "text": "Place duplicate"
+    },
+    {
+      "key": "#PLACE_GROUND",
+      "text": "Place on ground"
+    },
+    {
+      "key": "#PLACEMENT_POINT",
+      "text": "Placement point"
+    },
+    {
+      "key": "#PLACING",
+      "text": "Placing: "
+    },
+    {
+      "key": "#PLACING_ARG0_ESCAPE_FINISH",
+      "text": "Placing: {0} · Escape to finish"
+    },
+    {
+      "key": "#PLANE",
+      "text": "Plane"
+    },
+    {
+      "key": "#PLATFORM",
+      "text": "Platform"
+    },
+    {
+      "key": "#POSITION_OUTSIDE_APEX_WORLD_WORLD",
+      "text": "Position outside the world limits: each axis must stay between −65,535 and +65,535 units."
+    },
+    {
+      "key": "#PREPARING_DROP",
+      "text": "Preparing drop: "
+    },
+    {
+      "key": "#PREPARING_TEXTURES",
+      "text": "Preparing textures: "
+    },
+    {
+      "key": "#PREPARING",
+      "text": "Preparing…"
+    },
+    {
+      "key": "#PRIORITY_LOADING",
+      "text": "Priority loading: "
+    },
+    {
+      "key": "#PROPERTIES",
+      "text": "Properties"
+    },
+    {
+      "key": "#QUEUED",
+      "text": "Queued"
+    },
+    {
+      "key": "#RPAKS_LOADED_PLAYED_MAP_COMMON",
+      "text": "RPAKs loaded by the played map · Common included"
+    },
+    {
+      "key": "#RSX_ARCHIVE_LOAD_FAILED",
+      "text": "RSX archive load failed: "
+    },
+    {
+      "key": "#RSX_DID_EXPORT_MODEL_LOG",
+      "text": "RSX did not export this model. Log: "
+    },
+    {
+      "key": "#RSX_DID_PRODUCE_SINGLE_CAST",
+      "text": "RSX did not produce a single CAST model."
+    },
+    {
+      "key": "#RSX_EXCEEDED_THREE_MINUTES_OPERATION",
+      "text": "RSX exceeded three minutes; operation stopped."
+    },
+    {
+      "key": "#RSX_FAILED",
+      "text": "RSX failed ("
+    },
+    {
+      "key": "#RSX_MODEL_EXPORT_FAILED",
+      "text": "RSX model export failed: "
+    },
+    {
+      "key": "#RSX_PREVIEW_SESSION_EXITED_LOG",
+      "text": "RSX preview session exited. Log: "
+    },
+    {
+      "key": "#RSX_SESSION_EXCEEDED_THREE_MINUTES",
+      "text": "RSX session exceeded three minutes without completing the request."
+    },
+    {
+      "key": "#RSX_SESSION_TIMED_OUT_LOG",
+      "text": "RSX session timed out. Log: "
+    },
+    {
+      "key": "#RANDOM_VARIATIONS",
+      "text": "Random variations"
+    },
+    {
+      "key": "#READING_ARCHIVE_INDEXES",
+      "text": "Reading archive indexes…"
+    },
+    {
+      "key": "#READING",
+      "text": "Reading: "
+    },
+    {
+      "key": "#REDO",
+      "text": "Redo"
+    },
+    {
+      "key": "#REFERENCED_ALBEDO_FILE_MISSING_CACHE",
+      "text": "Referenced albedo file is missing from the cache."
+    },
+    {
+      "key": "#RENAME_F2",
+      "text": "Rename    F2"
+    },
+    {
+      "key": "#RESET_LAYOUT",
+      "text": "Reset layout"
+    },
+    {
+      "key": "#RESET_LOCAL_ROTATION",
+      "text": "Reset local rotation"
+    },
+    {
+      "key": "#RESET_LOCAL_SCALE",
+      "text": "Reset local scale"
+    },
+    {
+      "key": "#RESTORE",
+      "text": "Restore"
+    },
+    {
+      "key": "#RESUME_THUMBNAILS",
+      "text": "Resume thumbnails"
+    },
+    {
+      "key": "#RETRY",
+      "text": "Retry"
+    },
+    {
+      "key": "#ROLL",
+      "text": "Roll"
+    },
+    {
+      "key": "#ROTATE_E",
+      "text": "Rotate · E"
+    },
+    {
+      "key": "#ROTATION",
+      "text": "Rotation"
+    },
+    {
+      "key": "#ROTATION_109E81",
+      "text": "Rotation (°)"
+    },
+    {
+      "key": "#ROTATION_AROUND_WORLD_Z_SCALE",
+      "text": "Rotation around world Z. The scale factor preserves current proportions."
+    },
+    {
+      "key": "#ROWS",
+      "text": "Rows"
+    },
+    {
+      "key": "#SAVE",
+      "text": "Save"
+    },
+    {
+      "key": "#SAVE_FILE_EXCEEDS_16_MIB",
+      "text": "Save file exceeds 16 MiB."
+    },
+    {
+      "key": "#SAVE_PATHS",
+      "text": "Save paths"
+    },
+    {
+      "key": "#SAVE_SELECTION",
+      "text": "Save selection"
+    },
+    {
+      "key": "#SAVED",
+      "text": "Saved"
+    },
+    {
+      "key": "#SAVED_4D9F39",
+      "text": "Saved: "
+    },
+    {
+      "key": "#SCALE",
+      "text": "Scale"
+    },
+    {
+      "key": "#SCALE_FACTOR",
+      "text": "Scale (factor)"
+    },
+    {
+      "key": "#SCALE_FACTOR_7490FA",
+      "text": "Scale factor"
+    },
+    {
+      "key": "#SCALE_BETWEEN_0_01_1",
+      "text": "Scale must be between 0.01 and 1,000."
+    },
+    {
+      "key": "#SCALE_R",
+      "text": "Scale · R"
+    },
+    {
+      "key": "#SCALES_RANDOMIZED",
+      "text": "Scales randomized."
+    },
+    {
+      "key": "#SCENE",
+      "text": "Scene"
+    },
+    {
+      "key": "#WORLD_SPAWN",
+      "text": "World Spawn"
+    },
+    {
+      "key": "#STARTING_APEX_POSITION_U",
+      "text": "Starting position (u)"
+    },
+    {
+      "key": "#SCENE_STARTING_POSITION_CONTAIN_FINITE",
+      "text": "The scene starting position must contain finite numbers."
+    },
+    {
+      "key": "#OFFSET_APPLIED_GAME_EDITOR_KEEPS",
+      "text": "This offset is applied only in game. The editor keeps the scene centered on 0."
+    },
+    {
+      "key": "#SEARCH_MODELS_NAME_PATH",
+      "text": "Search models by name or path"
+    },
+    {
+      "key": "#SELECT_GROUP_CREATE_SUBGROUP",
+      "text": "Select an object to create a subgroup"
+    },
+    {
+      "key": "#SELECT_PARENT_GROUP",
+      "text": "Select a parent object."
+    },
+    {
+      "key": "#SELECT_END_OBJECT",
+      "text": "Select an end object."
+    },
+    {
+      "key": "#SELECT_OBJECT_SCENE_HIERARCHY",
+      "text": "Select an object in the scene or hierarchy."
+    },
+    {
+      "key": "#SELECT_OBJECT_GROUP",
+      "text": "Select an object or a group"
+    },
+    {
+      "key": "#SELECT_OBJECT_GROUP_0ED54C",
+      "text": "Select an object or a group."
+    },
+    {
+      "key": "#SELECT_MAPS_WHOSE_RPAKS_LOADED",
+      "text": "Select maps whose RPAKs are loaded together by the played map. Their models are combined: one selected source is enough."
+    },
+    {
+      "key": "#SELECT_OBJECTS_ENTER_NAME_USE",
+      "text": "Select objects, enter a name and use Save selection."
+    },
+    {
+      "key": "#SELECT_ONE_MORE_OBJECTS_DUPLICATE",
+      "text": "Select one or more objects to duplicate."
+    },
+    {
+      "key": "#SELECT_ITEMS_SAVE",
+      "text": "Select the items to save."
+    },
+    {
+      "key": "#SELECTION",
+      "text": "Selection"
+    },
+    {
+      "key": "#SELECTION_PLACED_Z_0",
+      "text": "Selection placed on Z = 0."
+    },
+    {
+      "key": "#SELECTION_PLACED_AVAILABLE_SUPPORTS",
+      "text": "Selection placed on available supports."
+    },
+    {
+      "key": "#SET_CURRENT_SELECTION_START",
+      "text": "Set current selection as start"
+    },
+    {
+      "key": "#SETTINGS",
+      "text": "Settings"
+    },
+    {
+      "key": "#SETTINGS_7A0408",
+      "text": "Settings…"
+    },
+    {
+      "key": "#SNAP_PIVOTS_ACTIVE_STEP",
+      "text": "Snap pivots to the active step"
+    },
+    {
+      "key": "#SNAPPING",
+      "text": "Snapping"
+    },
+    {
+      "key": "#SNAPPING_USE_STEPS_HANDLES_SCALE",
+      "text": "Snapping: use these steps for handles. Scale: local axes; center square = uniform."
+    },
+    {
+      "key": "#SOME_ASSEMBLY_MODELS_MISSING_SELECTED",
+      "text": "Some assembly models are missing from the selected archives."
+    },
+    {
+      "key": "#SOURCES_CHANGED_RUN_INDEXING_AGAIN",
+      "text": "Sources changed. Run indexing again."
+    },
+    {
+      "key": "#SOURCES_CHANGED_DROP_CANCELED",
+      "text": "Sources changed: drop canceled."
+    },
+    {
+      "key": "#SPACING_POSITIVE_USED_AXIS",
+      "text": "Spacing must be positive on each used axis."
+    },
+    {
+      "key": "#STARTER_WORKSPACE",
+      "text": "Starter workspace"
+    },
+    {
+      "key": "#STEPS",
+      "text": "Steps…"
+    },
+    {
+      "key": "#TEXTURE_MEMORY_BUDGET_EXCEEDED_ARG0",
+      "text": "Texture memory budget exceeded ({0} MB)."
+    },
+    {
+      "key": "#TEXTURE_CACHE",
+      "text": "Texture cache"
+    },
+    {
+      "key": "#TEXTURE_EXCEEDS_8192_PX",
+      "text": "Texture exceeds 8192 px."
+    },
+    {
+      "key": "#TEXTURE_OUTSIDE_MODEL_CACHE",
+      "text": "Texture is outside the model cache."
+    },
+    {
+      "key": "#ASSEMBLY_EXCEED_10_000_ITEM",
+      "text": "The assembly would exceed the 10,000 item limit."
+    },
+    {
+      "key": "#BATCH_SHARE_ARCHIVE_HAVE_DISTINCT",
+      "text": "The batch must share an archive and have distinct names."
+    },
+    {
+      "key": "#BOTTOM_BOUNDS_RESTS_SUPPORT_NO",
+      "text": "The bottom of the bounds rests on the support. With no surface below, the object stays in place."
+    },
+    {
+      "key": "#NAME_CONTAIN_1_128_CHARACTERS",
+      "text": "The name must contain 1 to 128 characters."
+    },
+    {
+      "key": "#PARENT_EXISTING_GROUP",
+      "text": "The parent must be an existing object."
+    },
+    {
+      "key": "#REORDER_TARGET_SAME_FOLDER",
+      "text": "The reorder target must belong to the same parent."
+    },
+    {
+      "key": "#SELECTED_ARCHIVES_CHANGED_DURING_EXTRACTION",
+      "text": "The selected archives changed during extraction. Select the model again."
+    },
+    {
+      "key": "#SMALL_MARKER_SHOWS_ASSEMBLY_BASE",
+      "text": "The small marker shows the assembly base. Click a surface · Escape to cancel."
+    },
+    {
+      "key": "#ASSEMBLY_CONTAINS_MODELS_MISSING_SELECTED",
+      "text": "This assembly contains models missing from the selected archives."
+    },
+    {
+      "key": "#MODEL_MISSING_LOADED_ARCHIVES",
+      "text": "This model is missing from the loaded archives."
+    },
+    {
+      "key": "#MODEL_SELECTED_ARCHIVES",
+      "text": "This model is not in any of the selected archives."
+    },
+    {
+      "key": "#THUMBNAIL",
+      "text": "Thumbnail "
+    },
+    {
+      "key": "#THUMBNAIL_CACHE",
+      "text": "Thumbnail cache: "
+    },
+    {
+      "key": "#THUMBNAILS_LOCAL_CACHE",
+      "text": "Thumbnails: local cache"
+    },
+    {
+      "key": "#THUMBNAILS_ARG0_ARG1",
+      "text": "Thumbnails: {0}/{1}"
+    },
+    {
+      "key": "#THUMBNAILS_AVAILABLE_ARG0_UPDATED_ARG1",
+      "text": "Thumbnails available: {0} · updated: {1}/{2}"
+    },
+    {
+      "key": "#THUMBNAILS_ARG0_ARG1_READING_ARG2",
+      "text": "Thumbnails: {0}/{1} · reading {2} models · {3} s"
+    },
+    {
+      "key": "#THUMBNAILS_ARG0_ARG1_ARG2_ARG3",
+      "text": "Thumbnails: {0}/{1} · {2} · {3} s"
+    },
+    {
+      "key": "#ARG0_S_ARG1",
+      "text": " · {0} s · {1}"
+    },
+    {
+      "key": "#ARG0_S_READING_ARG1_MODELS",
+      "text": " · {0} s · reading {1} models"
+    },
+    {
+      "key": "#TOO_MANY_CAST_ROOTS",
+      "text": "Too many CAST roots."
+    },
+    {
+      "key": "#TOO_MANY_COPIES_MOST_1",
+      "text": "Too many copies: at most 1,000 new items per operation and 10,000 in the scene."
+    },
+    {
+      "key": "#TOOLS",
+      "text": "Tools"
+    },
+    {
+      "key": "#TRAILING_CAST_DATA",
+      "text": "Trailing CAST data."
+    },
+    {
+      "key": "#TRANSFORM_ADJUSTED",
+      "text": "Transform adjusted."
+    },
+    {
+      "key": "#TRANSFORM_SNAPPING",
+      "text": "Transform snapping"
+    },
+    {
+      "key": "#TRANSFORMS_RELATIVE_SELECTION_WORLD_POSITION",
+      "text": "Transforms are relative to the selection. World position; local scale for each root."
+    },
+    {
+      "key": "#TRANSFORMS_FINITE_NUMBERS",
+      "text": "Transforms must be finite numbers."
+    },
+    {
+      "key": "#TRUNCATED_CAST_FILE",
+      "text": "Truncated CAST file."
+    },
+    {
+      "key": "#UNABLE_START_RSX",
+      "text": "Unable to start RSX."
+    },
+    {
+      "key": "#UNABLE_START_RSX_PREVIEW_SESSION",
+      "text": "Unable to start the RSX preview session."
+    },
+    {
+      "key": "#UNDO",
+      "text": "Undo"
+    },
+    {
+      "key": "#UNKNOWN_CAST_TYPE",
+      "text": "Unknown CAST type: "
+    },
+    {
+      "key": "#UNREADABLE_PNG",
+      "text": "Unreadable PNG."
+    },
+    {
+      "key": "#UNREADABLE_PNG_05CEBB",
+      "text": "Unreadable PNG: "
+    },
+    {
+      "key": "#UNRECOGNIZED_RSX_INDEX_COLUMNS",
+      "text": "Unrecognized RSX index columns."
+    },
+    {
+      "key": "#UNSAVED_CHANGES",
+      "text": "Unsaved changes"
+    },
+    {
+      "key": "#UNSUPPORTED_CAST_FILE_SIZE",
+      "text": "Unsupported CAST file size."
+    },
+    {
+      "key": "#UNSUPPORTED_RSX_SESSION_PROTOCOL",
+      "text": "Unsupported RSX session protocol."
+    },
+    {
+      "key": "#UNSUPPORTED_COORDINATE_SYSTEM",
+      "text": "Unsupported coordinate system."
+    },
+    {
+      "key": "#UNSUPPORTED_SAVE_VERSION",
+      "text": "Unsupported save version."
+    },
+    {
+      "key": "#VERTICAL_STEP",
+      "text": "Vertical step"
+    },
+    {
+      "key": "#VIEW",
+      "text": "View"
+    },
+    {
+      "key": "#WAIT_RSX_OPERATION_FINISH",
+      "text": "Wait for the RSX operation to finish."
+    },
+    {
+      "key": "#WALL",
+      "text": "Wall"
+    },
+    {
+      "key": "#WALL_XZ",
+      "text": "Wall · XZ"
+    },
+    {
+      "key": "#WORKSPACE_READY_SELECTION_DUPLICATION_UNDO",
+      "text": "Workspace ready: selection, duplication, undo and saving verified."
+    },
+    {
+      "key": "#WORLD_APEX_POSITION_U",
+      "text": "World position (u): "
+    },
+    {
+      "key": "#WORLD_APEX_POSITION_U_ARG0",
+      "text": "World position (u): {0}"
+    },
+    {
+      "key": "#OBJECT_AXES_SELECTION_BECOMES_FIRST",
+      "text": "Object axes. The selection becomes the first cell; its rotation and children are preserved."
+    },
+    {
+      "key": "#YAW",
+      "text": "Yaw"
+    },
+    {
+      "key": "#Z_ROTATIONS_APPLIED",
+      "text": "Z rotations applied."
+    },
+    {
+      "key": "#ARG0_OBJECTS_ARG1_LOADED_MODELS",
+      "text": "{0} objects · {1} loaded models"
+    },
+    {
+      "key": "#DOUBLE_CLICK_PLACE_DRAG_SCENE",
+      "text": "Double-click to place · drag into the scene for a placement preview"
+    },
+    {
+      "key": "#LOADING_PLACEMENT_PREVIEW",
+      "text": "Loading placement preview…"
+    },
+    {
+      "key": "#FILE",
+      "text": "File"
+    },
+    {
+      "key": "#EDIT",
+      "text": "Edit"
+    },
+    {
+      "key": "#PROJECT",
+      "text": "Project"
+    },
+    {
+      "key": "#LOCAL_PROJECT_NAME_USED_SAVING",
+      "text": "Local project name used for saving"
+    },
+    {
+      "key": "#LAST_WORKSPACE_RESTORED",
+      "text": "Last workspace restored."
+    },
+    {
+      "key": "#CURRENT_PROJECT_ARG0",
+      "text": "Current project: {0}"
+    },
+    {
+      "key": "#OPEN_CURRENT_NAME",
+      "text": "Open current name"
+    },
+    {
+      "key": "#SAVED_PROJECTS",
+      "text": "Saved projects"
+    },
+    {
+      "key": "#SELECT",
+      "text": "Select all"
+    },
+    {
+      "key": "#GROUP_SELECTION",
+      "text": "Group selection"
+    },
+    {
+      "key": "#CONSTRUCTION_TOOLS_6E6587",
+      "text": "Construction tools"
+    },
+    {
+      "key": "#TRANSFORM_STEPS",
+      "text": "Transform steps…"
+    },
+    {
+      "key": "#INDEX_ARCHIVES",
+      "text": "Index archives"
+    },
+    {
+      "key": "#LIBRARY_DETAILS",
+      "text": "Library details"
+    },
+    {
+      "key": "#HIDE_DETAILS",
+      "text": "Hide details"
+    },
+    {
+      "key": "#DETAILS",
+      "text": "Details"
+    },
+    {
+      "key": "#INVALID_EDITED_MAP",
+      "text": "Invalid edited map."
+    },
+    {
+      "key": "#CONFIGURE_WORKSPACE_GAME_SOURCES_MAP",
+      "text": "Configure the workspace, the game sources and the map currently being edited."
+    },
+    {
+      "key": "#PREVIEW_QUALITY",
+      "text": "Preview quality"
+    },
+    {
+      "key": "#MAP_CONFIGURATION",
+      "text": "Map configuration"
+    },
+    {
+      "key": "#CHOOSE_APEX_MAP_BUILDING_AUTOMATICALLY",
+      "text": "Choose the Apex map you are building for. It is automatically included in the model sources below."
+    },
+    {
+      "key": "#SHOW_MAIN_BSP",
+      "text": "Show main BSP terrain"
+    },
+    {
+      "key": "#SHOW_MAIN_BSP_HELP",
+      "text": "Extracts and displays the selected map terrain as a locked, read-only scene reference."
+    },
+    {
+      "key": "#SHOW_MPRT_MODELS",
+      "text": "Show MPRT models"
+    },
+    {
+      "key": "#SHOW_MPRT_MODELS_HELP",
+      "text": "Extracts and places the static models registered by the BSP. They remain locked and read-only."
+    },
+    {
+      "key": "#RELOAD_MAP_REFERENCE",
+      "text": "Reload map reference"
+    },
+    {
+      "key": "#SELECT_EDITED_MAP_FIRST",
+      "text": "Select the edited map first."
+    },
+    {
+      "key": "#PREPARING_MAP_REFERENCE",
+      "text": "Preparing map reference…"
+    },
+    {
+      "key": "#BUILDING_BSP_MESHES",
+      "text": "Building BSP terrain meshes…"
+    },
+    {
+      "key": "#INDEXING_MODELS_FOR_MPRT",
+      "text": "Indexing model archives for MPRT…"
+    },
+    {
+      "key": "#RESOLVING_MPRT_MODELS",
+      "text": "Resolving MPRT model references…"
+    },
+    {
+      "key": "#PREPARING_MPRT_STREAMING_INDEX",
+      "text": "Preparing the MPRT streaming index…"
+    },
+    {
+      "key": "#EXTRACTING_MPRT_MODEL_ARG0_ARG1",
+      "text": "Extracting MPRT model {0}/{1}…"
+    },
+    {
+      "key": "#PLACING_MPRT_MODELS_ARG0_ARG1",
+      "text": "Placing MPRT models {0}/{1}…"
+    },
+    {
+      "key": "#MAP_REFERENCE_READY_ARG0_ARG1_ARG2",
+      "text": "Map reference ready: {0} BSP surfaces, {1} static models, {2} unavailable models."
+    },
+    {
+      "key": "#MAP_REFERENCE_LOADING_CANCELLED",
+      "text": "Map reference loading cancelled."
+    },
+    {
+      "key": "#EDITED_MAP",
+      "text": "Edited map"
+    },
+    {
+      "key": "#SPECIFIED",
+      "text": "Not specified"
+    },
+    {
+      "key": "#NO_EDITED_MAP_SELECTED",
+      "text": "No edited map selected."
+    },
+    {
+      "key": "#EDITED_MAP_SELECTED_ARCHIVE_ENABLED",
+      "text": "Edited map selected. Its archive is enabled below."
+    },
+    {
+      "key": "#ADDITIONAL_MODEL_SOURCES",
+      "text": "Additional model sources"
+    },
+    {
+      "key": "#ENABLE_OTHER_MAPS_NEED_ASSETS",
+      "text": "Enable other maps only when you need assets from their loaded RPAKs. Common assets are always included."
+    },
+    {
+      "key": "#CLOSE",
+      "text": "Close"
+    },
+    {
+      "key": "#APPLY_INDEX_CLOSE",
+      "text": "Apply, index and close"
+    },
+    {
+      "key": "#WORKSPACE_RECOVERY_FAILED",
+      "text": "Workspace recovery failed: "
+    },
+    {
+      "key": "#CHOOSE_SAVED_PROJECT",
+      "text": "Choose a saved project"
+    },
+    {
+      "key": "#CREATE_NEW_MAP",
+      "text": "Create a new map"
+    },
+    {
+      "key": "#PROJECT_NAME",
+      "text": "Project name"
+    },
+    {
+      "key": "#EDITED_MAP_RPAKS",
+      "text": "Edited map and RPAKs"
+    },
+    {
+      "key": "#CHOOSE_MAIN_MAP_ADD_OTHER",
+      "text": "Choose the main map, then add any other map archives whose models you need."
+    },
+    {
+      "key": "#CANCEL",
+      "text": "Cancel"
+    },
+    {
+      "key": "#CREATE_LOAD_RPAKS",
+      "text": "Create and load RPAKs"
+    },
+    {
+      "key": "#SELECT_LEAST_ONE_RPAK_SOURCE",
+      "text": "Select at least one RPAK source."
+    },
+    {
+      "key": "#MAP_CREATED_LOADING_SELECTED_RPAKS",
+      "text": "Map created. Loading the selected RPAKs…"
+    },
+    {
+      "key": "#MAP_CREATED_CONFIGURE_GAME_SOURCES",
+      "text": "Map created. Configure the game sources to load its RPAKs."
+    },
+    {
+      "key": "#MAP_OPENED_RELOADING_SELECTED_RPAKS",
+      "text": "Map opened. Reloading its selected RPAKs…"
+    },
+    {
+      "key": "#MAP_OPENED_CONFIGURE_GAME_SOURCES",
+      "text": "Map opened. Configure the game sources to reload its RPAKs."
+    },
+    {
+      "key": "#SAVE_SELECTION_ASSEMBLY",
+      "text": "Save selection as an assembly"
+    },
+    {
+      "key": "#SELECTED_OBJECTS_HIERARCHY_BECOME_REUSABLE",
+      "text": "The selected objects and their hierarchy will become a reusable library item."
+    },
+    {
+      "key": "#ASSEMBLY_NAME",
+      "text": "Assembly name"
+    },
+    {
+      "key": "#SELECT_OBJECTS_USE_SAVE_SELECTION",
+      "text": "Select objects, then use Save selection and enter a name."
+    },
+    {
+      "key": "#UNCATEGORIZED",
+      "text": "Uncategorized"
+    },
+    {
+      "key": "#COMMON",
+      "text": "Common"
+    },
+    {
+      "key": "#CATEGORY",
+      "text": "Category: "
+    },
+    {
+      "key": "#RPAK",
+      "text": "RPAK:"
+    },
+    {
+      "key": "#LOADING_PREVIEW",
+      "text": "Loading preview…"
+    },
+    {
+      "key": "#SELECTED_MODEL",
+      "text": "Selected model: "
+    },
+    {
+      "key": "#ARG0_MATERIAL_S_UNRESOLVED_ALBEDO",
+      "text": "{0} material(s) with unresolved albedo"
+    },
+    {
+      "key": "#ARG0_ARG1_MATERIAL_S_UNRESOLVED",
+      "text": "{0}: {1} material(s) with unresolved albedo"
+    },
+    {
+      "key": "#ASSET_CACHE",
+      "text": "Asset cache"
+    },
+    {
+      "key": "#MODELS_TEXTURES_USE_STABLE_EASY",
+      "text": "Models and textures use a stable, easy-to-find folder. Older incompatible generations are preserved in Versions."
+    },
+    {
+      "key": "#CACHE_FOLDER",
+      "text": "Cache folder"
+    },
+    {
+      "key": "#OPEN_CACHE_FOLDER",
+      "text": "Open cache folder"
+    },
+    {
+      "key": "#INVALID_CACHE_GENERATION",
+      "text": "Invalid cache generation."
+    },
+    {
+      "key": "#CACHE_DESTINATION_ALREADY_EXISTS",
+      "text": "Cache destination already exists: "
+    },
+    {
+      "key": "#INVALID_MODEL_CACHE_PATH",
+      "text": "Invalid model cache path."
+    },
+    {
+      "key": "#ARG0_MODELS",
+      "text": "{0} models"
+    },
+    {
+      "key": "#ARG0_ASSEMBLIES",
+      "text": "{0} assemblies"
+    },
+    {
+      "key": "#DIMENSIONS_X_Y_Z",
+      "text": "Dimensions X / Y / Z: "
+    },
+    {
+      "key": "#KEEP_MODEL_PROPORTIONS_THREE_SCALE",
+      "text": "Keep model proportions on all three scale axes"
+    },
+    {
+      "key": "#GAME_SCALING_PROP_DYNAMIC_SCALE",
+      "text": "In game, scaling a prop_dynamic does not scale its hitbox; collision remains at 1:1."
+    },
+    {
+      "key": "#SCALE_PROPORTIONS_LINKED",
+      "text": "Scale · proportions linked"
+    },
+    {
+      "key": "#SCALE_FREE_AXES",
+      "text": "Scale · free axes"
+    },
+    {
+      "key": "#COPY_E21F93",
+      "text": "Copy"
+    },
+    {
+      "key": "#CUT",
+      "text": "Cut"
+    },
+    {
+      "key": "#PASTE",
+      "text": "Paste"
+    },
+    {
+      "key": "#COPIED_ARG0_ITEM_S",
+      "text": "Copied {0} item(s)."
+    },
+    {
+      "key": "#CUT_ARG0_ITEM_S",
+      "text": "Cut {0} item(s)."
+    },
+    {
+      "key": "#PASTED_ARG0_ITEM_S",
+      "text": "Pasted {0} item(s)."
+    },
+    {
+      "key": "#CLIPBOARD_CONTAIN_REMAP_OBJECTS",
+      "text": "The clipboard does not contain ReMap objects."
+    },
+    {
+      "key": "#FULLSCREEN",
+      "text": "Fullscreen"
+    },
+    {
+      "key": "#EXIT_FULLSCREEN",
+      "text": "Exit fullscreen"
+    },
+    {
+      "key": "#FULLSCREEN_ENABLED",
+      "text": "Fullscreen enabled."
+    },
+    {
+      "key": "#WINDOWED_MODE_ENABLED",
+      "text": "Windowed mode enabled."
+    },
+    {
+      "key": "#PLACEMENT_CANCELLED",
+      "text": "Placement cancelled."
+    },
+    {
+      "key": "#RELATIVE_PARENT_ARG0_MOVING_PARENT",
+      "text": "Relative to parent « {0} ». Moving the parent also moves this object."
+    },
+    {
+      "key": "#WORLD_APEX_POSITION_READ_ARG0",
+      "text": "World position (read-only): {0}"
+    },
+    {
+      "key": "#OBJECT_MAY_CONTAIN_MOST_64",
+      "text": "An object may contain at most 64 game script properties."
+    },
+    {
+      "key": "#GAME_SCRIPT_PROPERTIES_USE_KV",
+      "text": "Game script properties must use .kv, .e or .s."
+    },
+    {
+      "key": "#INVALID_GAME_SCRIPT_PROPERTY_NAME",
+      "text": "Invalid game script property name."
+    },
+    {
+      "key": "#INVALID_GAME_SCRIPT_PROPERTY_VALUE",
+      "text": "Invalid game script property value."
+    },
+    {
+      "key": "#PLATFORM_FOLDER",
+      "text": "Platform folder"
+    },
+    {
+      "key": "#GENERATED_GAME_SCRIPTS_WRITTEN_PLATFORM",
+      "text": "Generated game scripts are written to platform/scripts/vscripts. The folder may be a Windows junction."
+    },
+    {
+      "key": "#BUILD_GAME_SCRIPT",
+      "text": "Build game script"
+    },
+    {
+      "key": "#COPY_LIVE_COMMANDS",
+      "text": "Copy live commands"
+    },
+    {
+      "key": "#ARG0_APEX_PROPS_SUPPORT_UNIFORM",
+      "text": "{0}: Apex props support only uniform game scale."
+    },
+    {
+      "key": "#ARG0_NO_VALID_APEX_MODEL",
+      "text": "{0}: no valid Apex model path is available."
+    },
+    {
+      "key": "#CONFIGURE_PLATFORM_FOLDER_SETTINGS_FIRST",
+      "text": "Configure the platform folder in Settings first."
+    },
+    {
+      "key": "#PLATFORM_CONTAIN_REMAP_S_REMAP",
+      "text": "The platform does not contain ReMap's _remap.gnut bridge."
+    },
+    {
+      "key": "#GAME_SCRIPT_BUILT",
+      "text": "Game script built: "
+    },
+    {
+      "key": "#ARG0_LIVE_COMMANDS_COPIED_PASTE",
+      "text": "{0} live commands copied. Paste them into the server console while the map is running."
+    },
+    {
+      "key": "#GAME_SCRIPT_PROPERTIES",
+      "text": "Game script properties"
+    },
+    {
+      "key": "#OPTIONAL_VALUES_APPLIED_PROP_CREATED",
+      "text": "Optional values applied after the prop is created. Presets remain fully editable."
+    },
+    {
+      "key": "#FIELD_NAME",
+      "text": "Field name"
+    },
+    {
+      "key": "#SQUIRREL_VALUE",
+      "text": "Squirrel value"
+    },
+    {
+      "key": "#ADD_CUSTOM_PROPERTY",
+      "text": "Add custom property"
+    },
+    {
+      "key": "#ADD_PRESET",
+      "text": "Add a preset..."
+    },
+    {
+      "key": "#NO_DISTANCE_FADE",
+      "text": "No distance fade"
+    },
+    {
+      "key": "#DISABLE_SHADOWS",
+      "text": "Disable shadows"
+    },
+    {
+      "key": "#RENDER_COLOR",
+      "text": "Render color"
+    },
+    {
+      "key": "#RENDER_AMOUNT",
+      "text": "Render amount"
+    },
+    {
+      "key": "#RENDER_MODE",
+      "text": "Render mode"
+    },
+    {
+      "key": "#PREVENT_STICKY_ENTITIES",
+      "text": "Prevent sticky entities"
+    },
+    {
+      "key": "#DESTROY_OUT_BOUNDS",
+      "text": "Destroy out of bounds"
+    },
+    {
+      "key": "#BURN",
+      "text": "Can burn"
+    },
+    {
+      "key": "#BLOCKS_THERMITE",
+      "text": "Blocks thermite"
+    },
+    {
+      "key": "#IGNORE_JUMP_PADS",
+      "text": "Ignore jump pads"
+    },
+    {
+      "key": "#IGNORE_PING_TRACE",
+      "text": "Ignore ping trace"
+    },
+    {
+      "key": "#CUSTOM_SCRIPT_VALUE",
+      "text": "Custom script value"
+    },
+    {
+      "key": "#APEX_X_Y_HORIZONTAL_Z_5DFE76",
+      "text": "X / Y horizontal · Z up · limits ±65,535 u · drag an axis label · F: frame"
+    },
+    {
+      "key": "#DUPLICATE_SELECTION",
+      "text": "Duplicate selection"
+    },
+    {
+      "key": "#DELETE_SELECTION",
+      "text": "Delete selection"
+    },
+    {
+      "key": "#GENERATED_GAME_CODE",
+      "text": "Generated game code"
+    },
+    {
+      "key": "#REFRESH_CODE",
+      "text": "Refresh code"
+    },
+    {
+      "key": "#COPY_CODE",
+      "text": "Copy code"
+    },
+    {
+      "key": "#GENERATED_GAME_CODE_COPIED",
+      "text": "Generated game code copied."
+    },
+    {
+      "key": "#PREVIEW_GAME_CODE",
+      "text": "Preview game code"
+    },
+    {
+      "key": "#TOOL",
+      "text": "Tool"
+    },
+    {
+      "key": "#TOOL_ACTIVE",
+      "text": "Tool active"
+    },
+    {
+      "key": "#TOOL_PAUSED",
+      "text": "Tool paused"
+    },
+    {
+      "key": "#TOGGLE_TOOL_ACTIVE",
+      "text": "Pause or resume the selected tool without closing this window."
+    },
+    {
+      "key": "#MEASURE_AXES",
+      "text": "Axes included in distance"
+    },
+    {
+      "key": "#NO_AXIS",
+      "text": "none"
+    },
+    {
+      "key": "#MEASURED_AXES_ARG0",
+      "text": "\nMeasured axes: {0}"
+    },
+    {
+      "key": "#SELECT_BY_TYPE",
+      "text": "Select by type"
+    },
+    {
+      "key": "#SELECTION_CRITERION",
+      "text": "Match"
+    },
+    {
+      "key": "#SAME_OBJECT_TYPE",
+      "text": "Same object type"
+    },
+    {
+      "key": "#SAME_MODEL",
+      "text": "Same model"
+    },
+    {
+      "key": "#REGULAR_PROPS",
+      "text": "Regular props"
+    },
+    {
+      "key": "#FOLDERS",
+      "text": "Folders"
+    },
+    {
+      "key": "#ZIPLINES",
+      "text": "Ziplines"
+    },
+    {
+      "key": "#SEARCH_SCOPE",
+      "text": "Scope"
+    },
+    {
+      "key": "#WHOLE_SCENE",
+      "text": "Whole scene"
+    },
+    {
+      "key": "#SELECTION_AND_DESCENDANTS",
+      "text": "Selection and descendants"
+    },
+    {
+      "key": "#SELECT_MATCHING_OBJECTS",
+      "text": "Select matching objects"
+    },
+    {
+      "key": "#SELECT_BY_TYPE_HELP",
+      "text": "Build a selection from the whole scene or only the currently selected branches."
+    },
+    {
+      "key": "#SELECT_REFERENCE_OBJECT_FIRST",
+      "text": "Select a reference object first."
+    },
+    {
+      "key": "#ARG0_MATCHING_ITEMS_SELECTED",
+      "text": "{0} matching item(s) selected."
+    },
+    {
+      "key": "#BATCH_MODEL_REPLACEMENT",
+      "text": "Batch model replacement"
+    },
+    {
+      "key": "#BATCH_MODEL_REPLACEMENT_HELP",
+      "text": "Choose a model in the Library, add it here, then replace selected props or active props inside selected folders. Transforms and parameters are preserved."
+    },
+    {
+      "key": "#ADD_LIBRARY_MODEL",
+      "text": "Add selected Library model"
+    },
+    {
+      "key": "#RANDOM_MODEL_PER_OBJECT",
+      "text": "Choose a random model for each object"
+    },
+    {
+      "key": "#REPLACE_SELECTED_MODELS",
+      "text": "Replace selected models"
+    },
+    {
+      "key": "#SELECT_COMPATIBLE_LIBRARY_MODEL",
+      "text": "Select a compatible regular model in the Library first."
+    },
+    {
+      "key": "#ARG0_ADDED_REPLACEMENT_MODELS",
+      "text": "{0} was added to the replacement models."
+    },
+    {
+      "key": "#NO_REPLACEMENT_MODEL",
+      "text": "No replacement model added."
+    },
+    {
+      "key": "#REMOVE_ARG0",
+      "text": "Remove {0}"
+    },
+    {
+      "key": "#ADD_REPLACEMENT_MODEL_FIRST",
+      "text": "Add at least one compatible replacement model first."
+    },
+    {
+      "key": "#SELECTED_MODELS_REPLACED",
+      "text": "Selected models replaced."
+    },
+    {
+      "key": "#ARG0_MODELS_REPLACED",
+      "text": "{0} model(s) replaced."
+    },
+    {
+      "key": "#PARAMETER_TRANSFER",
+      "text": "Parameter transfer"
+    },
+    {
+      "key": "#NO_SOURCE_OBJECT",
+      "text": "No source object selected."
+    },
+    {
+      "key": "#USE_SELECTION_AS_SOURCE",
+      "text": "Use current selection as source"
+    },
+    {
+      "key": "#OBJECT_REMAP_PARAMETERS",
+      "text": "Object / ReMap parameters"
+    },
+    {
+      "key": "#TRANSFER_TO_SELECTION",
+      "text": "Transfer to selection"
+    },
+    {
+      "key": "#PARAMETER_TRANSFER_HELP",
+      "text": "Only compatible objects are updated. Models, transforms, hierarchy and structural links are preserved."
+    },
+    {
+      "key": "#SELECT_ONE_SOURCE_OBJECT",
+      "text": "Select exactly one source object."
+    },
+    {
+      "key": "#SOURCE_MUST_HAVE_PARAMETERS",
+      "text": "The source must be a prop or an object with transferable parameters."
+    },
+    {
+      "key": "#ARG0_PARAMETER_SOURCE",
+      "text": "{0} is now the parameter source."
+    },
+    {
+      "key": "#SOURCE_ARG0",
+      "text": "Source: {0}"
+    },
+    {
+      "key": "#CHOOSE_PARAMETER_SOURCE_FIRST",
+      "text": "Choose a parameter source first."
+    },
+    {
+      "key": "#CHOOSE_PARAMETERS_TO_TRANSFER",
+      "text": "Choose at least one parameter category to transfer."
+    },
+    {
+      "key": "#PARAMETERS_TRANSFERRED",
+      "text": "Parameters transferred."
+    },
+    {
+      "key": "#ARG0_OBJECTS_UPDATED",
+      "text": "{0} compatible object(s) updated."
+    },
+    {
+      "key": "#SELECT_EDITED_APEX_MAP_BUILDING",
+      "text": "Select the edited Apex map before building game code."
+    },
+    {
+      "key": "#SOLID_COLLISION",
+      "text": "Solid collision"
+    },
+    {
+      "key": "#CHOOSE_PROPERTY_FAMILY_COMPATIBLE_FIELD",
+      "text": "Choose a property family, then a compatible field. Manual fields remain available."
+    },
+    {
+      "key": "#PROPERTY_FAMILY",
+      "text": "Property family"
+    },
+    {
+      "key": "#PROPERTY_FIELD",
+      "text": "Property field"
+    },
+    {
+      "key": "#MANUAL_FIELD",
+      "text": "Manual field..."
+    },
+    {
+      "key": "#ADD_PROPERTY",
+      "text": "Add property"
+    },
+    {
+      "key": "#SOLID_AVAILABLE_KV",
+      "text": "solid is only available under .kv."
+    },
+    {
+      "key": "#GAME_SCRIPT_PROPERTIES_USE_KV_7AE349",
+      "text": "Game script properties must use ., .kv, .e or .s."
+    },
+    {
+      "key": "#FULL_MODEL",
+      "text": "Full model: "
+    },
+    {
+      "key": "#APEX_DIMENSIONS_X_Y_Z_31CD3B",
+      "text": "Dimensions X / Y / Z (u): "
+    },
+    {
+      "key": "#PLACE_SURFACE",
+      "text": "Place on a surface"
+    },
+    {
+      "key": "#BOTTOM_SURFACE_BELOW",
+      "text": "Bottom on surface below"
+    },
+    {
+      "key": "#TOP_SURFACE_ABOVE",
+      "text": "Top under surface above"
+    },
+    {
+      "key": "#GO_TO_ZERO",
+      "text": "Go to 0"
+    },
+    {
+      "key": "#BOTTOM_Z_0_PLANE",
+      "text": "Bottom on the Z = 0 plane"
+    },
+    {
+      "key": "#PLACE_BOTTOM_SUPPORT_ATTACH_TOP",
+      "text": "Place the bottom on a support, or attach the top under the nearest structure above."
+    },
+    {
+      "key": "#USE_GIZMO_AROUND_SELECTION",
+      "text": "Use the gizmo around the selection."
+    },
+    {
+      "key": "#DUPLICATE_AROUND_CORNER",
+      "text": "Duplicate around a corner"
+    },
+    {
+      "key": "#PLACEMENT_MOVED_OTHER_SIDE_AXIS",
+      "text": "Placement moved to the other side of the axis."
+    },
+    {
+      "key": "#PLACEMENT_ROTATED_90_OTHER_AXIS",
+      "text": "Placement rotated 90° to the other axis."
+    },
+    {
+      "key": "#FUTURE_OBJECTS_FLIPPED_180_REMAINED",
+      "text": "Future objects flipped 180° and remained anchored to the corner."
+    },
+    {
+      "key": "#COPY_CREATED_CHOSEN_CORNER",
+      "text": "Copy created from the chosen corner."
+    },
+    {
+      "key": "#ARROWS_ONE_COPY_MIRROR_MIRROR",
+      "text": "Arrows: one copy · ⇆ Mirror reverses one copy · Corners: choose a global-bounds diamond · Axis cycles north/east/south/west · Side chooses left/right · Objects rotates 180° inside the zone · R/right click also rotates objects"
+    },
+    {
+      "key": "#MIRRORED_COPY_ENABLED",
+      "text": "Mirrored copy enabled."
+    },
+    {
+      "key": "#MIRRORED_COPY_DISABLED",
+      "text": "Mirrored copy disabled."
+    },
+    {
+      "key": "#MIRRORED_COPY_CREATED_EDGE_EDGE",
+      "text": "Mirrored copy created edge to edge and selected."
+    },
+    {
+      "key": "#MIRROR",
+      "text": "⇆ Mirror"
+    },
+    {
+      "key": "#CORNER_RIGHT",
+      "text": "→ Right"
+    },
+    {
+      "key": "#CORNER_LEFT",
+      "text": "← Left"
+    },
+    {
+      "key": "#NORTH",
+      "text": "↑ North"
+    },
+    {
+      "key": "#EAST",
+      "text": "→ East"
+    },
+    {
+      "key": "#SOUTH",
+      "text": "↓ South"
+    },
+    {
+      "key": "#WEST",
+      "text": "← West"
+    },
+    {
+      "key": "#OBJECTS_0_DEG",
+      "text": "↻ Objects 0°"
+    },
+    {
+      "key": "#OBJECTS_180_DEG",
+      "text": "↻ Objects 180°"
+    },
+    {
+      "key": "#SIDE_RIGHT_AXIS",
+      "text": "Side: right of axis."
+    },
+    {
+      "key": "#SIDE_LEFT_AXIS",
+      "text": "Side: left of axis."
+    },
+    {
+      "key": "#AXIS_NORTH",
+      "text": "Axis: north."
+    },
+    {
+      "key": "#AXIS_EAST",
+      "text": "Axis: east."
+    },
+    {
+      "key": "#AXIS_SOUTH",
+      "text": "Axis: south."
+    },
+    {
+      "key": "#AXIS_WEST",
+      "text": "Axis: west."
+    },
+    {
+      "key": "#OBJECTS_ORIGINAL_ORIENTATION",
+      "text": "Objects: original orientation."
+    },
+    {
+      "key": "#OBJECTS_ROTATED_180_INSIDE_TARGET",
+      "text": "Objects: rotated 180° inside the target zone."
+    },
+    {
+      "key": "#MIRROR_SIDE",
+      "text": "⇆ Side"
+    },
+    {
+      "key": "#ROTATE_AXIS",
+      "text": "↻ Axis"
+    },
+    {
+      "key": "#ROTATE_PLACEMENT",
+      "text": "↻ Placement"
+    },
+    {
+      "key": "#ROTATE_OBJECTS",
+      "text": "↻ Objects"
+    },
+    {
+      "key": "#CHOOSE_VISIBLE_CORNER_HANDLE",
+      "text": "Choose a visible corner handle."
+    },
+    {
+      "key": "#SELECTION_ATTACHED_NEAREST_SUPPORTS",
+      "text": "Selection attached under the nearest supports."
+    },
+    {
+      "key": "#RENAME_CURRENT_MAP",
+      "text": "Rename current map…"
+    },
+    {
+      "key": "#RENAME_CURRENT_MAP_802B4C",
+      "text": "Rename current map"
+    },
+    {
+      "key": "#CHOOSE_NEW_PROJECT_NAME_CURRENT",
+      "text": "Choose the new project name. The current save file will be renamed too."
+    },
+    {
+      "key": "#MAP_NAME",
+      "text": "Map name"
+    },
+    {
+      "key": "#RENAME",
+      "text": "Rename"
+    },
+    {
+      "key": "#CURRENT_MAP_SAVE_FOUND",
+      "text": "Current map save was not found."
+    },
+    {
+      "key": "#MAP_ALREADY_USES_NAME",
+      "text": "A map already uses this name."
+    },
+    {
+      "key": "#MAP_RENAMED",
+      "text": "Map renamed: "
+    },
+    {
+      "key": "#RESET_INSTALLED_GAME_SCRIPT",
+      "text": "Reset installed game script"
+    },
+    {
+      "key": "#INSTALLED_REMAP_SCRIPT_RESET_BUILD",
+      "text": "Installed ReMap script reset. Build it again to restore the map."
+    },
+    {
+      "key": "#FLOWSTATE_LAUNCHER_S_LOCAL_CONSOLE",
+      "text": "The Flowstate launcher's local console needs no manual RCON. These advanced settings are only for sending commands directly from ReMap through a separately enabled RCON server."
+    },
+    {
+      "key": "#AUTOMATIC_LOCAL_CONNECTION_FLOWSTATE_LAUNCHER",
+      "text": "Automatic local connection through the Flowstate launcher."
+    },
+    {
+      "key": "#REMAP_USES_OPEN_FLOWSTATE_LAUNCHER",
+      "text": "ReMap uses the open Flowstate launcher's Server console automatically. Leave the RCON key and password empty for this mode; fill them only for a separate manual RCON connection."
+    },
+    {
+      "key": "#SERVER_COMMAND_TOO_LONG",
+      "text": "A server command is too long."
+    },
+    {
+      "key": "#START_FLOWSTATE_LAUNCHER_LOCAL_GAME",
+      "text": "Start the Flowstate launcher and a local game first."
+    },
+    {
+      "key": "#FLOWSTATE_SERVER_CONSOLE_INPUT_FOUND",
+      "text": "The Flowstate server console input was not found."
+    },
+    {
+      "key": "#START_LOCAL_FLOWSTATE_GAME_SENDING",
+      "text": "Start a local Flowstate game before sending commands."
+    },
+    {
+      "key": "#WINDOWS_UI_AUTOMATION_UNAVAILABLE",
+      "text": "Windows UI Automation is unavailable."
+    },
+    {
+      "key": "#FLOWSTATE_LAUNCHER_CONNECTOR_MISSING_REBUILD",
+      "text": "The Flowstate launcher connector is missing. Rebuild the Windows application."
+    },
+    {
+      "key": "#COULD_START_FLOWSTATE_LAUNCHER_CONNECTOR",
+      "text": "Could not start the Flowstate launcher connector."
+    },
+    {
+      "key": "#FLOWSTATE_LAUNCHER_DID_ACCEPT_COMMANDS",
+      "text": "The Flowstate launcher did not accept the commands in time."
+    },
+    {
+      "key": "#NO_MODEL",
+      "text": "No model"
+    },
+    {
+      "key": "#ZIPLINE_ARM",
+      "text": "Zipline arm"
+    },
+    {
+      "key": "#FENCE_SUPPORT",
+      "text": "Fence support"
+    },
+    {
+      "key": "#WALL_PANEL",
+      "text": "Wall panel"
+    },
+    {
+      "key": "#STANDING_PANEL",
+      "text": "Standing panel"
+    },
+    {
+      "key": "#ZIPLINE",
+      "text": "Zipline"
+    },
+    {
+      "key": "#START",
+      "text": "Start"
+    },
+    {
+      "key": "#END",
+      "text": "End"
+    },
+    {
+      "key": "#CREATE_ZIPLINE",
+      "text": "Create Zipline"
+    },
+    {
+      "key": "#ZIPLINE_CREATED_MOVE_START_END",
+      "text": "Zipline created. Move its Start and End points with the gizmo."
+    },
+    {
+      "key": "#SELECT_START_END_BELOW_MOVE",
+      "text": "Select Start or End below, then move that point with the gizmo."
+    },
+    {
+      "key": "#SELECT_START",
+      "text": "Select Start"
+    },
+    {
+      "key": "#SELECT_END",
+      "text": "Select End"
+    },
+    {
+      "key": "#HORIZONTAL",
+      "text": "Horizontal"
+    },
+    {
+      "key": "#VERTICAL",
+      "text": "Vertical"
+    },
+    {
+      "key": "#ORIENTATION",
+      "text": "Orientation"
+    },
+    {
+      "key": "#CABLE_WIDTH_SHORT",
+      "text": "Cable width"
+    },
+    {
+      "key": "#SPEED_SCALE",
+      "text": "Speed scale"
+    },
+    {
+      "key": "#SWAP_START_END",
+      "text": "Swap Start and End"
+    },
+    {
+      "key": "#ZIPLINE_START",
+      "text": "Zipline Start"
+    },
+    {
+      "key": "#ZIPLINE_END",
+      "text": "Zipline End"
+    },
+    {
+      "key": "#END_MODEL",
+      "text": "End model"
+    },
+    {
+      "key": "#MODEL_PRECACHED_ZIPLINE_GAME_SCRIPT",
+      "text": "The model is precached by the zipline game script. The point itself controls the cable attachment."
+    },
+    {
+      "key": "#SELECT_ZIPLINE",
+      "text": "Select Zipline"
+    },
+    {
+      "key": "#CUSTOM_OBJECT_ZIPLINE",
+      "text": "Custom object · Zipline"
+    },
+    {
+      "key": "#ZIPLINE_ATTACHMENT_POINT",
+      "text": "Zipline attachment point"
+    },
+    {
+      "key": "#UNKNOWN_CUSTOM_OBJECT_TYPE",
+      "text": "Unknown custom object type."
+    },
+    {
+      "key": "#CUSTOM_OBJECTS_HIERARCHY_GROUPS",
+      "text": "Custom objects must be hierarchy groups."
+    },
+    {
+      "key": "#INVALID_ZIPLINE_ORIENTATION_MODE",
+      "text": "Invalid zipline orientation mode."
+    },
+    {
+      "key": "#INVALID_ZIPLINE_WIDTH_SPEED",
+      "text": "Invalid zipline width or speed."
+    },
+    {
+      "key": "#ZIPLINE_CONTAIN_ONE_START_ONE",
+      "text": "A zipline must contain one start and one end point."
+    },
+    {
+      "key": "#INVALID_ZIPLINE_ENDPOINT",
+      "text": "Invalid zipline endpoint."
+    },
+    {
+      "key": "#ARG0_ZIPLINE_ENDPOINTS_MISSING",
+      "text": "{0}: zipline endpoints are missing."
+    },
+    {
+      "key": "#CUSTOM",
+      "text": "Custom"
+    },
+    {
+      "key": "#ARG0_CUSTOM_OBJECTS",
+      "text": "{0} custom objects"
+    },
+    {
+      "key": "#NO_CUSTOM_OBJECT_MATCHES_SEARCH",
+      "text": "No custom object matches this search."
+    },
+    {
+      "key": "#CABLE_TWO_INDEPENDENTLY_MOVABLE_ENDPOINTS",
+      "text": "A cable with two independently movable endpoints. Select either endpoint to position and rotate its support model."
+    },
+    {
+      "key": "#MOVE_ROTATE_ENDPOINT_GIZMO_SUPPORT",
+      "text": "Move or rotate this endpoint with the gizmo; the support model and cable update immediately."
+    },
+    {
+      "key": "#ZIPLINE_SUPPORT_PREVIEW",
+      "text": "Zipline support preview: "
+    },
+    {
+      "key": "#ZIPLINE_HIERARCHY_GROUP",
+      "text": "A zipline must be a hierarchy group."
+    },
+    {
+      "key": "#NO_SUPPORT",
+      "text": "No support"
+    },
+    {
+      "key": "#ARM",
+      "text": "Arm"
+    },
+    {
+      "key": "#ARM_SUPPORT",
+      "text": "Arm + support"
+    },
+    {
+      "key": "#ZIPLINE_SUPPORT",
+      "text": "Zipline support"
+    },
+    {
+      "key": "#MAIN_OBJECT_START_POINT_END",
+      "text": "The main object is the start point. Only End remains in the hierarchy."
+    },
+    {
+      "key": "#ZIPLINE_CREATED_MAIN_OBJECT_CONTROLS",
+      "text": "Zipline created. The main object controls the start; move End to set its destination."
+    },
+    {
+      "key": "#VERTICAL_ZIPLINE",
+      "text": "Vertical zipline"
+    },
+    {
+      "key": "#START_SUPPORT",
+      "text": "Start support"
+    },
+    {
+      "key": "#END_SUPPORT",
+      "text": "End support"
+    },
+    {
+      "key": "#LOCK_ZIPLINE_END",
+      "text": "Lock end position"
+    },
+    {
+      "key": "#LOCK_ZIPLINE_END_HELP",
+      "text": "Keep the end at its world position while moving, rotating or scaling the start."
+    },
+    {
+      "key": "#ARM_HEIGHT_APEX_U",
+      "text": "Arm height (u)"
+    },
+    {
+      "key": "#AUTOMATIC_END_MODEL_BELOW",
+      "text": "Automatic end on model below"
+    },
+    {
+      "key": "#AUTOMATIC_VERTICAL_END_SURFACE",
+      "text": "Automatic bottom on surface below the top attachment"
+    },
+    {
+      "key": "#VERTICAL_GROUND_OFFSET_APEX_U",
+      "text": "Ground offset (u)"
+    },
+    {
+      "key": "#END_HEIGHT_OFFSET_APEX_U",
+      "text": "End height offset (u)"
+    },
+    {
+      "key": "#REFRESH_AUTOMATIC_END",
+      "text": "Refresh automatic end"
+    },
+    {
+      "key": "#PUSH_OFF_LOCAL_X_DIRECTION",
+      "text": "Push off in local X direction"
+    },
+    {
+      "key": "#ARROW_SCENE_SHOWS_PLAYER_S",
+      "text": "The arrow in the scene shows the player's push-off direction."
+    },
+    {
+      "key": "#CABLE_WIDTH",
+      "text": "Cable width (u)"
+    },
+    {
+      "key": "#LENGTH_SCALE_CABLE_GRAVITY",
+      "text": "Length scale (cable gravity)"
+    },
+    {
+      "key": "#RANGE_0_1_2_0",
+      "text": "Range 0-1.2; 0.9 is typical; values above 1 are exceptional."
+    },
+    {
+      "key": "#INVALID_ZIPLINE_LENGTH_SCALE",
+      "text": "Invalid zipline length scale."
+    },
+    {
+      "key": "#MOVE_ROTATE_END_GIZMO_ZIPLINE",
+      "text": "Move or rotate End with the gizmo. All zipline settings are on the main object."
+    },
+    {
+      "key": "#NO_MODEL_FOUND_BELOW_ZIPLINE",
+      "text": "No model was found below the zipline end."
+    },
+    {
+      "key": "#ZIPLINE_END_ALIGNED_MODEL_BELOW",
+      "text": "Zipline end aligned to the model below."
+    },
+    {
+      "key": "#VERTICAL_ZIPLINE_BOTTOM_ALIGNED",
+      "text": "Vertical zipline bottom aligned to the detected surface."
+    },
+    {
+      "key": "#ZIPLINE_GAMEPLAY",
+      "text": "Gameplay"
+    },
+    {
+      "key": "#CABLE_SCALE",
+      "text": "Cable scale"
+    },
+    {
+      "key": "#PRESERVE_VELOCITY",
+      "text": "Preserve player velocity"
+    },
+    {
+      "key": "#DROP_TO_BOTTOM",
+      "text": "Drop player to bottom"
+    },
+    {
+      "key": "#AUTO_DETACH_START_APEX_U",
+      "text": "Auto detach at start (u)"
+    },
+    {
+      "key": "#AUTO_DETACH_END_APEX_U",
+      "text": "Auto detach at end (u)"
+    },
+    {
+      "key": "#REST_POINTS",
+      "text": "Use endpoint rest points"
+    },
+    {
+      "key": "#DETACH_END_ON_SPAWN",
+      "text": "Detach end on spawn"
+    },
+    {
+      "key": "#DETACH_END_ON_USE",
+      "text": "Detach end on use"
+    },
+    {
+      "key": "#INVALID_ZIPLINE_FADE_SCALE",
+      "text": "Zipline fade distance must be at least -1 and cable scale must be between 0.01 and 100."
+    },
+    {
+      "key": "#INVALID_ZIPLINE_AUTO_DETACH",
+      "text": "Zipline auto-detach distances must be between 0 and 65535 units."
+    },
+    {
+      "key": "#R5RELOADED_USES_NATIVE_TWO_POINT",
+      "text": "R5Reloaded uses its native two-point zipline. Advanced support models and vertical push direction are available in R5Flowstate."
+    },
+    {
+      "key": "#INVALID_ZIPLINE_ARM_HEIGHT",
+      "text": "Zipline arm height must be between 70 and 290 units."
+    },
+    {
+      "key": "#VERTICAL_ZIPLINE_END_MOVE_APEX",
+      "text": "For a vertical zipline, End can move only on the Z axis."
+    },
+    {
+      "key": "#PUSH_OFF_ANGLE_DEGREES",
+      "text": "World push-off angle (degrees)"
+    },
+    {
+      "key": "#INVALID_ZIPLINE_PUSH_OFF_ANGLE",
+      "text": "Zipline push-off angle must be between -360 and 360 degrees."
+    },
+    {
+      "key": "#INVALID_ZIPLINE_COMPONENT",
+      "text": "Invalid zipline component."
+    },
+    {
+      "key": "#TARGET_GAME",
+      "text": "Target game"
+    },
+    {
+      "key": "#CREATE",
+      "text": "Create for"
+    },
+    {
+      "key": "#TARGET_SAVED_MAP_GENERATED_FUNCTIONS",
+      "text": "The target is saved in the map. Generated functions and custom objects may differ between games."
+    },
+    {
+      "key": "#GAME_INSTALLATIONS",
+      "text": "Game installations"
+    },
+    {
+      "key": "#R5RELOADED_FOLDER",
+      "text": "R5Reloaded folder"
+    },
+    {
+      "key": "#R5RELOADED_PLATFORM_FOLDER",
+      "text": "R5Reloaded platform folder"
+    },
+    {
+      "key": "#R5FLOWSTATE_FOLDER",
+      "text": "R5Flowstate folder"
+    },
+    {
+      "key": "#R5FLOWSTATE_PLATFORM_FOLDER",
+      "text": "R5Flowstate platform folder"
+    },
+    {
+      "key": "#REMAP_DETECTS_PAKS_WIN64_AVAILABLE",
+      "text": "ReMap detects paks/Win64, available RPAKs and model entries automatically for the selected game."
+    },
+    {
+      "key": "#R5RELOADED_DEFAULT_CHOICE_STORED_PROJECT",
+      "text": "R5Reloaded is the default. The choice is stored with the project and controls game-specific generation."
+    },
+    {
+      "key": "#R5RELOADED_USES_NATIVE_TWO_POINT_588E5D",
+      "text": "R5Reloaded uses its native two-point zipline. Advanced support models, orientation, width and speed are available only for R5Flowstate."
+    },
+    {
+      "key": "#MOVE_ENDPOINT_GIZMO_R5RELOADED_CREATES",
+      "text": "Move this endpoint with the gizmo. R5Reloaded creates the support through its native map editor."
+    },
+    {
+      "key": "#UNSUPPORTED_TARGET_GAME",
+      "text": "Unsupported target game."
+    },
+    {
+      "key": "#CONFIGURE_ARG0_GAME_FOLDER",
+      "text": "Configure the {0} game folder."
+    },
+    {
+      "key": "#R5RELOADED_FOLDER_CONTAIN_RPAK_ARCHIVES",
+      "text": "The R5Reloaded folder does not contain any RPAK archives."
+    },
+    {
+      "key": "#R5FLOWSTATE_FOLDER_CONTAIN_RPAK_ARCHIVES",
+      "text": "The R5Flowstate folder does not contain any RPAK archives."
+    },
+    {
+      "key": "#ARG0_PLATFORM_CONTAIN_REQUIRED_ARG1",
+      "text": "The {0} platform does not contain its required {1} bridge."
+    },
+    {
+      "key": "#GAME_SCRIPT_MANIFEST_FOUND",
+      "text": "The game script manifest was not found."
+    },
+    {
+      "key": "#GAME_SCRIPT_MANIFEST_LOAD_ARG0",
+      "text": "The game script manifest does not load {0}."
+    },
+    {
+      "key": "#R5FLOWSTATE_USE_OPEN_LAUNCHER_CONSOLE",
+      "text": "R5Flowstate can use its open launcher console automatically. R5Reloaded uses its configured RCON connection."
+    },
+    {
+      "key": "#LIVE_GAME",
+      "text": "Live game"
+    },
+    {
+      "key": "#LIVE_GAME_F9FC5E",
+      "text": "Live game…"
+    },
+    {
+      "key": "#SERVER_ADDRESS",
+      "text": "Server address"
+    },
+    {
+      "key": "#RCON_AES_KEY",
+      "text": "RCON AES key"
+    },
+    {
+      "key": "#RCON_PASSWORD",
+      "text": "RCON password"
+    },
+    {
+      "key": "#SAVE_LIVE_CONNECTION",
+      "text": "Save live connection"
+    },
+    {
+      "key": "#LIVE_CONNECTION_SAVED",
+      "text": "Live connection saved."
+    },
+    {
+      "key": "#SERVER_COMMAND",
+      "text": "Server command"
+    },
+    {
+      "key": "#SEND_COMMAND",
+      "text": "Send command"
+    },
+    {
+      "key": "#REBUILD_MAP_NOW",
+      "text": "Rebuild map now"
+    },
+    {
+      "key": "#REBUILD_CLEARS_REMAP_PROPS_RECREATES",
+      "text": "Rebuild clears only ReMap props, then recreates the current map while the server keeps running."
+    },
+    {
+      "key": "#RCON_TARGET",
+      "text": "RCON target: "
+    },
+    {
+      "key": "#ENTER_COMMAND_SEND",
+      "text": "Enter a command to send."
+    },
+    {
+      "key": "#CONFIGURE_RCON_AES_KEY_PASSWORD",
+      "text": "Configure the RCON AES key and password for R5Reloaded."
+    },
+    {
+      "key": "#ENTER_VALID_RCON_SERVER_ADDRESS",
+      "text": "Enter a valid RCON server address, for example [::ffff:127.0.0.1]:37015."
+    },
+    {
+      "key": "#RCON_AES_KEY_VALID_BASE64",
+      "text": "The RCON AES key must be valid Base64."
+    },
+    {
+      "key": "#RCON_AES_KEY_CONTAIN_EXACTLY",
+      "text": "The RCON AES key must contain exactly 16 bytes (AES-128)."
+    },
+    {
+      "key": "#CONFIGURE_NON_EMPTY_RCON_PASSWORD",
+      "text": "Configure a non-empty RCON password without line breaks."
+    },
+    {
+      "key": "#R5RELOADED_NETCON_EXE_FOUND_NEXT",
+      "text": "R5Reloaded netcon.exe was not found next to the platform folder."
+    },
+    {
+      "key": "#COULD_START_R5RELOADED_NETCON_EXE",
+      "text": "Could not start R5Reloaded netcon.exe."
+    },
+    {
+      "key": "#RCON_REJECTED_CONNECTION_CHECK_ADDRESS",
+      "text": "RCON rejected the connection. Check the address, AES key and password, and verify that the game server is running."
+    },
+    {
+      "key": "#LIVE_GAME_CONNECTION_DID_FINISH",
+      "text": "The live game connection did not finish in time."
+    },
+    {
+      "key": "#COMMAND_EXECUTED_RUNNING_SERVER_RCON",
+      "text": "Command executed by the running server, without the rcon prefix"
+    },
+    {
+      "key": "#SENDING_COMMAND",
+      "text": "Sending command…"
+    },
+    {
+      "key": "#REBUILDING_MAP_RUNNING_GAME",
+      "text": "Rebuilding the map in the running game…"
+    },
+    {
+      "key": "#ARG0_COMMAND_S_SENT_RUNNING",
+      "text": "{0} command(s) sent to the running game."
+    },
+    {
+      "key": "#LIVE_MAP_REBUILT_ARG0_COMMANDS",
+      "text": "Live map rebuilt: {0} commands sent."
+    },
+    {
+      "key": "#R5RELOADED_REMAP_LIVE_MAP_SCRIPT",
+      "text": "The R5Reloaded ReMap live-map script was not found."
+    },
+    {
+      "key": "#REMAP_INIT_MISSING",
+      "text": "The game does not call Sh_ReMap_Init in {0}."
+    },
+    {
+      "key": "#CONFIGURE_SELECTED_GAME_FOLDER_SETTINGS",
+      "text": "Configure the selected game folder in Settings."
+    },
+    {
+      "key": "#COMPATIBLE_MODELS_TEXTURES_SHARED_BETWEEN",
+      "text": "Compatible models and textures are shared between games. Versions preserves only older RPAK indexes."
+    },
+    {
+      "key": "#SOME_MAP_SOURCES_SAVED_SCENE",
+      "text": "Some map sources saved in this scene were not detected in the active {0} installation: {1}. Available sources will still be loaded."
+    },
+    {
+      "key": "#NO_SAVED_ARG0_PROJECT_FOUND",
+      "text": "No saved {0} project was found. Create a map for this game."
+    },
+    {
+      "key": "#PROJECT_CREATED_ARG0_BUT_ACTIVE",
+      "text": "This project was created for {0}, but the active game is {1}. Switch games before opening it."
+    },
+    {
+      "key": "#SCENE_CANNOT_STARTED_ARG0_MISSING",
+      "text": "This scene cannot be started in {0}. Missing map RPAKs: {1}."
+    },
+    {
+      "key": "#PORT_CURRENT_MAP_OTHER_GAME",
+      "text": "Port current map to the other game…"
+    },
+    {
+      "key": "#PORT_CREATED_COPY_EVERY_APEX",
+      "text": "The port is created as a copy. Every Apex model must exist at the same internal path in the selected target RPAKs."
+    },
+    {
+      "key": "#VERIFY_MODELS_PORT",
+      "text": "Verify models and port"
+    },
+    {
+      "key": "#CHOOSE_OTHER_GAME_PORT",
+      "text": "Choose the other game for the port."
+    },
+    {
+      "key": "#VERIFYING_MODELS_TARGET_GAME",
+      "text": "Verifying models in the target game…"
+    },
+    {
+      "key": "#ARG0_MORE",
+      "text": " and {0} more"
+    },
+    {
+      "key": "#PORT_BLOCKED_MISSING_INCOMPATIBLE_MODELS",
+      "text": "Port blocked. Missing or incompatible models: {0}."
+    },
+    {
+      "key": "#MAP_PORTED_ARG0_ARG1",
+      "text": "Map ported to {0}: {1}"
+    },
+    {
+      "key": "#NOT_REMAP_MAP",
+      "text": "This file is not a ReMap map."
+    },
+    {
+      "key": "#NO_MAP_OPEN",
+      "text": "No map is currently open."
+    },
+    {
+      "key": "#FOLDER_PIVOT",
+      "text": "Folder pivot"
+    },
+    {
+      "key": "#PIVOT_TO_BOTTOM_CENTER",
+      "text": "Move pivot to bottom center"
+    },
+    {
+      "key": "#PIVOT_TO_BOUNDS_CENTER",
+      "text": "Move pivot to full center"
+    },
+    {
+      "key": "#PIVOT_TO_TOP_CENTER",
+      "text": "Move pivot to top center"
+    },
+    {
+      "key": "#PIVOT_REPOSITION_KEEP_GEOMETRY",
+      "text": "Children keep their world position. Rotation and scale then use the new pivot."
+    },
+    {
+      "key": "#PIVOT_REPOSITIONED",
+      "text": "Folder pivot repositioned."
+    },
+    {
+      "key": "#SELECT_SINGLE_FOLDER_PIVOT",
+      "text": "Select one folder to reposition its pivot."
+    },
+    {
+      "key": "#PIVOT_FROM_SELECTION_BOTTOM_CENTER",
+      "text": "Pivot: selected models’ bottom center"
+    },
+    {
+      "key": "#PIVOT_FROM_SELECTION_CENTER",
+      "text": "Pivot: selected models’ full center"
+    },
+    {
+      "key": "#PIVOT_FROM_SELECTION_TOP_CENTER",
+      "text": "Pivot: selected models’ top center"
+    },
+    {
+      "key": "#MPRT_PRESET",
+      "text": "MPRT model quality"
+    },
+    {
+      "key": "#MPRT_PRESET_PERFORMANCE",
+      "text": "Performance"
+    },
+    {
+      "key": "#MPRT_PRESET_BALANCED",
+      "text": "Balanced"
+    },
+    {
+      "key": "#MPRT_PRESET_QUALITY",
+      "text": "Quality"
+    },
+    {
+      "key": "#MPRT_PRESET_CUSTOM",
+      "text": "Custom"
+    },
+    {
+      "key": "#MPRT_DISTANCE_METERS",
+      "text": "Display distance (m)"
+    },
+    {
+      "key": "#MPRT_MAXIMUM_ACTIVE",
+      "text": "Maximum active models"
+    },
+    {
+      "key": "#MPRT_MINIMUM_SIZE_METERS",
+      "text": "Minimum model size (m)"
+    },
+    {
+      "key": "#MPRT_DENSITY_PERCENT",
+      "text": "Map density (%)"
+    },
+    {
+      "key": "#MPRT_STREAMING_HELP",
+      "text": "Only models near the camera are created. Minimum size uses the model’s visual bounds because MPRT data does not directly contain native hitboxes."
+    },
+    {
+      "key": "#MPRT_STREAMING_STATUS_ARG0_ARG1",
+      "text": "Active MPRT models: {0}/{1}."
+    },
+    {
+      "key": "#IMPORT_SHARED_PROJECT",
+      "text": "Import shared project…"
+    },
+    {
+      "key": "#EXPORT_CURRENT_PROJECT",
+      "text": "Export current project…"
+    },
+    {
+      "key": "#EXPORT_FOLDER_NOT_FOUND",
+      "text": "The selected export folder does not exist."
+    },
+    {
+      "key": "#PROJECT_EXPORTED_ARG0",
+      "text": "Project exported to {0}"
+    },
+    {
+      "key": "#PROJECT_IMPORTED_OPENED_ARG0",
+      "text": "Imported project “{0}” and opened it."
+    },
+    {
+      "key": "#PROJECT_IMPORTED_OTHER_GAME_ARG0_ARG1",
+      "text": "Imported project “{0}” for {1}. Switch workspace game to open it."
+    },
+    {
+      "key": "#WORKSPACE_GAME",
+      "text": "Workspace game…"
+    },
+    {
+      "key": "#WORKSPACE_GAME_HELP",
+      "text": "Choose which game installation and project list ReMap uses. This does not convert the current project."
+    },
+    {
+      "key": "#WORKSPACE_GAME_PROJECTS_HELP",
+      "text": "The current project is saved before switching. Only projects created for the selected game are shown."
+    },
+    {
+      "key": "#SWITCH_WORKSPACE_GAME",
+      "text": "Switch game"
+    },
+    {
+      "key": "#CHANGE_WORKSPACE_GAME",
+      "text": "Change the workspace game"
+    },
+    {
+      "key": "#WORKSPACE_GAME_CHANGED",
+      "text": "Workspace game changed. Configure this game’s installation paths in Settings if needed."
+    },
+    {
+      "key": "#SETTINGS_PAGE_INTRO",
+      "text": "Global ReMap preferences, game installation paths, live connection, preview quality, and map-reference display. Project archive choices are managed on the separate Indexing page."
+    },
+    {
+      "key": "#PATHS_SAVED_OPEN_INDEXING",
+      "text": "Paths saved. Open Indexing to choose archives and rebuild the model catalog."
+    },
+    {
+      "key": "#MAP_REFERENCE_DISPLAY",
+      "text": "Map reference display"
+    },
+    {
+      "key": "#INDEXING_PAGE",
+      "text": "Indexing…"
+    },
+    {
+      "key": "#INDEXING_PAGE_INTRO",
+      "text": "Choose the edited Apex map and every additional RPAK source needed by this project, then rebuild its model catalog."
+    },
+    {
+      "key": "#PROJECT_TARGET_LOCKED_ARG0",
+      "text": "Project target: {0} (locked)"
+    },
+    {
+      "key": "#PROJECT_TARGET_LOCKED_HELP",
+      "text": "A project cannot be launched against the other game. Use File > Port current map to the other game… to verify compatibility and create a converted copy."
+    },
+    {
+      "key": "#CLOSE_WITHOUT_INDEXING",
+      "text": "Close without indexing"
+    },
+    {
+      "key": "#ARCHIVES_CHANGED_APPLY_INDEXING",
+      "text": "Archive choices changed. Apply indexing to update the model catalog."
+    },
+    {
+      "key": "#CONVERSION_BLOCKED",
+      "text": "Conversion blocked"
+    },
+    {
+      "key": "#CONVERSION_MISSING_MODELS_HELP",
+      "text": "No copy was created. These model references were not found with the same GUID and internal path in the selected target archives. Change the target map/RPAKs or replace the models in the source project."
+    },
+    {
+      "key": "#BACK_TO_CONVERSION",
+      "text": "Back to conversion"
+    },
+    {
+      "key": "#CONVERSION_MISSING_MODELS_ARG0_ARG1",
+      "text": "{0} model(s) are unavailable or incompatible in {1}."
+    },
+    {
+      "key": "#CLASSIC_PROP_SETTINGS",
+      "text": "Classic prop settings"
+    },
+    {
+      "key": "#ALLOW_MANTLE",
+      "text": "Allow mantle"
+    },
+    {
+      "key": "#FADE_DISTANCE_APEX_U",
+      "text": "Fade distance (u)"
+    },
+    {
+      "key": "#REALM_ID",
+      "text": "Realm ID"
+    },
+    {
+      "key": "#CLIENT_SIDE_PROP",
+      "text": "Client-side prop"
+    },
+    {
+      "key": "#CLASSIC_PROP_SETTINGS_HELP",
+      "text": "Mantle, fade distance and realm are creation options. Options below remain the revised .kv, .e and .s assignments."
+    },
+    {
+      "key": "#CLIENT_PROP_CLASSIC_SETTINGS_IGNORED",
+      "text": "Client-side props preserve model scale and Options. Mantle, fade distance and realm do not apply. .e fields must exist in ClientEntityStruct."
+    },
+    {
+      "key": "#INVALID_PROP_FADE_DISTANCE",
+      "text": "Prop fade distance must be a finite number greater than or equal to -1."
+    },
+    {
+      "key": "#INVALID_PROP_REALM_ID",
+      "text": "Prop realm ID must be greater than or equal to -1."
+    },
+    {
+      "key": "#CLIENT_E_FIELDS_MANUAL_ONLY",
+      "text": "Client-side .e fields belong to ClientEntityStruct. Enter their names manually; server presets are hidden."
+    }
+  ]
+}

@@ -1,0 +1,39 @@
+name: Feature request
+description: Propose a focused improvement to ReMap
+title: "[Feature]: "
+labels:
+  - enhancement
+body:
+  - type: textarea
+    id: problem
+    attributes:
+      label: Problem
+      description: What workflow or limitation should be improved?
+    validations:
+      required: true
+  - type: textarea
+    id: proposal
+    attributes:
+      label: Proposed solution
+      description: Describe the desired behavior and any alternatives considered.
+    validations:
+      required: true
+  - type: dropdown
+    id: target
+    attributes:
+      label: Scope
+      options:
+        - ReMap core
+        - R5Reloaded
+        - R5Flowstate
+        - Both game targets
+        - Documentation or tooling
+    validations:
+      required: true
+  - type: checkboxes
+    id: checks
+    attributes:
+      label: Checklist
+      options:
+        - label: I searched for an existing issue or pull request covering this request.
+          required: true

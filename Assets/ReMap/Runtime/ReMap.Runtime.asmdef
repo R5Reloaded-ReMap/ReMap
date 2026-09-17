@@ -1,0 +1,5 @@
+{
+  "name": "ReMap.Runtime",
+  "rootNamespace": "ReMap.Standalone",
+  "references": ["ReMap.Core", "Unity.InputSystem"]
+}

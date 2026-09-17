@@ -1,0 +1,5 @@
+{
+  "name": "ReMap.Core",
+  "rootNamespace": "ReMap.Standalone.Core",
+  "noEngineReferences": true
+}

@@ -1,0 +1,276 @@
+using System;
+using System.Collections.Generic;
+
+namespace ReMap.Standalone.Core
+{
+    public static class GameTargets
+    {
+        public const string R5Reloaded = "r5reloaded";
+        public const string R5Flowstate = "r5flowstate";
+
+        public static bool IsSupported(string value) =>
+            value == R5Reloaded || value == R5Flowstate;
+
+        public static string Normalize(string value) => IsSupported(value) ? value : R5Reloaded;
+
+        public static string DisplayName(string value) =>
+            Normalize(value) == R5Flowstate ? "R5Flowstate" : "R5Reloaded";
+    }
+
+    [Serializable]
+    public struct Float3
+    {
+        public float x, y, z;
+        public Float3(float x, float y, float z) { this.x = x; this.y = y; this.z = z; }
+        public bool IsFinite => Finite(x) && Finite(y) && Finite(z);
+        private static bool Finite(float value) => !float.IsNaN(value) && !float.IsInfinity(value);
+    }
+
+    [Serializable]
+    public sealed class ScriptProperty
+    {
+        public string scope = "s";
+        public string name = "remapValue";
+        public string value = "null";
+
+        public ScriptProperty Copy() => new ScriptProperty { scope = scope, name = name, value = value };
+    }
+
+    [Serializable]
+    public sealed class MapObject
+    {
+        public string id = Guid.NewGuid().ToString("N");
+        public string assetId = "demo:cube";
+        public string displayName = L.T("#CUBE");
+        public string parentId = "";
+        public bool isGroup;
+        public bool disabled;
+        public string gameModelPath = "";
+        // Empty for regular props. Custom objects remain regular hierarchy nodes so they
+        // inherit grouping, undo/redo, duplication and the existing transform gizmo.
+        public string customType = "";
+        public string customRole = "";
+        public string customProfile = "";
+        public string ziplineStartId = "";
+        public string ziplineEndId = "";
+        public string ziplineMode = "horizontal";
+        public float ziplineWidth = 2f;
+        public float ziplineSpeed = 1f;
+        public float ziplineLengthScale = 1f;
+        public float ziplineFadeDistance = -1f;
+        public float ziplineScale = 1f;
+        public bool ziplinePreserveVelocity;
+        public bool ziplineDropToBottom = true;
+        public float ziplineAutoDetachStart = 100f;
+        public float ziplineAutoDetachEnd = 100f;
+        public bool ziplineRestPoint;
+        public bool ziplineDetachEndOnSpawn;
+        public bool ziplineDetachEndOnUse;
+        public bool ziplineAutomaticEnd;
+        public bool ziplineLockEnd;
+        public const float DefaultZiplineEndOffsetApex = 25f;
+        public float ziplineEndOffset = DefaultZiplineEndOffsetApex;
+        public float ziplineArmHeight = 180f;
+        public bool ziplinePushOffInDirectionX = true;
+        public float ziplinePushOffAngle;
+        public bool commonAsset;
+        public List<string> availableMaps = new List<string>();
+        public bool allowMantle = true;
+        public float fadeDistance = 50000f;
+        public int realmId = -1;
+        public bool clientSide;
+        public List<ScriptProperty> scriptProperties = new List<ScriptProperty>();
+        public Float3 position;
+        public Float3 rotation;
+        public Float3 scale = new Float3(1, 1, 1);
+
+        public MapObject Copy()
+        {
+            var copy = (MapObject)MemberwiseClone();
+            copy.availableMaps = new List<string>(availableMaps ?? new List<string>());
+            copy.scriptProperties = (scriptProperties ?? new List<ScriptProperty>()).ConvertAll(item => item?.Copy());
+            return copy;
+        }
+    }
+
+    [Serializable]
+    public sealed class MapDocument
+    {
+        public const int CurrentVersion = 1;
+        public int schemaVersion = CurrentVersion;
+        public string name = L.T("#NEW_MAP");
+        // Backward-compatible storage in Unity metres; editor fields use ApexCoordinates (Source units, Z up).
+        public string coordinateSystem = "unity-y-up-meters";
+        // The target is part of the map because game functions and custom objects can differ.
+        public string gameTarget = GameTargets.R5Reloaded;
+        public string editingMap = "";
+        public List<string> targetMaps = new List<string>();
+        // Scene-root translation. Objects stay local to the editor origin; game output adds this offset.
+        public Float3 originOffset;
+        public List<MapObject> objects = new List<MapObject>();
+
+        public MapDocument Copy()
+        {
+            var result = new MapDocument { schemaVersion = schemaVersion, name = name,
+                coordinateSystem = coordinateSystem, gameTarget = gameTarget, editingMap = editingMap,
+                originOffset = originOffset,
+                targetMaps = new List<string>(targetMaps ?? new List<string>()) };
+            foreach (var item in objects) result.objects.Add(item.Copy());
+            return result;
+        }
+
+        public void Validate()
+        {
+            if (schemaVersion != CurrentVersion)
+                throw new ArgumentException(L.T("#UNSUPPORTED_SAVE_VERSION"));
+            if (coordinateSystem != "unity-y-up-meters")
+                throw new ArgumentException(L.T("#UNSUPPORTED_COORDINATE_SYSTEM"));
+            if (!originOffset.IsFinite)
+                throw new ArgumentException(L.T("#SCENE_STARTING_POSITION_CONTAIN_FINITE"));
+            if (objects == null || objects.Count > 10000)
+                throw new ArgumentException(L.T("#MAP_MAY_CONTAIN_MOST_10"));
+            if (string.IsNullOrWhiteSpace(name) || name.Length > 128)
+                throw new ArgumentException(L.T("#INVALID_MAP_NAME_1_128"));
+            targetMaps = targetMaps ?? new List<string>();
+            if (string.IsNullOrWhiteSpace(gameTarget)) gameTarget = GameTargets.R5Reloaded;
+            else if (!GameTargets.IsSupported(gameTarget))
+                throw new ArgumentException(L.T("#UNSUPPORTED_TARGET_GAME"));
+            editingMap = editingMap ?? "";
+            if (editingMap.Length > 128)
+                throw new ArgumentException(L.T("#INVALID_EDITED_MAP"));
+            if (targetMaps.Count > 64 || targetMaps.Exists(m => string.IsNullOrWhiteSpace(m) || m.Length > 128))
+                throw new ArgumentException(L.T("#INVALID_TARGET_MAP_LIST"));
+            var ids = new HashSet<string>(StringComparer.Ordinal);
+            foreach (var item in objects)
+            {
+                if (item == null || !Guid.TryParseExact(item.id, "N", out _) || !ids.Add(item.id))
+                    throw new ArgumentException(L.T("#INVALID_DUPLICATE_OBJECT_ID"));
+                if (string.IsNullOrWhiteSpace(item.assetId) || item.assetId.Length > 1024)
+                    throw new ArgumentException(L.T("#INVALID_MODEL_REFERENCE"));
+                if (string.IsNullOrWhiteSpace(item.displayName) || item.displayName.Length > 128)
+                    throw new ArgumentException(L.T("#INVALID_OBJECT_NAME"));
+                item.customType = item.customType ?? "";
+                item.customRole = item.customRole ?? "";
+                item.customProfile = item.customProfile ?? "";
+                item.ziplineStartId = item.ziplineStartId ?? "";
+                item.ziplineEndId = item.ziplineEndId ?? "";
+                item.ziplineMode = item.ziplineMode ?? "horizontal";
+                if (item.ziplineMode == "auto") item.ziplineMode = "horizontal";
+                if (item.customType != "" && item.customType != "zipline" && item.customType != "zipline-endpoint" &&
+                    item.customType != "zipline-component")
+                    throw new ArgumentException(L.T("#UNKNOWN_CUSTOM_OBJECT_TYPE"));
+                if (item.customType == "zipline" && !item.isGroup)
+                    throw new ArgumentException(L.T("#ZIPLINE_HIERARCHY_GROUP"));
+                if (item.customType == "zipline" &&
+                    (item.ziplineMode != "horizontal" && item.ziplineMode != "vertical"))
+                    throw new ArgumentException(L.T("#INVALID_ZIPLINE_ORIENTATION_MODE"));
+                if (item.customType == "zipline" && (!Finite(item.ziplineWidth) || !Finite(item.ziplineSpeed) ||
+                    !Finite(item.ziplineEndOffset) ||
+                    item.ziplineWidth < 0.1f || item.ziplineWidth > 32f || item.ziplineSpeed < 0.1f || item.ziplineSpeed > 10f))
+                    throw new ArgumentException(L.T("#INVALID_ZIPLINE_WIDTH_SPEED"));
+                if (item.customType == "zipline" && (!Finite(item.ziplinePushOffAngle) ||
+                    item.ziplinePushOffAngle < -360f || item.ziplinePushOffAngle > 360f))
+                    throw new ArgumentException(L.T("#INVALID_ZIPLINE_PUSH_OFF_ANGLE"));
+                if (item.customType == "zipline" && (!Finite(item.ziplineLengthScale) || item.ziplineLengthScale < 0f || item.ziplineLengthScale > 1.2f))
+                    throw new ArgumentException(L.T("#INVALID_ZIPLINE_LENGTH_SCALE"));
+                if (item.customType == "zipline" && (!Finite(item.ziplineFadeDistance) || item.ziplineFadeDistance < -1f ||
+                    !Finite(item.ziplineScale) || item.ziplineScale < .01f || item.ziplineScale > 100f))
+                    throw new ArgumentException(L.T("#INVALID_ZIPLINE_FADE_SCALE"));
+                if (item.customType == "zipline" && (!Finite(item.ziplineAutoDetachStart) || !Finite(item.ziplineAutoDetachEnd) ||
+                    item.ziplineAutoDetachStart < 0f || item.ziplineAutoDetachStart > 65535f ||
+                    item.ziplineAutoDetachEnd < 0f || item.ziplineAutoDetachEnd > 65535f))
+                    throw new ArgumentException(L.T("#INVALID_ZIPLINE_AUTO_DETACH"));
+
+                if (item.customType == "zipline-endpoint" && (!Finite(item.ziplineArmHeight) ||
+                    item.ziplineArmHeight < 70f || item.ziplineArmHeight > 290f))
+                    throw new ArgumentException(L.T("#INVALID_ZIPLINE_ARM_HEIGHT"));
+                if (!item.position.IsFinite || !item.rotation.IsFinite || !item.scale.IsFinite)
+                    throw new ArgumentException(L.T("#TRANSFORMS_FINITE_NUMBERS"));
+                if (!Finite(item.fadeDistance) || item.fadeDistance < -1f)
+                    throw new ArgumentException(L.T("#INVALID_PROP_FADE_DISTANCE"));
+                if (item.realmId < -1)
+                    throw new ArgumentException(L.T("#INVALID_PROP_REALM_ID"));
+                if (item.scale.x < 0.01f || item.scale.y < 0.01f || item.scale.z < 0.01f ||
+                    item.scale.x > 1000 || item.scale.y > 1000 || item.scale.z > 1000)
+                    throw new ArgumentException(L.T("#SCALE_BETWEEN_0_01_1"));
+                item.scriptProperties = item.scriptProperties ?? new List<ScriptProperty>();
+                if (item.scriptProperties.Count > 64)
+                    throw new ArgumentException(L.T("#OBJECT_MAY_CONTAIN_MOST_64"));
+                foreach (var property in item.scriptProperties)
+                {
+                    if (property == null || (property.scope != "" && property.scope != "kv" && property.scope != "e" && property.scope != "s"))
+                        throw new ArgumentException(L.T("#GAME_SCRIPT_PROPERTIES_USE_KV_7AE349"));
+                    if (string.IsNullOrWhiteSpace(property.name) || property.name.Length > 64 ||
+                        !IsScriptIdentifier(property.name))
+                        throw new ArgumentException(L.T("#INVALID_GAME_SCRIPT_PROPERTY_NAME"));
+                    if (property.name == "solid" && property.scope != "kv")
+                        throw new ArgumentException(L.T("#SOLID_AVAILABLE_KV"));
+                    if (string.IsNullOrWhiteSpace(property.value) || property.value.Length > 2048 ||
+                        property.value.IndexOfAny(new[] { '\r', '\n' }) >= 0)
+                        throw new ArgumentException(L.T("#INVALID_GAME_SCRIPT_PROPERTY_VALUE"));
+                }
+
+            }
+            MapHierarchy.Validate(this);
+            foreach (var item in objects)
+            {
+                if (item.customType == "zipline")
+                {
+                    var start = objects.Find(o => o.id == item.ziplineStartId);
+                    var end = objects.Find(o => o.id == item.ziplineEndId);
+                    if (start == null || end == null || start.parentId != item.id || end.parentId != item.id ||
+                        start.customType != "zipline-endpoint" || end.customType != "zipline-endpoint" ||
+                        start.customRole != "start" || end.customRole != "end")
+                        throw new ArgumentException(L.T("#ZIPLINE_CONTAIN_ONE_START_ONE"));
+                }
+                else if (item.customType == "zipline-endpoint")
+                {
+                    var parent = objects.Find(o => o.id == item.parentId);
+                    if (parent == null || parent.customType != "zipline" ||
+                        (item.customRole != "start" && item.customRole != "end") || item.customProfile.Length > 64)
+                        throw new ArgumentException(L.T("#INVALID_ZIPLINE_ENDPOINT"));
+                }
+                else if (item.customType == "zipline-component")
+                {
+                    var parent = objects.Find(o => o.id == item.parentId);
+                    if (parent == null || parent.customType != "zipline-endpoint")
+                        throw new ArgumentException(L.T("#INVALID_ZIPLINE_COMPONENT"));
+                }
+            }
+            NormalizeZiplineStartPositions();
+            ApexCoordinates.ValidateWorld(this);
+        }
+
+        private static bool Finite(float value) => !float.IsNaN(value) && !float.IsInfinity(value);
+        private void NormalizeZiplineStartPositions()
+        {
+            foreach (var zipline in objects)
+            {
+                if (zipline.customType != "zipline") continue;
+                var start = objects.Find(item => item.id == zipline.ziplineStartId);
+                if (start == null || start.parentId != zipline.id) continue;
+                var offset = start.position;
+                if (Math.Abs(offset.x) < 0.000001f && Math.Abs(offset.y) < 0.000001f && Math.Abs(offset.z) < 0.000001f)
+                    continue;
+                // The main custom object owns the start pivot. Hidden endpoint offsets from older
+                // saves are removed from both ends so the cable keeps its direction and length.
+                foreach (var child in objects)
+                    if (child.parentId == zipline.id)
+                        child.position = new Float3(child.position.x - offset.x, child.position.y - offset.y,
+                            child.position.z - offset.z);
+            }
+        }
+
+
+        private static bool IsScriptIdentifier(string value)
+        {
+            if (value.Length == 0 || !IsIdentifierStart(value[0])) return false;
+            for (int i = 1; i < value.Length; i++)
+                if (!IsIdentifierStart(value[i]) && (value[i] < '0' || value[i] > '9')) return false;
+            return true;
+        }
+
+        private static bool IsIdentifierStart(char value) =>
+            (value >= 'a' && value <= 'z') || (value >= 'A' && value <= 'Z') || value == '_';
+    }
+}

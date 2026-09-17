@@ -1,0 +1,59 @@
+/*
+ * ReMap game scripts
+ *
+ * Source lineage: rewritten from the active R5Reloaded ReMap implementation
+ * and the legacy ReMap scripts.
+ * Original ReMap: Zee (@AyeZeeBB on X, zee_x64 on Discord)
+ * and Julefox (@Julefox_ on X, julefox on Discord).
+ * This standalone ReMap rewrite was created and is maintained by Julefox.
+ *
+ * Made with love for the Apex modding community. <3
+ * Built on the Apex modding foundation created by Amos (@AmosModz on X, amosmodz on Discord):
+ * https://github.com/Mauler125/r5sdk
+ */
+
+global function ReMap_ClearProps
+global function ReMap_CreateProp
+
+struct
+{
+	array< entity > props
+} file
+
+void function ReMap_ClearProps()
+{
+	foreach ( entity prop in file.props )
+	{
+		if ( IsValid( prop ) )
+			prop.Destroy()
+	}
+
+	file.props.clear()
+}
+
+entity function ReMap_CreateProp( asset model, vector origin, vector angles, bool allowMantle = true, float fadeDistance = 50000.0, int realmId = -1, float scale = 1.0 )
+{
+	entity prop = CreatePropDynamic( model, origin, angles, SOLID_VPHYSICS, fadeDistance )
+	prop.kv.fadedist = fadeDistance
+	prop.kv.rendermode = 0
+	prop.kv.renderamt = 1
+	prop.kv.solid = 6
+	prop.kv.CollisionGroup = TRACE_COLLISION_GROUP_PLAYER
+	prop.SetScriptName( "remap_prop" )
+	prop.SetModelScale( scale )
+
+	if ( allowMantle )
+		prop.AllowMantle()
+
+	if ( realmId > -1 )
+	{
+		prop.RemoveFromAllRealms()
+		prop.AddToRealm( realmId )
+	}
+#if R5R
+	prop.e.gameModeId = realmId
+#endif
+
+	file.props.append( prop )
+	return prop
+}
