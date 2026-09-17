@@ -15,7 +15,6 @@ namespace ReMap.Standalone
         private const string ZiplineModelSelectionName = "__remap_zipline_model_selection";
         private const string TriggerPreviewName = "__remap_trigger_volume";
         private const string CameraPathMarkerName = "__remap_camera_path_marker";
-        private const string SoundMarkerName = "__remap_sound_marker";
         private const string LocationPairMarkerName = "__remap_location_pair_marker";
         private const string TextInfoPanelMarkerName = "__remap_text_info_panel_marker";
         private const string WindowHintMarkerName = "__remap_window_hint_marker";
@@ -232,53 +231,6 @@ namespace ReMap.Standalone
             var tint = new MaterialPropertyBlock();
             tint.SetColor("_BaseColor", item.customType == "camera-path-target" ?
                 new Color(1f, .25f, .65f) : new Color(1f, .82f, .18f));
-            marker.GetComponent<Renderer>().SetPropertyBlock(tint);
-        }
-
-        private void EnsureTriggerVisual(GameObject instance, MapObject item)
-        {
-            var child = instance.transform.Find(TriggerPreviewName);
-            GameObject volume;
-            if (child == null)
-            {
-                volume = GameObject.CreatePrimitive(PrimitiveType.Cylinder);
-                volume.name = TriggerPreviewName;
-                volume.transform.SetParent(instance.transform, false);
-                volume.GetComponent<Renderer>().sharedMaterial = lineMaterial;
-                instanceIds[volume] = item.id;
-            }
-            else volume = child.gameObject;
-            float radius = Mathf.Max(.1f, item.triggerRadius) * ApexCoordinates.MetersPerUnit;
-            float halfHeight = Mathf.Max(.1f, item.triggerHalfHeight) * ApexCoordinates.MetersPerUnit;
-            volume.transform.localPosition = Vector3.zero;
-            volume.transform.localRotation = Quaternion.identity;
-            volume.transform.localScale = new Vector3(radius * 2f, halfHeight, radius * 2f);
-            var tint = new MaterialPropertyBlock();
-            tint.SetColor("_BaseColor", new Color(.15f, .7f, 1f, .28f));
-            volume.GetComponent<Renderer>().SetPropertyBlock(tint);
-        }
-
-        private void EnsureSoundMarker(GameObject instance, MapObject item)
-        {
-            var existing = instance.transform.Find(SoundMarkerName);
-            GameObject marker;
-            if (existing == null)
-            {
-                marker = GameObject.CreatePrimitive(item.customType == "sound" ?
-                    PrimitiveType.Cylinder : PrimitiveType.Sphere);
-                marker.name = SoundMarkerName; marker.transform.SetParent(instance.transform, false);
-                marker.GetComponent<Collider>().enabled = false;
-                marker.GetComponent<Renderer>().sharedMaterial = lineMaterial;
-                instanceIds[marker] = item.id;
-            }
-            else marker = existing.gameObject;
-            marker.transform.localPosition = Vector3.zero;
-            marker.transform.localRotation = Quaternion.identity;
-            marker.transform.localScale = item.customType == "sound" ?
-                new Vector3(.28f, .08f, .28f) : Vector3.one * .16f;
-            var tint = new MaterialPropertyBlock();
-            tint.SetColor("_BaseColor", item.customType == "sound" ?
-                new Color(.15f, .8f, 1f) : new Color(.3f, 1f, .65f));
             marker.GetComponent<Renderer>().SetPropertyBlock(tint);
         }
 
@@ -818,15 +770,18 @@ namespace ReMap.Standalone
                 }
                 if (entry.CustomType == "trigger")
                 {
-                    ghost = GameObject.CreatePrimitive(PrimitiveType.Cylinder);
-                    ghost.name = "Trigger placement preview";
-                    ghost.transform.SetParent(root.transform);
-                    ghost.transform.localScale = new Vector3(entry.Size.x, entry.Size.y * .5f, entry.Size.z);
-                    ghost.GetComponent<Collider>().enabled = false;
-                    ghost.GetComponent<Renderer>().sharedMaterial = lineMaterial;
-                    var triggerTint = new MaterialPropertyBlock();
-                    triggerTint.SetColor("_BaseColor", new Color(.15f, .7f, 1f, .28f));
-                    ghost.GetComponent<Renderer>().SetPropertyBlock(triggerTint);
+                    ghost = CreateTriggerWireframe("Trigger placement preview",
+                        root.transform, null);
+                    UpdateTriggerWireframe(ghost, entry.Size.x * .5f,
+                        entry.Size.y * .5f);
+                    ghost.transform.position = position.Value;
+                    return;
+                }
+                if (entry.CustomType == "sound")
+                {
+                    ghost = CreateSoundRangeWireframe("Sound placement preview",
+                        root.transform, null);
+                    UpdateSoundRangeWireframe(ghost, entry.Size.x * .5f);
                     ghost.transform.position = position.Value;
                     return;
                 }
