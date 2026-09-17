@@ -37,7 +37,14 @@ namespace ReMap.Standalone.Tests
             StringAssert.Contains("void function ReMap_CreateRespawnHeal", script);
             StringAssert.Contains("trigger.SetEnterCallback( ReMap_OnRespawnHealEnter )", script);
             StringAssert.Contains("StatusEffect_AddEndless", script);
-            StringAssert.Contains("trigger.s.remapActive = true", script);
+            StringAssert.Contains("table<entity, ReMapRespawnHealState> respawnHeals", script);
+            StringAssert.Contains("state.active = true", script);
+            StringAssert.Contains("file.respawnHeals[trigger] = state", script);
+            StringAssert.Contains("targetHealth = minint(", script);
+            StringAssert.Contains("targetShield = minint(", script);
+            StringAssert.DoesNotContain("targetHealth = min(", script);
+            StringAssert.DoesNotContain("targetShield = min(", script);
+            StringAssert.DoesNotContain("trigger.s.remap", script);
             StringAssert.DoesNotContain("ReMapCreateRespawnableHeal(", script);
             StringAssert.DoesNotContain("DetermineHealModel(", script);
             StringAssert.DoesNotContain("MapEditor_", script);

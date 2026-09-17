@@ -47,6 +47,7 @@ const asset REMAP_DOOR_MODEL_VERTICAL = $"mdl/door/door_canyonlands_large_01_ani
 const asset REMAP_DOOR_MODEL_HORIZONTAL = $"mdl/door/door_256x256x8_elevatorstyle02_animated.rmdl"
 const asset REMAP_LOOT_BIN_MODEL = $"mdl/props/loot_bin/loot_bin_01_animated.rmdl"
 const asset REMAP_JUMP_PAD_MODEL = $"mdl/props/octane_jump_pad/octane_jump_pad.rmdl"
+const asset REMAP_JUMP_PAD_LAUNCH_FX = $"P_launchpad_launch"
 const asset REMAP_JUMP_TOWER_BASE_MODEL = $"mdl/props/zipline_balloon/zipline_balloon_base.rmdl"
 const asset REMAP_JUMP_TOWER_BALLOON_MODEL = $"mdl/props/zipline_balloon/zipline_balloon.rmdl"
 const asset REMAP_WEAPON_RACK_MODEL = $"mdl/industrial/gun_rack_arm_down.rmdl"
@@ -74,10 +75,24 @@ const asset REMAP_BUBBLE_SHIELD_MODEL = $"mdl/fx/bb_shield.rmdl"
 const asset REMAP_ANIMATED_CAMERA_BASE_MODEL = $"mdl/IMC_base/camera_imc_base_01.rmdl"
 const asset REMAP_ANIMATED_CAMERA_HEAD_MODEL = $"mdl/IMC_base/camera_imc_01.rmdl"
 
+struct ReMapRespawnHealState
+{
+	entity pickup
+	int healType
+	float respawnTime
+	float healDuration
+	int healAmount
+	bool progressive
+	bool active = true
+	array<entity> effects
+}
+
 struct
 {
 	array< entity > props
 	array< array > textInfoPanels
+	table<entity, bool> jumpPadDoubleJump
+	table<entity, ReMapRespawnHealState> respawnHeals
 	int nextTextInfoPanelId = 1000000
 	bool textInfoPanelCallbackRegistered = false
 } file
@@ -92,6 +107,8 @@ void function ReMap_ClearProps()
 	}
 
 	file.props.clear()
+	file.jumpPadDoubleJump.clear()
+	file.respawnHeals.clear()
 }
 
 void function ReMap_RegisterTextInfoPanelCallbacks()
@@ -535,7 +552,7 @@ entity function ReMap_CreateJumpPad( vector origin, vector angles, bool allowMan
 	trigger.SetViewPunchValues( 15.0, 4.0, 0.0 )
 	trigger.UsePointCollision()
 	trigger.kv.triggerFilterNonCharacter = "0"
-	trigger.s.remapDoubleJump <- doubleJump
+	file.jumpPadDoubleJump[trigger] <- doubleJump
 	DispatchSpawn( trigger )
 	trigger.SetEnterCallback( ReMap_OnJumpPadEnter )
 	trigger.SetParent( jumpPad )
@@ -554,21 +571,49 @@ void function ReMap_OnJumpPadEnter( entity trigger, entity ent )
 	if ( IsValid( jumpPad ) )
 		PlayAnimNoWait( jumpPad, "prop_octane_jump_pad_deploy_trans" )
 
-	ent.kv.gravity = 0.75
-	JumpPadPushEnt( trigger, ent, trigger.GetOrigin(), trigger.GetAngles() )
-	thread ReMap_RestoreJumpPadGravity( ent )
-	if ( trigger.s.remapDoubleJump )
+	ReMap_JumpPadPushEnt( trigger, ent, trigger.GetOrigin(), trigger.GetAngles() )
+	if ( file.jumpPadDoubleJump[trigger] )
 		thread ReMap_GiveJumpPadDoubleJump( ent )
+}
+
+void function ReMap_JumpPadPushEnt( entity trigger, entity ent, vector origin, vector angles )
+{
+	if ( !IsValid( ent ) )
+		return
+
+	if ( ent.IsPlayer() )
+	{
+		entity jumpPad = trigger.GetOwner()
+		if ( IsValid( jumpPad ) )
+		{
+			int fxId = GetParticleSystemIndex( REMAP_JUMP_PAD_LAUNCH_FX )
+			StartParticleEffectOnEntity( jumpPad, fxId, FX_PATTACH_ABSORIGIN_FOLLOW, ATTACHMENTID_INVALID )
+		}
+		ent.kv.gravity = 0.75
+		thread ReMap_RestoreJumpPadGravity( ent )
+	}
+	else
+	{
+		EmitSoundOnEntity( ent, "JumpPad_LaunchPlayer_3p" )
+		EmitSoundOnEntity( ent, "JumpPad_AirborneMvmt_3p" )
+	}
 }
 
 void function ReMap_RestoreJumpPadGravity( entity player )
 {
 	player.EndSignal( "OnDeath" )
 	player.EndSignal( "OnDestroy" )
+	EmitSoundOnEntityExceptToPlayer( player, player, "JumpPad_LaunchPlayer_3p" )
+	EmitSoundOnEntityExceptToPlayer( player, player, "JumpPad_Ascent_Windrush" )
+	EmitSoundOnEntity( player, "JumpPad_AirborneMvmt_3p" )
 	OnThreadEnd( function() : ( player )
 	{
 		if ( IsValid( player ) )
+		{
 			player.kv.gravity = 1.0
+			StopSoundOnEntity( player, "JumpPad_AirborneMvmt_3p" )
+			StopSoundOnEntity( player, "JumpPad_Ascent_Windrush" )
+		}
 	} )
 
 	WaitFrame()
@@ -800,14 +845,15 @@ void function ReMap_CreateRespawnHeal( vector origin, int healType = REMAP_HEAL_
 	trigger.SetAboveHeight( 60 )
 	trigger.SetBelowHeight( 0 )
 	trigger.SetOrigin( origin )
-	trigger.s.remapPickup <- pickup
-	trigger.s.remapHealType <- healType
-	trigger.s.remapRespawnTime <- respawnTime
-	trigger.s.remapHealDuration <- healDuration
-	trigger.s.remapHealAmount <- healAmount
-	trigger.s.remapProgressive <- progressive
-	trigger.s.remapActive <- true
-	trigger.s.remapFx <- ReMap_StartRespawnHealEffects( pickup )
+	ReMapRespawnHealState state
+	state.pickup = pickup
+	state.healType = healType
+	state.respawnTime = respawnTime
+	state.healDuration = healDuration
+	state.healAmount = healAmount
+	state.progressive = progressive
+	state.effects = ReMap_StartRespawnHealEffects( pickup )
+	file.respawnHeals[trigger] <- state
 	DispatchSpawn( trigger )
 	trigger.SetEnterCallback( ReMap_OnRespawnHealEnter )
 
@@ -817,9 +863,10 @@ void function ReMap_CreateRespawnHeal( vector origin, int healType = REMAP_HEAL_
 
 void function ReMap_OnRespawnHealEnter( entity trigger, entity player )
 {
-	if ( !IsValid( player ) || !player.IsPlayer() || !trigger.s.remapActive )
+	ReMapRespawnHealState state = file.respawnHeals[trigger]
+	if ( !IsValid( player ) || !player.IsPlayer() || !state.active )
 		return
-	int healType = expect int( trigger.s.remapHealType )
+	int healType = state.healType
 	bool needsHealth = player.GetHealth() < player.GetMaxHealth()
 	bool needsShield = player.GetShieldHealth() < player.GetShieldHealthMax()
 	if ( ( healType == REMAP_HEAL_MEDKIT || healType == REMAP_HEAL_SYRINGE ) && !needsHealth )
@@ -829,30 +876,32 @@ void function ReMap_OnRespawnHealEnter( entity trigger, entity player )
 	if ( healType == REMAP_HEAL_PHOENIX && !needsHealth && !needsShield )
 		return
 
-	trigger.s.remapActive = false
-	entity pickup = expect entity( trigger.s.remapPickup )
+	state.active = false
+	entity pickup = state.pickup
 	pickup.kv.rendercolor = "255 255 255 40"
-	foreach ( entity fx in expect array<entity>( trigger.s.remapFx ) )
+	foreach ( entity fx in state.effects )
 		if ( IsValid( fx ) ) fx.Destroy()
-	trigger.s.remapFx.clear()
+	state.effects.clear()
+	file.respawnHeals[trigger] = state
 	thread ReMap_ConsumeRespawnHeal( trigger, player )
 }
 
 void function ReMap_ConsumeRespawnHeal( entity trigger, entity player )
 {
 	trigger.EndSignal( "OnDestroy" )
-	int healType = expect int( trigger.s.remapHealType )
-	float duration = expect float( trigger.s.remapHealDuration )
-	int amount = expect int( trigger.s.remapHealAmount )
-	bool progressive = expect bool( trigger.s.remapProgressive )
+	ReMapRespawnHealState state = file.respawnHeals[trigger]
+	int healType = state.healType
+	float duration = state.healDuration
+	int amount = state.healAmount
+	bool progressive = state.progressive
 	int startHealth = player.GetHealth()
 	int startShield = player.GetShieldHealth()
 	int targetHealth = startHealth
 	int targetShield = startShield
 	if ( healType == REMAP_HEAL_MEDKIT || healType == REMAP_HEAL_PHOENIX ) targetHealth = player.GetMaxHealth()
-	if ( healType == REMAP_HEAL_SYRINGE ) targetHealth = min( player.GetMaxHealth(), startHealth + amount )
+	if ( healType == REMAP_HEAL_SYRINGE ) targetHealth = minint( player.GetMaxHealth(), startHealth + amount )
 	if ( healType == REMAP_HEAL_BATTERY || healType == REMAP_HEAL_PHOENIX ) targetShield = player.GetShieldHealthMax()
-	if ( healType == REMAP_HEAL_CELL ) targetShield = min( player.GetShieldHealthMax(), startShield + amount )
+	if ( healType == REMAP_HEAL_CELL ) targetShield = minint( player.GetShieldHealthMax(), startShield + amount )
 
 	if ( IsValid( player ) )
 	{
@@ -885,14 +934,15 @@ void function ReMap_ConsumeRespawnHeal( entity trigger, entity player )
 		StopSoundOnEntity( player, REMAP_HEAL_ACTIVE_SOUND )
 		StatusEffect_StopAllOfType( player, eStatusEffect.drone_healing )
 	}
-	wait expect float( trigger.s.remapRespawnTime )
+	wait state.respawnTime
 	if ( !IsValid( trigger ) ) return
-	entity pickup = expect entity( trigger.s.remapPickup )
+	entity pickup = state.pickup
 	if ( !IsValid( pickup ) ) return
 	pickup.kv.rendercolor = "255 255 255 200"
-	trigger.s.remapFx = ReMap_StartRespawnHealEffects( pickup )
+	state.effects = ReMap_StartRespawnHealEffects( pickup )
 	EmitSoundOnEntity( pickup, ReMap_RespawnHealPickupSound( healType ) )
-	trigger.s.remapActive = true
+	state.active = true
+	file.respawnHeals[trigger] = state
 }
 
 array<entity> function ReMap_StartRespawnHealEffects( entity pickup )

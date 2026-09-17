@@ -38,7 +38,12 @@ namespace ReMap.Standalone.Tests
             StringAssert.Contains("entity function ReMap_CreateJumpPad", script);
             StringAssert.Contains("CreateEntity( \"trigger_cylinder_heavy\" )", script);
             StringAssert.Contains("trigger.SetLaunchScaleValues( launchVelocity, forwardScale )", script);
+            StringAssert.Contains("file.jumpPadDoubleJump[trigger] <- doubleJump", script);
+            StringAssert.Contains("void function ReMap_JumpPadPushEnt", script);
+            StringAssert.Contains("ReMap_JumpPadPushEnt( trigger, ent", script);
             StringAssert.Contains("thread ReMap_GiveJumpPadDoubleJump( ent )", script);
+            StringAssert.DoesNotContain("\tJumpPadPushEnt( trigger, ent", script);
+            StringAssert.DoesNotContain("trigger.s.remapDoubleJump", script);
             StringAssert.DoesNotContain("MapEditor_", script);
         }
 

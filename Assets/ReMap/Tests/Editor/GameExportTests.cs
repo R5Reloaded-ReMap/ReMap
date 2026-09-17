@@ -429,6 +429,7 @@ namespace ReMap.Standalone.Tests
                 StringAssert.Contains("float fadeDistance = 50000.0", props);
                 StringAssert.Contains("prop.RemoveFromAllRealms()", props);
                 StringAssert.Contains("prop.AddToRealm( realmId )", props);
+                StringAssert.DoesNotContain("trigger.s.remap", props);
             }
             foreach (string variant in new[] { "remap_r5f", "remap_r5r" })
             {
