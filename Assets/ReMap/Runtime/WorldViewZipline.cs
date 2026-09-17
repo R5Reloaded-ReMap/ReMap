@@ -39,8 +39,7 @@ namespace ReMap.Standalone
                     EnsureZiplineMarker(instance, item);
                 if (item.customType == "curved-zipline-component" || item.customType == "ziprail-component")
                 {
-                    foreach (var collider in instance.GetComponentsInChildren<Collider>(true))
-                        collider.enabled = false;
+                    ConfigureZiplineComponentColliders(instance, item);
                     EnsureZiplineModelSelection(instance, item.id);
                 }
                 if (item.customType == "trigger") EnsureTriggerVisual(instance, item);
@@ -407,6 +406,19 @@ namespace ReMap.Standalone
             var box = hitbox.GetComponent<BoxCollider>(); box.enabled = true; box.isTrigger = true;
             box.center = localBounds.center;
             box.size = Vector3.Max(localBounds.size, Vector3.one * .15f);
+        }
+
+        internal static void ConfigureZiplineComponentColliders(GameObject instance, MapObject item)
+        {
+            bool solid = item.customRole == "support" ||
+                (item.customRole?.StartsWith("support-", StringComparison.Ordinal) ?? false);
+            Transform selection = instance.transform.Find(ZiplineModelSelectionName);
+            foreach (var collider in instance.GetComponentsInChildren<Collider>(true))
+            {
+                if (selection != null && collider.transform == selection) continue;
+                collider.enabled = solid;
+                if (solid) collider.isTrigger = false;
+            }
         }
 
         private void UpdateZiplineCableSelection(GameObject instance, string id,

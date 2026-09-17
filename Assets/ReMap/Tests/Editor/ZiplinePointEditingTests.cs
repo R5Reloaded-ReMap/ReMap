@@ -101,5 +101,35 @@ namespace ReMap.Standalone.Tests
                 finally { LogAssert.ignoreFailingMessages = previous; }
             }
         }
+
+        [TestCase("support", true)]
+        [TestCase("support-post", true)]
+        [TestCase("arm", false)]
+        [TestCase("cord-end", false)]
+        public void OnlyZiplineSupportModelsKeepSolidColliders(string role, bool solid)
+        {
+            var instance = new GameObject("component");
+            try
+            {
+                var physical = instance.AddComponent<BoxCollider>();
+                physical.isTrigger = true;
+                var selection = new GameObject("__remap_zipline_model_selection");
+                selection.transform.SetParent(instance.transform, false);
+                var selectionCollider = selection.AddComponent<BoxCollider>();
+                selectionCollider.isTrigger = true;
+
+                var method = typeof(WorldView).GetMethod("ConfigureZiplineComponentColliders",
+                    BindingFlags.Static | BindingFlags.NonPublic);
+                method.Invoke(null, new object[] {
+                    instance, new MapObject { customRole = role }
+                });
+
+                Assert.That(physical.enabled, Is.EqualTo(solid));
+                if (solid) Assert.That(physical.isTrigger, Is.False);
+                Assert.That(selectionCollider.enabled, Is.True);
+                Assert.That(selectionCollider.isTrigger, Is.True);
+            }
+            finally { Object.DestroyImmediate(instance); }
+        }
     }
 }
