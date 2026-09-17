@@ -25,6 +25,7 @@ global function ReMap_CreateRespawnHeal
 global function ReMap_CreateButton
 global function ReMap_CreateTeleportButton
 global function ReMap_CreateSpeedBoost
+global function ReMap_CreateBubbleShield
 
 global const int REMAP_DOOR_SINGLE = 0
 global const int REMAP_DOOR_DOUBLE = 1
@@ -59,6 +60,7 @@ const asset REMAP_BUTTON_ARROW_MODEL = $"mdl/weapons/bullets/damage_arrow.rmdl"
 const asset REMAP_SPEED_BOOST_ORB_MODEL = $"mdl/fx/plasma_sphere_01.rmdl"
 const asset REMAP_SPEED_BOOST_BASE_MODEL = $"mdl/fx/ar_edge_sphere_512.rmdl"
 const asset REMAP_SPEED_BOOST_FP_FX = $"P_sprint_FP"
+const asset REMAP_BUBBLE_SHIELD_MODEL = $"mdl/fx/bb_shield.rmdl"
 
 struct
 {
@@ -322,6 +324,24 @@ void function ReMap_CreateSpeedBoost( vector origin, vector color = < 255, 255, 
 	file.props.append( trigger )
 	thread ReMap_SpeedBoostThink( mover, trigger, origin, color, respawnTime,
 		strength, duration, fadeTime )
+}
+
+entity function ReMap_CreateBubbleShield( vector origin, vector angles,
+	float scale = 1.0, vector color = < 128, 255, 128 > )
+{
+	entity shield = CreateEntity( "prop_dynamic" )
+	shield.SetValueForModelKey( REMAP_BUBBLE_SHIELD_MODEL )
+	shield.SetOrigin( origin )
+	shield.SetAngles( angles )
+	shield.SetModelScale( scale )
+	shield.kv.solid = SOLID_VPHYSICS
+	shield.kv.rendercolor = VectorToString( color )
+	shield.kv.contents = int( shield.kv.contents ) | CONTENTS_NOGRAPPLE
+	shield.kv.CollisionGroup = TRACE_COLLISION_GROUP_BLOCK_WEAPONS
+	DispatchSpawn( shield )
+	EmitSoundOnEntity( shield, "Gibraltar_BubbleShield_Sustain" )
+	file.props.append( shield )
+	return shield
 }
 
 void function ReMap_SpeedBoostThink( entity mover, entity trigger, vector origin, vector color,

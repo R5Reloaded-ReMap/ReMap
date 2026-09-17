@@ -4119,6 +4119,38 @@
       "text": "The speed boost settings are invalid."
     },
     {
+      "key": "#BUBBLE_SHIELD",
+      "text": "Bubble shield"
+    },
+    {
+      "key": "#CUSTOM_OBJECT_BUBBLE_SHIELD",
+      "text": "Custom bubble shield"
+    },
+    {
+      "key": "#BUBBLE_SHIELD_COLOR_RGB",
+      "text": "Shield color (RGB 0–255)"
+    },
+    {
+      "key": "#BUBBLE_SHIELD_CUSTOM_HELP",
+      "text": "Weapon-blocking bubble shield. The object is unavailable when its collision model is absent from the selected RPAKs."
+    },
+    {
+      "key": "#BUBBLE_SHIELD_HELP",
+      "text": "Use the regular uniform scale control to resize the shield. Players can pass through it."
+    },
+    {
+      "key": "#BUBBLE_SHIELD_CREATED",
+      "text": "Bubble shield created."
+    },
+    {
+      "key": "#BUBBLE_SHIELD_PREVIEW_ERROR",
+      "text": "Could not prepare the bubble shield model: "
+    },
+    {
+      "key": "#INVALID_BUBBLE_SHIELD_SETTINGS",
+      "text": "The bubble shield settings are invalid."
+    },
+    {
       "key": "#DEVELOPMENT_BUILD",
       "text": "Development build — debugging enabled"
     },

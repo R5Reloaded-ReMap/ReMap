@@ -473,7 +473,8 @@ namespace ReMap.Standalone
                     item.customType != "jump-pad" && item.customType != "spawn-point" &&
                     item.customType != "trigger" && item.customType != "jump-tower" &&
                     item.customType != "weapon-rack" && item.customType != "respawn-heal" &&
-                    item.customType != "button" && item.customType != "speed-boost") continue;
+                    item.customType != "button" && item.customType != "speed-boost" &&
+                    item.customType != "bubble-shield") continue;
                 if (!MapHierarchy.IsEnabled(document, item.id)) continue;
                 var copy = item.Copy(); var pose = WorldPose(item.id);
                 copy.parentId = item.customType == "curved-zipline-point" ? item.parentId : "";

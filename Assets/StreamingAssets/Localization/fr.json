@@ -4119,6 +4119,38 @@
       "text": "Les paramètres du boost de vitesse sont invalides."
     },
     {
+      "key": "#BUBBLE_SHIELD",
+      "text": "Bouclier bulle"
+    },
+    {
+      "key": "#CUSTOM_OBJECT_BUBBLE_SHIELD",
+      "text": "Bouclier bulle personnalisé"
+    },
+    {
+      "key": "#BUBBLE_SHIELD_COLOR_RGB",
+      "text": "Couleur du bouclier (RVB 0–255)"
+    },
+    {
+      "key": "#BUBBLE_SHIELD_CUSTOM_HELP",
+      "text": "Bouclier bulle bloquant les armes. L’objet est indisponible si son modèle de collision manque dans les RPAK sélectionnés."
+    },
+    {
+      "key": "#BUBBLE_SHIELD_HELP",
+      "text": "Utilisez l’échelle uniforme habituelle pour redimensionner le bouclier. Les joueurs peuvent le traverser."
+    },
+    {
+      "key": "#BUBBLE_SHIELD_CREATED",
+      "text": "Bouclier bulle créé."
+    },
+    {
+      "key": "#BUBBLE_SHIELD_PREVIEW_ERROR",
+      "text": "Impossible de préparer le modèle du bouclier bulle : "
+    },
+    {
+      "key": "#INVALID_BUBBLE_SHIELD_SETTINGS",
+      "text": "Les paramètres du bouclier bulle sont invalides."
+    },
+    {
       "key": "#DEVELOPMENT_BUILD",
       "text": "Build de développement — débogage activé"
     },

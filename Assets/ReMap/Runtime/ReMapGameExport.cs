@@ -82,6 +82,9 @@ namespace ReMap.Standalone
                 if (!models.Contains(ReMapApp.SpeedBoostBaseModelPath, StringComparer.OrdinalIgnoreCase))
                     models.Add(ReMapApp.SpeedBoostBaseModelPath);
             }
+            if (world.Any(o => o.customType == "bubble-shield") &&
+                !models.Contains(ReMapApp.BubbleShieldModelPath, StringComparer.OrdinalIgnoreCase))
+                models.Add(ReMapApp.BubbleShieldModelPath);
             Vector3 originOffset = OriginOffset(document);
             bool useOriginOffset = HasOriginOffset(originOffset);
             var shared = new StringBuilder();
@@ -121,6 +124,7 @@ namespace ReMap.Standalone
             AppendRespawnHeals(server, world, false, originOffset, useOriginOffset);
             AppendButtons(server, world, false, originOffset, useOriginOffset);
             AppendSpeedBoosts(server, world, false, originOffset, useOriginOffset);
+            AppendBubbleShields(server, world, false, originOffset, useOriginOffset);
             AppendCurvedZiplines(server, world, false, originOffset, useOriginOffset);
             AppendZiplines(server, world, false, originOffset, useOriginOffset);
 
@@ -214,6 +218,7 @@ namespace ReMap.Standalone
             AppendRespawnHeals(result, world, true, originOffset, false);
             AppendButtons(result, world, true, originOffset, false);
             AppendSpeedBoosts(result, world, true, originOffset, false);
+            AppendBubbleShields(result, world, true, originOffset, false);
             AppendCurvedZiplines(result, world, true, originOffset, false);
             AppendZiplines(result, world, true, originOffset, false);
             return result.ToString();
@@ -608,6 +613,23 @@ namespace ReMap.Standalone
                     Vector(WorldView.ToVector(boost.speedBoostColor)) + ", " +
                     Number(boost.speedBoostRespawnTime) + ", " + Number(boost.speedBoostStrength) + ", " +
                     Number(boost.speedBoostDuration) + ", " + Number(boost.speedBoostFadeTime) + " )";
+                code.Append(live ? "script " : "\t").Append(expression).AppendLine();
+            }
+        }
+
+        private static void AppendBubbleShields(StringBuilder code, List<MapObject> world, bool live,
+            Vector3 originOffset, bool symbolicOffset)
+        {
+            var shields = world.Where(o => o.customType == "bubble-shield").ToList();
+            if (!live && shields.Count > 0) { code.AppendLine(); code.AppendLine("\t// Bubble shields"); }
+            foreach (var shield in shields)
+            {
+                if (!Nearly(shield.scale.x, shield.scale.y) || !Nearly(shield.scale.x, shield.scale.z))
+                    throw new ArgumentException(L.F("#ARG0_APEX_PROPS_SUPPORT_UNIFORM", shield.displayName));
+                string expression = "ReMap_CreateBubbleShield( " +
+                    Position(shield.position, originOffset, symbolicOffset) + ", " +
+                    Vector(ApexDisplay.Angles(WorldView.ToVector(shield.rotation))) + ", " +
+                    Number(shield.scale.x) + ", " + Vector(WorldView.ToVector(shield.bubbleShieldColor)) + " )";
                 code.Append(live ? "script " : "\t").Append(expression).AppendLine();
             }
         }

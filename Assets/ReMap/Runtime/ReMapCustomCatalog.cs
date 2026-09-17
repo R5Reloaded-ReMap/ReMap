@@ -20,7 +20,8 @@ namespace ReMap.Standalone
             new CatalogEntry("custom:weapon-rack", L.T("#WEAPON_RACK"), L.T("#CUSTOM"), new Vector3(.9f, .9f, .55f)) { CustomType = "weapon-rack" },
             new CatalogEntry("custom:respawn-heal", L.T("#RESPAWN_HEAL"), L.T("#CUSTOM"), new Vector3(.5f, .5f, .5f)) { CustomType = "respawn-heal" },
             new CatalogEntry("custom:button", L.T("#BUTTON"), L.T("#CUSTOM"), new Vector3(.8f, 1.2f, .8f)) { CustomType = "button" },
-            new CatalogEntry("custom:speed-boost", L.T("#SPEED_BOOST"), L.T("#CUSTOM"), new Vector3(1.5f, 1.3f, 1.5f)) { CustomType = "speed-boost" }
+            new CatalogEntry("custom:speed-boost", L.T("#SPEED_BOOST"), L.T("#CUSTOM"), new Vector3(1.5f, 1.3f, 1.5f)) { CustomType = "speed-boost" },
+            new CatalogEntry("custom:bubble-shield", L.T("#BUBBLE_SHIELD"), L.T("#CUSTOM"), new Vector3(5.2f, 5.2f, 5.2f)) { CustomType = "bubble-shield" }
         };
 
         private bool CustomObjectAvailable(CatalogEntry entry)
@@ -47,6 +48,8 @@ namespace ReMap.Standalone
             if (entry.CustomType == "respawn-heal") return RespawnHealAnyModelAvailable();
             if (entry.CustomType == "button") return ButtonModeAvailable("visible");
             if (entry.CustomType == "speed-boost") return SpeedBoostModelsAvailable();
+            if (entry.CustomType == "bubble-shield")
+                return ReMapModelAvailability.HasModel(assetLibrary?.Records, Targets, BubbleShieldModelPath);
             return true;
         }
 
@@ -83,6 +86,7 @@ namespace ReMap.Standalone
             _ = PrepareRespawnHealModels();
             _ = PrepareButtonModels();
             _ = PrepareSpeedBoostModels();
+            _ = PrepareBubbleShieldModel();
         }
 
         private void SelectCustomAsset(CatalogEntry entry)
@@ -104,6 +108,7 @@ namespace ReMap.Standalone
                     entry.CustomType == "respawn-heal" ? "#RESPAWN_HEAL_CUSTOM_HELP" :
                     entry.CustomType == "button" ? "#BUTTON_CUSTOM_HELP" :
                     entry.CustomType == "speed-boost" ? "#SPEED_BOOST_CUSTOM_HELP" :
+                    entry.CustomType == "bubble-shield" ? "#BUBBLE_SHIELD_CUSTOM_HELP" :
                     "#CABLE_TWO_INDEPENDENTLY_MOVABLE_ENDPOINTS");
             placeAssetButton.SetEnabled(true); RefreshCatalog();
             _ = PrepareZiplineModels();
@@ -116,6 +121,7 @@ namespace ReMap.Standalone
             _ = PrepareRespawnHealModels();
             _ = PrepareButtonModels();
             _ = PrepareSpeedBoostModels();
+            _ = PrepareBubbleShieldModel();
         }
 
         private void InsertCustomObject(CatalogEntry entry, Vector3 position, string parent = "")
@@ -134,6 +140,7 @@ namespace ReMap.Standalone
             else if (entry?.CustomType == "respawn-heal") InsertRespawnHeal(position, parent);
             else if (entry?.CustomType == "button") InsertButton(position, parent);
             else if (entry?.CustomType == "speed-boost") InsertSpeedBoost(position, parent);
+            else if (entry?.CustomType == "bubble-shield") InsertBubbleShield(position, parent);
         }
     }
 }

@@ -113,6 +113,7 @@ namespace ReMap.Standalone.Core
         public float speedBoostStrength = .35f;
         public float speedBoostDuration = 3f;
         public float speedBoostFadeTime;
+        public Float3 bubbleShieldColor = new Float3(128f, 255f, 128f);
         public bool commonAsset;
         public List<string> availableMaps = new List<string>();
         public bool allowMantle = true;
@@ -229,7 +230,7 @@ namespace ReMap.Standalone.Core
                     item.customType != "jump-tower" && item.customType != "jump-tower-component" &&
                     item.customType != "weapon-rack" && item.customType != "respawn-heal" &&
                     item.customType != "button" && item.customType != "speed-boost" &&
-                    item.customType != "speed-boost-component")
+                    item.customType != "speed-boost-component" && item.customType != "bubble-shield")
                     throw new ArgumentException(L.T("#UNKNOWN_CUSTOM_OBJECT_TYPE"));
                 if (item.customType == "zipline" && !item.isGroup)
                     throw new ArgumentException(L.T("#ZIPLINE_HIERARCHY_GROUP"));
@@ -333,6 +334,13 @@ namespace ReMap.Standalone.Core
                     item.speedBoostDuration > 3600f || !Finite(item.speedBoostFadeTime) ||
                     item.speedBoostFadeTime < 0f || item.speedBoostFadeTime > item.speedBoostDuration))
                     throw new ArgumentException(L.T("#INVALID_SPEED_BOOST_SETTINGS"));
+                if (item.customType == "bubble-shield" && (!item.bubbleShieldColor.IsFinite ||
+                    item.bubbleShieldColor.x < 0f || item.bubbleShieldColor.x > 255f ||
+                    item.bubbleShieldColor.y < 0f || item.bubbleShieldColor.y > 255f ||
+                    item.bubbleShieldColor.z < 0f || item.bubbleShieldColor.z > 255f ||
+                    Math.Abs(item.scale.x - item.scale.y) > .0001f ||
+                    Math.Abs(item.scale.x - item.scale.z) > .0001f))
+                    throw new ArgumentException(L.T("#INVALID_BUBBLE_SHIELD_SETTINGS"));
                 if (!item.position.IsFinite || !item.rotation.IsFinite || !item.scale.IsFinite)
                     throw new ArgumentException(L.T("#TRANSFORMS_FINITE_NUMBERS"));
                 if (!Finite(item.fadeDistance) || item.fadeDistance < -1f)
