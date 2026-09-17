@@ -99,7 +99,7 @@ namespace ReMap.Standalone
             thumbnailProgress.text=status;
         }
         [Serializable] private sealed class ThumbnailInfo { public int missingAlbedo; public int rendererVersion; }
-        private const int ThumbnailRendererVersion=3;
+        private const int ThumbnailRendererVersion=4;
         private bool NeedsThumbnailRefresh(GameAssetRecord record)
         {
             try

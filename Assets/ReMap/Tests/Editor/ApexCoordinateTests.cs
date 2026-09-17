@@ -61,6 +61,9 @@ namespace ReMap.Standalone.Tests {
             var model=ApexModelOrientation.VisualCorrection(@"mdl\props\charge_pylon\charge_pylon_01_cells.rmdl");
             Assert.That(Quaternion.Angle(cast,expected),Is.LessThan(.001f));
             Assert.That(Quaternion.Angle(model,expected),Is.LessThan(.001f));
+            var jumpPadExpected=Quaternion.Euler(ApexDisplay.UnityAngles(new Vector3(0,90,90)));
+            var jumpPad=ApexModelOrientation.VisualCorrection("mdl/props/octane_jump_pad/octane_jump_pad.rmdl");
+            Assert.That(Quaternion.Angle(jumpPad,jumpPadExpected),Is.LessThan(.001f));
             Assert.That(Quaternion.Angle(ApexModelOrientation.VisualCorrection("ordinary_LOD0.cast"),Quaternion.identity),Is.LessThan(.001f));
         }
         [Test] public void EditableModelOrientationMetadataAcceptsPathsAndRejectsInvalidEntries() {

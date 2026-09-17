@@ -5,6 +5,12 @@
       "pitch": 0.0,
       "yaw": 0.0,
       "roll": -90.0
+    },
+    {
+      "model": "mdl/props/octane_jump_pad/octane_jump_pad.rmdl",
+      "pitch": 0.0,
+      "yaw": 90.0,
+      "roll": 90.0
     }
   ]
 }
