@@ -140,6 +140,26 @@ namespace ReMap.Standalone.Tests
         }
 
         [Test]
+        public void AutoDetachGuidesFollowTheGravityCurve()
+        {
+            var curve = WorldView.ZiplinePreviewPoints(new Vector3(0f, 4f, 0f),
+                new Vector3(20f, 4f, 0f), .7f, false, 24);
+
+            bool visible = WorldView.TryZiplineDetachGuidePoints(curve, 200f, 200f,
+                out var startGuide, out var cable, out var endGuide);
+
+            Assert.That(visible, Is.True);
+            Assert.That(startGuide.Length, Is.GreaterThan(2));
+            Assert.That(endGuide.Length, Is.GreaterThan(2));
+            Assert.That(startGuide[startGuide.Length - 1].y, Is.LessThan(4f));
+            Assert.That(endGuide[0].y, Is.LessThan(4f));
+            Assert.That(cable[0], Is.EqualTo(startGuide[startGuide.Length - 1]));
+            Assert.That(cable[cable.Length - 1], Is.EqualTo(endGuide[0]));
+            Assert.That(startGuide[0], Is.EqualTo(curve[0]));
+            Assert.That(endGuide[endGuide.Length - 1], Is.EqualTo(curve[curve.Length - 1]));
+        }
+
+        [Test]
         public void VerticalPushOffAngleUsesWorldAxes()
         {
             Vector3 zero = WorldView.ZiplinePushDirection(0f);

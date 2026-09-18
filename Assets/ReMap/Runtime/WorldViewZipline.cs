@@ -111,21 +111,16 @@ namespace ReMap.Standalone
                         endAnchor = VerticalEndAnchor(startAnchor, endAnchor);
                         SetZiplineMarkerPosition(end, endAnchor);
                     }
-                    Vector3 cableStart = startAnchor, cableEnd = endAnchor;
-                    if (TryZiplineDetachGuides(startAnchor, endAnchor,
-                        item.ziplineAutoDetachStart, item.ziplineAutoDetachEnd,
-                        out var startGuideEnd, out var endGuideStart))
-                    {
-                        if (item.ziplineAutoDetachStart > 0f) cableStart = startGuideEnd;
-                        if (item.ziplineAutoDetachEnd > 0f) cableEnd = endGuideStart;
-                    }
-                    var cablePoints = ZiplinePreviewPoints(cableStart, cableEnd,
+                    var fullCablePoints = ZiplinePreviewPoints(startAnchor, endAnchor,
                         item.ziplineLengthScale, item.ziplineMode == "vertical");
+                    bool hasDetachGuides = TryZiplineDetachGuidePoints(fullCablePoints,
+                        item.ziplineAutoDetachStart, item.ziplineAutoDetachEnd,
+                        out var startGuidePoints, out var cablePoints, out var endGuidePoints);
+                    if (!hasDetachGuides) cablePoints = fullCablePoints;
                     line.positionCount = cablePoints.Length;
                     line.SetPositions(cablePoints);
-                    UpdateZiplineCableSelection(instance, item.id, cablePoints);
-                    UpdateZiplineDetachGuides(instance, startAnchor, endAnchor,
-                        item.ziplineAutoDetachStart, item.ziplineAutoDetachEnd);
+                    UpdateZiplineCableSelection(instance, item.id, fullCablePoints);
+                    UpdateZiplineDetachGuides(instance, startGuidePoints, endGuidePoints);
                     Vector3 pushDirection = ZiplinePushDirection(item.ziplinePushOffAngle);
                     UpdateZiplinePushArrow(instance, item.ziplineMode == "vertical" && item.ziplinePushOffInDirectionX,
                         startAnchor, pushDirection);
@@ -133,7 +128,7 @@ namespace ReMap.Standalone
                 else
                 {
                     UpdateZiplineCableSelection(instance, item.id, Array.Empty<Vector3>());
-                    UpdateZiplineDetachGuides(instance, Vector3.zero, Vector3.zero, 0f, 0f);
+                    UpdateZiplineDetachGuides(instance, Array.Empty<Vector3>(), Array.Empty<Vector3>());
                     UpdateZiplinePushArrow(instance, false, Vector3.zero, Vector3.right);
                 }
             }
@@ -650,16 +645,69 @@ namespace ReMap.Standalone
         public static bool TryZiplineDetachGuides(Vector3 start, Vector3 end,
             float startApex, float endApex, out Vector3 startGuideEnd, out Vector3 endGuideStart)
         {
-            startGuideEnd = start; endGuideStart = end;
-            Vector3 delta = end - start;
-            float length = delta.magnitude;
+            bool visible = TryZiplineDetachGuidePoints(new[] { start, end }, startApex, endApex,
+                out var startPoints, out _, out var endPoints);
+            startGuideEnd = startPoints.Length > 0 ? startPoints[startPoints.Length - 1] : start;
+            endGuideStart = endPoints.Length > 0 ? endPoints[0] : end;
+            return visible;
+        }
+
+        public static bool TryZiplineDetachGuidePoints(IReadOnlyList<Vector3> curve,
+            float startApex, float endApex, out Vector3[] startGuidePoints,
+            out Vector3[] cablePoints, out Vector3[] endGuidePoints)
+        {
+            startGuidePoints = Array.Empty<Vector3>();
+            cablePoints = Array.Empty<Vector3>();
+            endGuidePoints = Array.Empty<Vector3>();
+            if (curve == null || curve.Count < 2) return false;
+
+            var distances = new float[curve.Count];
+            for (int index = 1; index < curve.Count; index++)
+                distances[index] = distances[index - 1] + Vector3.Distance(curve[index - 1], curve[index]);
+            float total = distances[distances.Length - 1];
             float startDistance = Mathf.Max(0f, startApex) * ApexCoordinates.MetersPerUnit;
             float endDistance = Mathf.Max(0f, endApex) * ApexCoordinates.MetersPerUnit;
-            if (length < .0001f || length <= startDistance + endDistance) return false;
-            Vector3 direction = delta / length;
-            startGuideEnd = start + direction * startDistance;
-            endGuideStart = end - direction * endDistance;
-            return startDistance > .0001f || endDistance > .0001f;
+            if (total < .0001f || total <= startDistance + endDistance) return false;
+            if (startDistance <= .0001f && endDistance <= .0001f) return false;
+
+            float cableEnd = total - endDistance;
+            if (startDistance > .0001f)
+                startGuidePoints = SlicePolyline(curve, distances, 0f, startDistance);
+            cablePoints = SlicePolyline(curve, distances, startDistance, cableEnd);
+            if (endDistance > .0001f)
+                endGuidePoints = SlicePolyline(curve, distances, cableEnd, total);
+            if (cablePoints.Length >= 2) return true;
+            startGuidePoints = Array.Empty<Vector3>();
+            cablePoints = Array.Empty<Vector3>();
+            endGuidePoints = Array.Empty<Vector3>();
+            return false;
+        }
+
+        private static Vector3[] SlicePolyline(IReadOnlyList<Vector3> points, float[] distances,
+            float from, float to)
+        {
+            var result = new List<Vector3> { PointOnPolyline(points, distances, from) };
+            for (int index = 1; index < points.Count - 1; index++)
+                if (distances[index] > from + .0001f && distances[index] < to - .0001f)
+                    result.Add(points[index]);
+            Vector3 last = PointOnPolyline(points, distances, to);
+            if (Vector3.Distance(result[result.Count - 1], last) > .0001f) result.Add(last);
+            return result.ToArray();
+        }
+
+        private static Vector3 PointOnPolyline(IReadOnlyList<Vector3> points, float[] distances,
+            float distance)
+        {
+            distance = Mathf.Clamp(distance, 0f, distances[distances.Length - 1]);
+            for (int index = 1; index < points.Count; index++)
+            {
+                if (distance > distances[index]) continue;
+                float segment = distances[index] - distances[index - 1];
+                if (segment < .0001f) continue;
+                return Vector3.Lerp(points[index - 1], points[index],
+                    (distance - distances[index - 1]) / segment);
+            }
+            return points[points.Count - 1];
         }
 
         public static Vector3 ZiplinePushDirection(float worldYaw) =>
@@ -676,18 +724,25 @@ namespace ReMap.Standalone
             return line;
         }
 
-        private void UpdateZiplineDetachGuides(GameObject zipline, Vector3 start, Vector3 end,
-            float startApex, float endApex)
+        private void UpdateZiplineDetachGuides(GameObject zipline,
+            IReadOnlyList<Vector3> startPoints, IReadOnlyList<Vector3> endPoints)
         {
-            bool visible = TryZiplineDetachGuides(start, end, startApex, endApex,
-                out var startGuideEnd, out var endGuideStart);
             var startGuide = ZiplineDetachGuide(zipline, ZiplineDetachStartName);
             var endGuide = ZiplineDetachGuide(zipline, ZiplineDetachEndName);
-            startGuide.enabled = visible && startApex > 0f;
-            endGuide.enabled = visible && endApex > 0f;
-            if (!visible) return;
-            startGuide.SetPosition(0, start); startGuide.SetPosition(1, startGuideEnd);
-            endGuide.SetPosition(0, end); endGuide.SetPosition(1, endGuideStart);
+            startGuide.enabled = startPoints != null && startPoints.Count >= 2;
+            endGuide.enabled = endPoints != null && endPoints.Count >= 2;
+            if (startGuide.enabled)
+            {
+                startGuide.positionCount = startPoints.Count;
+                for (int index = 0; index < startPoints.Count; index++)
+                    startGuide.SetPosition(index, startPoints[index]);
+            }
+            if (endGuide.enabled)
+            {
+                endGuide.positionCount = endPoints.Count;
+                for (int index = 0; index < endPoints.Count; index++)
+                    endGuide.SetPosition(index, endPoints[index]);
+            }
         }
 
         private void UpdateZiplinePushArrow(GameObject zipline, bool visible, Vector3 origin, Vector3 direction)
