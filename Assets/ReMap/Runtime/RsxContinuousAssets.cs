@@ -84,7 +84,7 @@ namespace ReMap.Standalone
         }
         private void RetryContinuousGeometry(GameAssetRecord[] entries,string archive,AssetBatchResult result)
         {
-            string[] archives=new[]{"common_early.rpak",archive}.Distinct(StringComparer.OrdinalIgnoreCase).Select(a=>Path.Combine(PakDirectory,a)).Where(File.Exists).ToArray();
+            string[] archives=Common.Concat(new[]{archive}).Distinct(StringComparer.OrdinalIgnoreCase).Select(a=>Path.Combine(PakDirectory,a)).Where(File.Exists).ToArray();
             ResetPreviewSession();
             try
             {
