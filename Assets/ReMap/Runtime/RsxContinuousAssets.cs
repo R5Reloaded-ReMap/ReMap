@@ -119,13 +119,13 @@ namespace ReMap.Standalone
                 EnsurePreviewSession(true);previewSession.Load(archives,archive);
                 if(entries.Length>1)
                 {
-                    try {CommitContinuousExports(entries,previewSession.ExportBatch(entries.Select(e=>e.guid).ToArray(),true),archive,result);}
+                    try {CommitContinuousExports(entries,previewSession.ExportBatch(entries.Select(e=>e.guid).ToArray(),true),archive,result,true);}
                     catch(Exception ex)when(ex is IOException||ex is TimeoutException)
                     {RetryContinuousIndividually(entries,archives,archive,result,true,true);return;}
                     var missing=entries.Where(entry=>!result.Paths.ContainsKey(entry.Id)).ToArray();
                     if(missing.Length>0)RetryContinuousIndividually(missing,archives,archive,result,false,true);
                 }
-                else CommitContinuousExports(entries,previewSession.Export(entries[0].guid,true),archive,result);
+                else CommitContinuousExports(entries,previewSession.Export(entries[0].guid,true),archive,result,true);
             }
             catch(Exception ex)when(ex is IOException||ex is TimeoutException)
             {
@@ -144,7 +144,7 @@ namespace ReMap.Standalone
                 {
                     EnsurePreviewSession(geometryOnly);
                     previewSession.Load(archives,archive);
-                    CommitContinuousExports(new[]{entry},previewSession.Export(entry.guid,geometryOnly),archive,result);
+                    CommitContinuousExports(new[]{entry},previewSession.Export(entry.guid,geometryOnly),archive,result,geometryOnly);
                     if(!geometryOnly&&GeometryPreviewsSupported&&!result.Paths.ContainsKey(entry.Id))RetryContinuousGeometry(new[]{entry},archive,result);
                 }
                 catch(Exception ex)when(ex is IOException||ex is TimeoutException)
@@ -155,7 +155,7 @@ namespace ReMap.Standalone
                 }
             }
         }
-        private void CommitContinuousExports(GameAssetRecord[] entries,string output,string archive,AssetBatchResult result)
+        private void CommitContinuousExports(GameAssetRecord[] entries,string output,string archive,AssetBatchResult result,bool geometryOnly=false)
         {
             string[] exported=Directory.Exists(output)?Directory.GetFiles(output,"*_LOD0.cast",SearchOption.AllDirectories):Array.Empty<string>();
             foreach(var entry in entries)
@@ -170,7 +170,7 @@ namespace ReMap.Standalone
                     if(!source.StartsWith(Path.GetFullPath(previewSession.Root)+Path.DirectorySeparatorChar,StringComparison.OrdinalIgnoreCase)||!destination.StartsWith(Path.GetFullPath(modelRoot)+Path.DirectorySeparatorChar,StringComparison.OrdinalIgnoreCase))throw new IOException(L.T("#EXPORT_PATH_OUTSIDE_CACHE"));
                     Directory.CreateDirectory(modelRoot);Directory.Move(source,destination);
                     string cast=Path.Combine(destination,Path.GetFileName(matches[0]));
-                    File.WriteAllText(Path.Combine(modelRoot,"complete.txt"),Path.GetRelativePath(modelRoot,cast)+"\n"+archive);
+                    File.WriteAllText(Path.Combine(modelRoot,"complete.txt"),Path.GetRelativePath(modelRoot,cast)+"\n"+archive+"\n"+(geometryOnly?"geometry":"textured")+"\n"+ActiveCacheGeneration());
                     result.Paths[entry.Id]=cast;result.Errors.Remove(entry.Id);
                 }
                 catch(Exception ex)when(ex is IOException||ex is ArgumentException){result.Errors[entry.Id]=ex.Message;}

@@ -465,12 +465,34 @@ namespace ReMap.Standalone
             return result.Distinct(StringComparer.OrdinalIgnoreCase).ToArray();
         }
         public string ModelDirectory(GameAssetRecord entry) => Path.Combine(CacheRoot, "Models", entry.guid);
+        [Serializable] private sealed class CachedThumbnailInfo { public int missingAlbedo=0; }
+        private string ActiveCacheGeneration()
+        {
+            try { return File.ReadAllText(Path.Combine(CacheRoot, "active-generation.txt")).Trim(); }
+            catch { return ""; }
+        }
+        private static bool LegacyModelNeedsTexturedRetry(string folder)
+        {
+            try
+            {
+                string path=Path.Combine(folder,"thumbnail-info.json");
+                if(!File.Exists(path))return false;
+                var info=JsonUtility.FromJson<CachedThumbnailInfo>(File.ReadAllText(path));
+                return info!=null&&info.missingAlbedo>0;
+            }
+            catch{return false;}
+        }
         public string CachedModel(GameAssetRecord entry)
         {
             if (CacheRoot == null) return null;
             var folder = ModelDirectory(entry); string marker = Path.Combine(folder, "complete.txt");
             if (!File.Exists(marker)) return null;
-            string relative = File.ReadLines(marker).FirstOrDefault();
+            string[] completion=File.ReadAllLines(marker);
+            string mode=completion.Length>2?completion[2].Trim():"";
+            if(string.Equals(mode,"geometry",StringComparison.OrdinalIgnoreCase)&&
+                (completion.Length<4||!string.Equals(completion[3].Trim(),ActiveCacheGeneration(),StringComparison.OrdinalIgnoreCase)))return null;
+            if(string.IsNullOrEmpty(mode)&&LegacyModelNeedsTexturedRetry(folder))return null;
+            string relative = completion.FirstOrDefault();
             if (relative != null && relative.EndsWith(".cast", StringComparison.OrdinalIgnoreCase))
             {
                 string path = Path.GetFullPath(Path.Combine(folder, relative));

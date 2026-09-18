@@ -55,7 +55,7 @@ namespace ReMap.Standalone
                                 if(!source.StartsWith(Path.GetFullPath(batch)+Path.DirectorySeparatorChar,StringComparison.OrdinalIgnoreCase)||!destination.StartsWith(Path.GetFullPath(modelRoot)+Path.DirectorySeparatorChar,StringComparison.OrdinalIgnoreCase))throw new IOException(L.T("#EXPORT_PATH_OUTSIDE_CACHE"));
                                 Directory.CreateDirectory(Path.GetDirectoryName(destination));Directory.Move(source,destination);
                                 string cast=Path.Combine(destination,Path.GetFileName(matches[0]));
-                                File.WriteAllText(Path.Combine(modelRoot,"complete.txt"),Path.GetRelativePath(modelRoot,cast)+"\n"+archive);
+                                File.WriteAllText(Path.Combine(modelRoot,"complete.txt"),Path.GetRelativePath(modelRoot,cast)+"\n"+archive+"\n"+(geometry?"geometry":"textured")+"\n"+ActiveCacheGeneration());
                                 result.Paths[entry.Id]=cast;result.Errors.Remove(entry.Id);
                             }catch(Exception ex)when(ex is IOException||ex is ArgumentException){result.Errors[entry.Id]=ex.Message;}
                         }
