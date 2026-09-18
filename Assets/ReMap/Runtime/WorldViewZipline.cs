@@ -605,6 +605,35 @@ namespace ReMap.Standalone
                 ? instance.transform.position : ZiplineCableAnchor(instance, item);
         }
 
+        public Vector3 ZiprailGizmoPivot(string objectId)
+        {
+            if (syncedZiplineDocument == null) return Vector3.zero;
+            var item = syncedZiplineDocument.objects.Find(candidate => candidate.id == objectId);
+            if (item?.customType == "ziprail")
+                item = syncedZiplineDocument.objects.Where(candidate =>
+                    candidate.parentId == item.id && candidate.customType == "ziprail-point")
+                    .OrderBy(candidate => int.TryParse(candidate.customRole, out int index)
+                        ? index : int.MaxValue).FirstOrDefault();
+            if (item == null || !instances.TryGetValue(item.id, out var instance))
+                return instances.TryGetValue(objectId, out var fallback)
+                    ? fallback.transform.position : Vector3.zero;
+            if (item.customType != "ziprail-point") return instance.transform.position;
+
+            var profile = ReMapZiprailProfiles.Find(item.customProfile);
+            string baseRole = profile.HasSupport ? "support-base" : profile.HasArm ? "arm" : null;
+            if (baseRole == null) return instance.transform.position;
+            var component = syncedZiplineDocument.objects.FirstOrDefault(candidate =>
+                candidate.parentId == item.id && candidate.customType == "ziprail-component" &&
+                candidate.customRole == baseRole);
+            if (component != null && instances.TryGetValue(component.id, out var componentInstance))
+                return componentInstance.transform.position;
+            var definition = ReMapZiprailProfiles.Components(profile, item.ziplineArmHeight)
+                .FirstOrDefault(candidate => candidate.Role == baseRole);
+            return definition == null
+                ? instance.transform.position
+                : instance.transform.TransformPoint(definition.Position);
+        }
+
         private static bool TryLocalGeometryBounds(GameObject instance, out Bounds bounds)
         {
             bounds = default; bool found = false; var worldToLocal = instance.transform.worldToLocalMatrix;

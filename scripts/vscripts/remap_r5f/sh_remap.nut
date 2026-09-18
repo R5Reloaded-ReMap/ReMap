@@ -40,8 +40,9 @@ void function Sh_ReMap_Init()
 #endif // REMAP_LOAD_MAP
 }
 
-void function Sh_ReMap_PrecacheMap() {
-	PrecacheModel( $"mdl/dev/empty.rmdl" )
+void function Sh_ReMap_PrecacheMap()
+{
+	PrecacheModel( $"mdl/dev/empty_model.rmdl" )
 }
 
 void function Sh_ReMap_Clear()

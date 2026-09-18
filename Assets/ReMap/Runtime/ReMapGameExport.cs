@@ -876,6 +876,7 @@ namespace ReMap.Standalone
     {
         private const string ManagedPaksBegin = "// ReMap managed paks - begin";
         private const string ManagedPaksEnd = "// ReMap managed paks - end";
+        private const string EmptyLevelSettings = "\"LevelSet\"\n{\n}\n";
         private static readonly string[] ServerFileNames = { "sv_remap_objects.nut", "sv_remap_ziplines.nut", ReMapGameScript.ServerMapFileName, ReMapGameScript.SharedFileName };
         private static readonly string[] ClientFileNames = { "cl_remap_objects.nut", ReMapGameScript.ClientMapFileName, ReMapGameScript.SharedFileName };
 
@@ -941,8 +942,7 @@ namespace ReMap.Standalone
                 if (!File.Exists(path))
                 {
                     if ((rpaks ?? Array.Empty<string>()).Any())
-                        throw new FileNotFoundException(L.F("#ARG0_PLATFORM_CONTAIN_REQUIRED_ARG1",
-                            GameTargets.DisplayName(gameTarget), "scripts/levels/settings/" + map + ".kv"), path);
+                        changed.Add(new KeyValuePair<string, string>(path, SetManagedPaks(EmptyLevelSettings, rpaks, path)));
                 }
                 else
                 {
@@ -962,6 +962,8 @@ namespace ReMap.Standalone
             }
             foreach (var file in changed)
             {
+                string directory = Path.GetDirectoryName(file.Key);
+                if (!string.IsNullOrEmpty(directory)) Directory.CreateDirectory(directory);
                 BackupOnce(file.Key);
                 File.WriteAllText(file.Key, file.Value, new UTF8Encoding(false));
             }
@@ -1098,7 +1100,7 @@ namespace ReMap.Standalone
         private static void BackupOnce(string path)
         {
             string backup = path + ".remap.bak";
-            if (!File.Exists(backup)) File.Copy(path, backup);
+            if (File.Exists(path) && !File.Exists(backup)) File.Copy(path, backup);
         }
     }
 

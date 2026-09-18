@@ -41,6 +41,17 @@ namespace ReMap.Standalone
             try { await NormalizeCore(modelRoot, limit, cancellation); }
             finally { gate.Release(); }
         }
+        public static bool ManifestMatchesMaximum(string modelRoot,int limit)
+        {
+            try
+            {
+                string path=Path.Combine(modelRoot,"textures.manifest.json");
+                if(!File.Exists(path))return false;
+                var manifest=JsonUtility.FromJson<Manifest>(File.ReadAllText(path));
+                return manifest!=null&&manifest.maximumSize==Mathf.Clamp(limit<=0?PreviewMaximumSize:limit,256,2048);
+            }
+            catch{return false;}
+        }
         private static async Task NormalizeCore(string modelRoot, int limit, CancellationToken cancellation)
         {
             cancellation.ThrowIfCancellationRequested();
@@ -73,6 +84,7 @@ namespace ReMap.Standalone
             }
             var rawTextures=Directory.EnumerateFiles(modelRoot, "*.png", SearchOption.AllDirectories).Where(p=>Path.GetDirectoryName(p)!=modelRoot).ToArray();
             var albedos=new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+            var normalizedSources=new HashSet<string>(StringComparer.OrdinalIgnoreCase);
             if(rawTextures.Length>0)foreach(string cast in Directory.EnumerateFiles(modelRoot,"*.cast",SearchOption.AllDirectories))
                 foreach(var material in CastReader.Read(cast).SelectMany(n=>n.Descendants(CastReader.Material)))
                     foreach(string relative in CastAlbedo.Candidates(material,CastAlbedo.ModelName(cast)))
@@ -89,6 +101,7 @@ namespace ReMap.Standalone
                 byte[] normalized = NormalizePng(File.ReadAllBytes(path), limit);
                 string hash = Store(shared, normalized);
                 string relative = Path.GetRelativePath(modelRoot, path).Replace('\\', '/');
+                normalizedSources.Add(relative);
                 manifest.entries.RemoveAll(e => e.source == relative); manifest.entries.Add(new Entry { source = relative, hash = hash });
                 manifest.maximumSize = limit;
                 SaveManifest(manifestPath, manifest);
@@ -97,6 +110,37 @@ namespace ReMap.Standalone
                 await Task.Yield();
                 cancellation.ThrowIfCancellationRequested();
             }
+            if(rawTextures.Length>0&&manifest.entries.RemoveAll(e=>e==null||!normalizedSources.Contains(e.source))>0)
+                SaveManifest(manifestPath,manifest);
+        }
+
+        public static int CollectGarbage(string cacheRoot)
+        {
+            if(string.IsNullOrWhiteSpace(cacheRoot))return 0;
+            string root=Path.GetFullPath(cacheRoot),models=Path.Combine(root,"Models"),textures=Path.Combine(root,"Textures");
+            if(!Directory.Exists(models)||!Directory.Exists(textures))return 0;
+            var referenced=new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+            foreach(string path in Directory.EnumerateFiles(models,"textures.manifest.json",SearchOption.AllDirectories))
+            {
+                try
+                {
+                    var manifest=JsonUtility.FromJson<Manifest>(File.ReadAllText(path));
+                    // Legacy manifests may reference corrupted or oversized PNGs. Do not keep those files
+                    // alive: the model cache rejects the manifest and RSX will recreate it on demand.
+                    if(manifest?.entries==null||manifest.maximumSize!=PreviewMaximumSize)continue;
+                    foreach(var entry in manifest.entries)
+                        if(entry!=null&&!string.IsNullOrEmpty(entry.hash)&&entry.hash.Length==64&&entry.hash.All(Uri.IsHexDigit))referenced.Add(entry.hash);
+                }
+                catch(IOException){}
+            }
+            int removed=0;
+            foreach(string path in Directory.EnumerateFiles(textures,"*.png",SearchOption.TopDirectoryOnly))
+            {
+                string hash=Path.GetFileNameWithoutExtension(path);
+                if(hash.Length!=64||hash.Any(c=>!Uri.IsHexDigit(c))||referenced.Contains(hash))continue;
+                try{File.Delete(path);removed++;}catch(IOException){}catch(UnauthorizedAccessException){}
+            }
+            return removed;
         }
         private static byte[] NormalizePng(byte[] bytes, int limit)
         {

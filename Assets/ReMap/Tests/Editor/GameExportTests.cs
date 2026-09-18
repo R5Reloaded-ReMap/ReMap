@@ -384,6 +384,54 @@ namespace ReMap.Standalone.Tests
             finally { if (System.IO.Directory.Exists(platform)) System.IO.Directory.Delete(platform, true); }
         }
 
+        [TestCase(GameTargets.R5Flowstate)]
+        [TestCase(GameTargets.R5Reloaded)]
+        public void InstallerCreatesMissingLevelSettingsBridge(string gameTarget)
+        {
+            string platform = CreateInstallerPlatform(gameTarget);
+            string levelSettings = System.IO.Path.Combine(platform, "scripts", "levels", "settings", "mp_rr_desertlands_hu.kv");
+            try
+            {
+                var document = new MapDocument { gameTarget = gameTarget, editingMap = "mp_rr_desertlands_hu" };
+
+                ReMapGameScriptInstaller.Write(platform, document, document.objects, new[] { "mp_extra.rpak" });
+
+                Assert.That(System.IO.File.Exists(levelSettings), Is.True);
+                string installedSettings = System.IO.File.ReadAllText(levelSettings);
+                StringAssert.Contains("\"LevelSet\"", installedSettings);
+                StringAssert.Contains("\"PakList\"", installedSettings);
+                StringAssert.Contains("// ReMap managed paks - begin", installedSettings);
+                StringAssert.Contains("\"mp_extra.rpak\" \"2\"", installedSettings);
+                Assert.That(System.IO.File.Exists(levelSettings + ".remap.bak"), Is.False);
+
+                ReMapGameScriptInstaller.Reset(platform, gameTarget);
+                string resetSettings = System.IO.File.ReadAllText(levelSettings);
+                StringAssert.Contains("\"LevelSet\"", resetSettings);
+                StringAssert.DoesNotContain("ReMap managed paks", resetSettings);
+                StringAssert.DoesNotContain("mp_extra.rpak", resetSettings);
+            }
+            finally
+            {
+                if (System.IO.Directory.Exists(platform)) System.IO.Directory.Delete(platform, true);
+            }
+        }
+
+        private static string CreateInstallerPlatform(string gameTarget)
+        {
+            string platform = System.IO.Path.Combine(System.IO.Path.GetTempPath(), "ReMapInstaller-" + System.Guid.NewGuid().ToString("N"));
+            string scripts = System.IO.Path.Combine(platform, "scripts", "vscripts");
+            string remap = System.IO.Path.Combine(scripts, "remap");
+            System.IO.Directory.CreateDirectory(remap);
+            foreach (string file in new[] { "sv_remap_objects.nut", "sv_remap_ziplines.nut", "cl_remap_objects.nut" })
+                System.IO.File.WriteAllText(System.IO.Path.Combine(remap, file), "");
+            System.IO.File.WriteAllText(System.IO.Path.Combine(remap, "sh_remap.nut"), "global const bool REMAP_LOAD_MAP = false\nvoid function Sh_ReMap_PrecacheMap() {}\n");
+            System.IO.File.WriteAllText(System.IO.Path.Combine(remap, "sv_remap_map.nut"), "void function Sv_ReMap_LoadMap() {}\n");
+            System.IO.File.WriteAllText(System.IO.Path.Combine(remap, "cl_remap_map.nut"), "void function Cl_ReMap_LoadMap() {}\n");
+            string initName = gameTarget == GameTargets.R5Flowstate ? "_sh_init.gnut" : "sh_init.gnut";
+            System.IO.File.WriteAllText(System.IO.Path.Combine(scripts, initName), "void function Shared_Init()\n{\n    Sh_ReMap_Init()\n}\n");
+            return platform;
+        }
+
         [TestCase(GameTargets.R5Reloaded, "sh_init.gnut", "_sh_init.gnut")]
         [TestCase(GameTargets.R5Flowstate, "_sh_init.gnut", "sh_init.gnut")]
         public void InstallerRequiresTheTargetSpecificSharedInit(
@@ -463,6 +511,46 @@ namespace ReMap.Standalone.Tests
                 StringAssert.Contains("CreateClientSidePropDynamic( origin, angles, model )", clientProps);
                 StringAssert.Contains("prop.SetModelScale( scale )", clientProps);
             }
+        }
+
+        [Test]
+        public void GeneratedMoverCallsMatchTargetApi()
+        {
+            string root = System.IO.Path.GetFullPath(System.IO.Path.Combine(Application.dataPath, "..", "scripts", "vscripts"));
+            string flowstate = System.IO.File.ReadAllText(System.IO.Path.Combine(root, "remap_r5f", "sv_remap_objects.nut"));
+            string reloaded = System.IO.File.ReadAllText(System.IO.Path.Combine(root, "remap_r5r", "sv_remap_objects.nut"));
+
+            StringAssert.Contains("CreateScriptMover( \"\", origin, ZERO_VECTOR )", flowstate);
+            StringAssert.DoesNotContain("CreateScriptMover( origin, ZERO_VECTOR )", flowstate);
+            StringAssert.Contains("CreateScriptMover( origin, ZERO_VECTOR )", reloaded);
+            StringAssert.DoesNotContain("CreateScriptMover( \"\", origin, ZERO_VECTOR )", reloaded);
+        }
+
+        [Test]
+        public void GeneratedFlowstateCallsMatchTargetApi()
+        {
+            string root = System.IO.Path.GetFullPath(System.IO.Path.Combine(Application.dataPath, "..", "scripts", "vscripts"));
+            string flowstate = System.IO.File.ReadAllText(System.IO.Path.Combine(root, "remap_r5f", "sv_remap_objects.nut"));
+            string flowstateShared = System.IO.File.ReadAllText(System.IO.Path.Combine(root, "remap_r5f", "sh_remap.nut"));
+            string reloaded = System.IO.File.ReadAllText(System.IO.Path.Combine(root, "remap_r5r", "sv_remap_objects.nut"));
+            string reloadedShared = System.IO.File.ReadAllText(System.IO.Path.Combine(root, "remap_r5r", "sh_remap.nut"));
+
+            StringAssert.Contains("CreatePanelText_Localized( player, \"\", \"\", title, description, expect vector( panel[3] ), expect vector( panel[4] ), expect float( panel[6] ), expect int( panel[0] ) )", flowstate);
+            StringAssert.Contains("RemovePanelText( player, expect int( panel[0] ) )", flowstate);
+            StringAssert.DoesNotContain("Dev_BuildTextInfoPanel", flowstate);
+            StringAssert.DoesNotContain("Gamemode()", flowstate);
+            StringAssert.DoesNotContain("MYSTERY_BOX_SCRIPT_NAME", flowstate);
+            StringAssert.DoesNotContain("isTimerActive", flowstate);
+            StringAssert.Contains("LocalMsg( ent, token, \"\", messageType, duration, message, subMessage, \"\" )", flowstate);
+            StringAssert.DoesNotContain("LocalMsg( ent, token, \"\", messageType, duration, message, subMessage, \"\", false )", flowstate);
+            StringAssert.Contains("thread JumpPad_GiveDoubleJump( ent )", flowstate);
+            StringAssert.DoesNotContain("ConsumeDoubleJump", flowstate);
+            StringAssert.Contains("SpawnGenericLoot( weaponName, rack.GetOrigin() + REMAP_WEAPON_RACK_ITEM_OFFSET, rack.GetAngles() + REMAP_WEAPON_RACK_ITEM_ANGLES, 1, TRACE_COLLISION_GROUP_NONE, false, 0 )", flowstate);
+            StringAssert.Contains("PrecacheModel( $\"mdl/dev/empty_model.rmdl\" )", flowstateShared);
+            StringAssert.Contains("Remote_CallFunction_NonReplay( player, \"Dev_BuildTextInfoPanel\"", reloaded);
+            StringAssert.Contains("player.ConsumeDoubleJump()", reloaded);
+            StringAssert.Contains("1, TRACE_COLLISION_GROUP_NONE, false, 0, true )", reloaded);
+            StringAssert.Contains("PrecacheModel( $\"mdl/dev/empty.rmdl\" )", reloadedShared);
         }
 
         [Test]

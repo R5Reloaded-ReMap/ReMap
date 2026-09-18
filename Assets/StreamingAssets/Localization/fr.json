@@ -4524,7 +4524,7 @@
     },
     {
       "key": "#ZIPRAIL_CUSTOM_HELP",
-      "text": "Crée un ziprail natif R5Flowstate avec des nœuds de train modifiables. Chaque point peut n’avoir aucun modèle, un bras de rail, ou un support avec bras sans collision. Les modèles de Broken Moon nécessitent la sélection de son RPAK."
+      "text": "Crée un ziprail natif R5Flowstate avec des nœuds de train modifiables. Chaque point peut utiliser une griffe de bâtiment, un ancrage mural, un pylône de sol ou aucun ancrage. Les modèles de Broken Moon nécessitent la sélection de son RPAK."
     },
     {
       "key": "#ZIPRAIL_CREATED",
@@ -4535,8 +4535,40 @@
       "text": "Point de contrôle du ziprail"
     },
     {
+      "key": "#ZIPRAIL_MOUNT_STYLE",
+      "text": "Style d’ancrage"
+    },
+    {
+      "key": "#ZIPRAIL_MOUNT_STYLE_HELP",
+      "text": "Sélectionne l’habillage d’ancrage sans collision utilisé sur ce point du ziprail."
+    },
+    {
+      "key": "#ZIPRAIL_MOUNT_NONE",
+      "text": "Sans ancrage"
+    },
+    {
+      "key": "#ZIPRAIL_MOUNT_BUILDING_CLAW_01",
+      "text": "Griffe bâtiment 01"
+    },
+    {
+      "key": "#ZIPRAIL_MOUNT_BUILDING_CLAW_02",
+      "text": "Griffe bâtiment 02"
+    },
+    {
+      "key": "#ZIPRAIL_MOUNT_WALL",
+      "text": "Ancrage mural"
+    },
+    {
+      "key": "#ZIPRAIL_MOUNT_GROUND_TOWER",
+      "text": "Pylône de sol"
+    },
+    {
+      "key": "#ZIPRAIL_CABLE_CLAMP",
+      "text": "Maintien du câble"
+    },
+    {
       "key": "#ZIPRAIL_SUPPORT_HEIGHT_APEX_U",
-      "text": "Hauteur du support (u Apex)"
+      "text": "Hauteur de base du pylône (u Apex)"
     },
     {
       "key": "#ZIPRAIL_R5FLOWSTATE_ONLY",

@@ -484,6 +484,13 @@ namespace ReMap.Standalone
             }
             catch{return false;}
         }
+        public static bool CacheEntryMatchesGeneration(string[] completion,string activeGeneration)
+        {
+            string mode=completion!=null&&completion.Length>2?completion[2].Trim():"";
+            if(completion!=null&&completion.Length>=4&&
+                !string.Equals(completion[3].Trim(),activeGeneration,StringComparison.OrdinalIgnoreCase))return false;
+            return !string.Equals(mode,"geometry",StringComparison.OrdinalIgnoreCase)||(completion?.Length??0)>=4;
+        }
         public string CachedModel(GameAssetRecord entry)
         {
             if (CacheRoot == null) return null;
@@ -491,8 +498,11 @@ namespace ReMap.Standalone
             if (!File.Exists(marker)) return null;
             string[] completion=File.ReadAllLines(marker);
             string mode=completion.Length>2?completion[2].Trim():"";
-            if(string.Equals(mode,"geometry",StringComparison.OrdinalIgnoreCase)&&
-                (completion.Length<4||!string.Equals(completion[3].Trim(),ActiveCacheGeneration(),StringComparison.OrdinalIgnoreCase)))return null;
+            if(!string.Equals(mode,"geometry",StringComparison.OrdinalIgnoreCase)&&
+                !SharedTextureCache.ManifestMatchesMaximum(folder,SharedTextureCache.PreviewMaximumSize))return null;
+            // A different RSX build can change texture decoding. Never reuse a versioned model export
+            // across cache generations, otherwise corrected binaries keep serving corrupted PNGs.
+            if(!CacheEntryMatchesGeneration(completion,ActiveCacheGeneration()))return null;
             if(string.IsNullOrEmpty(mode)&&LegacyModelNeedsTexturedRetry(folder))return null;
             string relative = completion.FirstOrDefault();
             if (relative != null && relative.EndsWith(".cast", StringComparison.OrdinalIgnoreCase))

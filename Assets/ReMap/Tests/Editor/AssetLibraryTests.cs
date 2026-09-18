@@ -164,6 +164,18 @@ namespace ReMap.Standalone.Tests
             }
             finally { if (Directory.Exists(cache)) Directory.Delete(cache, true); }
         }
+        [Test] public void VersionedModelExportsAreInvalidatedWhenRsxChanges()
+        {
+            const string active = "222222222222222222222222";
+            Assert.That(RsxAssetLibrary.CacheEntryMatchesGeneration(
+                new[] { "model.cast", "common.rpak", "textured", active }, active), Is.True);
+            Assert.That(RsxAssetLibrary.CacheEntryMatchesGeneration(
+                new[] { "model.cast", "common.rpak", "textured", "111111111111111111111111" }, active), Is.False);
+            Assert.That(RsxAssetLibrary.CacheEntryMatchesGeneration(
+                new[] { "model.cast", "common.rpak", "geometry" }, active), Is.False);
+            Assert.That(RsxAssetLibrary.CacheEntryMatchesGeneration(
+                new[] { "model.cast", "common.rpak" }, active), Is.True);
+        }
         [Test] public void TargetsAndAvailabilitySurviveCopyHistoryAndJson()
         {
             var session = new MapSession();

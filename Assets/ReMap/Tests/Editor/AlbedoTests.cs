@@ -27,6 +27,32 @@ namespace ReMap.Standalone.Tests
             finally { Directory.Delete(root, true); }
         }
 
+        [Test]
+        public void TextureGarbageCollectionPreservesReferencedHashes()
+        {
+            string root=Path.Combine(Path.GetTempPath(),"remap-texture-gc-"+Guid.NewGuid().ToString("N"));
+            string cache=Path.Combine(root,"AssetCache"),model=Path.Combine(cache,"Models","test"),legacyModel=Path.Combine(cache,"Models","legacy"),textures=Path.Combine(cache,"Textures");
+            string kept=new string('a',64),orphaned=new string('b',64),legacy=new string('c',64);
+            Directory.CreateDirectory(model);Directory.CreateDirectory(legacyModel);Directory.CreateDirectory(textures);
+            try
+            {
+                File.WriteAllBytes(Path.Combine(textures,kept+".png"),new byte[]{1});
+                File.WriteAllBytes(Path.Combine(textures,orphaned+".png"),new byte[]{2});
+                File.WriteAllBytes(Path.Combine(textures,legacy+".png"),new byte[]{3});
+                File.WriteAllText(Path.Combine(model,"textures.manifest.json"),JsonUtility.ToJson(new SharedTextureCache.Manifest{
+                    maximumSize=SharedTextureCache.PreviewMaximumSize,entries=new List<SharedTextureCache.Entry>{new SharedTextureCache.Entry{source="color.png",hash=kept}}},true));
+                File.WriteAllText(Path.Combine(legacyModel,"textures.manifest.json"),JsonUtility.ToJson(new SharedTextureCache.Manifest{
+                    entries=new List<SharedTextureCache.Entry>{new SharedTextureCache.Entry{source="old.png",hash=legacy}}},true));
+                Assert.That(SharedTextureCache.ManifestMatchesMaximum(model,SharedTextureCache.PreviewMaximumSize),Is.True);
+                Assert.That(SharedTextureCache.ManifestMatchesMaximum(legacyModel,SharedTextureCache.PreviewMaximumSize),Is.False);
+                Assert.That(SharedTextureCache.CollectGarbage(cache),Is.EqualTo(2));
+                Assert.That(File.Exists(Path.Combine(textures,kept+".png")),Is.True);
+                Assert.That(File.Exists(Path.Combine(textures,orphaned+".png")),Is.False);
+                Assert.That(File.Exists(Path.Combine(textures,legacy+".png")),Is.False);
+            }
+            finally{if(Directory.Exists(root))Directory.Delete(root,true);}
+        }
+
         [UnityTest]
         public IEnumerator ExistingTextureManifestMigratesWithoutRsxExtraction()
         {

@@ -40,7 +40,7 @@ namespace ReMap.Standalone
         private ProgressBar thumbnailDashboardProgress;
         private Label thumbnailDashboardState, thumbnailDashboardDetail, thumbnailDashboardCompleted,
             thumbnailDashboardRemaining, thumbnailDashboardFailed, thumbnailDashboardSpeed, thumbnailDashboardEta,
-            thumbnailDashboardActive, thumbnailDashboardQueued, thumbnailDashboardPerformance;
+            thumbnailDashboardActive, thumbnailDashboardQueuedLeft, thumbnailDashboardQueuedRight, thumbnailDashboardPerformance;
         private Button thumbnailPauseButton, thumbnailDashboardPauseButton;
         private int thumbnailDone, thumbnailFailed, thumbnailTotal, thumbnailAvailable;
         private bool thumbnailDashboardShownForRun, thumbnailRendering;
@@ -83,7 +83,7 @@ namespace ReMap.Standalone
             metrics.Add(ThumbnailMetric(L.T("#THUMBNAIL_ESTIMATED_TIME"),out thumbnailDashboardEta));
             var queues=new VisualElement();queues.AddToClassList("thumbnail-dashboard-queues");dashboard.Add(queues);
             queues.Add(ThumbnailQueuePanel(L.T("#THUMBNAIL_CURRENT_MODELS"),out thumbnailDashboardActive));
-            queues.Add(ThumbnailQueuePanel(L.T("#THUMBNAIL_NEXT_MODELS"),out thumbnailDashboardQueued));
+            queues.Add(ThumbnailQueueColumns(L.T("#THUMBNAIL_NEXT_MODELS"),out thumbnailDashboardQueuedLeft,out thumbnailDashboardQueuedRight));
             thumbnailDashboardPerformance=Label("","thumbnail-dashboard-performance");dashboard.Add(thumbnailDashboardPerformance);
             var actions=new VisualElement();actions.AddToClassList("thumbnail-dashboard-actions");dashboard.Add(actions);
             thumbnailDashboardPauseButton=ImmediateThumbnailPauseButton();thumbnailDashboardPauseButton.AddToClassList("primary");actions.Add(thumbnailDashboardPauseButton);
@@ -97,6 +97,13 @@ namespace ReMap.Standalone
         private VisualElement ThumbnailQueuePanel(string title,out Label content) {
             var panel=new VisualElement();panel.AddToClassList("thumbnail-dashboard-queue");panel.Add(Label(title,"thumbnail-dashboard-queue-title"));
             content=Label("","thumbnail-dashboard-queue-content");panel.Add(content);return panel;
+        }
+        private VisualElement ThumbnailQueueColumns(string title,out Label left,out Label right) {
+            var panel=new VisualElement();panel.AddToClassList("thumbnail-dashboard-queue");panel.Add(Label(title,"thumbnail-dashboard-queue-title"));
+            var columns=new VisualElement();columns.AddToClassList("thumbnail-dashboard-queue-columns");panel.Add(columns);
+            left=Label("","thumbnail-dashboard-queue-column");columns.Add(left);
+            right=Label("","thumbnail-dashboard-queue-column");right.AddToClassList("thumbnail-dashboard-queue-column-right");columns.Add(right);
+            return panel;
         }
         private Button ImmediateThumbnailPauseButton() {
             var button=new Button{focusable=true,text=L.T(thumbnailPaused?"#RESUME_THUMBNAILS":"#PAUSE_THUMBNAILS")};
@@ -197,10 +204,15 @@ namespace ReMap.Standalone
             thumbnailDashboardFailed.text=thumbnailFailed.ToString();
             thumbnailDashboardSpeed.text=perMinute>0?L.F("#THUMBNAIL_MODELS_PER_MINUTE_ARG0",perMinute.ToString("0.0")):"—";
             thumbnailDashboardEta.text=remaining==0?"0 s":perMinute>0?FormatThumbnailDuration(remaining/perMinute*60f):L.T("#THUMBNAIL_ETA_UNKNOWN");
-            var active=eligible.Where(r=>extractingThumbnails.Contains(r.Id)).Take(8).ToArray();
+            int queueRows=ThumbnailQueueRows();
+            var active=eligible.Where(r=>extractingThumbnails.Contains(r.Id)).Take(queueRows).ToArray();
             thumbnailDashboardActive.text=active.Length==0?L.T("#THUMBNAIL_NO_ACTIVE_MODEL"):string.Join("\n",active.Select(r=>"• "+r.Name));
-            var queued=eligible.Where(r=>!readyThumbnails.Contains(r.Id)&&!failedThumbnails.Contains(r.Id)&&!extractingThumbnails.Contains(r.Id)).Take(10).ToArray();
-            thumbnailDashboardQueued.text=queued.Length==0?L.T("#THUMBNAIL_QUEUE_EMPTY"):string.Join("\n",queued.Select(r=>"• "+r.Name));
+            var pending=eligible.Where(r=>!readyThumbnails.Contains(r.Id)&&!failedThumbnails.Contains(r.Id)&&!extractingThumbnails.Contains(r.Id)).ToArray();
+            int visibleCount=Math.Min(pending.Length,queueRows*2),queueOffset=pending.Length>visibleCount?Mathf.FloorToInt(Time.realtimeSinceStartup)%pending.Length:0;
+            var queued=Enumerable.Range(0,visibleCount).Select(i=>pending[(queueOffset+i)%pending.Length]).ToArray();
+            int queuedSplit=Math.Min(queueRows,queued.Length);
+            thumbnailDashboardQueuedLeft.text=queued.Length==0?L.T("#THUMBNAIL_QUEUE_EMPTY"):string.Join("\n",queued.Take(queuedSplit).Select(r=>"• "+r.Name));
+            thumbnailDashboardQueuedRight.text=queued.Length<=queuedSplit?"":string.Join("\n",queued.Skip(queuedSplit).Select(r=>"• "+r.Name));
             thumbnailDashboardPerformance.text=L.F("#THUMBNAIL_PERFORMANCE_ARG0_ARG1",thumbnailLastExtractionSeconds.ToString("0.0"),thumbnailLastGenerationSeconds.ToString("0.0"));
             UpdateThumbnailPauseButtons();
         }
@@ -209,12 +221,22 @@ namespace ReMap.Standalone
             int total=Mathf.CeilToInt(seconds),minutes=total/60;
             return minutes>0?minutes+" min "+total%60+" s":total+" s";
         }
+        private int ThumbnailQueueRows() {
+            float height=thumbnailDashboardActive==null?0:thumbnailDashboardActive.resolvedStyle.height;
+            if(!float.IsFinite(height)||height<32)return 16;
+            return Mathf.Clamp(Mathf.FloorToInt(height/16f),8,24);
+        }
         [Serializable] private sealed class ThumbnailInfo { public int missingAlbedo; public int rendererVersion; }
-        private const int ThumbnailRendererVersion=4;
+        // Version 5 invalidates previews rendered from textures exported by the
+        // older RSX decompression path. Those PNGs can decode successfully but
+        // contain horizontal/static corruption, so existence alone is not a
+        // sufficient cache hit.
+        private const int ThumbnailRendererVersion=5;
         private bool NeedsThumbnailRefresh(GameAssetRecord record)
         {
             try
             {
+                if(!SharedTextureCache.ManifestMatchesMaximum(assetLibrary.ModelDirectory(record),SharedTextureCache.PreviewMaximumSize))return true;
                 string path=Path.Combine(assetLibrary.ModelDirectory(record),"thumbnail-info.json");
                 if(!File.Exists(path))return true;
                 var info=JsonUtility.FromJson<ThumbnailInfo>(File.ReadAllText(path));
@@ -261,7 +283,7 @@ namespace ReMap.Standalone
         private static IEnumerable<string> CustomThumbnailModelPaths(string type) {
             switch(type) {
                 case "zipline":case "curved-zipline":return ReMapZiplineProfiles.RequiredModelPaths;
-                case "ziprail":return new[]{"mdl/props/zip_rail/zip_rail_building_claw_01.rmdl","mdl/props/zip_rail/zip_rail_cord_end_01.rmdl","mdl/props/zip_rail/zip_rail_ground_base_01.rmdl","mdl/props/zip_rail/zip_rail_ground_post_01.rmdl","mdl/props/zip_rail/zip_rail_ground_post_top_01.rmdl"};
+                case "ziprail":return ReMapZiprailProfiles.RequiredModelPaths;
                 case "door":return ReMapDoorProfiles.RequiredModelPaths;
                 case "loot-bin":return new[]{LootBinModelPath};
                 case "jump-pad":return new[]{JumpPadModelPath};
@@ -386,6 +408,11 @@ namespace ReMap.Standalone
                         foreach(var entry in prefetched.batch)extractingThumbnails.Remove(entry.Id);
                     }
                     if(backgroundStopped||thumbnailDone+thumbnailFailed>=thumbnailTotal)await assetLibrary.ReleasePreviewSessionAsync();
+                    if(!backgroundStopped&&thumbnailDone+thumbnailFailed>=thumbnailTotal)
+                    {
+                        int removed=await Task.Run(()=>SharedTextureCache.CollectGarbage(assetLibrary.CacheRoot));
+                        if(removed>0)Debug.Log("REMAP_TEXTURE_CACHE_CLEANED: "+removed);
+                    }
                 }
                 finally{thumbnailLoopRunning=false;UpdateThumbnailControls();if(!backgroundStopped&&thumbnailDone+thumbnailFailed<thumbnailTotal)_=ReleaseThumbnailSessionAfterIdle(generation);}
             }

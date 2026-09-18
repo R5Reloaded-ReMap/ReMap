@@ -102,6 +102,51 @@ namespace ReMap.Standalone.Tests
             }
         }
 
+        [TestCase("support", "0", 0f, 0f, -320f)]
+        [TestCase("arm", "2", 0f, 235f, -137f)]
+        [TestCase("building-claw-02", "1", 0f, 235f, -137f)]
+        [TestCase("wall", "1", 0f, 235f, -137f)]
+        [TestCase("none", "1", 0f, 0f, 0f)]
+        public void ZiprailGizmoUsesTheVisualMountBase(string profile, string role,
+            float apexX, float apexY, float apexZ)
+        {
+            var world = new WorldView(Shader.Find("Universal Render Pipeline/Lit"),
+                Shader.Find("ReMap/WorkspaceGrid"),
+                Shader.Find("Universal Render Pipeline/Unlit"));
+            try
+            {
+                var objects = Create("CreateDefaultZiprailObjects");
+                var point = objects.Single(item => item.customType == "ziprail-point" &&
+                    item.customRole == role);
+                point.customProfile = profile;
+                var document = new MapDocument { gameTarget = GameTargets.R5Flowstate };
+                document.objects.AddRange(objects);
+                world.Sync(document, null);
+
+                var field = typeof(WorldView).GetField("instances",
+                    BindingFlags.Instance | BindingFlags.NonPublic);
+                var instances = (Dictionary<string, GameObject>)field.GetValue(world);
+                Vector3 expected = instances[point.id].transform.TransformPoint(
+                    ApexDisplay.UnityPosition(new Vector3(apexX, apexY, apexZ)));
+
+                Assert.That(Vector3.Distance(world.ZiprailGizmoPivot(point.id), expected),
+                    Is.LessThan(.0001f));
+                if (role == "0")
+                {
+                    var ziprail = objects.Single(item => item.customType == "ziprail");
+                    Assert.That(Vector3.Distance(world.ZiprailGizmoPivot(ziprail.id), expected),
+                        Is.LessThan(.0001f));
+                }
+            }
+            finally
+            {
+                bool previous = LogAssert.ignoreFailingMessages;
+                LogAssert.ignoreFailingMessages = true;
+                try { world.Dispose(); }
+                finally { LogAssert.ignoreFailingMessages = previous; }
+            }
+        }
+
         [TestCase("support", true)]
         [TestCase("support-post", true)]
         [TestCase("arm", false)]

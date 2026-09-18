@@ -307,9 +307,10 @@ namespace ReMap.Standalone
                 labels.Insert(0, L.F("#ARG0_UNAVAILABLE", L.T(current.Label)));
                 section.Add(Label(L.T("#ZIPLINE_SUPPORT_MODELS_UNAVAILABLE"), "note"));
             }
-            var model = CompactInspectorField(new DropdownField(L.T("#ZIPLINE_SUPPORT"), labels,
+            var model = CompactInspectorField(new DropdownField(L.T("#ZIPRAIL_MOUNT_STYLE"), labels,
                 Math.Max(0, profiles.IndexOf(current))));
-            model.tooltip = L.T("#START_ARM_SUPPORT_NO_COLLISION_HELP");
+            model.AddToClassList("ziprail-profile-field");
+            model.tooltip = L.T("#ZIPRAIL_MOUNT_STYLE_HELP");
             section.Add(model);
             model.RegisterValueChangedCallback(change => Run(() => {
                 int index = Math.Max(0, labels.IndexOf(change.newValue));
@@ -326,7 +327,7 @@ namespace ReMap.Standalone
             if (current.HasSupport)
             {
                 var height = CompactInspectorField(new FloatField(L.T("#ZIPRAIL_SUPPORT_HEIGHT_APEX_U")) {
-                    value = item.ziplineArmHeight, isDelayed = true
+                    value = item.ziplineArmHeight, isDelayed = false
                 });
                 section.Add(height);
                 height.RegisterValueChangedCallback(change => Run(() => {

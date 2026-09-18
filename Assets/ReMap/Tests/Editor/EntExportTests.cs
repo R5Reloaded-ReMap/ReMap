@@ -136,7 +136,7 @@ namespace ReMap.Standalone.Tests
             var last = new MapObject { customType = "ziprail-point", parentId = rail.id,
                 customRole = "2", customProfile = "arm", position = new Float3(4, 0, 8) };
             ReMapEntFragments result = ReMapEntExporter.Generate(document, new[] { rail, first, middle, last });
-            Assert.That(result.ScriptEntityCount, Is.EqualTo(9));
+            Assert.That(result.ScriptEntityCount, Is.EqualTo(10));
             StringAssert.Contains("\"classname\" \"script_mover_train_node\"", result.Script);
             StringAssert.Contains("\"script_name\" \"script_control_omit_zipline\"", result.Script);
             StringAssert.Contains("mdl/props/zip_rail/zip_rail_ground_post_01.rmdl", result.Script);

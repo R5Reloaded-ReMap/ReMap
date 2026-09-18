@@ -38,8 +38,11 @@ namespace ReMap.Standalone.Tests
         {
             var records = new[] {
                 Record("mdl/props/zip_rail/zip_rail_building_claw_01.rmdl", "mp_rr_divided_moon"),
+                Record("mdl/props/zip_rail/zip_rail_building_claw_02.rmdl", "mp_rr_divided_moon"),
+                Record("mdl/props/zip_rail/zip_rail_wall_01.rmdl", "mp_rr_divided_moon"),
                 Record("mdl/props/zip_rail/zip_rail_cord_end_01.rmdl", "mp_rr_divided_moon"),
                 Record("mdl/props/zip_rail/zip_rail_ground_base_01.rmdl", "mp_rr_divided_moon"),
+                Record("mdl/props/zip_rail/zip_rail_ground_claw_01.rmdl", "mp_rr_divided_moon"),
                 Record("mdl/props/zip_rail/zip_rail_ground_post_01.rmdl", "mp_rr_divided_moon"),
                 Record("mdl/props/zip_rail/zip_rail_ground_post_top_01.rmdl", "mp_rr_divided_moon")
             };
@@ -50,6 +53,10 @@ namespace ReMap.Standalone.Tests
                 new[] { "mp_rr_desertlands_hu" }, "arm"), Is.False);
             Assert.That(ReMapModelAvailability.ZiprailProfile(records,
                 new[] { "mp_rr_divided_moon_mu1" }, "arm"), Is.True);
+            Assert.That(ReMapModelAvailability.ZiprailProfile(records,
+                new[] { "mp_rr_divided_moon_mu1" }, "building-claw-02"), Is.True);
+            Assert.That(ReMapModelAvailability.ZiprailProfile(records,
+                new[] { "mp_rr_divided_moon_mu1" }, "wall"), Is.True);
             Assert.That(ReMapModelAvailability.ZiprailProfile(records,
                 new[] { "mp_rr_divided_moon_mu1" }, "support"), Is.True);
             Assert.That(ReMapModelAvailability.ZiprailProfile(records,

@@ -11,15 +11,17 @@ namespace ReMap.Standalone
         internal readonly string ScriptConstant;
         internal readonly bool HasArm;
         internal readonly bool HasSupport;
+        internal readonly string ArmModelPath;
 
         internal ReMapZiprailProfile(string id, string label, string scriptConstant,
-            bool hasArm, bool hasSupport)
+            bool hasArm, bool hasSupport, string armModelPath = null)
         {
             Id = id;
             Label = label;
             ScriptConstant = scriptConstant;
             HasArm = hasArm;
             HasSupport = hasSupport;
+            ArmModelPath = armModelPath;
         }
     }
 
@@ -46,6 +48,10 @@ namespace ReMap.Standalone
     {
         internal const string BuildingClawModelPath =
             "mdl/props/zip_rail/zip_rail_building_claw_01.rmdl";
+        internal const string BuildingClaw02ModelPath =
+            "mdl/props/zip_rail/zip_rail_building_claw_02.rmdl";
+        internal const string WallModelPath =
+            "mdl/props/zip_rail/zip_rail_wall_01.rmdl";
         internal const string CordEndModelPath =
             "mdl/props/zip_rail/zip_rail_cord_end_01.rmdl";
         internal const string GroundBaseModelPath =
@@ -54,19 +60,24 @@ namespace ReMap.Standalone
             "mdl/props/zip_rail/zip_rail_ground_post_01.rmdl";
         internal const string GroundPostTopModelPath =
             "mdl/props/zip_rail/zip_rail_ground_post_top_01.rmdl";
+        internal const string GroundClawModelPath =
+            "mdl/props/zip_rail/zip_rail_ground_claw_01.rmdl";
         internal const float MinSupportHeightApex = 40f;
         internal const float MaxSupportHeightApex = 1024f;
         internal const float DefaultSupportHeightApex = 320f;
 
         internal static readonly string[] RequiredModelPaths = {
-            BuildingClawModelPath, CordEndModelPath, GroundBaseModelPath,
-            GroundPostModelPath, GroundPostTopModelPath
+            BuildingClawModelPath, BuildingClaw02ModelPath, WallModelPath,
+            CordEndModelPath, GroundBaseModelPath, GroundPostModelPath,
+            GroundPostTopModelPath, GroundClawModelPath
         };
 
         internal static readonly ReMapZiprailProfile[] All = {
-            new ReMapZiprailProfile("none", "#NO_SUPPORT", "REMAP_ZIPRAIL_POINT_NONE", false, false),
-            new ReMapZiprailProfile("arm", "#ARM", "REMAP_ZIPRAIL_POINT_ARM", true, false),
-            new ReMapZiprailProfile("support", "#ARM_SUPPORT", "REMAP_ZIPRAIL_POINT_SUPPORT", true, true)
+            new ReMapZiprailProfile("none", "#ZIPRAIL_MOUNT_NONE", "REMAP_ZIPRAIL_POINT_NONE", false, false),
+            new ReMapZiprailProfile("arm", "#ZIPRAIL_MOUNT_BUILDING_CLAW_01", "REMAP_ZIPRAIL_POINT_ARM", true, false, BuildingClawModelPath),
+            new ReMapZiprailProfile("building-claw-02", "#ZIPRAIL_MOUNT_BUILDING_CLAW_02", "REMAP_ZIPRAIL_POINT_BUILDING_CLAW_02", true, false, BuildingClaw02ModelPath),
+            new ReMapZiprailProfile("wall", "#ZIPRAIL_MOUNT_WALL", "REMAP_ZIPRAIL_POINT_WALL", true, false, WallModelPath),
+            new ReMapZiprailProfile("support", "#ZIPRAIL_MOUNT_GROUND_TOWER", "REMAP_ZIPRAIL_POINT_SUPPORT", true, true)
         };
 
         internal static ReMapZiprailProfile Find(string id) =>
@@ -86,6 +97,8 @@ namespace ReMap.Standalone
                     Vector3.zero, Vector3.zero));
                 result.Add(Component("support-top", "#ZIPLINE_ARM", GroundPostTopModelPath,
                     new Vector3(0f, 4f, -1f), Vector3.zero));
+                result.Add(Component("ground-claw", "#ZIPRAIL_CABLE_CLAMP", GroundClawModelPath,
+                    new Vector3(-172f, 0f, 85f), Vector3.zero));
                 result.Add(Component("cord-end", "#ZIPLINE_ARM", CordEndModelPath,
                     Vector3.zero, new Vector3(0f, 90f, 0f)));
             }
@@ -93,7 +106,7 @@ namespace ReMap.Standalone
             {
                 // Broken Moon places the cable 235 units in front and 137 units above
                 // the building claw. The editor point remains on the rail itself.
-                result.Add(Component("arm", "#ZIPLINE_ARM", BuildingClawModelPath,
+                result.Add(Component("arm", profile.Label, profile.ArmModelPath,
                     new Vector3(0f, 235f, -137f), Vector3.zero));
                 result.Add(Component("cord-end", "#ZIPLINE_ARM", CordEndModelPath,
                     Vector3.zero, new Vector3(0f, 180f, 0f)));

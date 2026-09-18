@@ -56,6 +56,27 @@ namespace ReMap.Standalone.Tests
         }
 
         [Test]
+        public void ProfilesExposeBothBuildingClawsWallMountAndGroundCableClamp()
+        {
+            var document = Document();
+            var points = document.objects.Where(item => item.customType == "ziprail-point")
+                .OrderBy(item => item.customRole).ToArray();
+            points[1].customProfile = "building-claw-02";
+            points[2].customProfile = "wall";
+
+            Assert.DoesNotThrow(() => document.Validate());
+            Assert.That(points[1].customProfile, Is.EqualTo("building-claw-02"));
+            Assert.That(points[2].customProfile, Is.EqualTo("wall"));
+
+            string code = ReMapGameScript.Generate(document, document.objects);
+            StringAssert.Contains("REMAP_ZIPRAIL_POINT_BUILDING_CLAW_02", code);
+            StringAssert.Contains("REMAP_ZIPRAIL_POINT_WALL", code);
+            StringAssert.Contains("mdl/props/zip_rail/zip_rail_building_claw_02.rmdl", code);
+            StringAssert.Contains("mdl/props/zip_rail/zip_rail_wall_01.rmdl", code);
+            StringAssert.Contains("mdl/props/zip_rail/zip_rail_ground_claw_01.rmdl", code);
+        }
+
+        [Test]
         public void ExportUsesNativeZiprailNodesAndKeepsLiveBrokenMoonRpakLoad()
         {
             var document = Document();
@@ -69,6 +90,7 @@ namespace ReMap.Standalone.Tests
             StringAssert.Contains("ReMap_CreateZiprail( [ <0, 0, 0>, <300, 100, 80>, <600, 0, 0> ]", code);
             StringAssert.Contains("[ REMAP_ZIPRAIL_POINT_SUPPORT, REMAP_ZIPRAIL_POINT_NONE, REMAP_ZIPRAIL_POINT_ARM ]", code);
             StringAssert.Contains("PrecacheModel( $\"mdl/props/zip_rail/zip_rail_ground_post_01.rmdl\" )", code);
+            StringAssert.Contains("PrecacheModel( $\"mdl/props/zip_rail/zip_rail_ground_claw_01.rmdl\" )", code);
 
             string root = Path.GetFullPath(Path.Combine(Application.dataPath, ".."));
             string script = File.ReadAllText(Path.Combine(root,
@@ -79,6 +101,9 @@ namespace ReMap.Standalone.Tests
             StringAssert.Contains("nodes[index].LinkToEnt( nodes[index - 1] )", script);
             StringAssert.Contains("prop.kv.solid = 0", script);
             StringAssert.Contains("prop.kv.contents = 0", script);
+            StringAssert.Contains("REMAP_ZIPRAIL_POINT_BUILDING_CLAW_02", script);
+            StringAssert.Contains("REMAP_ZIPRAIL_POINT_WALL", script);
+            StringAssert.Contains("origin + RotateVector( <-172, 0, 85>, angles )", script);
             StringAssert.DoesNotContain("MapEditor_CreateLinkedZipline", script);
         }
 

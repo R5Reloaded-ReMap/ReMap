@@ -378,6 +378,9 @@ Button.thumbnail-dashboard-minimize { flex-shrink: 0; height: 29px; margin-left:
 .thumbnail-dashboard-state { flex-shrink: 0; font-size: 15px; -unity-font-style: bold; color: rgb(116,202,174); }
 .thumbnail-dashboard-detail { height: 20px; flex-shrink: 0; margin-top: 3px; color: rgb(174,185,199); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .thumbnail-dashboard-progress { height: 24px; flex-shrink: 0; margin: 10px 0 16px 0; }
+.thumbnail-dashboard-progress .unity-progress-bar__background { background-color: rgb(48,52,59); border-color: rgb(75,81,91); }
+.thumbnail-dashboard-progress .unity-progress-bar__progress { background-color: rgb(67,145,119); }
+.thumbnail-dashboard-progress .unity-progress-bar__title { color: rgb(245,247,250); -unity-font-style: bold; }
 .thumbnail-dashboard-metrics { flex-direction: row; flex-wrap: wrap; flex-shrink: 0; margin: 0 -4px 15px -4px; }
 .thumbnail-dashboard-metric { min-width: 150px; flex-grow: 1; flex-basis: 0; margin: 0 4px; padding: 11px 13px; background-color: rgb(31,33,37); border-width: 1px; border-color: rgb(57,61,68); border-radius: 3px; }
 .thumbnail-dashboard-metric-title { color: rgb(139,157,177); font-size: 10px; letter-spacing: .5px; }
@@ -387,6 +390,9 @@ Button.thumbnail-dashboard-minimize { flex-shrink: 0; height: 29px; margin-left:
 .thumbnail-dashboard-queue { min-width: 220px; flex-grow: 1; flex-basis: 0; margin: 0 5px; padding: 12px 14px; background-color: rgb(31,33,37); border-width: 1px; border-color: rgb(57,61,68); border-radius: 3px; overflow: hidden; }
 .thumbnail-dashboard-queue-title { height: 22px; flex-shrink: 0; color: rgb(174,195,218); -unity-font-style: bold; font-size: 11px; }
 .thumbnail-dashboard-queue-content { flex-grow: 1; color: rgb(194,202,213); font-size: 11px; line-height: 16px; white-space: normal; overflow: hidden; }
+.thumbnail-dashboard-queue-columns { min-height: 0; flex-grow: 1; flex-direction: row; overflow: hidden; }
+.thumbnail-dashboard-queue-column { min-width: 0; flex-grow: 1; flex-basis: 0; color: rgb(194,202,213); font-size: 10px; line-height: 16px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.thumbnail-dashboard-queue-column-right { margin-left: 12px; }
 .thumbnail-dashboard-performance { height: 24px; flex-shrink: 0; margin-top: 10px; color: rgb(137,154,173); -unity-text-align: middle-center; }
 .thumbnail-dashboard-actions { height: 42px; flex-shrink: 0; flex-direction: row; justify-content: center; align-items: center; }
 .thumbnail-dashboard-actions Button { min-width: 190px; height: 34px; margin: 2px 5px; }
@@ -406,6 +412,8 @@ Button.thumbnail-dashboard-minimize { flex-shrink: 0; height: 29px; margin-left:
 .inspector-field-row { height: 22px; min-height: 22px; margin: 2px 0; flex-direction: row; align-items: center; }
 .inspector-field-row > .unity-base-field__label { width: auto; min-width: 0; flex-grow: 7; flex-basis: 0; margin: 0 6px 0 0; padding: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 10px; }
 .inspector-field-row > .unity-base-text-field__input, .inspector-field-row > .unity-base-popup-field__input { min-width: 0; flex-grow: 3; flex-basis: 0; }
+.inspector-field-row.ziprail-profile-field > .unity-base-field__label { flex-grow: 3; }
+.inspector-field-row.ziprail-profile-field > .unity-base-popup-field__input { flex-grow: 7; }
 .inspector-field-row.unity-toggle > .unity-toggle__input { width: 18px; min-width: 18px; flex-grow: 0; flex-shrink: 0; margin-left: auto; margin-right: 0; }
 #inspector-transform .property-field { flex-direction: row; align-items: center; height: 24px; min-height: 24px; margin: 2px 0; }
 #inspector-transform > TextField.property-field > .unity-base-field__label { width: auto; min-width: 0; flex-grow: 1; flex-basis: 0; margin: 0 6px 0 0; padding: 0; font-size: 10px; }

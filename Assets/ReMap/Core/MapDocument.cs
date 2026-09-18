@@ -327,6 +327,7 @@ namespace ReMap.Standalone.Core
                     throw new ArgumentException(L.T("#INVALID_ZIPRAIL_SETTINGS"));
                 if (item.customType == "ziprail-point" &&
                     (item.customProfile != "none" && item.customProfile != "arm" &&
+                    item.customProfile != "building-claw-02" && item.customProfile != "wall" &&
                     item.customProfile != "support" || !Finite(item.ziplineArmHeight) ||
                     item.ziplineArmHeight < 40f || item.ziplineArmHeight > 1024f))
                     throw new ArgumentException(L.T("#INVALID_ZIPRAIL_SETTINGS"));

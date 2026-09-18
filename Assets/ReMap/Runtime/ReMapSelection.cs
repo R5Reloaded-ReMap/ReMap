@@ -204,6 +204,12 @@ namespace ReMap.Standalone
         private Vector3 SelectionPivot()
         {
             Vector3 activePivot = selectedId == null ? Vector3.zero : WorldView.ToVector(world.WorldPose(selectedId).position);
+            if (selectedIds.Count == 1 && selectedId != null)
+            {
+                var selected = snapshot.objects.Find(candidate => candidate.id == selectedId);
+                if (selected?.customType == "ziprail" || selected?.customType == "ziprail-point")
+                    return world.ZiprailGizmoPivot(selected.id);
+            }
             if (centrePivot)
                 return GizmoPlacement.Pivot(true, world.CombinedBounds(SelectionRoots())?.center, activePivot);
 

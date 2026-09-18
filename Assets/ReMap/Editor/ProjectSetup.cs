@@ -1,5 +1,6 @@
 ﻿using System;
 using System.IO;
+using System.Security.Cryptography;
 using ReMap.Standalone;
 using UnityEditor;
 using UnityEditor.Build.Reporting;
@@ -113,14 +114,30 @@ namespace ReMap.Standalone.Editor
             if (!File.Exists(geometryMarker))
                 throw new FileNotFoundException("Build the ReMap RSX geometry fallback fork in Release/x64 before building ReMap.", geometryMarker);
             Directory.CreateDirectory(outputDirectory);
-            File.Copy(executable, Path.Combine(outputDirectory, "rsx.exe"), true);
-            File.Copy(sessionMarker, Path.Combine(outputDirectory, "rsx.exe.remap-session-v1"), true);
-            File.Copy(batchMarker, Path.Combine(outputDirectory, "rsx.exe.remap-session-v2"), true);
-            File.Copy(geometryMarker, Path.Combine(outputDirectory, "rsx.exe.remap-session-v3"), true);
+            CopyIfChanged(executable, Path.Combine(outputDirectory, "rsx.exe"));
+            CopyIfChanged(sessionMarker, Path.Combine(outputDirectory, "rsx.exe.remap-session-v1"));
+            CopyIfChanged(batchMarker, Path.Combine(outputDirectory, "rsx.exe.remap-session-v2"));
+            CopyIfChanged(geometryMarker, Path.Combine(outputDirectory, "rsx.exe.remap-session-v3"));
             if (!File.Exists(rsxLicense))
                 throw new FileNotFoundException("The bundled RSX license is missing from ThirdParty/RSX.", rsxLicense);
             File.Copy(rsxLicense, Path.Combine(outputDirectory, "RSX-LICENSE.txt"), true);
             CopyRequired(Path.Combine(rsxRoot, "thirdpartylegalnotices.txt"), Path.Combine(outputDirectory, "RSX-THIRD-PARTY-NOTICES.txt"));
+        }
+
+        private static void CopyIfChanged(string source, string destination)
+        {
+            if (File.Exists(destination) && new FileInfo(source).Length == new FileInfo(destination).Length)
+            {
+                byte[] sourceHash, destinationHash;
+                using (var hash = SHA256.Create())
+                using (var stream = File.OpenRead(source)) sourceHash = hash.ComputeHash(stream);
+                using (var hash = SHA256.Create())
+                using (var stream = File.OpenRead(destination)) destinationHash = hash.ComputeHash(stream);
+                bool equal = sourceHash.Length == destinationHash.Length;
+                for (int i = 0; equal && i < sourceHash.Length; i++) equal = sourceHash[i] == destinationHash[i];
+                if (equal) return;
+            }
+            File.Copy(source, destination, true);
         }
 
         private static void CopyRequired(string source, string destination)

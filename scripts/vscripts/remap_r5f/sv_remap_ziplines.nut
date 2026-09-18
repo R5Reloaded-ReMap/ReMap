@@ -31,10 +31,15 @@ const asset REMAP_ZIPLINE_MODEL_SUPPORT = $"mdl/industrial/security_fence_post.r
 global const int REMAP_ZIPRAIL_POINT_NONE = 0
 global const int REMAP_ZIPRAIL_POINT_ARM = 1
 global const int REMAP_ZIPRAIL_POINT_SUPPORT = 2
+global const int REMAP_ZIPRAIL_POINT_BUILDING_CLAW_02 = 3
+global const int REMAP_ZIPRAIL_POINT_WALL = 4
 
 const asset REMAP_ZIPRAIL_MODEL_BUILDING_CLAW = $"mdl/props/zip_rail/zip_rail_building_claw_01.rmdl"
+const asset REMAP_ZIPRAIL_MODEL_BUILDING_CLAW_02 = $"mdl/props/zip_rail/zip_rail_building_claw_02.rmdl"
+const asset REMAP_ZIPRAIL_MODEL_WALL = $"mdl/props/zip_rail/zip_rail_wall_01.rmdl"
 const asset REMAP_ZIPRAIL_MODEL_CORD_END = $"mdl/props/zip_rail/zip_rail_cord_end_01.rmdl"
 const asset REMAP_ZIPRAIL_MODEL_GROUND_BASE = $"mdl/props/zip_rail/zip_rail_ground_base_01.rmdl"
+const asset REMAP_ZIPRAIL_MODEL_GROUND_CLAW = $"mdl/props/zip_rail/zip_rail_ground_claw_01.rmdl"
 const asset REMAP_ZIPRAIL_MODEL_GROUND_POST = $"mdl/props/zip_rail/zip_rail_ground_post_01.rmdl"
 const asset REMAP_ZIPRAIL_MODEL_GROUND_POST_TOP = $"mdl/props/zip_rail/zip_rail_ground_post_top_01.rmdl"
 
@@ -350,9 +355,16 @@ void function ReMap_SetZiprailEndpointProperties( entity endpoint, float width,
 void function ReMap_CreateZiprailPointModels( int profile, vector origin,
 	vector angles, float supportHeight )
 {
-	if ( profile == REMAP_ZIPRAIL_POINT_ARM )
+	if ( profile == REMAP_ZIPRAIL_POINT_ARM ||
+		profile == REMAP_ZIPRAIL_POINT_BUILDING_CLAW_02 ||
+		profile == REMAP_ZIPRAIL_POINT_WALL )
 	{
-		ReMap_CreateZiprailProp( REMAP_ZIPRAIL_MODEL_BUILDING_CLAW,
+		asset armModel = profile == REMAP_ZIPRAIL_POINT_BUILDING_CLAW_02
+			? REMAP_ZIPRAIL_MODEL_BUILDING_CLAW_02
+			: profile == REMAP_ZIPRAIL_POINT_WALL
+				? REMAP_ZIPRAIL_MODEL_WALL
+				: REMAP_ZIPRAIL_MODEL_BUILDING_CLAW
+		ReMap_CreateZiprailProp( armModel,
 			origin + RotateVector( <0, 235, -137>, angles ), angles )
 		ReMap_CreateZiprailProp( REMAP_ZIPRAIL_MODEL_CORD_END, origin,
 			<angles.x, angles.y + 180.0, angles.z> )
@@ -365,6 +377,8 @@ void function ReMap_CreateZiprailPointModels( int profile, vector origin,
 		ReMap_CreateZiprailProp( REMAP_ZIPRAIL_MODEL_GROUND_POST, origin, angles )
 		ReMap_CreateZiprailProp( REMAP_ZIPRAIL_MODEL_GROUND_POST_TOP,
 			origin + RotateVector( <0, 4, -1>, angles ), angles )
+		ReMap_CreateZiprailProp( REMAP_ZIPRAIL_MODEL_GROUND_CLAW,
+			origin + RotateVector( <-172, 0, 85>, angles ), angles )
 		ReMap_CreateZiprailProp( REMAP_ZIPRAIL_MODEL_CORD_END, origin,
 			<angles.x, angles.y + 90.0, angles.z> )
 	}

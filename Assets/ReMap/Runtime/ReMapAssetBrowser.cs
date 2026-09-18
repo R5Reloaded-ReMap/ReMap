@@ -202,7 +202,7 @@ namespace ReMap.Standalone
                 if (assetLibrary.CacheRoot != null)
                 {
                     string thumbnailPath = Path.Combine(assetLibrary.ModelDirectory(record), "thumbnail.png");
-                    if (File.Exists(thumbnailPath))
+                    if (File.Exists(thumbnailPath) && !NeedsThumbnailRefresh(record))
                     {
                         var texture = new Texture2D(2, 2); pageThumbnails.Add(texture);
                         try { if (ImageConversion.LoadImage(texture, File.ReadAllBytes(thumbnailPath), true)) { image.image = texture; hasImage = true; } }

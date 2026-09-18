@@ -49,8 +49,7 @@ void function ReMap_CreateCameraPath( array<vector> points, array<vector> angles
 	thread ReMap_RunCameraPath( points, angles, fov, transitionTime, trackTarget, target )
 }
 
-void function ReMap_RunCameraPath( array<vector> points, array<vector> angles,
-	float fov, float transitionTime, bool trackTarget, vector target )
+void function ReMap_RunCameraPath( array<vector> points, array<vector> angles, float fov, float transitionTime, bool trackTarget, vector target )
 {
 	entity player = GetLocalClientPlayer()
 	if ( !IsValid( player ) )

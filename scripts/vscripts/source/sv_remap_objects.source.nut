@@ -122,8 +122,7 @@ void function ReMap_RegisterTextInfoPanelCallbacks()
 	AddCallback_OnClientConnected( ReMap_SendTextInfoPanelsToPlayer )
 }
 
-void function ReMap_CreateTextInfoPanel( string title, string description, vector origin,
-	vector angles, bool showPin = true, float textScale = 1.0 )
+void function ReMap_CreateTextInfoPanel( string title, string description, vector origin, vector angles, bool showPin = true, float textScale = 1.0 )
 {
 	int panelId = file.nextTextInfoPanelId++
 	array panel = [ panelId, title, description, origin, angles, showPin, textScale ]
@@ -144,6 +143,9 @@ void function ReMap_SendTextInfoPanelToPlayer( entity player, array panel )
 		return
 	string title = expect string( panel[1] )
 	string description = expect string( panel[2] )
+#if R5F
+	CreatePanelText_Localized( player, "", "", title, description, expect vector( panel[3] ), expect vector( panel[4] ), expect float( panel[6] ), expect int( panel[0] ) )
+#else
 	foreach ( int textType, string value in [ title, description ] )
 		for ( int index = 0; index < value.len(); index++ )
 			Remote_CallFunction_NonReplay( player, "Dev_BuildTextInfoPanel", textType, value[index] )
@@ -152,6 +154,7 @@ void function ReMap_SendTextInfoPanelToPlayer( entity player, array panel )
 	Remote_CallFunction_NonReplay( player, "Dev_CreateTextInfoPanelWithID",
 		origin.x, origin.y, origin.z, angles.x, angles.y, angles.z,
 		expect bool( panel[5] ), expect float( panel[6] ), expect int( panel[0] ) )
+#endif
 }
 
 void function ReMap_ClearTextInfoPanels()
@@ -159,7 +162,11 @@ void function ReMap_ClearTextInfoPanels()
 	foreach ( array panel in file.textInfoPanels )
 		foreach ( entity player in GetPlayerArray() )
 			if ( IsValid( player ) )
+#if R5F
+				RemovePanelText( player, expect int( panel[0] ) )
+#else
 				Remote_CallFunction_NonReplay( player, "Dev_DestroyTextInfoPanelWithID", expect int( panel[0] ) )
+#endif
 	file.textInfoPanels.clear()
 }
 
@@ -295,14 +302,7 @@ void function ReMap_OpenPlainDoorAtSpawn( entity door )
 entity function ReMap_CreateLootBin( vector origin, vector angles, int skin = 0 )
 {
 	entity lootBin = CreateEntity( "prop_dynamic" )
-#if R5F
-	if ( Gamemode() == eGamemodes.fs_infected )
-		lootBin.SetScriptName( MYSTERY_BOX_SCRIPT_NAME )
-	else
-		lootBin.SetScriptName( LOOT_BIN_SCRIPTNAME )
-#else
 	lootBin.SetScriptName( LOOT_BIN_SCRIPTNAME )
-#endif
 	lootBin.SetValueForModelKey( REMAP_LOOT_BIN_MODEL )
 	lootBin.SetOrigin( origin )
 	lootBin.SetAngles( angles )
@@ -348,8 +348,7 @@ entity function ReMap_CreateButton( vector origin, vector angles, bool visible =
 	return panel
 }
 
-void function ReMap_TeleportPlayer( entity ent, vector destination, vector direction,
-	bool playSound )
+void function ReMap_TeleportPlayer( entity ent, vector destination, vector direction, bool playSound )
 {
 	if ( playSound )
 		EmitDifferentSoundsOnEntityForPlayerAndWorld( REMAP_TELEPORT_SOUND_1P,
@@ -359,8 +358,7 @@ void function ReMap_TeleportPlayer( entity ent, vector destination, vector direc
 	ent.SetVelocity( ZERO_VECTOR )
 }
 
-void function ReMap_AddButtonTeleport( entity panel, vector destination, vector direction,
-	bool playSound = true )
+void function ReMap_AddButtonTeleport( entity panel, vector destination, vector direction, bool playSound = true )
 {
 	AddCallback_OnUseEntity( panel, void function( entity usedPanel, entity ent, int input ) :
 		( destination, direction, playSound )
@@ -371,10 +369,7 @@ void function ReMap_AddButtonTeleport( entity panel, vector destination, vector 
 	} )
 }
 
-void function ReMap_CreateTeleportButton( vector origin, vector angles, bool up,
-	vector destination, vector direction, string message = "", string subMessage = "",
-	int messageType = 4, float duration = 5.0, string token = "#FS_STRING_VAR",
-	bool playSound = true )
+void function ReMap_CreateTeleportButton( vector origin, vector angles, bool up, vector destination, vector direction, string message = "", string subMessage = "", int messageType = 4, float duration = 5.0, string token = "#FS_STRING_VAR", bool playSound = true )
 {
 	entity panel = ReMap_CreateButton( origin, angles, false, up )
 	AddCallback_OnUseEntity( panel, void function( entity usedPanel, entity ent, int input ) :
@@ -382,27 +377,21 @@ void function ReMap_CreateTeleportButton( vector origin, vector angles, bool up,
 	{
 		if ( !IsValid( ent ) || !ent.IsPlayer() )
 			return
-#if R5F
-		if ( ent.p.isTimerActive )
-		{
-			LocalMsg( ent, token, "", messageType, duration,
-				"Can't use it while timer is running", "", "", false )
-			return
-		}
-#endif
 		ReMap_TeleportPlayer( ent, destination, direction, playSound )
 #if R5F
 		if ( message.len() > 0 || subMessage.len() > 0 )
-			LocalMsg( ent, token, "", messageType, duration, message, subMessage, "", false )
+			LocalMsg( ent, token, "", messageType, duration, message, subMessage, "" )
 #endif
 	} )
 }
 
-void function ReMap_CreateSpeedBoost( vector origin, vector color = < 255, 255, 255 >,
-	float respawnTime = 5.0, float strength = 0.35, float duration = 3.0,
-	float fadeTime = 0.0 )
+void function ReMap_CreateSpeedBoost( vector origin, vector color = < 255, 255, 255 >, float respawnTime = 5.0, float strength = 0.35, float duration = 3.0, float fadeTime = 0.0 )
 {
+#if R5F
+	entity mover = CreateScriptMover( "", origin, ZERO_VECTOR )
+#else
 	entity mover = CreateScriptMover( origin, ZERO_VECTOR )
+#endif
 	file.props.append( mover )
 
 	for ( int index = 0; index < 5; index++ )
@@ -445,8 +434,7 @@ void function ReMap_CreateSpeedBoost( vector origin, vector color = < 255, 255, 
 		strength, duration, fadeTime )
 }
 
-entity function ReMap_CreateBubbleShield( vector origin, vector angles,
-	float scale = 1.0, vector color = < 128, 255, 128 > )
+entity function ReMap_CreateBubbleShield( vector origin, vector angles, float scale = 1.0, vector color = < 128, 255, 128 > )
 {
 	entity shield = CreateEntity( "prop_dynamic" )
 	shield.SetValueForModelKey( REMAP_BUBBLE_SHIELD_MODEL )
@@ -463,11 +451,13 @@ entity function ReMap_CreateBubbleShield( vector origin, vector angles,
 	return shield
 }
 
-entity function ReMap_CreateAnimatedCamera( vector origin, vector angles,
-	float angleOffset = 20.0, float maxLeft = 20.0, float maxRight = 40.0,
-	float rotationTime = 4.0, float transitionTime = 2.0 )
+entity function ReMap_CreateAnimatedCamera( vector origin, vector angles, float angleOffset = 20.0, float maxLeft = 20.0, float maxRight = 40.0, float rotationTime = 4.0, float transitionTime = 2.0 )
 {
+#if R5F
+	entity mover = CreateScriptMover( "", origin, ZERO_VECTOR )
+#else
 	entity mover = CreateScriptMover( origin, ZERO_VECTOR )
+#endif
 	entity cameraBase = CreateEntity( "prop_dynamic" )
 	cameraBase.SetValueForModelKey( REMAP_ANIMATED_CAMERA_BASE_MODEL )
 	cameraBase.SetOrigin( origin )
@@ -476,8 +466,7 @@ entity function ReMap_CreateAnimatedCamera( vector origin, vector angles,
 	DispatchSpawn( cameraBase )
 	cameraBase.SetParent( mover )
 
-	entity cameraHead = CreateScriptMoverModel( REMAP_ANIMATED_CAMERA_HEAD_MODEL,
-		origin + < 16, 0, 8 >, < angleOffset, 0, 0 >, SOLID_VPHYSICS )
+	entity cameraHead = CreateScriptMoverModel( REMAP_ANIMATED_CAMERA_HEAD_MODEL, origin + < 16, 0, 8 >, < angleOffset, 0, 0 >, SOLID_VPHYSICS )
 	cameraHead.SetParent( mover )
 	mover.SetAngles( angles )
 	file.props.append( mover )
@@ -487,8 +476,7 @@ entity function ReMap_CreateAnimatedCamera( vector origin, vector angles,
 	return mover
 }
 
-entity function ReMap_CreateSound( vector origin, string soundName, float radius = 0.0,
-	bool isWaveAmbient = false, bool enabled = true, array<vector> polylinePoints = [] )
+entity function ReMap_CreateSound( vector origin, string soundName, float radius = 0.0, bool isWaveAmbient = false, bool enabled = true, array<vector> polylinePoints = [] )
 {
 	entity sound = CreateEntity( "ambient_generic" )
 	sound.SetOrigin( origin )
@@ -498,8 +486,7 @@ entity function ReMap_CreateSound( vector origin, string soundName, float radius
 	{
 		vector start = index == 0 ? ZERO_VECTOR : polylinePoints[index - 1] - origin
 		vector end = polylinePoints[index] - origin
-		sound.SetValueForKey( "polyline_segment_" + index,
-			"(" + VectorToString( start ) + ") (" + VectorToString( end ) + ")" )
+		sound.SetValueForKey( "polyline_segment_" + index, "(" + VectorToString( start ) + ") (" + VectorToString( end ) + ")" )
 	}
 	sound.SetSoundName( soundName )
 	sound.SetEnabled( enabled )
@@ -531,8 +518,7 @@ void function ReMap_AnimateCamera( entity cameraHead, float maxLeft, float maxRi
 	}
 }
 
-void function ReMap_SpeedBoostThink( entity mover, entity trigger, vector origin, vector color,
-	float respawnTime, float strength, float duration, float fadeTime )
+void function ReMap_SpeedBoostThink( entity mover, entity trigger, vector origin, vector color, float respawnTime, float strength, float duration, float fadeTime )
 {
 	while ( IsValid( trigger ) )
 	{
@@ -609,7 +595,11 @@ void function ReMap_OnJumpPadEnter( entity trigger, entity ent )
 
 	ReMap_JumpPadPushEnt( trigger, ent, trigger.GetOrigin(), trigger.GetAngles() )
 	if ( file.jumpPadDoubleJump[trigger] )
+#if R5F
+		thread JumpPad_GiveDoubleJump( ent )
+#else
 		thread ReMap_GiveJumpPadDoubleJump( ent )
+#endif
 }
 
 void function ReMap_JumpPadPushEnt( entity trigger, entity ent, vector origin, vector angles )
@@ -661,6 +651,7 @@ void function ReMap_RestoreJumpPadGravity( entity player )
 		WaitFrame()
 }
 
+#if R5R
 void function ReMap_GiveJumpPadDoubleJump( entity player )
 {
 	if ( !IsValid( player ) || !player.IsPlayer() )
@@ -717,6 +708,7 @@ void function ReMap_ConsumeJumpPadDoubleJump( entity player )
 	player.ConsumeDoubleJump()
 	RemoveButtonPressedPlayerInputCallback( player, IN_JUMP, ReMap_ConsumeJumpPadDoubleJump )
 }
+#endif
 
 entity function ReMap_CreateSpawnPoint( vector origin, vector angles, int teamNumber = 0 )
 {
@@ -837,10 +829,14 @@ entity function ReMap_SpawnWeaponRackItem( entity rack, string weaponName )
 	if ( !IsValid( rack ) || weaponName.len() == 0 )
 		return null
 
+#if R5F
+	entity weapon = SpawnGenericLoot( weaponName, rack.GetOrigin() + REMAP_WEAPON_RACK_ITEM_OFFSET, rack.GetAngles() + REMAP_WEAPON_RACK_ITEM_ANGLES, 1, TRACE_COLLISION_GROUP_NONE, false, 0 )
+#else
 	entity weapon = SpawnGenericLoot( weaponName,
 		rack.GetOrigin() + REMAP_WEAPON_RACK_ITEM_OFFSET,
 		rack.GetAngles() + REMAP_WEAPON_RACK_ITEM_ANGLES,
 		1, TRACE_COLLISION_GROUP_NONE, false, 0, true )
+#endif
 	if ( !IsValid( weapon ) )
 		return null
 	weapon.SetParent( rack )

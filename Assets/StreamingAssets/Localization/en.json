@@ -4524,7 +4524,7 @@
     },
     {
       "key": "#ZIPRAIL_CUSTOM_HELP",
-      "text": "Creates an R5Flowstate native ziprail through editable train nodes. Every point can use no model, a rail arm, or a collision-free support and arm. Broken Moon model choices require its RPAK to be selected."
+      "text": "Creates an R5Flowstate native ziprail through editable train nodes. Each point can use a building claw, wall mount, ground tower, or no mount. Broken Moon model choices require its RPAK to be selected."
     },
     {
       "key": "#ZIPRAIL_CREATED",
@@ -4535,8 +4535,40 @@
       "text": "Ziprail control point"
     },
     {
+      "key": "#ZIPRAIL_MOUNT_STYLE",
+      "text": "Mount style"
+    },
+    {
+      "key": "#ZIPRAIL_MOUNT_STYLE_HELP",
+      "text": "Selects the collision-free visual mounting assembly used at this ziprail point."
+    },
+    {
+      "key": "#ZIPRAIL_MOUNT_NONE",
+      "text": "No mount"
+    },
+    {
+      "key": "#ZIPRAIL_MOUNT_BUILDING_CLAW_01",
+      "text": "Building claw 01"
+    },
+    {
+      "key": "#ZIPRAIL_MOUNT_BUILDING_CLAW_02",
+      "text": "Building claw 02"
+    },
+    {
+      "key": "#ZIPRAIL_MOUNT_WALL",
+      "text": "Wall mount"
+    },
+    {
+      "key": "#ZIPRAIL_MOUNT_GROUND_TOWER",
+      "text": "Ground tower"
+    },
+    {
+      "key": "#ZIPRAIL_CABLE_CLAMP",
+      "text": "Cable clamp"
+    },
+    {
       "key": "#ZIPRAIL_SUPPORT_HEIGHT_APEX_U",
-      "text": "Support height (Apex u)"
+      "text": "Ground-tower base height (Apex u)"
     },
     {
       "key": "#ZIPRAIL_R5FLOWSTATE_ONLY",
