@@ -95,8 +95,11 @@ namespace ReMap.Standalone.Tests
             string root = Path.GetFullPath(Path.Combine(Application.dataPath, ".."));
             string script = File.ReadAllText(Path.Combine(root,
                 "scripts/vscripts/source/sv_remap_ziplines.source.nut"));
-            StringAssert.Contains("CreateEntity( isEndpoint ? \"ziprail\" : \"script_mover_train_node\" )", script);
-            StringAssert.DoesNotContain("CreateEntity( isEndpoint ? \"zipline\" : \"script_mover_train_node\" )", script);
+            StringAssert.Contains("CreateEntity( isEndpoint ? \"zipline\" : \"script_mover_train_node\" )", script);
+            StringAssert.DoesNotContain("CreateEntity( isEndpoint ? \"ziprail\" : \"script_mover_train_node\" )", script);
+            StringAssert.Contains("array<vector> pathPoints = ReMap_BuildZiprailPathPoints( controlPoints )", script);
+            StringAssert.Contains("pathPoints.append( (controlPoints[0] + controlPoints[lastIndex]) * 0.5 )", script);
+            StringAssert.Contains("for ( int index = 1; index < nodes.len() - 1; index++ )", script);
             StringAssert.Contains("node.kv.tangent_type = 0", script);
             StringAssert.Contains("endpoint.kv.isZiprailStart = 1", script);
             StringAssert.DoesNotContain("endpoint.kv.ZiplineVersion", script);

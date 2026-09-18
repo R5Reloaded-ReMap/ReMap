@@ -284,16 +284,17 @@ void function ReMap_CreateZiprail( array<vector> controlPoints, array<int> point
 		ReMap_CreateZiprailPointModels( profile, controlPoints[index], angles, supportHeight )
 	}
 
+	array<vector> pathPoints = ReMap_BuildZiprailPathPoints( controlPoints )
 	array<entity> nodes
-	for ( int index = 0; index < controlPoints.len(); index++ )
+	for ( int index = 0; index < pathPoints.len(); index++ )
 	{
-		bool isEndpoint = index == 0 || index == controlPoints.len() - 1
-		entity node = CreateEntity( isEndpoint ? "ziprail" : "script_mover_train_node" )
-		node.SetOrigin( controlPoints[index] )
+		bool isEndpoint = index == 0 || index == pathPoints.len() - 1
+		entity node = CreateEntity( isEndpoint ? "zipline" : "script_mover_train_node" )
+		node.SetOrigin( pathPoints[index] )
 		node.SetScriptName( "script_control_omit_zipline" )
 		if ( isEndpoint )
 		{
-			vector direction = index == 0 ? controlPoints[index] - controlPoints[index + 1] : controlPoints[index] - controlPoints[index - 1]
+			vector direction = index == 0 ? pathPoints[index] - pathPoints[index + 1] : pathPoints[index] - pathPoints[index - 1]
 			node.SetAngles( VectorToAngles( Normalize( direction ) ) )
 			float autoDetachDistance = index == 0 ? startAutoDetachDistance : endAutoDetachDistance
 			ReMap_SetZiprailEndpointProperties( node, width, speedScale, autoDetachDistance )
@@ -309,11 +310,31 @@ void function ReMap_CreateZiprail( array<vector> controlPoints, array<int> point
 
 	for ( int index = 1; index < nodes.len(); index++ )
 		nodes[index].LinkToEnt( nodes[index - 1] )
+	for ( int index = 1; index < nodes.len() - 1; index++ )
+		DispatchSpawn( nodes[index] )
+	DispatchSpawn( nodes[0] )
+	DispatchSpawn( nodes[nodes.len() - 1] )
 	foreach ( entity node in nodes )
-	{
-		DispatchSpawn( node )
 		file.entities.append( node )
+}
+
+array<vector> function ReMap_BuildZiprailPathPoints( array<vector> controlPoints )
+{
+	int lastIndex = controlPoints.len() - 1
+	float startGuideDistance = min( 32.0, Distance( controlPoints[0], controlPoints[1] ) * 0.25 )
+	float endGuideDistance = min( 32.0, Distance( controlPoints[lastIndex - 1], controlPoints[lastIndex] ) * 0.25 )
+	array<vector> pathPoints = [controlPoints[0]]
+	pathPoints.append( controlPoints[0] + Normalize( controlPoints[1] - controlPoints[0] ) * startGuideDistance )
+	if ( controlPoints.len() == 2 )
+		pathPoints.append( (controlPoints[0] + controlPoints[lastIndex]) * 0.5 )
+	else
+	{
+		for ( int index = 1; index < lastIndex; index++ )
+			pathPoints.append( controlPoints[index] )
 	}
+	pathPoints.append( controlPoints[lastIndex] + Normalize( controlPoints[lastIndex - 1] - controlPoints[lastIndex] ) * endGuideDistance )
+	pathPoints.append( controlPoints[lastIndex] )
+	return pathPoints
 }
 
 void function ReMap_SetZiprailEndpointProperties( entity endpoint, float width, float speedScale, float autoDetachDistance )
