@@ -288,7 +288,7 @@ void function ReMap_CreateZiprail( array<vector> controlPoints, array<int> point
 	for ( int index = 0; index < controlPoints.len(); index++ )
 	{
 		bool isEndpoint = index == 0 || index == controlPoints.len() - 1
-		entity node = CreateEntity( isEndpoint ? "zipline" : "script_mover_train_node" )
+		entity node = CreateEntity( isEndpoint ? "ziprail" : "script_mover_train_node" )
 		node.SetOrigin( controlPoints[index] )
 		node.SetScriptName( "script_control_omit_zipline" )
 		if ( isEndpoint )
