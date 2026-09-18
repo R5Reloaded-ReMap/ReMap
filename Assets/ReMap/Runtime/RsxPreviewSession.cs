@@ -29,7 +29,9 @@ namespace ReMap.Standalone
             log=new StreamWriter(Path.Combine(root,"session.log"),false){AutoFlush=true};
             process=new Process();
             string threads=Math.Min(4,Math.Max(1,Environment.ProcessorCount/2)).ToString();
-            var arguments=new[]{"-nogui","-embedded","-export","--loadwhitelist",geometryOnly?"mdl_,Ptch":"mdl_,matl,txtr,shdr,shds,Ptch","--parsethreads",threads,"--exportthreads",threads}
+            // Several R5F asset loaders mutate shared registries while parsing. Keep archive parsing serial;
+            // model export remains parallel and the loaded archive is reused across batches.
+            var arguments=new[]{"-nogui","-embedded","-export","--loadwhitelist",geometryOnly?"mdl_,Ptch":"mdl_,matl,txtr,shdr,shds,Ptch","--parsethreads","1","--exportthreads",threads}
                 .Concat(geometryOnly?Array.Empty<string>():new[]{"-matltextures"}).Concat(new[]{"--remap-session",root}).ToArray();
             if(!geometryOnly&&File.Exists(executable+".remap-albedo-v1"))arguments=arguments.Concat(new[]{"-albedoonly"}).ToArray();
             process.StartInfo=new ProcessStartInfo{FileName=executable,Arguments=string.Join(" ",arguments.Select(Quote)),WorkingDirectory=workingDirectory,
