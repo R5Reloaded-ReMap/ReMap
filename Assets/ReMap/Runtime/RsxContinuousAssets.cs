@@ -50,7 +50,8 @@ namespace ReMap.Standalone
         {
             shutdown.Token.ThrowIfCancellationRequested();
             string archive=OriginArchive(entries[0],targets);
-            string[] archives=Common.Concat(new[]{archive}).Distinct(StringComparer.OrdinalIgnoreCase).Select(a=>Path.Combine(PakDirectory,a)).Where(File.Exists).ToArray();
+            string[] available=Directory.EnumerateFiles(PakDirectory,"*.rpak",SearchOption.TopDirectoryOnly).Select(Path.GetFileName).ToArray();
+            string[] archives=Common.Concat(SelectMapArchives(targets,available)).Concat(new[]{archive}).Distinct(StringComparer.OrdinalIgnoreCase).Select(a=>Path.Combine(PakDirectory,a)).Where(File.Exists).ToArray();
             try
             {
                 EnsurePreviewSession();
@@ -75,8 +76,8 @@ namespace ReMap.Standalone
                 {
                     try {CommitContinuousExports(new[]{entry},previewSession.Export(entry.guid),archive,result);}
                     catch(Exception ex)when(GeometryPreviewsSupported&&(ex is IOException||ex is TimeoutException))
-                    {RetryContinuousGeometry(new[]{entry},archive,result);continue;}
-                    if(GeometryPreviewsSupported&&!result.Paths.ContainsKey(entry.Id))RetryContinuousGeometry(new[]{entry},archive,result);
+                    {RetryContinuousGeometry(new[]{entry},archives,archive,result);continue;}
+                    if(GeometryPreviewsSupported&&!result.Paths.ContainsKey(entry.Id))RetryContinuousGeometry(new[]{entry},archives,archive,result);
                 }
                 return result;
             }
@@ -110,9 +111,8 @@ namespace ReMap.Standalone
             RetryContinuousTexturedPartitions(entries.Take(middle).ToArray(),archives,archive,result);
             RetryContinuousTexturedPartitions(entries.Skip(middle).ToArray(),archives,archive,result);
         }
-        private void RetryContinuousGeometry(GameAssetRecord[] entries,string archive,AssetBatchResult result)
+        private void RetryContinuousGeometry(GameAssetRecord[] entries,string[] archives,string archive,AssetBatchResult result)
         {
-            string[] archives=Common.Concat(new[]{archive}).Distinct(StringComparer.OrdinalIgnoreCase).Select(a=>Path.Combine(PakDirectory,a)).Where(File.Exists).ToArray();
             ResetPreviewSession();
             try
             {
@@ -145,12 +145,12 @@ namespace ReMap.Standalone
                     EnsurePreviewSession(geometryOnly);
                     previewSession.Load(archives,archive);
                     CommitContinuousExports(new[]{entry},previewSession.Export(entry.guid,geometryOnly),archive,result,geometryOnly);
-                    if(!geometryOnly&&GeometryPreviewsSupported&&!result.Paths.ContainsKey(entry.Id))RetryContinuousGeometry(new[]{entry},archive,result);
+                    if(!geometryOnly&&GeometryPreviewsSupported&&!result.Paths.ContainsKey(entry.Id))RetryContinuousGeometry(new[]{entry},archives,archive,result);
                 }
                 catch(Exception ex)when(ex is IOException||ex is TimeoutException)
                 {
                     ResetPreviewSession();
-                    if(!geometryOnly&&GeometryPreviewsSupported)RetryContinuousGeometry(new[]{entry},archive,result);
+                    if(!geometryOnly&&GeometryPreviewsSupported)RetryContinuousGeometry(new[]{entry},archives,archive,result);
                     else result.Errors[entry.Id]=ex.Message;
                 }
             }

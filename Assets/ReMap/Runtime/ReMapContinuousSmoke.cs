@@ -45,7 +45,7 @@ namespace ReMap.Standalone
             var other=assetLibrary.Records.FirstOrDefault(record=>record.Supports(targets)&&!string.Equals(assetLibrary.OriginArchive(record,targets),firstArchive,StringComparison.OrdinalIgnoreCase));
             if(other==null)throw new Exception("No model from a second archive was indexed for the active game.");
             string otherPath=await assetLibrary.ExtractAsync(other,targets);CastReader.Read(otherPath);
-            if(assetLibrary.PreviewProcessId!=pid||assetLibrary.PreviewSessionStarts!=1||assetLibrary.PreviewArchiveLoads!=2)throw new Exception("Changing archives restarted RSX or retained the wrong archives.");
+            if(assetLibrary.PreviewProcessId!=pid||assetLibrary.PreviewSessionStarts!=1||assetLibrary.PreviewArchiveLoads!=1)throw new Exception("Changing model origins reloaded the selected archive union.");
             if(world.models.LoadedGameModelCount!=0)throw new Exception("Thumbnail models remained resident in Unity.");
             await assetLibrary.ReleasePreviewSessionAsync();
             if(assetLibrary.PreviewProcessId!=0)throw new Exception("RSX session not released.");
