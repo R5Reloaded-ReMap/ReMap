@@ -65,10 +65,10 @@ namespace ReMap.Standalone
                     }
                     catch(Exception ex)when(ex is IOException||ex is TimeoutException)
                     {
-                        // Streamed R5F textures can terminate RSX. Protocol v3 restarts once with only
-                        // model data, preserving fast batch extraction while still producing a thumbnail.
-                        if(GeometryPreviewsSupported)RetryContinuousGeometry(entries,archive,result);
-                        else RetryContinuousIndividually(entries,archives,archive,result,true,false);
+                        // Isolate the model that terminates RSX so the rest of the batch keeps its materials.
+                        // Splitting the failed batch avoids restarting once per model in the common case.
+                        ResetPreviewSession();
+                        RetryContinuousTexturedPartitions(entries,archives,archive,result);
                     }
                 }
                 else foreach(var entry in entries)
@@ -81,6 +81,34 @@ namespace ReMap.Standalone
                 return result;
             }
             catch(TimeoutException){ResetPreviewSession();throw;}
+        }
+        private void RetryContinuousTexturedPartitions(GameAssetRecord[] entries,string[] archives,string archive,AssetBatchResult result)
+        {
+            entries=entries.Where(entry=>!result.Paths.ContainsKey(entry.Id)).ToArray();
+            if(entries.Length==0)return;
+            if(entries.Length==1)
+            {
+                RetryContinuousIndividually(entries,archives,archive,result,false,false);
+                return;
+            }
+            try
+            {
+                EnsurePreviewSession();previewSession.Load(archives,archive);
+                CommitContinuousExports(entries,previewSession.ExportBatch(entries.Select(entry=>entry.guid).ToArray()),archive,result);
+                var missing=entries.Where(entry=>!result.Paths.ContainsKey(entry.Id)).ToArray();
+                if(missing.Length>0)RetryContinuousTexturedSplit(missing,archives,archive,result);
+            }
+            catch(Exception ex)when(ex is IOException||ex is TimeoutException)
+            {
+                ResetPreviewSession();
+                RetryContinuousTexturedSplit(entries,archives,archive,result);
+            }
+        }
+        private void RetryContinuousTexturedSplit(GameAssetRecord[] entries,string[] archives,string archive,AssetBatchResult result)
+        {
+            int middle=(entries.Length+1)/2;
+            RetryContinuousTexturedPartitions(entries.Take(middle).ToArray(),archives,archive,result);
+            RetryContinuousTexturedPartitions(entries.Skip(middle).ToArray(),archives,archive,result);
         }
         private void RetryContinuousGeometry(GameAssetRecord[] entries,string archive,AssetBatchResult result)
         {
