@@ -30,6 +30,11 @@ namespace ReMap.Standalone.Tests {
             var result=ThumbnailQueue.Next(new[]{a,b},new[]{a},new HashSet<string>(),new HashSet<string>(),"",Array.Empty<string>(),8,"loaded.rpak");
             Assert.That(result.Select(r=>r.Id),Is.EqualTo(new[]{a.Id}));
         }
+        [Test] public void VisiblePageFinishesItsLoadedArchiveBeforeSwitching() {
+            var first=Record("1","first","other.rpak");var loaded=Record("2","loaded","loaded.rpak");
+            var result=ThumbnailQueue.Next(new[]{first,loaded},new[]{first,loaded},new HashSet<string>(),new HashSet<string>(),"",Array.Empty<string>(),8,"loaded.rpak");
+            Assert.That(result.Select(r=>r.Id),Is.EqualTo(new[]{loaded.Id}));
+        }
         [Test] public void MissingSceneModelsWinOverVisibleAndCustomModels() {
             var scene=Record("1","scene","scene.rpak");var visible=Record("2","visible","visible.rpak");var custom=Record("3","custom","custom.rpak");
             var result=ThumbnailQueue.Next(new[]{custom,visible,scene},new[]{scene},new[]{visible},new[]{custom},new HashSet<string>(),new HashSet<string>(),"",Array.Empty<string>());

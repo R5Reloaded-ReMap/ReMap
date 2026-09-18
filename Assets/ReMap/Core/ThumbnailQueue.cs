@@ -19,12 +19,14 @@ namespace ReMap.Standalone.Core
             var scenePending=(scene??Enumerable.Empty<GameAssetRecord>()).Where(r=>ids.Contains(r.Id)).ToArray();
             var visiblePending=(visible??Enumerable.Empty<GameAssetRecord>()).Where(r=>ids.Contains(r.Id)).ToArray();
             var customPending=(custom??Enumerable.Empty<GameAssetRecord>()).Where(r=>ids.Contains(r.Id)).ToArray();
-            var ordered=scenePending.Concat(visiblePending).Concat(customPending).Concat(eligible.Where(r=>r.modelPath.IndexOf(search??"",StringComparison.OrdinalIgnoreCase)>=0)).Concat(eligible).GroupBy(r=>r.Id).Select(g=>g.First()).ToArray();
+            var searchPending=eligible.Where(r=>r.modelPath.IndexOf(search??"",StringComparison.OrdinalIgnoreCase)>=0).ToArray();
+            var ordered=scenePending.Concat(visiblePending).Concat(customPending).Concat(searchPending).Concat(eligible).GroupBy(r=>r.Id).Select(g=>g.First()).ToArray();
             if(ordered.Length==0)return Array.Empty<GameAssetRecord>();
             string Origin(GameAssetRecord r)=>r.origins.First(o=>o.mapId==""||targets.Contains(o.mapId)).archive;
-            // Foreground priorities may switch archives. Once they are ready, finish the open archive.
-            bool foregroundPending=scenePending.Length>0||visiblePending.Length>0||customPending.Length>0;
-            string archive=!foregroundPending&&preferredArchive!=null&&ordered.Any(r=>Origin(r)==preferredArchive)?preferredArchive:Origin(ordered[0]);
+            // Stay on the loaded archive while it still contains work from the highest active priority tier.
+            // This preserves scene > visible > custom > search > background without bouncing between RPAKs.
+            var tier=scenePending.Length>0?scenePending:visiblePending.Length>0?visiblePending:customPending.Length>0?customPending:searchPending.Length>0?searchPending:eligible;
+            string archive=preferredArchive!=null&&tier.Any(r=>Origin(r)==preferredArchive)?preferredArchive:Origin(tier[0]);
             return ordered.Where(r=>Origin(r)==archive).GroupBy(r=>r.Name,StringComparer.OrdinalIgnoreCase).Select(g=>g.First()).Take(Math.Min(8,Math.Max(1,limit))).ToArray();
         }
     }
