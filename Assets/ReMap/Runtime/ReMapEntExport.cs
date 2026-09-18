@@ -385,7 +385,6 @@ namespace ReMap.Standalone
                     fields.Add(Pair("DetachEndOnSpawn", "0"));
                     fields.Add(Pair("scale", "1"));
                     fields.Add(Pair("angles", VectorValue(DirectionAngles(current - other))));
-                    fields.Add(Pair("ZiplineVersion", "3"));
                     fields.Add(Pair("ZiplineSpeedScale", Number(ziprail.ziplineSpeed)));
                     fields.Add(Pair("ZiplineAutoDetachDistance", Number(index == 0 ?
                         ziprail.ziplineAutoDetachStart : ziprail.ziplineAutoDetachEnd)));

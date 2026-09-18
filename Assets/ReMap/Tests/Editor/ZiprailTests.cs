@@ -98,7 +98,9 @@ namespace ReMap.Standalone.Tests
             StringAssert.Contains("CreateEntity( isEndpoint ? \"zipline\" : \"script_mover_train_node\" )", script);
             StringAssert.Contains("node.kv.tangent_type = 0", script);
             StringAssert.Contains("endpoint.kv.isZiprailStart = 1", script);
+            StringAssert.DoesNotContain("endpoint.kv.ZiplineVersion", script);
             StringAssert.Contains("nodes[index].LinkToEnt( nodes[index - 1] )", script);
+            StringAssert.DoesNotContain("nodes[index - 1].LinkToEnt( nodes[index] )", script);
             StringAssert.Contains("prop.kv.solid = 0", script);
             StringAssert.Contains("prop.kv.contents = 0", script);
             StringAssert.Contains("REMAP_ZIPRAIL_POINT_BUILDING_CLAW_02", script);

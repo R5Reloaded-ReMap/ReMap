@@ -140,6 +140,7 @@ namespace ReMap.Standalone.Tests
             StringAssert.Contains("\"classname\" \"script_mover_train_node\"", result.Script);
             StringAssert.Contains("\"script_name\" \"script_control_omit_zipline\"", result.Script);
             StringAssert.Contains("mdl/props/zip_rail/zip_rail_ground_post_01.rmdl", result.Script);
+            StringAssert.DoesNotContain("\"ZiplineVersion\"", result.Script);
             Assert.That(result.Script.Split(new[] { "\"isZiprailStart\" \"1\"" },
                 StringSplitOptions.None).Length - 1, Is.EqualTo(2));
         }

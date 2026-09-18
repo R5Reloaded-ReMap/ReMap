@@ -108,9 +108,7 @@ void function ReMap_CreateZipline( vector startOrigin, vector startAngles, vecto
 	file.entities.append( endPoint )
 }
 
-void function ReMap_CreateCurvedZipline( array<vector> controlPoints, int segmentsPerSpan = 8,
-	array<int> pointProfiles = [], array<vector> pointAngles = [],
-	array<float> pointArmHeights = [], float width = 2.0, float speedScale = 1.0 )
+void function ReMap_CreateCurvedZipline( array<vector> controlPoints, int segmentsPerSpan = 8, array<int> pointProfiles = [], array<vector> pointAngles = [], array<float> pointArmHeights = [], float width = 2.0, float speedScale = 1.0 )
 {
 	if ( controlPoints.len() < 2 )
 		return
@@ -121,8 +119,7 @@ void function ReMap_CreateCurvedZipline( array<vector> controlPoints, int segmen
 		int profile = index < pointProfiles.len() ? pointProfiles[index] : REMAP_ZIPLINE_END_NONE
 		vector angles = index < pointAngles.len() ? pointAngles[index] : <0, 0, 0>
 		float armHeight = index < pointArmHeights.len() ? pointArmHeights[index] : 180.0
-		adjustedPoints[index] = ReMap_CreateCurvedZiplinePointModel(
-			profile, adjustedPoints[index], angles, armHeight )
+		adjustedPoints[index] = ReMap_CreateCurvedZiplinePointModel( profile, adjustedPoints[index], angles, armHeight )
 	}
 	array<vector> curvePoints = ReMap_BuildBezierPath( adjustedPoints, segmentsPerSpan )
 	if ( curvePoints.len() < 2 )
@@ -131,8 +128,7 @@ void function ReMap_CreateCurvedZipline( array<vector> controlPoints, int segmen
 	array<entity> ropes
 	for ( int index = 0; index < curvePoints.len(); index++ )
 	{
-		entity rope = ReMap_SetCurvedRopeProperties(
-			CreateEntity( index == 0 ? "move_rope" : "keyframe_rope" ), width, speedScale )
+		entity rope = ReMap_SetCurvedRopeProperties( CreateEntity( index == 0 ? "move_rope" : "keyframe_rope" ), width, speedScale )
 		rope.SetOrigin( curvePoints[index] )
 		ropes.append( rope )
 	}
@@ -164,8 +160,7 @@ entity function ReMap_SetCurvedRopeProperties( entity rope, float width, float s
 	return rope
 }
 
-vector function ReMap_CreateCurvedZiplinePointModel( int profile, vector origin, vector angles,
-	float armHeight )
+vector function ReMap_CreateCurvedZiplinePointModel( int profile, vector origin, vector angles, float armHeight )
 {
 	vector armOrigin = origin
 	if ( profile == REMAP_ZIPLINE_END_SUPPORT )
@@ -205,8 +200,7 @@ array<vector> function ReMap_BuildBezierPath( array<vector> points, int segments
 	for ( int index = 1; index < points.len() - 1; index++ )
 	{
 		vector direction = points[index + 1] - points[index - 1]
-		float tangentLength = min( Distance( points[index - 1], points[index] ),
-			Distance( points[index], points[index + 1] ) ) * 0.5
+		float tangentLength = min( Distance( points[index - 1], points[index] ), Distance( points[index], points[index + 1] ) ) * 0.5
 		tangents.append( Length( direction ) < 0.001 ? <0, 0, 0> : Normalize( direction ) * tangentLength )
 	}
 	tangents.append( (points[points.len() - 1] - points[points.len() - 2]) * 0.5 )

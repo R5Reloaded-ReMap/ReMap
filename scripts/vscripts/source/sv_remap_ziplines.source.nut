@@ -123,9 +123,7 @@ void function ReMap_CreateZipline( vector startOrigin, vector startAngles, vecto
 	file.entities.append( endPoint )
 }
 
-void function ReMap_CreateCurvedZipline( array<vector> controlPoints, int segmentsPerSpan = 8,
-	array<int> pointProfiles = [], array<vector> pointAngles = [],
-	array<float> pointArmHeights = [], float width = 2.0, float speedScale = 1.0 )
+void function ReMap_CreateCurvedZipline( array<vector> controlPoints, int segmentsPerSpan = 8, array<int> pointProfiles = [], array<vector> pointAngles = [], array<float> pointArmHeights = [], float width = 2.0, float speedScale = 1.0 )
 {
 	if ( controlPoints.len() < 2 )
 		return
@@ -136,8 +134,7 @@ void function ReMap_CreateCurvedZipline( array<vector> controlPoints, int segmen
 		int profile = index < pointProfiles.len() ? pointProfiles[index] : REMAP_ZIPLINE_END_NONE
 		vector angles = index < pointAngles.len() ? pointAngles[index] : <0, 0, 0>
 		float armHeight = index < pointArmHeights.len() ? pointArmHeights[index] : 180.0
-		adjustedPoints[index] = ReMap_CreateCurvedZiplinePointModel(
-			profile, adjustedPoints[index], angles, armHeight )
+		adjustedPoints[index] = ReMap_CreateCurvedZiplinePointModel( profile, adjustedPoints[index], angles, armHeight )
 	}
 	array<vector> curvePoints = ReMap_BuildBezierPath( adjustedPoints, segmentsPerSpan )
 	if ( curvePoints.len() < 2 )
@@ -146,8 +143,7 @@ void function ReMap_CreateCurvedZipline( array<vector> controlPoints, int segmen
 	array<entity> ropes
 	for ( int index = 0; index < curvePoints.len(); index++ )
 	{
-		entity rope = ReMap_SetCurvedRopeProperties(
-			CreateEntity( index == 0 ? "move_rope" : "keyframe_rope" ), width, speedScale )
+		entity rope = ReMap_SetCurvedRopeProperties( CreateEntity( index == 0 ? "move_rope" : "keyframe_rope" ), width, speedScale )
 		rope.SetOrigin( curvePoints[index] )
 		ropes.append( rope )
 	}
@@ -179,8 +175,7 @@ entity function ReMap_SetCurvedRopeProperties( entity rope, float width, float s
 	return rope
 }
 
-vector function ReMap_CreateCurvedZiplinePointModel( int profile, vector origin, vector angles,
-	float armHeight )
+vector function ReMap_CreateCurvedZiplinePointModel( int profile, vector origin, vector angles, float armHeight )
 {
 	vector armOrigin = origin
 	if ( profile == REMAP_ZIPLINE_END_SUPPORT )
@@ -220,8 +215,7 @@ array<vector> function ReMap_BuildBezierPath( array<vector> points, int segments
 	for ( int index = 1; index < points.len() - 1; index++ )
 	{
 		vector direction = points[index + 1] - points[index - 1]
-		float tangentLength = min( Distance( points[index - 1], points[index] ),
-			Distance( points[index], points[index + 1] ) ) * 0.5
+		float tangentLength = min( Distance( points[index - 1], points[index] ), Distance( points[index], points[index + 1] ) ) * 0.5
 		tangents.append( Length( direction ) < 0.001 ? <0, 0, 0> : Normalize( direction ) * tangentLength )
 	}
 	tangents.append( (points[points.len() - 1] - points[points.len() - 2]) * 0.5 )
@@ -272,11 +266,7 @@ vector function ReMap_CreateZiplineEndModel( int profile, vector origin, vector 
 }
 
 #if R5F
-void function ReMap_CreateZiprail( array<vector> controlPoints,
-	array<int> pointProfiles = [], array<vector> pointAngles = [],
-	array<float> pointSupportHeights = [], float width = 1.75,
-	float speedScale = 1.75, float startAutoDetachDistance = 0.0,
-	float endAutoDetachDistance = 0.0 )
+void function ReMap_CreateZiprail( array<vector> controlPoints, array<int> pointProfiles = [], array<vector> pointAngles = [], array<float> pointSupportHeights = [], float width = 1.75, float speedScale = 1.75, float startAutoDetachDistance = 0.0, float endAutoDetachDistance = 0.0 )
 {
 	if ( controlPoints.len() < 2 )
 		return
@@ -304,12 +294,9 @@ void function ReMap_CreateZiprail( array<vector> controlPoints,
 		node.SetScriptName( "script_control_omit_zipline" )
 		if ( isEndpoint )
 		{
-			vector direction = index == 0
-				? controlPoints[index] - controlPoints[index + 1]
-				: controlPoints[index] - controlPoints[index - 1]
+			vector direction = index == 0 ? controlPoints[index] - controlPoints[index + 1] : controlPoints[index] - controlPoints[index - 1]
 			node.SetAngles( VectorToAngles( Normalize( direction ) ) )
-			float autoDetachDistance = index == 0
-				? startAutoDetachDistance : endAutoDetachDistance
+			float autoDetachDistance = index == 0 ? startAutoDetachDistance : endAutoDetachDistance
 			ReMap_SetZiprailEndpointProperties( node, width, speedScale, autoDetachDistance )
 		}
 		else
@@ -330,8 +317,7 @@ void function ReMap_CreateZiprail( array<vector> controlPoints,
 	}
 }
 
-void function ReMap_SetZiprailEndpointProperties( entity endpoint, float width,
-	float speedScale, float autoDetachDistance )
+void function ReMap_SetZiprailEndpointProperties( entity endpoint, float width, float speedScale, float autoDetachDistance )
 {
 	endpoint.kv.Material = "cable/zipline.vmt"
 	endpoint.kv.DetachEndOnSpawn = 0
@@ -345,7 +331,6 @@ void function ReMap_SetZiprailEndpointProperties( entity endpoint, float width,
 	endpoint.kv.ZiplinePreserveVelocity = 0
 	endpoint.kv.ZiplinePushOffInDirectionX = 0
 	endpoint.kv.ZiplineSpeedScale = speedScale
-	endpoint.kv.ZiplineVersion = 3
 	endpoint.kv.ZiplineVertical = 0
 	endpoint.kv.isZiprailStart = 1
 	endpoint.kv.ziprailMountReverseDistance = 200
@@ -353,35 +338,22 @@ void function ReMap_SetZiprailEndpointProperties( entity endpoint, float width,
 	endpoint.kv.useZiprailAutoDetachSpeed = autoDetachDistance > 0.0 ? 1 : 0
 }
 
-void function ReMap_CreateZiprailPointModels( int profile, vector origin,
-	vector angles, float supportHeight )
+void function ReMap_CreateZiprailPointModels( int profile, vector origin, vector angles, float supportHeight )
 {
-	if ( profile == REMAP_ZIPRAIL_POINT_ARM ||
-		profile == REMAP_ZIPRAIL_POINT_BUILDING_CLAW_02 ||
-		profile == REMAP_ZIPRAIL_POINT_WALL )
+	if ( profile == REMAP_ZIPRAIL_POINT_ARM || profile == REMAP_ZIPRAIL_POINT_BUILDING_CLAW_02 || profile == REMAP_ZIPRAIL_POINT_WALL )
 	{
-		asset armModel = profile == REMAP_ZIPRAIL_POINT_BUILDING_CLAW_02
-			? REMAP_ZIPRAIL_MODEL_BUILDING_CLAW_02
-			: profile == REMAP_ZIPRAIL_POINT_WALL
-				? REMAP_ZIPRAIL_MODEL_WALL
-				: REMAP_ZIPRAIL_MODEL_BUILDING_CLAW
-		ReMap_CreateZiprailProp( armModel,
-			origin + RotateVector( <0, 235, -137>, angles ), angles )
-		ReMap_CreateZiprailProp( REMAP_ZIPRAIL_MODEL_CORD_END, origin,
-			<angles.x, angles.y + 180.0, angles.z> )
+		asset armModel = profile == REMAP_ZIPRAIL_POINT_BUILDING_CLAW_02 ? REMAP_ZIPRAIL_MODEL_BUILDING_CLAW_02 : profile == REMAP_ZIPRAIL_POINT_WALL ? REMAP_ZIPRAIL_MODEL_WALL : REMAP_ZIPRAIL_MODEL_BUILDING_CLAW
+		ReMap_CreateZiprailProp( armModel, origin + RotateVector( <0, 235, -137>, angles ), angles )
+		ReMap_CreateZiprailProp( REMAP_ZIPRAIL_MODEL_CORD_END, origin, <angles.x, angles.y + 180.0, angles.z> )
 	}
 	else if ( profile == REMAP_ZIPRAIL_POINT_SUPPORT )
 	{
 		supportHeight = clamp( supportHeight, 40.0, 1024.0 )
-		ReMap_CreateZiprailProp( REMAP_ZIPRAIL_MODEL_GROUND_BASE,
-			origin + RotateVector( <0, 0, -supportHeight>, angles ), angles )
+		ReMap_CreateZiprailProp( REMAP_ZIPRAIL_MODEL_GROUND_BASE, origin + RotateVector( <0, 0, -supportHeight>, angles ), angles )
 		ReMap_CreateZiprailProp( REMAP_ZIPRAIL_MODEL_GROUND_POST, origin, angles )
-		ReMap_CreateZiprailProp( REMAP_ZIPRAIL_MODEL_GROUND_POST_TOP,
-			origin + RotateVector( <0, 4, -1>, angles ), angles )
-		ReMap_CreateZiprailProp( REMAP_ZIPRAIL_MODEL_GROUND_CLAW,
-			origin + RotateVector( <-172, 0, 85>, angles ), angles )
-		ReMap_CreateZiprailProp( REMAP_ZIPRAIL_MODEL_CORD_END, origin,
-			<angles.x, angles.y + 90.0, angles.z> )
+		ReMap_CreateZiprailProp( REMAP_ZIPRAIL_MODEL_GROUND_POST_TOP, origin + RotateVector( <0, 4, -1>, angles ), angles )
+		ReMap_CreateZiprailProp( REMAP_ZIPRAIL_MODEL_GROUND_CLAW, origin + RotateVector( <-172, 0, 85>, angles ), angles )
+		ReMap_CreateZiprailProp( REMAP_ZIPRAIL_MODEL_CORD_END, origin, <angles.x, angles.y + 90.0, angles.z> )
 	}
 }
 
