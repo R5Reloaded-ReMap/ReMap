@@ -13,8 +13,13 @@ namespace ReMap.Standalone
     // Manifests retain CAST-relative names; content-addressed PNGs are shared across all models.
     public static class SharedTextureCache
     {
+        public const int PreviewMaximumSize = 512;
         [Serializable] public sealed class Entry { public string source, hash; }
-        [Serializable] public sealed class Manifest { public List<Entry> entries = new List<Entry>(); }
+        [Serializable] public sealed class Manifest
+        {
+            public int maximumSize;
+            public List<Entry> entries = new List<Entry>();
+        }
         private sealed class Resident { public Texture2D texture; public int references; }
         private static readonly Dictionary<string, Resident> resident = new Dictionary<string, Resident>(StringComparer.OrdinalIgnoreCase);
         public static int ResidentCount => resident.Count;
@@ -39,10 +44,33 @@ namespace ReMap.Standalone
         private static async Task NormalizeCore(string modelRoot, int limit, CancellationToken cancellation)
         {
             cancellation.ThrowIfCancellationRequested();
-            limit = Mathf.Clamp(limit <= 0 ? 1024 : limit, 256, 2048);
+            limit = Mathf.Clamp(limit <= 0 ? PreviewMaximumSize : limit, 256, 2048);
             string shared = RootFor(modelRoot); Directory.CreateDirectory(shared);
             string manifestPath = Path.Combine(modelRoot, "textures.manifest.json");
             var manifest = File.Exists(manifestPath) ? JsonUtility.FromJson<Manifest>(File.ReadAllText(manifestPath)) : new Manifest();
+            manifest = manifest ?? new Manifest();
+            manifest.entries = manifest.entries ?? new List<Entry>();
+            if (manifest.maximumSize != limit)
+            {
+                // Older manifests point at already-normalized shared PNGs. Resize those directly so changing
+                // the preview policy does not force RSX to extract every model again.
+                foreach (var entry in manifest.entries)
+                {
+                    cancellation.ThrowIfCancellationRequested();
+                    if (entry == null || string.IsNullOrEmpty(entry.hash) || entry.hash.Length != 64 ||
+                        entry.hash.Any(c => !Uri.IsHexDigit(c))) continue;
+                    string existing = Path.Combine(shared, entry.hash + ".png");
+                    if (!File.Exists(existing)) continue;
+                    byte[] normalized = NormalizePng(File.ReadAllBytes(existing), limit);
+                    string hash = Store(shared, normalized);
+                    if (hash == entry.hash) continue;
+                    entry.hash = hash;
+                    SaveManifest(manifestPath, manifest);
+                    await Task.Yield();
+                }
+                manifest.maximumSize = limit;
+                SaveManifest(manifestPath, manifest);
+            }
             var rawTextures=Directory.EnumerateFiles(modelRoot, "*.png", SearchOption.AllDirectories).Where(p=>Path.GetDirectoryName(p)!=modelRoot).ToArray();
             var albedos=new HashSet<string>(StringComparer.OrdinalIgnoreCase);
             if(rawTextures.Length>0)foreach(string cast in Directory.EnumerateFiles(modelRoot,"*.cast",SearchOption.AllDirectories))
@@ -58,42 +86,57 @@ namespace ReMap.Standalone
                 cancellation.ThrowIfCancellationRequested();
                 // Discard only this model's generated non-color exports. Existing shared cache entries remain intact.
                 if(albedos.Count>0&&!albedos.Contains(Path.GetFullPath(path))&&!CastAlbedo.IsColorTextureName(path)){File.Delete(path);continue;}
-                Texture2D source = null, output = null; RenderTexture rt = null; var previous = RenderTexture.active;
-                try
-                {
-                    byte[] bytes = File.ReadAllBytes(path); ValidatePng(bytes);
-                    source = new Texture2D(2, 2, TextureFormat.RGBA32, false);
-                    if (!ImageConversion.LoadImage(source, bytes)) throw new InvalidDataException(L.T("#UNREADABLE_PNG_05CEBB") + path);
-                    output = source;
-                    if (Math.Max(source.width, source.height) > limit)
-                    {
-                        float ratio = (float)limit / Math.Max(source.width, source.height);
-                        int width = Math.Max(1, Mathf.RoundToInt(source.width * ratio)), height = Math.Max(1, Mathf.RoundToInt(source.height * ratio));
-                        rt = RenderTexture.GetTemporary(width, height, 0, RenderTextureFormat.ARGB32, RenderTextureReadWrite.sRGB);
-                        Graphics.Blit(source, rt); RenderTexture.active = rt;
-                        output = new Texture2D(width, height, TextureFormat.RGBA32, false);
-                        output.ReadPixels(new Rect(0, 0, width, height), 0, 0); output.Apply();
-                    }
-                    byte[] normalized = output.EncodeToPNG(); string hash;
-                    using (var sha = SHA256.Create()) hash = BitConverter.ToString(sha.ComputeHash(normalized)).Replace("-", "").ToLowerInvariant();
-                    string destination = Path.Combine(shared, hash + ".png");
-                    if (!File.Exists(destination)) File.WriteAllBytes(destination, normalized);
-                    string relative = Path.GetRelativePath(modelRoot, path).Replace('\\', '/');
-                    manifest.entries.RemoveAll(e => e.source == relative); manifest.entries.Add(new Entry { source = relative, hash = hash });
-                    string temporary = manifestPath + ".tmp"; File.WriteAllText(temporary, JsonUtility.ToJson(manifest, true));
-                    if (File.Exists(manifestPath)) File.Replace(temporary, manifestPath, null); else File.Move(temporary, manifestPath);
-                    // Delete only the processed cache file, after both shared content and its mapping are durable.
-                    File.Delete(path);
-                }
-                finally
-                {
-                    RenderTexture.active = previous; if (rt != null) RenderTexture.ReleaseTemporary(rt);
-                    if (output != null && output != source) UnityEngine.Object.Destroy(output);
-                    if (source != null) UnityEngine.Object.Destroy(source);
-                }
+                byte[] normalized = NormalizePng(File.ReadAllBytes(path), limit);
+                string hash = Store(shared, normalized);
+                string relative = Path.GetRelativePath(modelRoot, path).Replace('\\', '/');
+                manifest.entries.RemoveAll(e => e.source == relative); manifest.entries.Add(new Entry { source = relative, hash = hash });
+                manifest.maximumSize = limit;
+                SaveManifest(manifestPath, manifest);
+                // Delete only the processed cache file, after both shared content and its mapping are durable.
+                File.Delete(path);
                 await Task.Yield();
                 cancellation.ThrowIfCancellationRequested();
             }
+        }
+        private static byte[] NormalizePng(byte[] bytes, int limit)
+        {
+            ValidatePng(bytes);
+            Texture2D source = null, output = null; RenderTexture rt = null; var previous = RenderTexture.active;
+            try
+            {
+                source = new Texture2D(2, 2, TextureFormat.RGBA32, false);
+                if (!ImageConversion.LoadImage(source, bytes)) throw new InvalidDataException(L.T("#UNREADABLE_PNG"));
+                if (Math.Max(source.width, source.height) <= limit) return bytes;
+                float ratio = (float)limit / Math.Max(source.width, source.height);
+                int width = Math.Max(1, Mathf.RoundToInt(source.width * ratio));
+                int height = Math.Max(1, Mathf.RoundToInt(source.height * ratio));
+                rt = RenderTexture.GetTemporary(width, height, 0, RenderTextureFormat.ARGB32, RenderTextureReadWrite.sRGB);
+                Graphics.Blit(source, rt); RenderTexture.active = rt;
+                output = new Texture2D(width, height, TextureFormat.RGBA32, false);
+                output.ReadPixels(new Rect(0, 0, width, height), 0, 0); output.Apply();
+                return output.EncodeToPNG();
+            }
+            finally
+            {
+                RenderTexture.active = previous;
+                if (rt != null) RenderTexture.ReleaseTemporary(rt);
+                DestroyTexture(output);
+                DestroyTexture(source);
+            }
+        }
+        private static string Store(string shared, byte[] normalized)
+        {
+            string hash;
+            using (var sha = SHA256.Create()) hash = BitConverter.ToString(sha.ComputeHash(normalized)).Replace("-", "").ToLowerInvariant();
+            string destination = Path.Combine(shared, hash + ".png");
+            if (!File.Exists(destination)) File.WriteAllBytes(destination, normalized);
+            return hash;
+        }
+        private static void SaveManifest(string manifestPath, Manifest manifest)
+        {
+            string temporary = manifestPath + ".tmp";
+            File.WriteAllText(temporary, JsonUtility.ToJson(manifest, true));
+            if (File.Exists(manifestPath)) File.Replace(temporary, manifestPath, null); else File.Move(temporary, manifestPath);
         }
         public static string Resolve(string castPath, string relative)
         {
@@ -130,7 +173,7 @@ namespace ReMap.Standalone
             {
                 byte[] bytes = File.ReadAllBytes(path); ValidatePng(bytes);
                 var texture = new Texture2D(2, 2, TextureFormat.RGBA32, true);
-                if (!ImageConversion.LoadImage(texture, bytes, true)) { UnityEngine.Object.Destroy(texture); throw new InvalidDataException(L.T("#UNREADABLE_PNG")); }
+                if (!ImageConversion.LoadImage(texture, bytes, true)) { DestroyTexture(texture); throw new InvalidDataException(L.T("#UNREADABLE_PNG")); }
                 item = new Resident { texture = texture }; resident.Add(path, item);
             }
             item.references++; return item.texture;
@@ -138,7 +181,13 @@ namespace ReMap.Standalone
         public static void Release(string path)
         {
             if (!resident.TryGetValue(path, out var item)) return;
-            if (--item.references == 0) { UnityEngine.Object.Destroy(item.texture); resident.Remove(path); }
+            if (--item.references == 0) { DestroyTexture(item.texture); resident.Remove(path); }
+        }
+        private static void DestroyTexture(Texture texture)
+        {
+            if (texture == null) return;
+            if (Application.isPlaying) UnityEngine.Object.Destroy(texture);
+            else UnityEngine.Object.DestroyImmediate(texture);
         }
         private static void ValidatePng(byte[] bytes)
         {

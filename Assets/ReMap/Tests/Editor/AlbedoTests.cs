@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
@@ -24,6 +25,52 @@ namespace ReMap.Standalone.Tests
                     await SharedTextureCache.Normalize(root, 256, cancellation.Token));
             }
             finally { Directory.Delete(root, true); }
+        }
+
+        [UnityTest]
+        public IEnumerator ExistingTextureManifestMigratesWithoutRsxExtraction()
+        {
+            string root = Path.Combine(Path.GetTempPath(), "remap-texture-migration-" + Guid.NewGuid().ToString("N"));
+            string modelRoot = Path.Combine(root, "AssetCache", "Models", "test");
+            string materialRoot = Path.Combine(modelRoot, "export", "mdl", "test");
+            Directory.CreateDirectory(materialRoot);
+            Texture2D source = null;
+            try
+            {
+                source = new Texture2D(1024, 512, TextureFormat.RGBA32, false);
+                source.SetPixels32(Enumerable.Repeat(new Color32(90, 140, 210, 255), 1024 * 512).ToArray());
+                source.Apply();
+                File.WriteAllBytes(Path.Combine(materialRoot, "color.png"), source.EncodeToPNG());
+                UnityEngine.Object.DestroyImmediate(source); source = null;
+
+                var initial = SharedTextureCache.Normalize(modelRoot, 1024);
+                while (!initial.IsCompleted) yield return null;
+                if (initial.IsFaulted) throw initial.Exception;
+                string cast = Path.Combine(materialRoot, "test.cast");
+                string original = SharedTextureCache.Resolve(cast, "color.png");
+                Assert.That(original, Is.Not.Null);
+
+                var migration = SharedTextureCache.Normalize(modelRoot, 0);
+                while (!migration.IsCompleted) yield return null;
+                if (migration.IsFaulted) throw migration.Exception;
+                string migrated = SharedTextureCache.Resolve(cast, "color.png");
+                Assert.That(migrated, Is.Not.Null.And.Not.EqualTo(original));
+                Assert.That(File.Exists(original), Is.True, "Shared textures still referenced by another manifest must be preserved.");
+                var texture = SharedTextureCache.Acquire(migrated);
+                try
+                {
+                    Assert.That(texture.width, Is.EqualTo(512));
+                    Assert.That(texture.height, Is.EqualTo(256));
+                }
+                finally { SharedTextureCache.Release(migrated); }
+                var manifest = JsonUtility.FromJson<SharedTextureCache.Manifest>(File.ReadAllText(Path.Combine(modelRoot, "textures.manifest.json")));
+                Assert.That(manifest.maximumSize, Is.EqualTo(SharedTextureCache.PreviewMaximumSize));
+            }
+            finally
+            {
+                if (source != null) UnityEngine.Object.DestroyImmediate(source);
+                if (Directory.Exists(root)) Directory.Delete(root, true);
+            }
         }
 
         [Test] public void MissingBindingOffersOnlyExactMaterialColorNames()

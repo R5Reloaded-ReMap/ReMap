@@ -102,7 +102,7 @@ namespace ReMap.Standalone
                 try
                 {
                     string path = await assetLibrary.ExtractAsync(record, Targets, CancellationToken.None);
-                    await SharedTextureCache.Normalize(assetLibrary.ModelDirectory(record), assetLibrary.Settings.textureLimit);
+                    await SharedTextureCache.Normalize(assetLibrary.ModelDirectory(record), SharedTextureCache.PreviewMaximumSize);
                     world.models.Prepare(record.Id, path); ready.Add(record.Id);
                 }
                 catch (Exception exception)

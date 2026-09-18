@@ -119,7 +119,7 @@ Model extraction and thumbnail rendering start in a dedicated full-screen progre
 
 Saved projects are listed only for the active target game, with separate recovery state for R5Reloaded and R5Flowstate. A project's game target is locked after creation, so it cannot be launched against the other installation. **File > Port current map to the other game…** selects the opposite game, verifies the target RPAKs, and creates a converted copy only when every Apex model exists under the same GUID and internal model path. If conversion is blocked, a dedicated report lists every unavailable or incompatible model and no copy is created. Live rebuilding is disabled while a scene references map RPAKs absent from the active installation.
 
-New textures are limited to **1024 px** by default, configurable from 256 to 2048. Existing files are preserved. Content hashes avoid duplicate PNG copies, and runtime reference counting avoids duplicate GPU textures.
+Preview textures are limited to **512 px** on their longest side. Existing cached previews are migrated without re-extracting their models. Content hashes avoid duplicate PNG copies, and runtime reference counting avoids duplicate GPU textures.
 
 The first full pass can take time because RSX decompresses archives in its own process, although Unity only retains the current preparation model.
 

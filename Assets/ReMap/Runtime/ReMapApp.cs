@@ -982,7 +982,8 @@ namespace ReMap.Standalone
             var showMainBsp = new Toggle(L.T("#SHOW_MAIN_BSP")) { value = assetLibrary.Settings.showMainBsp };
             showMainBsp.RegisterValueChangedCallback(change => SetMapReferenceOptions(showBsp: change.newValue));
             inspector.Add(showMainBsp);
-            var showMprtModels = new Toggle(L.T("#SHOW_MPRT_MODELS")) { value = assetLibrary.Settings.showMprtModels };
+            var showMprtModels = new Toggle(L.T("#SHOW_MPRT_MODELS")) {
+                value = assetLibrary.Settings.showMprtModels, name = MprtVisibilityToggleName };
             showMprtModels.RegisterValueChangedCallback(change => SetMapReferenceOptions(showMprt: change.newValue));
             inspector.Add(showMprtModels);
             AddMprtStreamingSettings(inspector);

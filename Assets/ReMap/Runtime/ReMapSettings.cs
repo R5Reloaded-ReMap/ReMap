@@ -80,11 +80,6 @@ namespace ReMap.Standalone
                 assetLibrary.Settings.rconAddress = rconAddress.value.Trim(); assetLibrary.Settings.rconKey = rconKey.value.Trim(); assetLibrary.Settings.rconPassword = rconPassword.value;
                 assetLibrary.SaveSettings(); SetStatus(L.T("#LIVE_CONNECTION_SAVED"));
             }));
-            scroll.Add(Label(L.T("#PREVIEW_QUALITY"), "section-title"));
-            var quality = new DropdownField(L.T("#MAXIMUM_SIZE"), new System.Collections.Generic.List<string> { "256", "512", "1024", "2048" }, 2);
-            quality.SetValueWithoutNotify((assetLibrary.Settings.textureLimit <= 0 ? 1024 : assetLibrary.Settings.textureLimit).ToString());
-            quality.RegisterValueChangedCallback(e => { assetLibrary.Settings.textureLimit = int.Parse(e.newValue); assetLibrary.SaveSettings(); }); scroll.Add(quality);
-            scroll.Add(Label(L.T("#NEW_EXPORTS_KEEP_ALBEDO_TEXTURES"), "note"));
             scroll.Add(Label(L.T("#ASSET_CACHE"), "section-title"));
             scroll.Add(Label(L.T("#COMPATIBLE_MODELS_TEXTURES_SHARED_BETWEEN"), "note"));
             var cachePath = new TextField(L.T("#ASSET_EXPORT_FOLDER")) { value = assetLibrary.AssetExportDirectory, isDelayed = true }; cachePath.AddToClassList("settings-field"); scroll.Add(cachePath);
@@ -107,7 +102,8 @@ namespace ReMap.Standalone
             showMainBsp.tooltip = L.T("#SHOW_MAIN_BSP_HELP");
             showMainBsp.RegisterValueChangedCallback(change => SetMapReferenceOptions(showBsp: change.newValue));
             scroll.Add(showMainBsp);
-            var showMprtModels = new Toggle(L.T("#SHOW_MPRT_MODELS")) { value = assetLibrary.Settings.showMprtModels };
+            var showMprtModels = new Toggle(L.T("#SHOW_MPRT_MODELS")) {
+                value = assetLibrary.Settings.showMprtModels, name = MprtVisibilityToggleName };
             showMprtModels.tooltip = L.T("#SHOW_MPRT_MODELS_HELP");
             showMprtModels.RegisterValueChangedCallback(change => SetMapReferenceOptions(showMprt: change.newValue));
             scroll.Add(showMprtModels);

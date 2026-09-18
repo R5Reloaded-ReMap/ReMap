@@ -263,7 +263,7 @@ namespace ReMap.Standalone
                 if (this == null || previewGeneration!=assetLibrary.CacheRoot) return;
                 if (!record.Supports(Targets)) throw new InvalidOperationException(L.T("#SELECTED_ARCHIVES_CHANGED_DURING_EXTRACTION"));
                 previewText.text=L.T("#PREPARING_TEXTURES")+record.Name;
-                await SharedTextureCache.Normalize(assetLibrary.ModelDirectory(record), assetLibrary.Settings.textureLimit);
+                await SharedTextureCache.Normalize(assetLibrary.ModelDirectory(record), SharedTextureCache.PreviewMaximumSize);
                 if (this == null || previewGeneration!=assetLibrary.CacheRoot) return;
                 world.models.Prepare(record.Id, path); model = world.models.Create(record.Id, false);
                 var bounds = model.GetComponent<MeshFilter>().sharedMesh.bounds;

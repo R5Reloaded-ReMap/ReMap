@@ -1,6 +1,6 @@
 # Local asset loading — prototype status
 
-> Current implementation: the official RSX bundled beside `ReMap.exe` is launched directly in command-line mode. Previews are generated progressively and cached. PNG textures share the content-addressed `AssetCache/Textures` directory with a default 1024 px limit. Active models use the stable `AssetCache/Models` path. See [README](../README.md) and [RSX integration](../Tools/RSX-BACKEND.md).
+> Current implementation: the official RSX bundled beside `ReMap.exe` is launched directly in command-line mode. Previews are generated progressively and cached. RSX selects a loaded mip no larger than 512 px for preview PNGs, and Unity enforces the same fixed limit as a fallback. Textures share the content-addressed `AssetCache/Textures` directory. Active models use the stable `AssetCache/Models` path. See [README](../README.md) and [RSX integration](../Tools/RSX-BACKEND.md).
 
 > Both official four-column CSV and extended six-column CSV indexes are accepted. Failed textured exports are retried as geometry-only exports in a separate work directory and log.
 

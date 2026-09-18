@@ -6,6 +6,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using ReMap.Standalone.Core;
 using UnityEngine;
+using UnityEngine.UIElements;
 
 namespace ReMap.Standalone
 {
@@ -14,6 +15,7 @@ namespace ReMap.Standalone
         private CancellationTokenSource mapReferenceCancellation;
         private string mapReferenceRequestKey;
         private bool mapReferencePresent;
+        private const string MprtVisibilityToggleName = "show-mprt-models-toggle";
 
         private void SyncMapReference()
         {
@@ -36,7 +38,8 @@ namespace ReMap.Standalone
             _ = LoadMapReferenceAsync(key, map, false);
         }
 
-        private void RequestMapReferenceReload(bool forceExtraction = false)
+        private void RequestMapReferenceReload(bool forceExtraction = false,
+            bool rollbackMprtOnCancellation = false)
         {
             mapReferenceRequestKey = null;
             if (snapshot == null) return;
@@ -50,15 +53,16 @@ namespace ReMap.Standalone
             string key = assetLibrary.TargetGame + "|" + map + "|" + assetLibrary.Settings.showMainBsp + "|" +
                 assetLibrary.Settings.showMprtModels + "|" + (assetLibrary.CacheRoot ?? "") + (forceExtraction ? "|force" : "");
             mapReferenceRequestKey = key;
-            _ = LoadMapReferenceAsync(key, map, forceExtraction);
+            _ = LoadMapReferenceAsync(key, map, forceExtraction, rollbackMprtOnCancellation);
         }
 
         private void SetMapReferenceOptions(bool? showBsp = null, bool? showMprt = null)
         {
+            bool rollbackMprtOnCancellation = showMprt == true && !assetLibrary.Settings.showMprtModels;
             if (showBsp.HasValue) assetLibrary.Settings.showMainBsp = showBsp.Value;
             if (showMprt.HasValue) assetLibrary.Settings.showMprtModels = showMprt.Value;
             assetLibrary.SaveSettings();
-            RequestMapReferenceReload();
+            RequestMapReferenceReload(rollbackMprtOnCancellation: rollbackMprtOnCancellation);
             RefreshInspector();
         }
 
@@ -81,18 +85,23 @@ namespace ReMap.Standalone
                 world.MprtReferenceAvailableCount));
         }
 
-        private async Task LoadMapReferenceAsync(string requestKey, string mapId, bool forceExtraction)
+        private async Task LoadMapReferenceAsync(string requestKey, string mapId, bool forceExtraction,
+            bool rollbackMprtOnCancellation = false)
         {
             mapReferenceCancellation?.Cancel();
             var cancellation = new CancellationTokenSource();
             mapReferenceCancellation = cancellation;
             bool loadingActive = true;
+            bool preserveExistingBsp = rollbackMprtOnCancellation && assetLibrary.Settings.showMainBsp &&
+                world.BspReferenceMeshCount > 0;
+            bool mprtRolledBack = false;
             Action cancel = () => {
                 if (!loadingActive || cancellation.IsCancellationRequested) return;
                 try { cancellation.Cancel(); }
                 catch (ObjectDisposedException) { return; }
                 if (this != null && requestKey == mapReferenceRequestKey)
                 {
+                    if (rollbackMprtOnCancellation) RollbackMprtVisibilityOption();
                     Loading(false);
                     SetStatus(L.T("#MAP_REFERENCE_LOADING_CANCELLED"));
                 }
@@ -109,8 +118,9 @@ namespace ReMap.Standalone
                     progress, cancellation.Token);
                 if (!CurrentMapReferenceRequest(requestKey, cancellation)) return;
 
-                world.ClearMapReference(); mapReferencePresent = true;
-                if (assetLibrary.Settings.showMainBsp)
+                if (!preserveExistingBsp) world.ClearMapReference();
+                mapReferencePresent = true;
+                if (assetLibrary.Settings.showMainBsp && !preserveExistingBsp)
                 {
                     var bspProgress = new Progress<float>(value => {
                         if (loadingActive && CurrentMapReferenceRequest(requestKey, cancellation))
@@ -148,7 +158,7 @@ namespace ReMap.Standalone
                         {
                             string path = await assetLibrary.ExtractAsync(record, Targets, cancellation.Token);
                             await SharedTextureCache.Normalize(assetLibrary.ModelDirectory(record),
-                                assetLibrary.Settings.textureLimit, cancellation.Token);
+                                SharedTextureCache.PreviewMaximumSize, cancellation.Token);
                             if (!CurrentMapReferenceRequest(requestKey, cancellation)) return;
                             world.models.Prepare(record.Id, path); prepared.Add(record.Id);
                         }
@@ -178,7 +188,14 @@ namespace ReMap.Standalone
             {
                 if (requestKey == mapReferenceRequestKey)
                 {
-                    world.ClearMapReference(); mapReferencePresent = false;
+                    if (preserveExistingBsp) world.ClearMprtReference();
+                    else { world.ClearMapReference(); mapReferencePresent = false; }
+                    if (rollbackMprtOnCancellation)
+                    {
+                        RollbackMprtVisibilityOption();
+                        mapReferenceRequestKey = null;
+                        mprtRolledBack = true;
+                    }
                     SetStatus(L.T("#MAP_REFERENCE_LOADING_CANCELLED"));
                 }
             }
@@ -196,10 +213,23 @@ namespace ReMap.Standalone
                 // context. Invalidate them before hiding the overlay and disposing the token,
                 // otherwise a late callback can reopen a dead dialog with a stale Cancel action.
                 loadingActive = false;
-                if (this != null && requestKey == mapReferenceRequestKey) Loading(false);
+                if (this != null && (requestKey == mapReferenceRequestKey || mprtRolledBack)) Loading(false);
                 if (ReferenceEquals(mapReferenceCancellation, cancellation)) mapReferenceCancellation = null;
                 cancellation.Dispose();
             }
+        }
+
+        private void RollbackMprtVisibilityOption()
+        {
+            if (assetLibrary.Settings.showMprtModels)
+            {
+                assetLibrary.Settings.showMprtModels = false;
+                assetLibrary.SaveSettings();
+            }
+            root?.Query<Toggle>(name: MprtVisibilityToggleName).ForEach(toggle =>
+                toggle.SetValueWithoutNotify(false));
+            RefreshInspector();
+            world.SetMapReferenceVisibility(assetLibrary.Settings.showMainBsp, false);
         }
 
         private bool CurrentMapReferenceRequest(string key, CancellationTokenSource cancellation) =>

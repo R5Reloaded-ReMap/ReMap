@@ -79,6 +79,7 @@ namespace ReMap.Standalone
             metrics.Add(ThumbnailMetric(L.T("#THUMBNAIL_REMAINING"),out thumbnailDashboardRemaining));
             metrics.Add(ThumbnailMetric(L.T("#THUMBNAIL_FAILED"),out thumbnailDashboardFailed));
             metrics.Add(ThumbnailMetric(L.T("#THUMBNAIL_SPEED"),out thumbnailDashboardSpeed));
+            thumbnailDashboardSpeed.AddToClassList("thumbnail-dashboard-speed-value");
             metrics.Add(ThumbnailMetric(L.T("#THUMBNAIL_ESTIMATED_TIME"),out thumbnailDashboardEta));
             var queues=new VisualElement();queues.AddToClassList("thumbnail-dashboard-queues");dashboard.Add(queues);
             queues.Add(ThumbnailQueuePanel(L.T("#THUMBNAIL_CURRENT_MODELS"),out thumbnailDashboardActive));
@@ -355,7 +356,7 @@ namespace ReMap.Standalone
                             GameObject model=null;Texture2D thumbnail=null;
                             try {
                                 if(!result.Paths.TryGetValue(next.Id,out var cast))throw new IOException(result.Errors.TryGetValue(next.Id,out var error)?error:L.T("#EXPORT_MISSING"));
-                                await SharedTextureCache.Normalize(assetLibrary.ModelDirectory(next),assetLibrary.Settings.textureLimit);
+                                await SharedTextureCache.Normalize(assetLibrary.ModelDirectory(next),SharedTextureCache.PreviewMaximumSize);
                                 if(this==null||backgroundStopped||generation!=assetLibrary.CacheRoot)return;
                                 if(thumbnailPaused)continue;
                                 world.models.Prepare(next.Id,cast);model=world.models.Create(next.Id,false);RememberPlacementEntry(next,model);thumbnail=ModelThumbnail.Render(model);

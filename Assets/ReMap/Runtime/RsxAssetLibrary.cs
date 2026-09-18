@@ -35,7 +35,8 @@ namespace ReMap.Standalone
         public string rsxExecutable = "", rsxBackend = "official";
         public string rconAddress = "[::ffff:127.0.0.1]:37015", rconKey = "", rconPassword = "";
         public string assetExportDirectory = "";
-        public int textureLimit = 1024;
+        // Retained so older local JSON settings remain readable. Preview textures now always use 512 px.
+        public int textureLimit = SharedTextureCache.PreviewMaximumSize;
         public string[] lastTargetMaps = Array.Empty<string>();
         public string[] lastR5ReloadedTargetMaps = Array.Empty<string>();
         public string[] lastR5FlowstateTargetMaps = Array.Empty<string>();
@@ -165,6 +166,7 @@ namespace ReMap.Standalone
         private void MigrateSettings()
         {
             Settings.targetGame = GameTargets.Normalize(Settings.targetGame);
+            Settings.textureLimit = SharedTextureCache.PreviewMaximumSize;
             Settings.rsxBackend = "official";
             Settings.flowstateCast = false;
             if (!string.IsNullOrWhiteSpace(Settings.gameDirectory))
@@ -520,7 +522,12 @@ namespace ReMap.Standalone
                     {
                         string output = Path.Combine(folder, geometryOnly ? "geometry" : "textured"); Directory.CreateDirectory(output);
                         var args = new List<string> { "-export", "--exporttypes", "mdl_", "--exportdir", output };
-                        if (!geometryOnly) args.Add("-matltextures");
+                        if (!geometryOnly)
+                        {
+                            args.Add("-matltextures");
+                            args.Add("--texturemaxsize");
+                            args.Add(SharedTextureCache.PreviewMaximumSize.ToString());
+                        }
                         if (UsesForkFeatures) { args.Add("--exportguids"); args.Add(filter); }
                         else { args.Add("--exportfilter"); args.Add("0x" + entry.guid); }
                         foreach (string dependency in geometryOnly ? new[] { "common_early.rpak" } : Common)

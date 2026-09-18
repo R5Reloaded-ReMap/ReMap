@@ -543,7 +543,7 @@ namespace ReMap.Standalone
             SetMapReferenceOrigin(originOffset);
         }
 
-        private void ClearMprtReference()
+        public void ClearMprtReference()
         {
             foreach (int index in mprtActive.ToArray())
             {

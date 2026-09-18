@@ -41,7 +41,8 @@ namespace ReMap.Standalone
                     void Export(GameAssetRecord[] models,bool geometry) {
                         string filter=Path.Combine(batch,geometry?"geometry-guids.txt":"guids.txt");File.WriteAllLines(filter,models.Select(e=>e.guid));
                         string output=Path.Combine(batch,geometry?"geometry":"textured");Directory.CreateDirectory(output);
-                        var args=new List<string>{"-export","--exporttypes","mdl_","--exportdir",output,"--exportguids",filter};if(!geometry)args.Add("-matltextures");
+                        var args=new List<string>{"-export","--exporttypes","mdl_","--exportdir",output,"--exportguids",filter};
+                        if(!geometry){args.Add("-matltextures");args.Add("--texturemaxsize");args.Add(SharedTextureCache.PreviewMaximumSize.ToString());}
                         foreach(string dependency in geometry?new[]{"common_early.rpak"}:Common)if(dependency!=archive&&File.Exists(Path.Combine(PakDirectory,dependency)))args.Add(Path.Combine(PakDirectory,dependency));
                         args.Add(Path.Combine(PakDirectory,archive));string failure=null;
                         try {RunRsx(args,batch,geometry,linked.Token);}catch(Exception ex)when(ex is IOException||ex is TimeoutException){failure=ex.Message;}

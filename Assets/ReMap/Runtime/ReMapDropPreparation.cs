@@ -42,7 +42,7 @@ namespace ReMap.Standalone {
                 if(path==null){SetStatus(L.T("#EXTRACTING_DROP")+record.Name);path=await assetLibrary.ExtractAsync(record,Targets);}
                 if(this==null)return null;
                 if(generation!=assetLibrary.CacheRoot||!record.Supports(Targets))throw new InvalidOperationException(L.T("#ARCHIVES_CHANGED_DROP_CANCELED"));
-                await SharedTextureCache.Normalize(assetLibrary.ModelDirectory(record),assetLibrary.Settings.textureLimit);
+                await SharedTextureCache.Normalize(assetLibrary.ModelDirectory(record),SharedTextureCache.PreviewMaximumSize);
                 if(this==null)return null;
                 if(generation!=assetLibrary.CacheRoot)throw new InvalidOperationException(L.T("#SOURCES_CHANGED_DROP_CANCELED"));
                 world.models.Prepare(record.Id,path);var model=world.models.Create(record.Id,false);
