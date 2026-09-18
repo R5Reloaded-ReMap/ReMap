@@ -120,7 +120,7 @@ namespace ReMap.Standalone
             ResolveOfficialRsx();
             SyncActiveProfile();
             PakDirectory = FindPakDirectory(Settings.gameDirectory);
-            previewSession?.Dispose(); previewSession = null; Records.Clear(); CacheRoot = null; DiscoverMaps();
+            previewSession?.Dispose(); previewSession = null; previewArchivePlan=null; Records.Clear(); CacheRoot = null; DiscoverMaps();
             SaveSettings();
         }
         public void ConfigureAssetExportDirectory(string directory)
@@ -133,7 +133,7 @@ namespace ReMap.Standalone
             Settings.assetExportDirectory = string.Equals(resolved, defaultDirectory, StringComparison.OrdinalIgnoreCase) ? "" : resolved;
             if (!string.Equals(previous, resolved, StringComparison.OrdinalIgnoreCase))
             {
-                previewSession?.Dispose(); previewSession = null; Records.Clear(); CacheRoot = null;
+                previewSession?.Dispose(); previewSession = null; previewArchivePlan=null; Records.Clear(); CacheRoot = null;
             }
             SaveSettings();
         }
@@ -149,7 +149,7 @@ namespace ReMap.Standalone
         {
             if (worker.CurrentCount == 0) throw new InvalidOperationException(L.T("#WAIT_RSX_OPERATION_FINISH"));
             targetGame = GameTargets.Normalize(targetGame);
-            if (TargetGame != targetGame) { previewSession?.Dispose(); previewSession = null; Records.Clear(); CacheRoot = null; }
+            if (TargetGame != targetGame) { previewSession?.Dispose(); previewSession = null; previewArchivePlan=null; Records.Clear(); CacheRoot = null; }
             Settings.targetGame = targetGame;
             SyncActiveProfile();
             PakDirectory = FindPakDirectory(Settings.gameDirectory);
@@ -374,7 +374,7 @@ namespace ReMap.Standalone
             await worker.WaitAsync(linked.Token);
             try
             {
-                previewSession?.Dispose(); previewSession=null; // Release the CLI mutex before index subprocesses.
+                previewSession?.Dispose(); previewSession=null; previewArchivePlan=null; // Release the CLI mutex before index subprocesses.
                 string root = await Task.Run(() => ActivateCacheGeneration(CacheDirectory, Fingerprint()), linked.Token);
                 var records = await Task.Run(() => {
                     var result = new List<GameAssetRecord>();
@@ -576,6 +576,6 @@ namespace ReMap.Standalone
             if (value.Contains("\"") || value.Contains("\n") || value.Contains("\r")) throw new ArgumentException(L.T("#INVALID_RSX_ARGUMENT"));
             return "\"" + value.TrimEnd('\\') + "\"";
         }
-        public void Dispose() { shutdown.Cancel(); previewSession?.Dispose(); previewSession=null; }
+        public void Dispose() { shutdown.Cancel(); previewSession?.Dispose(); previewSession=null; previewArchivePlan=null; }
     }
 }

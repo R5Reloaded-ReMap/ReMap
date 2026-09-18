@@ -36,9 +36,17 @@ namespace ReMap.Standalone
         private ProgressBar loadingProgress;
         private Button loadingCancelButton;
         private Action loadingCancelAction;
-        private VisualElement thumbnailStatusRow;
-        private Button thumbnailPauseButton;
+        private VisualElement thumbnailStatusRow, thumbnailDashboard;
+        private ProgressBar thumbnailDashboardProgress;
+        private Label thumbnailDashboardState, thumbnailDashboardDetail, thumbnailDashboardCompleted,
+            thumbnailDashboardRemaining, thumbnailDashboardFailed, thumbnailDashboardSpeed, thumbnailDashboardEta,
+            thumbnailDashboardActive, thumbnailDashboardQueued, thumbnailDashboardPerformance;
+        private Button thumbnailPauseButton, thumbnailDashboardPauseButton;
         private int thumbnailDone, thumbnailFailed, thumbnailTotal, thumbnailAvailable;
+        private bool thumbnailDashboardShownForRun, thumbnailRendering;
+        private float thumbnailPerformanceStamp, thumbnailActiveSeconds, thumbnailLastExtractionSeconds,
+            thumbnailLastGenerationSeconds;
+        private int thumbnailRunStartDone;
         private void BuildLoadingUI()
         {
             loadingOverlay = new VisualElement(); loadingOverlay.AddToClassList("loading-overlay"); root.Add(loadingOverlay);
@@ -52,10 +60,70 @@ namespace ReMap.Standalone
             var row = new VisualElement(); thumbnailStatusRow=row; row.AddToClassList("thumbnail-progress-row"); row.style.flexDirection = FlexDirection.Row;
             libraryFooter.Add(row);
             thumbnailProgress = Label(L.T("#THUMBNAILS_LOCAL_CACHE"), "library-state"); thumbnailProgress.style.flexGrow = 1; row.Add(thumbnailProgress);
-            var pause = Button(L.T("#PAUSE_THUMBNAILS"), () => { thumbnailPaused = !thumbnailPaused; if(thumbnailPaused){InterruptBackgroundFor();_=assetLibrary.ReleasePreviewSessionAsync();} else _=PrepareThumbnails(); });
-            thumbnailPauseButton=pause;pause.schedule.Execute(() => pause.text = thumbnailPaused ? L.T("#RESUME_THUMBNAILS") : L.T("#PAUSE_THUMBNAILS")).Every(500); row.Add(pause);
+            row.Add(Button(L.T("#THUMBNAIL_DETAILS"), () => ShowThumbnailDashboard(true)));
+            thumbnailPauseButton=ImmediateThumbnailPauseButton();row.Add(thumbnailPauseButton);
             row.style.display=DisplayStyle.None;
+
+            thumbnailDashboard=new VisualElement();thumbnailDashboard.AddToClassList("thumbnail-dashboard");root.Add(thumbnailDashboard);
+            var dashboard=new VisualElement();dashboard.AddToClassList("thumbnail-dashboard-panel");thumbnailDashboard.Add(dashboard);
+            var heading=new VisualElement();heading.AddToClassList("thumbnail-dashboard-heading");dashboard.Add(heading);
+            var headingText=new VisualElement();headingText.style.flexGrow=1;heading.Add(headingText);
+            headingText.Add(Label(L.T("#THUMBNAIL_WORK_TITLE"),"thumbnail-dashboard-title"));
+            headingText.Add(Label(L.T("#THUMBNAIL_WORK_SUBTITLE"),"thumbnail-dashboard-subtitle"));
+            heading.Add(Button(L.T("#MINIMIZE_TO_BACKGROUND"),()=>ShowThumbnailDashboard(false),"thumbnail-dashboard-minimize"));
+            thumbnailDashboardState=Label(L.T("#THUMBNAIL_STAGE_PREPARING"),"thumbnail-dashboard-state");dashboard.Add(thumbnailDashboardState);
+            thumbnailDashboardDetail=Label("","thumbnail-dashboard-detail");dashboard.Add(thumbnailDashboardDetail);
+            thumbnailDashboardProgress=new ProgressBar{lowValue=0,highValue=1,value=0};thumbnailDashboardProgress.AddToClassList("thumbnail-dashboard-progress");dashboard.Add(thumbnailDashboardProgress);
+            var metrics=new VisualElement();metrics.AddToClassList("thumbnail-dashboard-metrics");dashboard.Add(metrics);
+            metrics.Add(ThumbnailMetric(L.T("#THUMBNAIL_COMPLETED"),out thumbnailDashboardCompleted));
+            metrics.Add(ThumbnailMetric(L.T("#THUMBNAIL_REMAINING"),out thumbnailDashboardRemaining));
+            metrics.Add(ThumbnailMetric(L.T("#THUMBNAIL_FAILED"),out thumbnailDashboardFailed));
+            metrics.Add(ThumbnailMetric(L.T("#THUMBNAIL_SPEED"),out thumbnailDashboardSpeed));
+            metrics.Add(ThumbnailMetric(L.T("#THUMBNAIL_ESTIMATED_TIME"),out thumbnailDashboardEta));
+            var queues=new VisualElement();queues.AddToClassList("thumbnail-dashboard-queues");dashboard.Add(queues);
+            queues.Add(ThumbnailQueuePanel(L.T("#THUMBNAIL_CURRENT_MODELS"),out thumbnailDashboardActive));
+            queues.Add(ThumbnailQueuePanel(L.T("#THUMBNAIL_NEXT_MODELS"),out thumbnailDashboardQueued));
+            thumbnailDashboardPerformance=Label("","thumbnail-dashboard-performance");dashboard.Add(thumbnailDashboardPerformance);
+            var actions=new VisualElement();actions.AddToClassList("thumbnail-dashboard-actions");dashboard.Add(actions);
+            thumbnailDashboardPauseButton=ImmediateThumbnailPauseButton();thumbnailDashboardPauseButton.AddToClassList("primary");actions.Add(thumbnailDashboardPauseButton);
+            actions.Add(Button(L.T("#MINIMIZE_TO_BACKGROUND"),()=>ShowThumbnailDashboard(false)));
+            thumbnailDashboard.style.display=DisplayStyle.None;
         }
+        private VisualElement ThumbnailMetric(string title,out Label value) {
+            var metric=new VisualElement();metric.AddToClassList("thumbnail-dashboard-metric");
+            metric.Add(Label(title,"thumbnail-dashboard-metric-title"));value=Label("—","thumbnail-dashboard-metric-value");metric.Add(value);return metric;
+        }
+        private VisualElement ThumbnailQueuePanel(string title,out Label content) {
+            var panel=new VisualElement();panel.AddToClassList("thumbnail-dashboard-queue");panel.Add(Label(title,"thumbnail-dashboard-queue-title"));
+            content=Label("","thumbnail-dashboard-queue-content");panel.Add(content);return panel;
+        }
+        private Button ImmediateThumbnailPauseButton() {
+            var button=new Button{focusable=true,text=L.T(thumbnailPaused?"#RESUME_THUMBNAILS":"#PAUSE_THUMBNAILS")};
+            button.RegisterCallback<PointerDownEvent>(evt=> {
+                if(evt.button!=0)return;ToggleThumbnailPause();evt.StopImmediatePropagation();
+            },TrickleDown.TrickleDown);
+            button.RegisterCallback<NavigationSubmitEvent>(evt=> {ToggleThumbnailPause();evt.StopImmediatePropagation();});
+            UpdateThumbnailPauseButtons();return button;
+        }
+        private void ToggleThumbnailPause() {
+            SampleThumbnailPerformance();thumbnailPaused=!thumbnailPaused;UpdateThumbnailPauseButtons();
+            var targets=new HashSet<string>(Targets,StringComparer.OrdinalIgnoreCase);
+            UpdateThumbnailProgress(assetLibrary.Records.Where(r=>r.Supports(targets)).ToArray());
+            if(thumbnailPaused){InterruptBackgroundFor();_=assetLibrary.ReleasePreviewSessionAsync();}
+            else _=PrepareThumbnails();
+        }
+        private void UpdateThumbnailPauseButtons() {
+            string text=L.T(thumbnailPaused?"#RESUME_THUMBNAILS":"#PAUSE_THUMBNAILS");
+            if(thumbnailPauseButton!=null)thumbnailPauseButton.text=text;
+            if(thumbnailDashboardPauseButton!=null)thumbnailDashboardPauseButton.text=text;
+        }
+        private void ShowThumbnailDashboard(bool show) {
+            if(thumbnailDashboard==null)return;
+            thumbnailDashboard.style.display=show?DisplayStyle.Flex:DisplayStyle.None;
+            if(world?.Camera!=null)world.Camera.enabled=!show;
+            if(show){world?.CancelNavigation();world?.ClearPreview();thumbnailDashboard.BringToFront();UpdateThumbnailDashboard();}
+        }
+        private bool ThumbnailDashboardOpen=>thumbnailDashboard?.style.display.value==DisplayStyle.Flex;
         private void Loading(bool show, string message = null, float? progress = null, Action cancel = null)
         {
             if (loadingOverlay == null) return;
@@ -74,6 +142,9 @@ namespace ReMap.Standalone
         private void ReadThumbnailState() {
             if(thumbnailStateRoot==assetLibrary.CacheRoot&&thumbnailStateCount==assetLibrary.Records.Count)return;
             if(thumbnailStateRoot!=assetLibrary.CacheRoot)preparedPlacementEntries.Clear();
+            thumbnailDashboardShownForRun=false;thumbnailPerformanceStamp=0;
+            thumbnailActiveSeconds=0;thumbnailLastExtractionSeconds=0;thumbnailLastGenerationSeconds=0;thumbnailRunStartDone=0;
+            if(thumbnailDashboard!=null){thumbnailDashboard.style.display=DisplayStyle.None;if(world?.Camera!=null)world.Camera.enabled=true;}
             thumbnailStateRoot=assetLibrary.CacheRoot;thumbnailStateCount=assetLibrary.Records.Count;readyThumbnails.Clear();availableThumbnails.Clear();failedThumbnails.Clear();thumbnailAlbedo.Clear();
             if(thumbnailStateRoot==null)return;
             foreach(var record in assetLibrary.Records) {
@@ -97,6 +168,45 @@ namespace ReMap.Standalone
             if(thumbnailPaused)status+=L.T("#PAUSED");
             if(!string.IsNullOrEmpty(detail))status+=detail;
             thumbnailProgress.text=status;
+            UpdateThumbnailDashboard(eligible,detail);
+        }
+        private void SampleThumbnailPerformance() {
+            float now=Time.realtimeSinceStartup;
+            if(thumbnailPerformanceStamp>0&&!thumbnailPaused&&thumbnailLoopRunning&&(thumbnailRendering||extractingThumbnails.Count>0))
+                thumbnailActiveSeconds+=Mathf.Max(0,now-thumbnailPerformanceStamp);
+            thumbnailPerformanceStamp=now;
+        }
+        private void UpdateThumbnailDashboard(GameAssetRecord[] eligible=null,string detail=null) {
+            if(thumbnailDashboardState==null||assetLibrary==null)return;
+            if(eligible==null) {
+                var targets=new HashSet<string>(Targets,StringComparer.OrdinalIgnoreCase);
+                eligible=assetLibrary.Records.Where(r=>r.Supports(targets)).ToArray();
+            }
+            SampleThumbnailPerformance();
+            int remaining=Mathf.Max(0,thumbnailTotal-thumbnailDone-thumbnailFailed);
+            int completedThisRun=Mathf.Max(0,thumbnailDone-thumbnailRunStartDone);
+            float perMinute=thumbnailActiveSeconds>0?completedThisRun*60f/thumbnailActiveSeconds:0;
+            string stage=thumbnailPaused?"#THUMBNAIL_STAGE_PAUSED":remaining==0?"#THUMBNAIL_STAGE_COMPLETE":thumbnailRendering?"#THUMBNAIL_STAGE_GENERATING":extractingThumbnails.Count>0?"#THUMBNAIL_STAGE_EXTRACTING":"#THUMBNAIL_STAGE_PREPARING";
+            thumbnailDashboardState.text=L.T(stage);
+            thumbnailDashboardDetail.text=string.IsNullOrWhiteSpace(detail)?L.T("#THUMBNAIL_WORKING_IN_BACKGROUND"):detail.Trim().TrimStart('·').Trim();
+            thumbnailDashboardProgress.value=thumbnailTotal<=0?0:(float)(thumbnailDone+thumbnailFailed)/thumbnailTotal;
+            thumbnailDashboardProgress.title=thumbnailTotal<=0?"0 %":Mathf.RoundToInt(100f*(thumbnailDone+thumbnailFailed)/thumbnailTotal)+" %";
+            thumbnailDashboardCompleted.text=thumbnailDone+" / "+thumbnailTotal;
+            thumbnailDashboardRemaining.text=remaining.ToString();
+            thumbnailDashboardFailed.text=thumbnailFailed.ToString();
+            thumbnailDashboardSpeed.text=perMinute>0?L.F("#THUMBNAIL_MODELS_PER_MINUTE_ARG0",perMinute.ToString("0.0")):"—";
+            thumbnailDashboardEta.text=remaining==0?"0 s":perMinute>0?FormatThumbnailDuration(remaining/perMinute*60f):L.T("#THUMBNAIL_ETA_UNKNOWN");
+            var active=eligible.Where(r=>extractingThumbnails.Contains(r.Id)).Take(8).ToArray();
+            thumbnailDashboardActive.text=active.Length==0?L.T("#THUMBNAIL_NO_ACTIVE_MODEL"):string.Join("\n",active.Select(r=>"• "+r.Name));
+            var queued=eligible.Where(r=>!readyThumbnails.Contains(r.Id)&&!failedThumbnails.Contains(r.Id)&&!extractingThumbnails.Contains(r.Id)).Take(10).ToArray();
+            thumbnailDashboardQueued.text=queued.Length==0?L.T("#THUMBNAIL_QUEUE_EMPTY"):string.Join("\n",queued.Select(r=>"• "+r.Name));
+            thumbnailDashboardPerformance.text=L.F("#THUMBNAIL_PERFORMANCE_ARG0_ARG1",thumbnailLastExtractionSeconds.ToString("0.0"),thumbnailLastGenerationSeconds.ToString("0.0"));
+            UpdateThumbnailPauseButtons();
+        }
+        private static string FormatThumbnailDuration(float seconds) {
+            if(!float.IsFinite(seconds)||seconds<0)return "—";
+            int total=Mathf.CeilToInt(seconds),minutes=total/60;
+            return minutes>0?minutes+" min "+total%60+" s":total+" s";
         }
         [Serializable] private sealed class ThumbnailInfo { public int missingAlbedo; public int rendererVersion; }
         private const int ThumbnailRendererVersion=4;
@@ -129,6 +239,7 @@ namespace ReMap.Standalone
             public CancellationTokenSource cancellation;
             public Task<AssetBatchResult> work;
             public IVisualElementScheduledItem progress;
+            public float started;
         }
         private bool ThumbnailExternalWorkBlocked() => indexRequested||pendingAssetDrops>0||thumbnailPaused||SettingsOpen||IndexingOpen||inspectorDirty||libraryDragging||draggingGizmo||sceneSelectionPending||assemblyDragging;
         private bool ThumbnailWorkBlocked() => assetBusy||ThumbnailExternalWorkBlocked();
@@ -180,7 +291,7 @@ namespace ReMap.Standalone
             return cached.Length>0?cached:batch;
         }
         private ThumbnailExtraction StartThumbnailExtraction(GameAssetRecord[] batch,string[] targets,GameAssetRecord[] eligible) {
-            var extraction=new ThumbnailExtraction{batch=batch,cancellation=new CancellationTokenSource()};
+            var extraction=new ThumbnailExtraction{batch=batch,cancellation=new CancellationTokenSource(),started=Time.realtimeSinceStartup};
             extractingThumbnails.UnionWith(batch.Select(r=>r.Id));RefreshCatalog();
             bool multiple=batch.Length>1;float started=Time.realtimeSinceStartup;
             UpdateThumbnailProgress(eligible,multiple?L.F("#EXTRACTING_ARG0_MODELS",batch.Length):L.F("#PREPARING_ARG0",batch[0].Name));
@@ -195,6 +306,7 @@ namespace ReMap.Standalone
         private async Task<AssetBatchResult> FinishThumbnailExtraction(ThumbnailExtraction extraction) {
             try{return await extraction.work;}
             finally {
+                thumbnailLastExtractionSeconds=Mathf.Max(0,Time.realtimeSinceStartup-extraction.started);
                 extraction.progress.Pause();
                 if(ReferenceEquals(thumbnailExport,extraction.cancellation))thumbnailExport=null;
                 extraction.cancellation.Dispose();
@@ -210,8 +322,12 @@ namespace ReMap.Standalone
                 while(this!=null&&!backgroundStopped&&generation==assetLibrary.CacheRoot) {
                     string[] targets=Targets;var targetSet=new HashSet<string>(targets,StringComparer.OrdinalIgnoreCase);
                     var eligible=assetLibrary.Records.Where(r=>r.Supports(targetSet)).ToArray();
+                    if(thumbnailPerformanceStamp<=0)thumbnailRunStartDone=eligible.Count(r=>readyThumbnails.Contains(r.Id));
                     UpdateThumbnailProgress(eligible);
                     UpdateThumbnailControls();
+                    if(!thumbnailDashboardShownForRun&&thumbnailDone+thumbnailFailed<thumbnailTotal&&!Environment.GetCommandLineArgs().AnySmokeFlag()) {
+                        thumbnailDashboardShownForRun=true;ShowThumbnailDashboard(true);
+                    }
                     if(thumbnailDone+thumbnailFailed>=thumbnailTotal&&prefetched==null)break;
                     if(ThumbnailWorkBlocked()){await Task.Delay(200);continue;}
                     bool continuous=assetLibrary.ContinuousPreviewsSupported;
@@ -231,13 +347,17 @@ namespace ReMap.Standalone
                             var nextBatch=NextThumbnailBatch(eligible,targetSet,targets,batchSize);
                             if(nextBatch.Length>0)prefetched=StartThumbnailExtraction(nextBatch,targets,eligible);
                         }
-                        var reloadScene=new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+                        var reloadScene=new HashSet<string>(StringComparer.OrdinalIgnoreCase);thumbnailRendering=true;
                         foreach(var next in batch) {
+                            await Task.Yield();
+                            if(thumbnailPaused)break;
+                            float generationStarted=Time.realtimeSinceStartup;
                             GameObject model=null;Texture2D thumbnail=null;
                             try {
                                 if(!result.Paths.TryGetValue(next.Id,out var cast))throw new IOException(result.Errors.TryGetValue(next.Id,out var error)?error:L.T("#EXPORT_MISSING"));
                                 await SharedTextureCache.Normalize(assetLibrary.ModelDirectory(next),assetLibrary.Settings.textureLimit);
                                 if(this==null||backgroundStopped||generation!=assetLibrary.CacheRoot)return;
+                                if(thumbnailPaused)continue;
                                 world.models.Prepare(next.Id,cast);model=world.models.Create(next.Id,false);RememberPlacementEntry(next,model);thumbnail=ModelThumbnail.Render(model);
                                 if(snapshot.objects.Any(item=>!item.isGroup&&(string.Equals(item.assetId,next.Id,StringComparison.OrdinalIgnoreCase)||GameAssetIndex.SameModelPath(item.gameModelPath,next.modelPath))))reloadScene.Add(next.Id);
                                 File.WriteAllBytes(Path.Combine(assetLibrary.ModelDirectory(next),"thumbnail.png"),thumbnail.EncodeToPNG());
@@ -245,9 +365,9 @@ namespace ReMap.Standalone
                                 SaveThumbnailInfo(next,world.models.MissingAlbedo(next.Id));
                                 readyThumbnails.Add(next.Id);failedThumbnails.Remove(next.Id);previewFailures.Remove(next.Id);
                             }catch(Exception ex){if(this==null||backgroundStopped||generation!=assetLibrary.CacheRoot)return;ThumbnailFailure(next,ex);}
-                            finally {if(this!=null&&!backgroundStopped){if(model!=null)world.models.Release(next.Id,model);if(thumbnail!=null)Destroy(thumbnail);extractingThumbnails.Remove(next.Id);UpdateThumbnailProgress(eligible);UpdateThumbnailControls();RefreshCatalog();}}
-                            await Task.Yield();
+                            finally {thumbnailLastGenerationSeconds=Mathf.Max(0,Time.realtimeSinceStartup-generationStarted);if(this!=null&&!backgroundStopped){if(model!=null)world.models.Release(next.Id,model);if(thumbnail!=null)Destroy(thumbnail);extractingThumbnails.Remove(next.Id);UpdateThumbnailProgress(eligible);UpdateThumbnailControls();RefreshCatalog();}}
                         }
+                        thumbnailRendering=false;UpdateThumbnailDashboard(eligible);
                         if(reloadScene.Count>0){foreach(string id in reloadScene)world.Reload(id);Refresh();}
                     }catch(OperationCanceledException) { Debug.Log("REMAP_THUMBNAIL_PREEMPTED"); /* Requeued without failure. */ }
                     catch(Exception ex){if(this!=null&&!backgroundStopped)foreach(var entry in batch)if(!readyThumbnails.Contains(entry.Id))ThumbnailFailure(entry,ex);}
@@ -257,6 +377,7 @@ namespace ReMap.Standalone
                     if(continuous)await Task.Yield();else await Task.Delay(150);
                 }
             }finally{
+                thumbnailRendering=false;
                 try{
                     if(prefetched!=null) {
                         prefetched.cancellation.Cancel();
@@ -283,6 +404,7 @@ namespace ReMap.Standalone
             thumbnailStatusRow.style.display=show?DisplayStyle.Flex:DisplayStyle.None;
             if(libraryFooter!=null)libraryFooter.style.display=show?DisplayStyle.Flex:DisplayStyle.None;
             if(thumbnailPauseButton!=null)thumbnailPauseButton.style.display=!complete&&(thumbnailLoopRunning||visiblePending)?DisplayStyle.Flex:DisplayStyle.None;
+            if(thumbnailDashboardPauseButton!=null)thumbnailDashboardPauseButton.style.display=complete?DisplayStyle.None:DisplayStyle.Flex;
         }
         private void ThumbnailFailure(GameAssetRecord entry,Exception ex) {
             string folder=assetLibrary.ModelDirectory(entry);Directory.CreateDirectory(folder);File.WriteAllText(Path.Combine(folder,"thumbnail.error.txt"),ex.Message);

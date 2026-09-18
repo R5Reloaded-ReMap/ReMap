@@ -9,6 +9,7 @@ namespace ReMap.Standalone
     public sealed partial class RsxAssetLibrary
     {
         private RsxPreviewSession previewSession;
+        private string[] previewArchivePlan;
         public int PreviewSessionStarts { get; private set; }
         public int PreviewArchiveLoads => previewSession?.ArchiveLoads??0;
         public int PreviewProcessId => previewSession?.ProcessId??0;
@@ -38,6 +39,20 @@ namespace ReMap.Standalone
             previewSession?.Dispose();
             previewSession=null;
         }
+        private string[] PreviewArchivePlan(string[] targets,string requiredArchive)
+        {
+            if(previewArchivePlan!=null)
+            {
+                if(previewArchivePlan.Any(path=>string.Equals(Path.GetFileName(path),requiredArchive,StringComparison.OrdinalIgnoreCase)))return previewArchivePlan;
+                previewArchivePlan=previewArchivePlan.Concat(new[]{Path.Combine(PakDirectory,requiredArchive)}).Where(File.Exists).Distinct(StringComparer.OrdinalIgnoreCase).ToArray();
+                return previewArchivePlan;
+            }
+            string[] available=Directory.EnumerateFiles(PakDirectory,"*.rpak",SearchOption.TopDirectoryOnly).Select(Path.GetFileName).ToArray();
+            string[] selectedMaps=SelectMapArchives(targets,available);
+            var pendingOrigins=new System.Collections.Generic.HashSet<string>(Records.Where(record=>record.Supports(targets)&&CachedModel(record)==null).Select(record=>OriginArchive(record,targets)),StringComparer.OrdinalIgnoreCase);
+            previewArchivePlan=Common.Concat(selectedMaps.Where(pendingOrigins.Contains)).Concat(new[]{requiredArchive}).Distinct(StringComparer.OrdinalIgnoreCase).Select(name=>Path.Combine(PakDirectory,name)).Where(File.Exists).ToArray();
+            return previewArchivePlan;
+        }
         // Called with the existing library semaphore held. Do not cancel a loaded session for a page change.
         // Finish the current model, commit its cache, then honor cancellation before the next request.
         private string ExtractContinuous(GameAssetRecord entry,string[] targets)
@@ -50,8 +65,7 @@ namespace ReMap.Standalone
         {
             shutdown.Token.ThrowIfCancellationRequested();
             string archive=OriginArchive(entries[0],targets);
-            string[] available=Directory.EnumerateFiles(PakDirectory,"*.rpak",SearchOption.TopDirectoryOnly).Select(Path.GetFileName).ToArray();
-            string[] archives=Common.Concat(SelectMapArchives(targets,available)).Concat(new[]{archive}).Distinct(StringComparer.OrdinalIgnoreCase).Select(a=>Path.Combine(PakDirectory,a)).Where(File.Exists).ToArray();
+            string[] archives=PreviewArchivePlan(targets,archive);
             try
             {
                 EnsurePreviewSession();
@@ -178,7 +192,7 @@ namespace ReMap.Standalone
         }
         public async Task ReleasePreviewSessionAsync()
         {
-            await worker.WaitAsync();try{previewSession?.Dispose();previewSession=null;}finally{worker.Release();}
+            await worker.WaitAsync();try{previewSession?.Dispose();previewSession=null;previewArchivePlan=null;}finally{worker.Release();}
         }
     }
 }

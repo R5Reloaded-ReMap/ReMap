@@ -4565,6 +4565,94 @@
     {
       "key": "#RELEASE_BUILD",
       "text": "Optimized build"
+    },
+    {
+      "key": "#THUMBNAIL_DETAILS",
+      "text": "Details"
+    },
+    {
+      "key": "#THUMBNAIL_WORK_TITLE",
+      "text": "Preparing model thumbnails"
+    },
+    {
+      "key": "#THUMBNAIL_WORK_SUBTITLE",
+      "text": "ReMap is focusing its resources on extraction and thumbnail generation. You can minimize this page and keep working."
+    },
+    {
+      "key": "#MINIMIZE_TO_BACKGROUND",
+      "text": "Run in background"
+    },
+    {
+      "key": "#THUMBNAIL_COMPLETED",
+      "text": "Completed"
+    },
+    {
+      "key": "#THUMBNAIL_REMAINING",
+      "text": "Remaining"
+    },
+    {
+      "key": "#THUMBNAIL_FAILED",
+      "text": "Failed"
+    },
+    {
+      "key": "#THUMBNAIL_SPEED",
+      "text": "Average speed"
+    },
+    {
+      "key": "#THUMBNAIL_ESTIMATED_TIME",
+      "text": "Estimated time"
+    },
+    {
+      "key": "#THUMBNAIL_CURRENT_MODELS",
+      "text": "Models in progress"
+    },
+    {
+      "key": "#THUMBNAIL_NEXT_MODELS",
+      "text": "Models remaining"
+    },
+    {
+      "key": "#THUMBNAIL_STAGE_PREPARING",
+      "text": "Preparing the next batch"
+    },
+    {
+      "key": "#THUMBNAIL_STAGE_EXTRACTING",
+      "text": "Extracting models with RSX"
+    },
+    {
+      "key": "#THUMBNAIL_STAGE_GENERATING",
+      "text": "Generating thumbnails"
+    },
+    {
+      "key": "#THUMBNAIL_STAGE_PAUSED",
+      "text": "Thumbnail preparation paused"
+    },
+    {
+      "key": "#THUMBNAIL_STAGE_COMPLETE",
+      "text": "Thumbnail preparation complete"
+    },
+    {
+      "key": "#THUMBNAIL_WORKING_IN_BACKGROUND",
+      "text": "The queue continues automatically while this application is open."
+    },
+    {
+      "key": "#THUMBNAIL_MODELS_PER_MINUTE_ARG0",
+      "text": "{0} models/min"
+    },
+    {
+      "key": "#THUMBNAIL_ETA_UNKNOWN",
+      "text": "Calculating…"
+    },
+    {
+      "key": "#THUMBNAIL_NO_ACTIVE_MODEL",
+      "text": "Waiting for the next model…"
+    },
+    {
+      "key": "#THUMBNAIL_QUEUE_EMPTY",
+      "text": "No model is waiting."
+    },
+    {
+      "key": "#THUMBNAIL_PERFORMANCE_ARG0_ARG1",
+      "text": "Last extraction: {0} s · last generation: {1} s"
     }
   ]
 }

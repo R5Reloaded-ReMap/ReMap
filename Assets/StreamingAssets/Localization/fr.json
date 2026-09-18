@@ -4565,6 +4565,94 @@
     {
       "key": "#RELEASE_BUILD",
       "text": "Build optimisé"
+    },
+    {
+      "key": "#THUMBNAIL_DETAILS",
+      "text": "Suivi"
+    },
+    {
+      "key": "#THUMBNAIL_WORK_TITLE",
+      "text": "Préparation des miniatures de modèles"
+    },
+    {
+      "key": "#THUMBNAIL_WORK_SUBTITLE",
+      "text": "ReMap concentre ses ressources sur l’extraction et la génération des miniatures. Vous pouvez réduire cette page et continuer à travailler."
+    },
+    {
+      "key": "#MINIMIZE_TO_BACKGROUND",
+      "text": "Continuer en arrière-plan"
+    },
+    {
+      "key": "#THUMBNAIL_COMPLETED",
+      "text": "Terminées"
+    },
+    {
+      "key": "#THUMBNAIL_REMAINING",
+      "text": "Restantes"
+    },
+    {
+      "key": "#THUMBNAIL_FAILED",
+      "text": "Échecs"
+    },
+    {
+      "key": "#THUMBNAIL_SPEED",
+      "text": "Vitesse moyenne"
+    },
+    {
+      "key": "#THUMBNAIL_ESTIMATED_TIME",
+      "text": "Temps estimé"
+    },
+    {
+      "key": "#THUMBNAIL_CURRENT_MODELS",
+      "text": "Modèles en cours"
+    },
+    {
+      "key": "#THUMBNAIL_NEXT_MODELS",
+      "text": "Modèles restants"
+    },
+    {
+      "key": "#THUMBNAIL_STAGE_PREPARING",
+      "text": "Préparation du prochain lot"
+    },
+    {
+      "key": "#THUMBNAIL_STAGE_EXTRACTING",
+      "text": "Extraction des modèles avec RSX"
+    },
+    {
+      "key": "#THUMBNAIL_STAGE_GENERATING",
+      "text": "Génération des miniatures"
+    },
+    {
+      "key": "#THUMBNAIL_STAGE_PAUSED",
+      "text": "Préparation des miniatures en pause"
+    },
+    {
+      "key": "#THUMBNAIL_STAGE_COMPLETE",
+      "text": "Préparation des miniatures terminée"
+    },
+    {
+      "key": "#THUMBNAIL_WORKING_IN_BACKGROUND",
+      "text": "La file continue automatiquement tant que l’application reste ouverte."
+    },
+    {
+      "key": "#THUMBNAIL_MODELS_PER_MINUTE_ARG0",
+      "text": "{0} modèles/min"
+    },
+    {
+      "key": "#THUMBNAIL_ETA_UNKNOWN",
+      "text": "Calcul en cours…"
+    },
+    {
+      "key": "#THUMBNAIL_NO_ACTIVE_MODEL",
+      "text": "En attente du prochain modèle…"
+    },
+    {
+      "key": "#THUMBNAIL_QUEUE_EMPTY",
+      "text": "Aucun modèle en attente."
+    },
+    {
+      "key": "#THUMBNAIL_PERFORMANCE_ARG0_ARG1",
+      "text": "Dernière extraction : {0} s · dernière génération : {1} s"
     }
   ]
 }

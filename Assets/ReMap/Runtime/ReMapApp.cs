@@ -389,7 +389,7 @@ namespace ReMap.Standalone
 
             var panelPosition = RuntimePanelUtils.ScreenToPanel(root.panel, new Vector2(mousePosition.x, Screen.height - mousePosition.y));
 
-            if (layoutResizing || BlockingDialogOpen || loadingOverlay?.style.display.value == DisplayStyle.Flex) { world.CancelNavigation(); world.ClearPreview(); return; }
+            if (layoutResizing || BlockingDialogOpen || ThumbnailDashboardOpen || loadingOverlay?.style.display.value == DisplayStyle.Flex) { world.CancelNavigation(); world.ClearPreview(); return; }
 
             bool inside = bounds.Contains(panelPosition) && !PointerOverFloatingPanel(panelPosition);
 
