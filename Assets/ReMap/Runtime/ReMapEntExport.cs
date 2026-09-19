@@ -762,11 +762,10 @@ namespace ReMap.Standalone
                     offset, false, out Vector3 cable);
                 adjusted.Add(cable);
             }
-            List<Vector3> curve = BezierPath(adjusted, zipline.curvedZiplineSegments);
-            // The working script path creates every rope, links the complete chain, then
-            // dispatches it. Entity lumps spawn sequentially, so serialize the chain in
-            // reverse order and use the native link GUID relationship from LinkToEnt.
-            for (int index = curve.Count - 1; index >= 0; index--)
+            // Native ropes interpolate between authored keyframes. Baking the editor's
+            // preview curve here created segmentsPerSpan entities for every span and made
+            // a four-point zipline expand to twenty-five rope entities.
+            for (int index = 0; index < adjusted.Count; index++)
             {
                 var fields = new List<KeyValuePair<string, string>>
                 {
@@ -776,15 +775,15 @@ namespace ReMap.Standalone
                     Pair("RopeMaterial", "cable/zipline.vmt"), Pair("Zipline", "1"),
                     Pair("ZiplineAutoDetachDistance", "150"), Pair("ZiplineSagEnable", "0"),
                     Pair("ZiplineSagHeight", "50"), Pair("fadedist", "50000"),
-                    Pair("origin", VectorValue(ApexDisplay.Position(curve[index] + offset)))
+                    Pair("origin", VectorValue(ApexDisplay.Position(adjusted[index] + offset)))
                 };
-                if (index + 1 < curve.Count)
+                if (index + 1 < adjusted.Count)
                     fields.Add(Pair("link_to_guid_0", LinkGuid(zipline.id, index + 1)));
                 fields.Add(Pair("link_guid", LinkGuid(zipline.id, index)));
                 fields.Add(Pair("classname", index == 0 ? "move_rope" : "keyframe_rope"));
                 AppendEntity(output, fields.ToArray());
             }
-            return count + curve.Count;
+            return count + adjusted.Count;
         }
 
         private static int AppendZiprail(StringBuilder output, MapObject ziprail,
@@ -974,36 +973,6 @@ namespace ReMap.Standalone
                 id = source.id, position = WorldView.ToData(position + rotation * localPosition),
                 rotation = WorldView.ToData((rotation * Quaternion.Euler(localRotation)).eulerAngles)
             };
-        }
-
-        private static List<Vector3> BezierPath(IReadOnlyList<Vector3> points, int segmentsPerSpan)
-        {
-            segmentsPerSpan = Math.Max(2, Math.Min(32, segmentsPerSpan));
-            var tangents = new List<Vector3> { (points[1] - points[0]) * .5f };
-            for (int index = 1; index < points.Count - 1; index++)
-            {
-                Vector3 direction = points[index + 1] - points[index - 1];
-                float length = Math.Min(Vector3.Distance(points[index - 1], points[index]),
-                    Vector3.Distance(points[index], points[index + 1])) * .5f;
-                tangents.Add(direction.magnitude < .001f ? Vector3.zero : direction.normalized * length);
-            }
-            tangents.Add((points[points.Count - 1] - points[points.Count - 2]) * .5f);
-            var result = new List<Vector3> { points[0] };
-            for (int span = 0; span < points.Count - 1; span++)
-            {
-                Vector3 p0 = points[span], p1 = p0 + tangents[span];
-                Vector3 p3 = points[span + 1], p2 = p3 - tangents[span + 1];
-                for (int segment = 1; segment <= segmentsPerSpan; segment++)
-                {
-                    float t = segment / (float)segmentsPerSpan;
-                    Vector3 a = Vector3.LerpUnclamped(p0, p1, t);
-                    Vector3 b = Vector3.LerpUnclamped(p1, p2, t);
-                    Vector3 c = Vector3.LerpUnclamped(p2, p3, t);
-                    result.Add(Vector3.LerpUnclamped(Vector3.LerpUnclamped(a, b, t),
-                        Vector3.LerpUnclamped(b, c, t), t));
-                }
-            }
-            return result;
         }
 
         private static Vector3 DirectionAngles(Vector3 direction)

@@ -248,25 +248,26 @@ namespace ReMap.Standalone.Tests
         }
 
         [Test]
-        public void CurvedZiplineBakesBezierRopesAndCollisionFreeVisualSupports()
+        public void CurvedZiplineExportsOneNativeRopePerAuthoredPoint()
         {
             var curve = new MapObject { customType = "curved-zipline", isGroup = true, curvedZiplineSegments = 4 };
             var first = new MapObject { customType = "curved-zipline-point", parentId = curve.id,
                 customRole = "0", customProfile = "support", ziplineArmHeight = 180 };
             var middle = new MapObject { customType = "curved-zipline-point", parentId = curve.id,
                 customRole = "1", customProfile = "none", position = new Float3(2, 2, 4) };
+            var middleEnd = new MapObject { customType = "curved-zipline-point", parentId = curve.id,
+                customRole = "2", customProfile = "none", position = new Float3(4, 2, 8) };
             var last = new MapObject { customType = "curved-zipline-point", parentId = curve.id,
-                customRole = "2", customProfile = "arm", position = new Float3(4, 0, 8) };
-            ReMapEntFragments result = ReMapEntExporter.Generate(Document(), new[] { curve, first, middle, last });
-            Assert.That(result.ScriptEntityCount, Is.EqualTo(12));
-            StringAssert.Contains("\"classname\" \"move_rope\"", result.Script);
-            StringAssert.Contains("\"classname\" \"keyframe_rope\"", result.Script);
+                customRole = "3", customProfile = "arm", position = new Float3(6, 0, 12) };
+            ReMapEntFragments result = ReMapEntExporter.Generate(Document(), new[] { curve, first, middle, middleEnd, last });
+            Assert.That(result.ScriptEntityCount, Is.EqualTo(7));
+            Assert.That(result.Script.Split(new[] { "\"classname\" \"move_rope\"" }, StringSplitOptions.None).Length - 1, Is.EqualTo(1));
+            Assert.That(result.Script.Split(new[] { "\"classname\" \"keyframe_rope\"" }, StringSplitOptions.None).Length - 1, Is.EqualTo(3));
             StringAssert.Contains("\"PositionInterpolator\" \"2\"", result.Script);
             StringAssert.Contains("\"link_guid\"", result.Script);
             StringAssert.Contains("\"link_to_guid_0\"", result.Script);
             StringAssert.DoesNotContain("\"targetname\"", result.Script);
             StringAssert.DoesNotContain("\"NextKey\"", result.Script);
-            Assert.That(result.Script.LastIndexOf("\"classname\" \"keyframe_rope\"", StringComparison.Ordinal), Is.LessThan(result.Script.IndexOf("\"classname\" \"move_rope\"", StringComparison.Ordinal)));
             StringAssert.Contains("\"solid\" \"0\"", result.Script);
             StringAssert.Contains("\"contents\" \"0\"", result.Script);
         }
