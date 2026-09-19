@@ -1136,6 +1136,8 @@ namespace ReMap.Standalone
         private VisualElement codeWindow;
         private ScrollView codePreviewScroll;
         private Label codePreview;
+        private Button codePreviewScriptTab, codePreviewEntTab;
+        private bool codePreviewEntMode;
         private VisualElement liveWindow;
         private TextField liveCommand;
         private Label liveConnectionStatus;
@@ -1197,13 +1199,16 @@ namespace ReMap.Standalone
         private void BuildCodePreviewWindow()
         {
             codeWindow = new VisualElement { name = "game-code-window" }; codeWindow.AddToClassList("floating-window"); codeWindow.AddToClassList("code-window"); root.Add(codeWindow);
-            var title = DockTitle(L.T("#GENERATED_GAME_CODE")); title.AddToClassList("floating-title"); codeWindow.Add(title); BindFloatingPanel(title, codeWindow);
+            var title = DockTitle(L.T("#GENERATED_OUTPUT")); title.AddToClassList("floating-title"); codeWindow.Add(title); BindFloatingPanel(title, codeWindow);
             var refresh = Button("↻", RefreshCodePreview, "dock-tab-action"); refresh.tooltip = L.T("#REFRESH_CODE"); title.Add(refresh);
             var copy = Button("⧉", CopyPreviewCode, "dock-tab-action"); copy.tooltip = L.T("#COPY_CODE"); title.Add(copy);
             title.Add(Button("×", () => ShowCodePreview(false), "dock-close"));
-            codePreviewScroll = new ScrollView(ScrollViewMode.Vertical) {
+            var tabs = new VisualElement(); tabs.AddToClassList("code-preview-tabs"); codeWindow.Add(tabs);
+            codePreviewScriptTab = Button(L.T("#SCRIPT_VIEW"), () => SetCodePreviewMode(false), "tool-tab"); tabs.Add(codePreviewScriptTab);
+            codePreviewEntTab = Button(L.T("#ENT_VIEW"), () => SetCodePreviewMode(true), "tool-tab"); tabs.Add(codePreviewEntTab);
+            codePreviewScroll = new ScrollView(ScrollViewMode.VerticalAndHorizontal) {
                 name = "game-code-scroll",
-                horizontalScrollerVisibility = ScrollerVisibility.Hidden,
+                horizontalScrollerVisibility = ScrollerVisibility.Auto,
                 verticalScrollerVisibility = ScrollerVisibility.AlwaysVisible
             };
             codePreviewScroll.AddToClassList("code-preview");
@@ -1215,6 +1220,7 @@ namespace ReMap.Standalone
             resize.AddToClassList("code-resize-grip"); codeWindow.Add(resize); BindCodePreviewResize(resize);
             root.RegisterCallback<GeometryChangedEvent>(_ => { if (codeWindow.style.display.value == DisplayStyle.Flex) ClampCodePreviewWindow(); });
             codeWindow.style.display = DisplayStyle.None;
+            SetCodePreviewMode(false, false);
         }
 
         private void BuildLiveConsoleWindow()
@@ -1362,16 +1368,27 @@ namespace ReMap.Standalone
         private void RefreshCodePreview()
         {
             CommitInspectorEdit();
-            try { codePreview.text = ReMapGameScript.Generate(snapshot,
-                world.GenerationObjects(snapshot), SelectedScriptRpaks()); }
+            try
+            {
+                MapObject[] objects = world.GenerationObjects(snapshot).ToArray();
+                codePreview.text = codePreviewEntMode ? ReMapEntExporter.Preview(snapshot, objects) : ReMapGameScript.Generate(snapshot, objects, SelectedScriptRpaks());
+            }
             catch (Exception ex) { codePreview.text = "// " + ex.Message; }
             codePreviewScroll.scrollOffset = Vector2.zero;
+        }
+
+        private void SetCodePreviewMode(bool ent, bool refresh = true)
+        {
+            codePreviewEntMode = ent;
+            codePreviewScriptTab?.EnableInClassList("active", !ent);
+            codePreviewEntTab?.EnableInClassList("active", ent);
+            if (refresh && codeWindow?.style.display.value == DisplayStyle.Flex) RefreshCodePreview();
         }
 
         private void CopyPreviewCode()
         {
             RefreshCodePreview(); GUIUtility.systemCopyBuffer = codePreview.text;
-            SetStatus(L.T("#GENERATED_GAME_CODE_COPIED"));
+            SetStatus(L.T("#GENERATED_OUTPUT_COPIED"));
         }
 
         private bool PointerOverFloatingPanel(Vector2 position) =>

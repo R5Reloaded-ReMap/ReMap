@@ -292,8 +292,9 @@ Button.tool-activation.paused:hover { background-color: rgb(68,71,77); }
 .directional-axis.axis-y { background-color: rgb(65,123,72); }
 .directional-axis.axis-z { background-color: rgb(65,102,151); }
 .code-window { left: 120px; top: 72px; width: 720px; height: 520px; min-width: 380px; min-height: 260px; overflow: hidden; }
+.code-preview-tabs { height: 25px; min-height: 25px; flex-shrink: 0; flex-direction: row; padding-left: 5px; background-color: rgb(37,38,42); border-bottom-width: 1px; border-bottom-color: rgb(20,21,24); }
 .code-preview { flex-grow: 1; flex-basis: 0; min-height: 0; margin: 6px; background-color: rgb(27,28,31); border-width: 1px; border-color: rgb(67,69,75); border-radius: 2px; }
-.code-preview-content { flex-shrink: 1; padding: 7px 9px 9px 9px; color: rgb(221,226,234); font-size: 11px; white-space: normal; }
+.code-preview-content { flex-shrink: 1; padding: 7px 9px 9px 9px; color: rgb(221,226,234); font-size: 11px; white-space: nowrap; }
 .code-preview .unity-scroller--vertical { width: 8px; min-width: 8px; max-width: 8px; margin: 0 1px; padding: 0 1px; background-color: rgba(0,0,0,0); border-width: 0; border-radius: 4px; }
 .code-preview .unity-scroller--horizontal { height: 8px; min-height: 8px; max-height: 8px; margin: 1px 0; padding: 1px 0; background-color: rgba(0,0,0,0); border-width: 0; border-radius: 4px; }
 .code-preview .unity-base-slider__tracker { margin: 0; border-width: 0; border-radius: 3px; background-color: rgba(0,0,0,0); }

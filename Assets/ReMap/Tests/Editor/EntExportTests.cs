@@ -70,6 +70,23 @@ namespace ReMap.Standalone.Tests
         }
 
         [Test]
+        public void PreviewSeparatesGeneratedEntLumpsAndReportsScriptOnlyObjects()
+        {
+            var prop = new MapObject { gameModelPath = "mdl/props/preview.rmdl" };
+            var clientProp = new MapObject { gameModelPath = "mdl/props/client.rmdl", clientSide = true, displayName = "Client preview" };
+            var sound = new MapObject { customType = "sound", soundName = "Arena.Ambient" };
+
+            string preview = ReMapEntExporter.Preview(Document(), new[] { prop, clientProp, sound });
+
+            StringAssert.Contains("mp_rr_divided_moon_script.ent", preview);
+            StringAssert.Contains("mp_rr_divided_moon_snd.ent", preview);
+            StringAssert.Contains("mp_rr_divided_moon_spawn.ent", preview);
+            StringAssert.Contains("mdl/props/preview.rmdl", preview);
+            StringAssert.Contains("Arena.Ambient", preview);
+            StringAssert.Contains("Client preview (client-side prop)", preview);
+        }
+
+        [Test]
         public void MergesAfterBaseEntitiesAndPreservesHeaderAndTerminalNull()
         {
             string original = "ENTITIES02 num_models=28\r\n{\r\n\"classname\" \"worldspawn\"\r\n}\r\n\0";

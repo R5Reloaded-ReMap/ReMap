@@ -2239,6 +2239,18 @@
       "text": "Generated game code"
     },
     {
+      "key": "#GENERATED_OUTPUT",
+      "text": "Generated output"
+    },
+    {
+      "key": "#SCRIPT_VIEW",
+      "text": "Scripts"
+    },
+    {
+      "key": "#ENT_VIEW",
+      "text": "ENT"
+    },
+    {
       "key": "#REFRESH_CODE",
       "text": "Refresh code"
     },
@@ -2251,8 +2263,12 @@
       "text": "Generated game code copied."
     },
     {
+      "key": "#GENERATED_OUTPUT_COPIED",
+      "text": "Generated output copied."
+    },
+    {
       "key": "#PREVIEW_GAME_CODE",
-      "text": "Preview game code"
+      "text": "Preview scripts / ENT"
     },
     {
       "key": "#TOOL",

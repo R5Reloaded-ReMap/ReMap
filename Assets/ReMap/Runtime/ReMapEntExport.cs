@@ -167,6 +167,35 @@ namespace ReMap.Standalone
             };
         }
 
+        public static string Preview(MapDocument document, IEnumerable<MapObject> worldObjects)
+        {
+            if (document == null) throw new ArgumentNullException(nameof(document));
+            string map = ValidateMapName(document.editingMap);
+            ReMapEntFragments fragments = Generate(document, worldObjects);
+            var preview = new StringBuilder();
+            preview.AppendLine("// ReMap ENT preview for " + map);
+            preview.AppendLine("// Generated additions only. Base entities are merged or excluded when the ENT bundle is exported.");
+            AppendPreviewLump(preview, map + "_script.ent", fragments.Script);
+            AppendPreviewLump(preview, map + "_snd.ent", fragments.Sound);
+            AppendPreviewLump(preview, map + "_spawn.ent", fragments.Spawn);
+            if (fragments.NutOnlyObjects.Count > 0)
+            {
+                preview.AppendLine();
+                preview.AppendLine("// Script-only objects");
+                foreach (string item in fragments.NutOnlyObjects.Distinct()) preview.AppendLine("// - " + item);
+            }
+            return preview.ToString().TrimEnd();
+        }
+
+        private static void AppendPreviewLump(StringBuilder preview, string fileName, string fragment)
+        {
+            preview.AppendLine();
+            preview.AppendLine("// ============================================================================");
+            preview.AppendLine("// " + fileName);
+            preview.AppendLine("// ============================================================================");
+            preview.AppendLine(string.IsNullOrWhiteSpace(fragment) ? "// No generated entities." : fragment.TrimEnd());
+        }
+
         public static string WriteMergedBundle(string selectedSourceEnt, MapDocument document,
             IEnumerable<MapObject> worldObjects)
         {
