@@ -133,6 +133,17 @@ namespace ReMap.Standalone.Tests
         }
 
         [Test]
+        public void GroundTowerBaseCanMoveAboveAndBelowItsDefaultPosition()
+        {
+            System.Type profiles = typeof(ReMapGameScript).Assembly.GetType("ReMap.Standalone.ReMapZiprailProfiles", true);
+            float minimum = (float)profiles.GetField("MinSupportHeightApex", BindingFlags.Static | BindingFlags.NonPublic).GetRawConstantValue();
+            float maximum = (float)profiles.GetField("MaxSupportHeightApex", BindingFlags.Static | BindingFlags.NonPublic).GetRawConstantValue();
+
+            Assert.That(minimum, Is.EqualTo(-1024f));
+            Assert.That(maximum, Is.EqualTo(1024f));
+        }
+
+        [Test]
         public void PreviewCurvePassesThroughEveryNativeNode()
         {
             var controls = new[] { Vector3.zero, new Vector3(3, 2, 1), new Vector3(8, -1, 4) };

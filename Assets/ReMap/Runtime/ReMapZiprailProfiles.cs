@@ -59,7 +59,7 @@ namespace ReMap.Standalone
             "mdl/props/zip_rail/zip_rail_ground_post_top_01.rmdl";
         internal const string GroundClawModelPath =
             "mdl/props/zip_rail/zip_rail_ground_claw_01.rmdl";
-        internal const float MinSupportHeightApex = 0f;
+        internal const float MinSupportHeightApex = -1024f;
         internal const float MaxSupportHeightApex = 1024f;
         internal const float DefaultSupportHeightApex = 320f;
         internal const float CordEndOriginOffsetApex = 18.7f;
