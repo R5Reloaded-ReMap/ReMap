@@ -1,6 +1,6 @@
 param(
     [string]$OutputRoot = (Join-Path (Split-Path -Parent $PSScriptRoot) 'scripts/vscripts'),
-    [string]$SourceRepositoryUrl = 'https://github.com/ReMap',
+    [string]$SourceRepositoryUrl = 'https://github.com/R5Reloaded-ReMap/ReMap',
     [switch]$Check
 )
 
