@@ -250,6 +250,14 @@ namespace ReMap.Standalone
             return result.ToString();
         }
 
+        public static string ReloadMapCommand(string map)
+        {
+            map = (map ?? "").Trim();
+            if (!Regex.IsMatch(map, @"^mp_[A-Za-z0-9_]{1,124}$", RegexOptions.CultureInvariant))
+                throw new ArgumentException(L.T("#SELECT_EDITED_APEX_MAP_BUILDING"));
+            return "map " + map;
+        }
+
         internal static string[] AdditionalRpaks(string editingMap,
             IEnumerable<string> selectedRpaks)
         {
@@ -1141,7 +1149,7 @@ namespace ReMap.Standalone
         private VisualElement liveWindow;
         private TextField liveCommand;
         private Label liveConnectionStatus;
-        private Button liveSendButton, liveRebuildButton;
+        private Button liveSendButton, liveRebuildButton, liveRestartButton;
         private bool liveSending;
         private float codePreviewWidth = 720, codePreviewHeight = 520;
         private sealed class ScriptPropertyPreset
@@ -1233,6 +1241,7 @@ namespace ReMap.Standalone
             var actions = new VisualElement(); actions.AddToClassList("live-actions"); liveWindow.Add(actions);
             liveSendButton = Button(L.T("#SEND_COMMAND"), () => SendLive(false)); actions.Add(liveSendButton);
             liveRebuildButton = Button(L.T("#REBUILD_MAP_NOW"), () => SendLive(true), "primary"); actions.Add(liveRebuildButton);
+            liveRestartButton = Button(L.T("#RESTART_CURRENT_MAP"), RestartCurrentMap); actions.Add(liveRestartButton);
             liveWindow.Add(Label(L.T("#REBUILD_CLEARS_REMAP_PROPS_RECREATES"), "note"));
             liveWindow.style.display = DisplayStyle.None;
         }
@@ -1248,6 +1257,7 @@ namespace ReMap.Standalone
                 string address = string.IsNullOrWhiteSpace(assetLibrary.Settings.rconAddress) ? "[::ffff:127.0.0.1]:37015" : assetLibrary.Settings.rconAddress;
                 liveConnectionStatus.text = string.IsNullOrEmpty(launchError) ? (launcherMode ? L.T("#AUTOMATIC_LOCAL_CONNECTION_FLOWSTATE_LAUNCHER") : L.T("#RCON_TARGET") + address) : launchError;
                 liveRebuildButton.SetEnabled(snapshot.objects.Count > 0 && string.IsNullOrEmpty(launchError));
+                liveRestartButton.SetEnabled(string.IsNullOrEmpty(launchError));
                 liveWindow.BringToFront(); liveCommand.Focus();
             }
         }
@@ -1281,7 +1291,7 @@ namespace ReMap.Standalone
                 if (commands.Length == 0) throw new ArgumentException(L.T("#ENTER_COMMAND_SEND"));
             }
             catch (Exception ex) { SetStatus(ex.Message); liveConnectionStatus.text = ex.Message; return; }
-            liveSending = true; liveSendButton.SetEnabled(false); liveRebuildButton.SetEnabled(false);
+            SetLiveButtons(false);
             liveConnectionStatus.text = rebuild ? L.T("#REBUILDING_MAP_RUNNING_GAME") : L.T("#SENDING_COMMAND");
             try
             {
@@ -1291,7 +1301,46 @@ namespace ReMap.Standalone
                 if (!rebuild) liveCommand.value = "";
             }
             catch (Exception ex) { liveConnectionStatus.text = ex.Message; SetStatus(ex.Message); Debug.LogException(ex); }
-            finally { liveSending = false; liveSendButton.SetEnabled(true); liveRebuildButton.SetEnabled(snapshot?.objects.Count > 0 && string.IsNullOrEmpty(ActiveSceneLaunchError())); }
+            finally { SetLiveButtons(true); }
+        }
+
+        private async void RestartCurrentMap()
+        {
+            if (liveSending) return;
+            try
+            {
+                CommitInspectorEdit();
+                string launchError = ActiveSceneLaunchError();
+                if (!string.IsNullOrEmpty(launchError)) throw new InvalidOperationException(launchError);
+                SetLiveButtons(false);
+                liveConnectionStatus.text = L.T("#RESTARTING_CURRENT_MAP");
+                string map = ReMapGameScript.EditingMap(snapshot);
+                await ReloadMapAsync(map);
+                string message = L.F("#MAP_RESTART_COMMAND_SENT_ARG0", map);
+                liveConnectionStatus.text = message; SetStatus(message);
+            }
+            catch (Exception ex) { liveConnectionStatus.text = ex.Message; SetStatus(ex.Message); Debug.LogException(ex); }
+            finally { SetLiveButtons(true); }
+        }
+
+        private System.Threading.Tasks.Task<int> ReloadMapAsync(string map)
+        {
+            string command = ReMapGameScript.ReloadMapCommand(map);
+            string gameTarget = snapshot.gameTarget;
+            string platform = assetLibrary.PlatformDirectory.Trim();
+            string address = assetLibrary.Settings.rconAddress;
+            string key = assetLibrary.Settings.rconKey;
+            string password = assetLibrary.Settings.rconPassword;
+            return System.Threading.Tasks.Task.Run(() => ReMapNetConsole.Send(gameTarget, platform, address, key, password, new[] { command }));
+        }
+
+        private void SetLiveButtons(bool enabled)
+        {
+            liveSending = !enabled;
+            string launchError = enabled ? ActiveSceneLaunchError() : "";
+            liveSendButton?.SetEnabled(enabled);
+            liveRebuildButton?.SetEnabled(enabled && snapshot?.objects.Count > 0 && string.IsNullOrEmpty(launchError));
+            liveRestartButton?.SetEnabled(enabled && string.IsNullOrEmpty(launchError));
         }
 
         private void ShowCodePreview(bool show = true)
@@ -1396,12 +1445,24 @@ namespace ReMap.Standalone
             codeWindow?.style.display.value == DisplayStyle.Flex && codeWindow.worldBound.Contains(position) ||
             liveWindow?.style.display.value == DisplayStyle.Flex && liveWindow.worldBound.Contains(position);
 
-        private void BuildGameScript()
+        private async void BuildGameScript(bool restartMap)
         {
             CommitInspectorEdit();
             string path = ReMapGameScriptInstaller.Write(assetLibrary.PlatformDirectory, snapshot,
                 world.GenerationObjects(snapshot), SelectedScriptRpaks());
             SetStatus(L.T("#GAME_SCRIPT_BUILT") + path);
+            if (!restartMap) return;
+            try
+            {
+                string map = ReMapGameScript.EditingMap(snapshot);
+                await ReloadMapAsync(map);
+                SetStatus(L.F("#GAME_SCRIPT_BUILT_MAP_RESTARTED_ARG0", map));
+            }
+            catch (Exception ex)
+            {
+                SetStatus(L.F("#GAME_SCRIPT_BUILT_RESTART_FAILED_ARG0", ex.Message));
+                Debug.LogException(ex);
+            }
         }
 
         private void ResetGameScript()

@@ -2039,6 +2039,10 @@
       "text": "Construire le script jeu"
     },
     {
+      "key": "#BUILD_GAME_SCRIPT_RESTART",
+      "text": "Construire le script et recharger la carte"
+    },
+    {
       "key": "#EXPORT_ENT_BUNDLE",
       "text": "Exporter et installer la carte loose"
     },
@@ -2069,6 +2073,14 @@
     {
       "key": "#ENT_EXPORT_PRESERVE_BASE_HELP",
       "text": "Désactivez cette option pour exporter uniquement les entités créées dans ReMap."
+    },
+    {
+      "key": "#RESTART_MAP_AFTER_INSTALL",
+      "text": "Recharger la carte après l’installation"
+    },
+    {
+      "key": "#RESTART_MAP_AFTER_INSTALL_HELP",
+      "text": "Envoie la commande de changement de carte au serveur une fois tous les fichiers installés. Désactivé par défaut."
     },
     {
       "key": "#ENT_EXPORT_DEVELOPMENT_TARGET_ARG0",
@@ -2105,6 +2117,14 @@
     {
       "key": "#LOOSE_MAP_DEVELOPMENT_INSTALLED_ARG0",
       "text": "ENT de développement installés pour {0} · priorité disque activée pour le client et le serveur (redémarrez les processus déjà lancés)"
+    },
+    {
+      "key": "#LOOSE_MAP_INSTALLED_RESTARTED_ARG0",
+      "text": "Carte loose {0} installée et commande de rechargement envoyée"
+    },
+    {
+      "key": "#LOOSE_MAP_INSTALLED_RESTART_FAILED_ARG0_ARG1",
+      "text": "Carte loose {0} installée, mais le rechargement a échoué : {1}"
     },
     {
       "key": "#ENT_SOURCE_MISSING_ARG0",
@@ -2145,6 +2165,14 @@
     {
       "key": "#GAME_SCRIPT_BUILT",
       "text": "Script jeu construit : "
+    },
+    {
+      "key": "#GAME_SCRIPT_BUILT_MAP_RESTARTED_ARG0",
+      "text": "Script jeu construit et commande de rechargement envoyée pour {0}"
+    },
+    {
+      "key": "#GAME_SCRIPT_BUILT_RESTART_FAILED_ARG0",
+      "text": "Script jeu construit, mais le rechargement a échoué : {0}"
     },
     {
       "key": "#ARG0_LIVE_COMMANDS_COPIED_PASTE",
@@ -3593,6 +3621,18 @@
     {
       "key": "#REBUILD_MAP_NOW",
       "text": "Reconstruire la carte maintenant"
+    },
+    {
+      "key": "#RESTART_CURRENT_MAP",
+      "text": "Recharger la carte"
+    },
+    {
+      "key": "#RESTARTING_CURRENT_MAP",
+      "text": "Rechargement de la carte…"
+    },
+    {
+      "key": "#MAP_RESTART_COMMAND_SENT_ARG0",
+      "text": "Commande de rechargement envoyée pour {0}"
     },
     {
       "key": "#REBUILD_CLEARS_REMAP_PROPS_RECREATES",

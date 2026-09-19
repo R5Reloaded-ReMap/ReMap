@@ -27,7 +27,7 @@ namespace ReMap.Standalone
         private DropdownField workspaceGameChoice;
         private TextField newMapName, renameMapName;
         private DropdownField newMapGame, newMapPrimary, entExportMode;
-        private Toggle entExportPreserveBase;
+        private Toggle entExportPreserveBase, entExportRestartMap;
         private Label newMapModeNotice, entExportTarget;
         private Button newMapConfirm;
         private bool portingMap;
@@ -106,7 +106,8 @@ namespace ReMap.Standalone
             MenuAction(menu, L.T("#RENAME_CURRENT_MAP"), () => ShowRenameMapDialog(true));
             MenuAction(menu, L.T("#SAVE") + "    Ctrl+S", Save);
             MenuSeparator(menu);
-            MenuAction(menu, L.T("#BUILD_GAME_SCRIPT"), BuildGameScript, snapshot?.objects.Count > 0);
+            MenuAction(menu, L.T("#BUILD_GAME_SCRIPT"), () => BuildGameScript(false), snapshot?.objects.Count > 0);
+            MenuAction(menu, L.T("#BUILD_GAME_SCRIPT_RESTART"), () => BuildGameScript(true), snapshot?.objects.Count > 0);
             MenuAction(menu, L.T("#EXPORT_ENT_BUNDLE"), () => ShowEntExportDialog(true), snapshot?.objects.Count > 0);
             MenuAction(menu, L.T("#RESET_INSTALLED_GAME_SCRIPT"), ResetGameScript);
             MenuAction(menu, L.T("#PREVIEW_GAME_CODE"), () => ShowCodePreview(), snapshot?.objects.Count > 0);
@@ -415,6 +416,9 @@ namespace ReMap.Standalone
             entExportPreserveBase = new Toggle(L.T("#ENT_EXPORT_PRESERVE_BASE")) { value = true };
             content.Add(entExportPreserveBase);
             content.Add(Label(L.T("#ENT_EXPORT_PRESERVE_BASE_HELP"), "note"));
+            entExportRestartMap = new Toggle(L.T("#RESTART_MAP_AFTER_INSTALL"));
+            content.Add(entExportRestartMap);
+            content.Add(Label(L.T("#RESTART_MAP_AFTER_INSTALL_HELP"), "note"));
             entExportTarget = Label("", "map-source-warning"); content.Add(entExportTarget);
             var actions = new VisualElement(); actions.AddToClassList("dialog-actions"); panel.Add(actions);
             actions.Add(Button(L.T("#CANCEL"), () => ShowEntExportDialog(false)));
@@ -429,6 +433,7 @@ namespace ReMap.Standalone
             HideCommandMenu(); CommitInspectorEdit();
             entExportMode.index = 0;
             entExportPreserveBase.SetValueWithoutNotify(true);
+            entExportRestartMap.SetValueWithoutNotify(false);
             RefreshEntExportTarget();
             entExportOverlay.style.display = DisplayStyle.Flex; entExportOverlay.BringToFront();
         }
@@ -445,8 +450,9 @@ namespace ReMap.Standalone
         {
             bool publish = entExportMode.index == 1;
             bool preserveBaseEntities = entExportPreserveBase.value;
+            bool restartMap = entExportRestartMap.value;
             ShowEntExportDialog(false);
-            ExportEntBundle(publish, preserveBaseEntities);
+            ExportEntBundle(publish, preserveBaseEntities, restartMap);
         }
         private void BuildRenameMapDialog()
         {
@@ -514,7 +520,7 @@ namespace ReMap.Standalone
             SetStatus(L.F("#PROJECT_EXPORTED_ARG0", path));
         }
 
-        private async void ExportEntBundle(bool publish, bool preserveBaseEntities)
+        private async void ExportEntBundle(bool publish, bool preserveBaseEntities, bool restartMap)
         {
             CommitInspectorEdit();
             MapDocument document = snapshot;
@@ -532,6 +538,20 @@ namespace ReMap.Standalone
                 string bundle = ReMapEntExporter.WriteMergedBundle(source, document, objects, assetLibrary.SelectedMapArchives(Targets), publish, preserveBaseEntities, out _);
                 ReMapLooseMapInstall installed = ReMapEntExporter.InstallLooseMap(bundle, document, assetLibrary.GameDirectory, assetLibrary.PlatformDirectory, publish);
                 SetStatus(publish ? L.F("#LOOSE_MAP_INSTALLED_ARG0_ARG1", installed.MapName, installed.LevelSettingsPath) : L.F("#LOOSE_MAP_DEVELOPMENT_INSTALLED_ARG0", installed.MapName));
+                if (restartMap)
+                {
+                    Loading(true, L.T("#RESTARTING_CURRENT_MAP"));
+                    try
+                    {
+                        await ReloadMapAsync(installed.MapName);
+                        SetStatus(L.F("#LOOSE_MAP_INSTALLED_RESTARTED_ARG0", installed.MapName));
+                    }
+                    catch (Exception exception)
+                    {
+                        SetStatus(L.F("#LOOSE_MAP_INSTALLED_RESTART_FAILED_ARG0_ARG1", installed.MapName, exception.Message));
+                        Debug.LogWarning(exception);
+                    }
+                }
             }
             catch (Exception exception)
             {

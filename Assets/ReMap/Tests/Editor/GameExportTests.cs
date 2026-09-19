@@ -7,6 +7,14 @@ namespace ReMap.Standalone.Tests
 {
     public sealed class GameExportTests
     {
+        [Test]
+        public void ReloadMapCommandAcceptsOnlyApexMapCodes()
+        {
+            Assert.That(ReMapGameScript.ReloadMapCommand("mp_rr_divided_moon"), Is.EqualTo("map mp_rr_divided_moon"));
+            Assert.Throws<System.ArgumentException>(() => ReMapGameScript.ReloadMapCommand("mp_rr_divided_moon; quit"));
+            Assert.Throws<System.ArgumentException>(() => ReMapGameScript.ReloadMapCommand("not_a_map"));
+        }
+
         [Test] public void AdditionalSelectedRpaksAreReservedForLevelSettings()
         {
             var document = new MapDocument { name = "Rpak load", editingMap = "mp_base" };

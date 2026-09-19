@@ -2039,6 +2039,10 @@
       "text": "Build game script"
     },
     {
+      "key": "#BUILD_GAME_SCRIPT_RESTART",
+      "text": "Build script and reload map"
+    },
+    {
       "key": "#EXPORT_ENT_BUNDLE",
       "text": "Export and install loose map"
     },
@@ -2069,6 +2073,14 @@
     {
       "key": "#ENT_EXPORT_PRESERVE_BASE_HELP",
       "text": "Disable this option to export only entities created in ReMap."
+    },
+    {
+      "key": "#RESTART_MAP_AFTER_INSTALL",
+      "text": "Reload the map after installation"
+    },
+    {
+      "key": "#RESTART_MAP_AFTER_INSTALL_HELP",
+      "text": "Sends the map change command to the server after every file is installed. Disabled by default."
     },
     {
       "key": "#ENT_EXPORT_DEVELOPMENT_TARGET_ARG0",
@@ -2105,6 +2117,14 @@
     {
       "key": "#LOOSE_MAP_DEVELOPMENT_INSTALLED_ARG0",
       "text": "Development ENT files installed for {0} · disk priority enabled for client and server (restart already running processes)"
+    },
+    {
+      "key": "#LOOSE_MAP_INSTALLED_RESTARTED_ARG0",
+      "text": "Loose map {0} installed and reload command sent"
+    },
+    {
+      "key": "#LOOSE_MAP_INSTALLED_RESTART_FAILED_ARG0_ARG1",
+      "text": "Loose map {0} was installed, but reload failed: {1}"
     },
     {
       "key": "#ENT_SOURCE_MISSING_ARG0",
@@ -2145,6 +2165,14 @@
     {
       "key": "#GAME_SCRIPT_BUILT",
       "text": "Game script built: "
+    },
+    {
+      "key": "#GAME_SCRIPT_BUILT_MAP_RESTARTED_ARG0",
+      "text": "Game script built and reload command sent for {0}"
+    },
+    {
+      "key": "#GAME_SCRIPT_BUILT_RESTART_FAILED_ARG0",
+      "text": "Game script built, but reload failed: {0}"
     },
     {
       "key": "#ARG0_LIVE_COMMANDS_COPIED_PASTE",
@@ -3593,6 +3621,18 @@
     {
       "key": "#REBUILD_MAP_NOW",
       "text": "Rebuild map now"
+    },
+    {
+      "key": "#RESTART_CURRENT_MAP",
+      "text": "Reload map"
+    },
+    {
+      "key": "#RESTARTING_CURRENT_MAP",
+      "text": "Reloading map…"
+    },
+    {
+      "key": "#MAP_RESTART_COMMAND_SENT_ARG0",
+      "text": "Reload command sent for {0}"
     },
     {
       "key": "#REBUILD_CLEARS_REMAP_PROPS_RECREATES",
