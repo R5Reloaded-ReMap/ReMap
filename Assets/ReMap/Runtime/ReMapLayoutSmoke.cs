@@ -24,6 +24,19 @@ namespace ReMap.Standalone
         private async Task CheckDockLayout()
         {
             await TreeFrames(12); ResetLayout(); await TreeFrames(); string layoutFixtureId = snapshot.objects[0].id; Select(layoutFixtureId); await TreeFrames();
+            var snapToggle = root.Q<Toggle>(className: "toolbar-snap-toggle");
+            var snapSettings = root.Q<Button>("snap-settings-button");
+            var snapInput = snapToggle?.Q(className: "unity-toggle__input");
+            if (snapToggle == null || snapSettings == null || snapInput == null)
+                throw new Exception("Compact snapping controls are missing from the toolbar.");
+            float snapGap = snapInput.worldBound.xMin - snapToggle.labelElement.worldBound.xMax;
+            if (snapGap > 6f) throw new Exception("Snapping label and toggle are too far apart: " + snapGap);
+            TreeClick(snapSettings); await TreeFrames();
+            var snapPopover = root.Q("snap-settings-popover");
+            if (snapPopover == null || snapPopover.resolvedStyle.display == DisplayStyle.None ||
+                snapPopover.worldBound.yMin < snapSettings.worldBound.yMax - 1f)
+                throw new Exception("Transform snapping popover did not open below its toolbar button.");
+            TreeClick(snapSettings); await TreeFrames();
             if(inspectorPanel.worldBound.width<370)throw new Exception("Properties panel is too narrow for transform vectors and game-property selectors.");
             void CheckVerticalScrollbar(ScrollView view, string name)
             {
@@ -213,7 +226,16 @@ namespace ReMap.Standalone
             TreeClick(maximizeSceneButton); await TreeFrames();
             if (Mathf.Abs(viewport.worldBound.width - fullWidth) > 2) throw new Exception("Scene layout was not restored.");
             ShowSettings(true); await TreeFrames();
-            CheckVerticalScrollbar(settingsPanel.Q<ScrollView>(className: "settings-scroll"), "Settings");
+            var settingsScroll = settingsPanel.Q<ScrollView>(className: "settings-scroll");
+            CheckVerticalScrollbar(settingsScroll, "Settings");
+            var mprtPreset = settingsScroll.Query<DropdownField>(className: "settings-field").ToList().FirstOrDefault();
+            var mprtPresetInput = mprtPreset?.Q(className: "unity-base-popup-field__input");
+            if (mprtPreset == null || mprtPresetInput == null || mprtPreset.worldBound.height < 40f || mprtPresetInput.worldBound.height < 20f)
+                throw new Exception("MPRT quality selector is vertically clipped.");
+            if (settingsScroll.Query<VisualElement>(className: "folder-picker").ToList().Count != 2)
+                throw new Exception("Settings should expose one root-folder picker per game.");
+            if (settingsScroll.Query<Label>().ToList().Any(label => label.text == L.T("#GAME_CONNECTION")))
+                throw new Exception("Disabled Live Map connection settings are still visible.");
             var before = settingsPanel.worldBound;
             await DragDockHandle(settingsPanel.Q("resize-settings"), new Vector2(-60, 35));
             if (Mathf.Abs(settingsPanel.worldBound.width - before.width + 60) > 2) throw new Exception("Settings resize failed.");
