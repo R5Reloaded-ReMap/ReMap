@@ -73,8 +73,6 @@ const asset REMAP_HEAL_IDLE_FX = $"P_LL_med_drone_jet_ctr_loop"
 const string REMAP_HEAL_ACTIVE_SOUND = "Lifeline_Drone_Healing_1P"
 const asset REMAP_BUTTON_PANEL_MODEL = $"mdl/props/global_access_panel_button/global_access_panel_button_console_w_stand.rmdl"
 const asset REMAP_BUTTON_ARROW_MODEL = $"mdl/weapons/bullets/damage_arrow.rmdl"
-const string REMAP_TELEPORT_SOUND_1P = "Wraith_phasegate_Travel_1p"
-const string REMAP_TELEPORT_SOUND_3P = "Wraith_phasegate_Travel_3p"
 const asset REMAP_SPEED_BOOST_ORB_MODEL = $"mdl/fx/plasma_sphere_01.rmdl"
 const asset REMAP_SPEED_BOOST_BASE_MODEL = $"mdl/fx/ar_edge_sphere_512.rmdl"
 const asset REMAP_SPEED_BOOST_FP_FX = $"P_sprint_FP"
@@ -320,11 +318,10 @@ entity function ReMap_CreateLootBin( vector origin, vector angles, int skin = 0 
 	return lootBin
 }
 
-entity function ReMap_CreateButton( vector origin, vector angles, bool visible = true,
-	bool up = true, string useText = "" )
+entity function ReMap_CreateButton( vector origin, vector angles, bool visible = true, bool up = true, string useText = "", asset model = REMAP_BUTTON_PANEL_MODEL )
 {
 	entity panel = CreateEntity( "prop_dynamic" )
-	panel.SetValueForModelKey( REMAP_BUTTON_PANEL_MODEL )
+	panel.SetValueForModelKey( model )
 	panel.SetOrigin( origin )
 	panel.SetAngles( angles )
 	panel.kv.solid = 0
@@ -355,14 +352,16 @@ entity function ReMap_CreateButton( vector origin, vector angles, bool visible =
 	return panel
 }
 
-void function ReMap_TeleportPlayer( entity ent, vector destination, vector direction, bool playSound )
+void function ReMap_TeleportPlayer( entity player, vector destination, vector direction, bool playSound )
 {
 	if ( playSound )
-		EmitDifferentSoundsOnEntityForPlayerAndWorld( REMAP_TELEPORT_SOUND_1P,
-			REMAP_TELEPORT_SOUND_3P, ent, ent )
-	ent.SetOrigin( destination )
-	ent.SetAngles( direction )
-	ent.SetVelocity( ZERO_VECTOR )
+	{
+		EmitSoundOnEntityOnlyToPlayer( player, player, "PhaseGate_Enter_1p" )
+		EmitSoundOnEntityExceptToPlayer( player, player, "PhaseGate_Enter_3p" )
+	}
+	player.SetOrigin( destination )
+	player.SetAngles( direction )
+	player.SetVelocity( ZERO_VECTOR )
 }
 
 void function ReMap_AddButtonTeleport( entity panel, vector destination, vector direction, bool playSound = true )

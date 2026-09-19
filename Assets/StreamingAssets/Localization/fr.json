@@ -4275,6 +4275,22 @@
       "text": "Mode du bouton"
     },
     {
+      "key": "#BUTTON_MODEL",
+      "text": "Modèle du bouton"
+    },
+    {
+      "key": "#BUTTON_MODEL_CONSOLE_STAND",
+      "text": "Console sur pied"
+    },
+    {
+      "key": "#BUTTON_MODEL_CONSOLE",
+      "text": "Console"
+    },
+    {
+      "key": "#BUTTON_MODEL_WALL",
+      "text": "Panneau mural"
+    },
+    {
       "key": "#BUTTON_VISIBLE",
       "text": "Visible"
     },

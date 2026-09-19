@@ -79,12 +79,12 @@ namespace ReMap.Standalone
             models.AddRange(world.Where(o => o.customType == "respawn-heal")
                 .Select(o => ReMapApp.RespawnHealModelPath(o.respawnHealType))
                 .Where(model => !models.Contains(model, StringComparer.OrdinalIgnoreCase)));
-            if (world.Any(o => o.customType == "button") &&
-                !models.Contains(ReMapApp.ButtonPanelModelPath, StringComparer.OrdinalIgnoreCase))
-                models.Add(ReMapApp.ButtonPanelModelPath);
-            if (world.Any(o => o.customType == "button" && o.buttonMode == "invisible") &&
-                !models.Contains(ReMapApp.ButtonArrowModelPath, StringComparer.OrdinalIgnoreCase))
-                models.Add(ReMapApp.ButtonArrowModelPath);
+            foreach (var button in world.Where(o => o.customType == "button"))
+            {
+                string model = ReMapApp.ButtonModelPath(button.buttonMode, button.customProfile);
+                if (!models.Contains(model, StringComparer.OrdinalIgnoreCase)) models.Add(model);
+                if (button.buttonMode == "invisible" && !models.Contains(ReMapApp.ButtonPanelModelPath, StringComparer.OrdinalIgnoreCase)) models.Add(ReMapApp.ButtonPanelModelPath);
+            }
             if (world.Any(o => o.customType == "speed-boost"))
             {
                 if (!models.Contains(ReMapApp.SpeedBoostOrbModelPath, StringComparer.OrdinalIgnoreCase))
@@ -619,7 +619,8 @@ namespace ReMap.Standalone
                 if (live) continue;
                 string variable = "remapButton" + (variableIndex++).ToString(CultureInfo.InvariantCulture);
                 code.Append("\tentity ").Append(variable).Append(" = ReMap_CreateButton( ")
-                    .Append(common).Append(", true, true, ").Append(ScriptString(button.buttonUseText)).AppendLine(" )");
+                    .Append(common).Append(", true, true, ").Append(ScriptString(button.buttonUseText)).Append(", $\"")
+                    .Append(ReMapApp.ButtonModelPath(button.buttonMode, button.customProfile)).AppendLine("\" )");
                 if (button.buttonTeleportEnabled)
                     code.Append("\tReMap_AddButtonTeleport( ").Append(variable).Append(", ")
                         .Append(Position(WorldView.ToData(destination), originOffset, symbolicOffset)).Append(", ")

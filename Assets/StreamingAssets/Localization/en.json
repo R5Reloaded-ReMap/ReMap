@@ -4275,6 +4275,22 @@
       "text": "Button mode"
     },
     {
+      "key": "#BUTTON_MODEL",
+      "text": "Button model"
+    },
+    {
+      "key": "#BUTTON_MODEL_CONSOLE_STAND",
+      "text": "Console with stand"
+    },
+    {
+      "key": "#BUTTON_MODEL_CONSOLE",
+      "text": "Console"
+    },
+    {
+      "key": "#BUTTON_MODEL_WALL",
+      "text": "Wall panel"
+    },
+    {
       "key": "#BUTTON_VISIBLE",
       "text": "Visible"
     },

@@ -1,6 +1,7 @@
 using NUnit.Framework;
 using ReMap.Standalone.Core;
 using System.IO;
+using System.Reflection;
 using UnityEngine;
 
 namespace ReMap.Standalone.Tests
@@ -13,14 +14,16 @@ namespace ReMap.Standalone.Tests
             var document = new MapDocument { name = "button", editingMap = "mp_rr_desertlands_hu" };
             document.objects.Add(new MapObject {
                 assetId = "custom:button", displayName = "Button", customType = "button",
-                gameModelPath = "mdl/props/global_access_panel_button/global_access_panel_button_console_w_stand.rmdl",
+                customProfile = "wall",
+                gameModelPath = "mdl/props/global_access_panel_button/global_access_panel_button_wall.rmdl",
                 buttonMode = "visible", buttonUseText = "%use% Launch",
                 buttonCallback = "ent.SetVelocity( <0, 0, 500> )"
             });
             document.Validate();
             var restored = new UnityMapCodec().Decode(new UnityMapCodec().Encode(document));
             string code = ReMapGameScript.Generate(restored, restored.objects);
-            StringAssert.Contains("ReMap_CreateButton( <0, 0, 0>, <0, 0, 0>, true, true, \"%use% Launch\" )", code);
+            StringAssert.Contains("PrecacheModel( $\"mdl/props/global_access_panel_button/global_access_panel_button_wall.rmdl\" )", code);
+            StringAssert.Contains("ReMap_CreateButton( <0, 0, 0>, <0, 0, 0>, true, true, \"%use% Launch\", $\"mdl/props/global_access_panel_button/global_access_panel_button_wall.rmdl\" )", code);
             StringAssert.Contains("AddCallback_OnUseEntity( remapButton0", code);
             StringAssert.Contains("ent.SetVelocity( <0, 0, 500> )", code);
         }
@@ -80,13 +83,24 @@ namespace ReMap.Standalone.Tests
             StringAssert.Contains("entity function ReMap_CreateButton", script);
             StringAssert.Contains("void function ReMap_AddButtonTeleport", script);
             StringAssert.Contains("void function ReMap_CreateTeleportButton", script);
-            StringAssert.Contains("Wraith_phasegate_Travel_1p", script);
-            StringAssert.Contains("Wraith_phasegate_Travel_3p", script);
-            StringAssert.Contains("EmitDifferentSoundsOnEntityForPlayerAndWorld", script);
+            StringAssert.Contains("EmitSoundOnEntityOnlyToPlayer( player, player, \"PhaseGate_Enter_1p\" )", script);
+            StringAssert.Contains("EmitSoundOnEntityExceptToPlayer( player, player, \"PhaseGate_Enter_3p\" )", script);
+            StringAssert.DoesNotContain("Wraith_phasegate_Travel", script);
+            StringAssert.DoesNotContain("EmitDifferentSoundsOnEntityForPlayerAndWorld", script);
             StringAssert.Contains("panel.MakeInvisible()", script);
-            StringAssert.Contains("ent.SetVelocity( ZERO_VECTOR )", script);
+            StringAssert.Contains("player.SetVelocity( ZERO_VECTOR )", script);
             StringAssert.DoesNotContain("Invis_Button(", script);
             StringAssert.DoesNotContain("MapEditor_CreateButton", script);
+        }
+
+        [TestCase("console", "mdl/props/global_access_panel_button/global_access_panel_button_console.rmdl")]
+        [TestCase("wall", "mdl/props/global_access_panel_button/global_access_panel_button_wall.rmdl")]
+        [TestCase("console-stand", "mdl/props/global_access_panel_button/global_access_panel_button_console_w_stand.rmdl")]
+        public void VisibleButtonProfilesResolveToTheirNativeModels(string profile, string expected)
+        {
+            var resolver = typeof(ReMapApp).GetMethod("ButtonModelPath", BindingFlags.Static | BindingFlags.NonPublic);
+            Assert.That(resolver.Invoke(null, new object[] { "visible", profile }), Is.EqualTo(expected));
+            Assert.That(resolver.Invoke(null, new object[] { "invisible", profile }), Is.EqualTo("mdl/weapons/bullets/damage_arrow.rmdl"));
         }
 
         [TestCase("other", 4, 5f)]

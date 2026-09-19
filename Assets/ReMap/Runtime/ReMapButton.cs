@@ -8,26 +8,55 @@ using UnityEngine.UIElements;
 
 namespace ReMap.Standalone
 {
+    internal sealed class ReMapButtonProfile
+    {
+        internal readonly string Id;
+        internal readonly string Label;
+        internal readonly string ModelPath;
+
+        internal ReMapButtonProfile(string id, string label, string modelPath)
+        {
+            Id = id;
+            Label = label;
+            ModelPath = modelPath;
+        }
+    }
+
+    internal static class ReMapButtonProfiles
+    {
+        internal static readonly ReMapButtonProfile[] All = {
+            new ReMapButtonProfile("console-stand", "#BUTTON_MODEL_CONSOLE_STAND", ReMapApp.ButtonPanelModelPath),
+            new ReMapButtonProfile("console", "#BUTTON_MODEL_CONSOLE", ReMapApp.ButtonConsoleModelPath),
+            new ReMapButtonProfile("wall", "#BUTTON_MODEL_WALL", ReMapApp.ButtonWallModelPath)
+        };
+        internal static readonly string[] RequiredModelPaths = All.Select(profile => profile.ModelPath).ToArray();
+
+        internal static ReMapButtonProfile Find(string id) => All.FirstOrDefault(profile => profile.Id == id) ?? All[0];
+    }
+
     public sealed partial class ReMapApp
     {
         internal const string ButtonPanelModelPath = "mdl/props/global_access_panel_button/global_access_panel_button_console_w_stand.rmdl";
+        internal const string ButtonConsoleModelPath = "mdl/props/global_access_panel_button/global_access_panel_button_console.rmdl";
+        internal const string ButtonWallModelPath = "mdl/props/global_access_panel_button/global_access_panel_button_wall.rmdl";
         internal const string ButtonArrowModelPath = "mdl/weapons/bullets/damage_arrow.rmdl";
         private bool preparingButtonModels;
 
-        internal static string ButtonModelPath(string mode) =>
-            mode == "invisible" ? ButtonArrowModelPath : ButtonPanelModelPath;
+        internal static string ButtonModelPath(string mode, string profile = "") => mode == "invisible" ? ButtonArrowModelPath : ReMapButtonProfiles.Find(profile).ModelPath;
 
-        private GameAssetRecord ButtonModelRecord(string mode) => assetLibrary?.Records.FirstOrDefault(candidate =>
-            GameAssetIndex.SameModelPath(candidate.modelPath, ButtonModelPath(mode)) && candidate.Supports(Targets));
+        private GameAssetRecord ButtonModelRecord(string mode, string profile = "") => assetLibrary?.Records.FirstOrDefault(candidate => GameAssetIndex.SameModelPath(candidate.modelPath, ButtonModelPath(mode, profile)) && candidate.Supports(Targets));
 
-        private bool ButtonModeAvailable(string mode) => ButtonModelRecord(mode) != null;
+        private bool ButtonModeAvailable(string mode) => mode == "invisible" ? ButtonModelRecord(mode) != null : ReMapButtonProfiles.All.Any(ButtonProfileAvailable);
+
+        private bool ButtonProfileAvailable(ReMapButtonProfile profile) => ButtonModelRecord("visible", profile.Id) != null;
 
         private MapObject CreateButton(Vector3 position, string parent = "")
         {
-            var record = ButtonModelRecord("visible");
+            var profile = ReMapButtonProfiles.All.FirstOrDefault(ButtonProfileAvailable) ?? ReMapButtonProfiles.All[0];
+            var record = ButtonModelRecord("visible", profile.Id);
             return new MapObject {
                 assetId = record?.Id ?? "custom:button", displayName = L.T("#BUTTON"),
-                customType = "button", gameModelPath = ButtonPanelModelPath,
+                customType = "button", customProfile = profile.Id, gameModelPath = profile.ModelPath,
                 parentId = parent ?? "", position = WorldView.ToData(position),
                 isGroup = record == null, commonAsset = record?.IsCommon ?? false,
                 availableMaps = record?.origins.Select(origin => origin.mapId)
@@ -65,6 +94,15 @@ namespace ReMap.Standalone
 
             if (item.buttonMode == "visible")
             {
+                var currentProfile = ReMapButtonProfiles.Find(item.customProfile);
+                var profiles = ReMapButtonProfiles.All.Where(ButtonProfileAvailable).ToList();
+                var profileLabels = profiles.Select(profile => L.T(profile.Label)).ToList();
+                if (!profiles.Contains(currentProfile))
+                {
+                    profiles.Insert(0, currentProfile);
+                    profileLabels.Insert(0, L.F("#ARG0_UNAVAILABLE", L.T(currentProfile.Label)));
+                }
+                var model = CompactInspectorField(new DropdownField(L.T("#BUTTON_MODEL"), profileLabels, Math.Max(0, profiles.IndexOf(currentProfile))));
                 var prompt = CompactInspectorField(new TextField(L.T("#BUTTON_USE_TEXT")) {
                     value = item.buttonUseText, isDelayed = true
                 });
@@ -75,7 +113,7 @@ namespace ReMap.Standalone
                     value = item.buttonCallback, multiline = true, isDelayed = true
                 };
                 callback.AddToClassList("property-field");
-                section.Add(prompt); section.Add(teleport);
+                section.Add(model); section.Add(prompt); section.Add(teleport);
                 if (item.buttonTeleportEnabled)
                 {
                     var sound = CompactInspectorField(new Toggle(L.T("#BUTTON_TELEPORT_SOUND")) {
@@ -89,6 +127,10 @@ namespace ReMap.Standalone
                 }
                 section.Add(callback);
                 section.Add(Label(L.T("#BUTTON_VISIBLE_HELP"), "note"));
+                model.RegisterValueChangedCallback(change => {
+                    int index = profileLabels.IndexOf(change.newValue);
+                    if (index >= 0) ChangeButtonProfile(item.id, profiles[index].Id);
+                });
                 prompt.RegisterValueChangedCallback(change => ChangeButton(item.id,
                     edited => edited.buttonUseText = change.newValue ?? ""));
                 teleport.RegisterValueChangedCallback(change =>
@@ -171,6 +213,18 @@ namespace ReMap.Standalone
             root.schedule.Execute(() => Run(RefreshInspector));
         }
 
+        private void ChangeButtonProfile(string id, string profile)
+        {
+            CommitInspectorEdit();
+            session.Edit(document => {
+                var edited = document.objects.Find(candidate => candidate.id == id);
+                edited.customProfile = ReMapButtonProfiles.Find(profile).Id;
+                SyncButtonModel(edited);
+            });
+            Refresh();
+            _ = PrepareButtonModels();
+        }
+
         private void ChangeButtonTeleportEnabled(string id, bool enabled)
         {
             CommitInspectorEdit();
@@ -219,8 +273,10 @@ namespace ReMap.Standalone
 
         private void SyncButtonModel(MapObject item)
         {
-            string path = ButtonModelPath(item.buttonMode);
-            var record = ButtonModelRecord(item.buttonMode);
+            var profile = ReMapButtonProfiles.Find(item.customProfile);
+            item.customProfile = profile.Id;
+            string path = ButtonModelPath(item.buttonMode, profile.Id);
+            var record = ButtonModelRecord(item.buttonMode, profile.Id);
             item.assetId = record?.Id ?? "custom:button";
             item.gameModelPath = path; item.isGroup = record == null;
             item.commonAsset = record?.IsCommon ?? false;
@@ -235,22 +291,22 @@ namespace ReMap.Standalone
             var prepared = new List<string>();
             try
             {
-                foreach (string mode in new[] { "visible", "invisible" })
+                foreach (string path in ReMapButtonProfiles.RequiredModelPaths.Concat(new[] { ButtonArrowModelPath }))
                 {
-                    var record = ButtonModelRecord(mode);
+                    var record = assetLibrary.Records.FirstOrDefault(candidate => GameAssetIndex.SameModelPath(candidate.modelPath, path) && candidate.Supports(Targets));
                     if (record == null) continue;
                     bool wasPrepared = world.models.IsPrepared(record.Id);
                     if (await PrepareDropEntry(record) == null || this == null) return;
                     if (!wasPrepared) prepared.Add(record.Id);
                 }
                 bool needsSync = snapshot.objects.Any(item => item.customType == "button" &&
-                    ButtonModelRecord(item.buttonMode) is GameAssetRecord record &&
+                    ButtonModelRecord(item.buttonMode, item.customProfile) is GameAssetRecord record &&
                     (item.assetId != record.Id || item.isGroup ||
-                    !GameAssetIndex.SameModelPath(item.gameModelPath, ButtonModelPath(item.buttonMode))));
+                    !GameAssetIndex.SameModelPath(item.gameModelPath, ButtonModelPath(item.buttonMode, item.customProfile))));
                 if (needsSync)
                     session.Edit(document => {
                         foreach (var item in document.objects.Where(candidate => candidate.customType == "button"))
-                            if (ButtonModelRecord(item.buttonMode) != null) SyncButtonModel(item);
+                            if (ButtonModelRecord(item.buttonMode, item.customProfile) != null) SyncButtonModel(item);
                     });
                 foreach (string assetId in prepared) world.Reload(assetId);
                 if (needsSync || prepared.Count > 0) Refresh();

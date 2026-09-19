@@ -291,7 +291,7 @@ namespace ReMap.Standalone
                 case "jump-tower":return new[]{JumpTowerBaseModelPath,JumpTowerBalloonModelPath};
                 case "weapon-rack":return new[]{WeaponRackModelPath};
                 case "respawn-heal":return RespawnHealProfiles.Select(profile=>profile.ModelPath);
-                case "button":return new[]{ButtonPanelModelPath,ButtonArrowModelPath};
+                case "button":return ReMapButtonProfiles.RequiredModelPaths.Concat(new[]{ButtonArrowModelPath});
                 case "speed-boost":return new[]{SpeedBoostBaseModelPath,SpeedBoostOrbModelPath};
                 case "bubble-shield":return new[]{BubbleShieldModelPath};
                 case "animated-camera":return new[]{AnimatedCameraBaseModelPath,AnimatedCameraHeadModelPath};
