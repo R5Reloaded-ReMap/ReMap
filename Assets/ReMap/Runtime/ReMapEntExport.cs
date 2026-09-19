@@ -555,14 +555,18 @@ namespace ReMap.Standalone
             string maps = Path.Combine(Path.GetFullPath(root), "maps");
             Directory.CreateDirectory(maps);
             string destination = Path.Combine(maps, map + "_" + kind + ".ent");
-            BackupAndCopy(source, destination);
+            // A second build must not turn ReMap's first generated override into
+            // the "original" backup. Files already carrying our install marker
+            // are replaced in place so reset can still remove first-time files.
+            BackupAndCopy(source, destination, !File.Exists(destination + InstallMarkerSuffix));
             File.WriteAllText(destination + InstallMarkerSuffix, "ReMap loose-map override\n", new UTF8Encoding(false));
             return destination;
         }
 
-        private static void BackupAndCopy(string source, string destination)
+        private static void BackupAndCopy(string source, string destination, bool backup = true)
         {
-            if (File.Exists(destination) && !File.Exists(destination + ".remap.bak")) File.Copy(destination, destination + ".remap.bak");
+            if (backup && File.Exists(destination) && !File.Exists(destination + ".remap.bak"))
+                File.Copy(destination, destination + ".remap.bak");
             File.Copy(source, destination, true);
         }
 

@@ -611,6 +611,11 @@ namespace ReMap.Standalone.Tests
                 var document = Document();
                 document.gameTarget = target;
                 ReMapEntExporter.InstallLooseMap(bundle, document, game, platform);
+                // Rebuilding before reset must not back up ReMap's own first-time
+                // overrides, otherwise reset would restore the generated content.
+                ReMapEntExporter.InstallLooseMap(bundle, document, game, platform);
+                Assert.That(File.Exists(Path.Combine(maps, map + "_snd.ent.remap.bak")), Is.False);
+                Assert.That(File.Exists(Path.Combine(maps, map + "_spawn.ent.remap.bak")), Is.False);
                 IReadOnlyList<string> restored = ReMapEntExporter.RestoreLooseMap(map, target, game, platform);
 
                 Assert.That(restored, Does.Contain(script));
