@@ -689,7 +689,7 @@ namespace ReMap.Standalone
                 foreach (var component in ReMapZiprailProfiles.Components(profile, point.ziplineArmHeight))
                 {
                     MapObject transformed = TransformUnity(point, component.Position, component.Rotation);
-                    AppendNativeProp(output, transformed, offset, component.ModelPath, true, "remap_ziprail_support");
+                    AppendNativeProp(output, transformed, offset, component.ModelPath, true);
                     count++;
                 }
             }
@@ -819,7 +819,7 @@ namespace ReMap.Standalone
         }
 
         private static void AppendNativeProp(StringBuilder output, MapObject item, Vector3 offset,
-            string model, bool collision, string scriptName = null)
+            string model, bool collision)
         {
             var fields = new List<KeyValuePair<string, string>>
             {
@@ -828,10 +828,10 @@ namespace ReMap.Standalone
                 Pair("collide_titan", collision ? "1" : "0"), Pair("collide_ai", collision ? "1" : "0"),
                 Pair("scale", "1"), Pair("angles", Angles(item.rotation)),
                 Pair("origin", Position(item.position, offset)), Pair("model", model),
-                Pair("ClientSide", "0")
+                Pair("ClientSide", "0"), Pair("script_name", "remap_prop"),
+                Pair("can_mantle", collision ? "true" : "false")
             };
             if (!collision) fields.Add(Pair("contents", "0"));
-            if (!string.IsNullOrEmpty(scriptName)) fields.Add(Pair("script_name", scriptName));
             fields.Add(Pair("classname", "prop_dynamic"));
             AppendEntity(output, fields.ToArray());
         }
@@ -934,7 +934,8 @@ namespace ReMap.Standalone
                 Pair("collide_titan", "1"), Pair("collide_ai", "1"), Pair("scale", Number(item.scale.x)),
                 Pair("angles", Angles(item.rotation)), Pair("origin", Position(item.position, offset)),
                 Pair("targetname", "ReMapEntProp"), Pair("solid", solid ? "6" : "0"),
-                Pair("model", model), Pair("ClientSide", "0")
+                Pair("model", model), Pair("ClientSide", "0"), Pair("script_name", "remap_prop"),
+                Pair("can_mantle", item.allowMantle ? "true" : "false")
             };
             var used = new HashSet<string>(fields.Select(field => field.Key), StringComparer.OrdinalIgnoreCase);
             foreach (var property in item.scriptProperties ?? new List<ScriptProperty>())

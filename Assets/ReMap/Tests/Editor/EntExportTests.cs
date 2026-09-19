@@ -62,6 +62,8 @@ namespace ReMap.Standalone.Tests
             Assert.That(result.ScriptEntityCount, Is.EqualTo(2));
             StringAssert.Contains("\"model\" \"mdl/props/crate.rmdl\"", result.Script);
             StringAssert.Contains("\"renderamt\" \"128\"", result.Script);
+            StringAssert.Contains("\"script_name\" \"remap_prop\"", result.Script);
+            StringAssert.Contains("\"can_mantle\" \"true\"", result.Script);
             StringAssert.Contains("\"classname\" \"func_window_hint\"", result.Script);
             StringAssert.Contains("\"classname\" \"ambient_generic\"", result.Sound);
             StringAssert.Contains("\"polyline_segment_0\"", result.Sound);
@@ -225,7 +227,8 @@ namespace ReMap.Standalone.Tests
             StringAssert.DoesNotContain("\"script_control_omit_zipline\"", result.Script);
             StringAssert.Contains("mdl/props/zip_rail/zip_rail_ground_post_01.rmdl", result.Script);
             Assert.That(result.Script.Split(new[] { "zip_rail_cord_end_01.rmdl" }, StringSplitOptions.None).Length - 1, Is.EqualTo(2));
-            StringAssert.Contains("\"script_name\" \"remap_ziprail_support\"", result.Script);
+            StringAssert.Contains("\"script_name\" \"remap_prop\"", result.Script);
+            StringAssert.Contains("\"can_mantle\" \"true\"", result.Script);
             StringAssert.Contains("\"solid\" \"6\"", result.Script);
             StringAssert.Contains("\"soundName\" \"3p_Ziprail_Emit_TowerBy\"", result.Sound);
             StringAssert.DoesNotContain("\"ZiplineVersion\"", result.Script);

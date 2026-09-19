@@ -3396,15 +3396,15 @@
     },
     {
       "key": "#SPAWN_POINT",
-      "text": "Point de spawn joueur"
+      "text": "Point de spawn joueur additionnel"
     },
     {
       "key": "#CUSTOM_OBJECT_SPAWN_POINT",
-      "text": "Objet personnalisé · Point de spawn joueur"
+      "text": "Objet personnalisé · Spawn joueur additionnel"
     },
     {
       "key": "#SPAWN_POINT_CUSTOM_HELP",
-      "text": "Un info_spawnpoint_human dynamique compatible avec les mêmes modes de jeu que l’ancien objet ReMap."
+      "text": "Ajoute un info_spawnpoint_human pour les modes multijoueurs et les équipes. Il ne remplace pas le info_player_start initial ; utilisez World Spawn pour cela."
     },
     {
       "key": "#SPAWN_POINT_TEAM",
@@ -3420,7 +3420,7 @@
     },
     {
       "key": "#SPAWN_POINT_CREATED",
-      "text": "Point de spawn joueur créé. Faites-le pivoter pour choisir la direction du regard."
+      "text": "Point de spawn joueur additionnel créé. Faites-le pivoter pour choisir la direction du regard."
     },
     {
       "key": "#OVERRIDE_PLAYER_SPAWN",

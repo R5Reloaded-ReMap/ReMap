@@ -14,4 +14,6 @@
 
 global function Cl_ReMap_LoadMap
 
-void function Cl_ReMap_LoadMap() {}
+void function Cl_ReMap_LoadMap()
+{
+}

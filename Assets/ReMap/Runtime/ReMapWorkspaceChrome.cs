@@ -20,7 +20,7 @@ namespace ReMap.Standalone
         private Button activeCommandMenuButton;
         private IVisualElementScheduledItem recoverySave;
         private bool changingProjectSelector;
-        private VisualElement newMapOverlay, newMapSources, renameMapOverlay, entExportOverlay, entExportNativeOptions;
+        private VisualElement newMapOverlay, newMapSources, renameMapOverlay, entExportNativeOptions;
         private VisualElement portCompatibilityOverlay, portCompatibilityList;
         private Label portCompatibilitySummary;
         private VisualElement workspaceGameOverlay;
@@ -106,7 +106,7 @@ namespace ReMap.Standalone
             MenuAction(menu, L.T("#RENAME_CURRENT_MAP"), () => ShowRenameMapDialog(true));
             MenuAction(menu, L.T("#SAVE") + "    Ctrl+S", Save);
             MenuSeparator(menu);
-            MenuAction(menu, L.T("#BUILD_INSTALL_MAP"), () => ShowEntExportDialog(true), snapshot?.objects.Count > 0);
+            MenuAction(menu, L.T("#BUILD_INSTALL_MAP"), () => ShowCodePreview(), snapshot?.objects.Count > 0);
             MenuAction(menu, L.T("#RESET_INSTALLED_GAME_SCRIPT"), ResetGameScript);
             MenuAction(menu, L.T("#PREVIEW_GAME_CODE"), () => ShowCodePreview(), snapshot?.objects.Count > 0);
             MenuAction(menu, L.T("#LIVE_GAME_F9FC5E"), () => ShowLiveConsole(), snapshot?.objects.Count > 0);
@@ -389,20 +389,17 @@ namespace ReMap.Standalone
             root.RegisterCallback<KeyDownEvent>(e => {
                 if (e.keyCode != KeyCode.Escape) return;
                 if (PortCompatibilityReportOpen) { ShowPortCompatibilityReport(null, null); e.StopPropagation(); }
-                else if (EntExportDialogOpen) { ShowEntExportDialog(false); e.StopPropagation(); }
                 else if (NewMapDialogOpen) { ShowNewMapDialog(false); e.StopPropagation(); }
             }, TrickleDown.TrickleDown);
             BuildRenameMapDialog();
             BuildPortCompatibilityReport();
-            BuildEntExportDialog();
         }
 
-        private void BuildEntExportDialog()
+        private VisualElement BuildEntExportPanel()
         {
-            entExportOverlay = new VisualElement(); entExportOverlay.AddToClassList("modal-overlay"); root.Add(entExportOverlay);
-            var panel = new VisualElement(); panel.AddToClassList("new-map-panel"); entExportOverlay.Add(panel);
-            var heading = DockTitle(L.T("#MAP_EXPORT_TITLE")); panel.Add(heading); heading.Add(Button("×", () => ShowEntExportDialog(false), "dock-close"));
-            var content = new VisualElement(); content.AddToClassList("new-map-content"); panel.Add(content);
+            var panel = new VisualElement(); panel.AddToClassList("code-export-panel");
+            panel.Add(Label(L.T("#MAP_EXPORT_TITLE"), "code-export-title"));
+            var content = new ScrollView(ScrollViewMode.Vertical); content.AddToClassList("code-export-options"); panel.Add(content);
             content.Add(Label(L.T("#MAP_EXPORT_HELP"), "note"));
             entExportUseNative = new Toggle(L.T("#OPTIMIZE_WITH_NATIVE_ENT")) { value = true };
             entExportUseNative.RegisterValueChangedCallback(_ => RefreshEntExportTarget());
@@ -428,24 +425,9 @@ namespace ReMap.Standalone
             content.Add(Label(L.T("#RESTART_MAP_AFTER_INSTALL_HELP"), "note"));
             entExportWarning = Label("", "map-source-warning"); entExportWarning.style.display = DisplayStyle.None; content.Add(entExportWarning);
             entExportTarget = Label("", "map-source-warning"); content.Add(entExportTarget);
-            var actions = new VisualElement(); actions.AddToClassList("dialog-actions"); panel.Add(actions);
-            actions.Add(Button(L.T("#CANCEL"), () => ShowEntExportDialog(false)));
+            var actions = new VisualElement(); actions.AddToClassList("code-export-actions"); panel.Add(actions);
             actions.Add(Button(L.T("#EXPORT_AND_INSTALL"), ConfirmEntExport, "primary"));
-            entExportOverlay.style.display = DisplayStyle.None;
-        }
-
-        private void ShowEntExportDialog(bool show)
-        {
-            if (entExportOverlay == null) return;
-            if (!show) { entExportOverlay.style.display = DisplayStyle.None; return; }
-            HideCommandMenu(); CommitInspectorEdit();
-            entExportUseNative.SetValueWithoutNotify(true);
-            entExportMode.index = 0;
-            entExportPreserveBase.SetValueWithoutNotify(true);
-            entExportResetScripts.SetValueWithoutNotify(true);
-            entExportRestartMap.SetValueWithoutNotify(false);
-            RefreshEntExportTarget();
-            entExportOverlay.style.display = DisplayStyle.Flex; entExportOverlay.BringToFront();
+            return panel;
         }
 
         private void RefreshEntExportTarget()
@@ -486,7 +468,6 @@ namespace ReMap.Standalone
             bool preserveBaseEntities = entExportPreserveBase.value;
             bool resetScripts = native && entExportResetScripts.value;
             bool restartMap = entExportRestartMap.value;
-            ShowEntExportDialog(false);
             if (native) ExportEntBundle(publish, preserveBaseEntities, resetScripts, restartMap);
             else BuildGameScript(restartMap);
         }
@@ -808,10 +789,9 @@ namespace ReMap.Standalone
             return false;
         }
         private bool NewMapDialogOpen => newMapOverlay != null && newMapOverlay.style.display.value != DisplayStyle.None;
-        private bool EntExportDialogOpen => entExportOverlay != null && entExportOverlay.style.display.value != DisplayStyle.None;
         private bool PortCompatibilityReportOpen => portCompatibilityOverlay != null && portCompatibilityOverlay.style.display.value != DisplayStyle.None;
         private bool WorkspaceGameDialogOpen => workspaceGameOverlay != null && workspaceGameOverlay.style.display.value != DisplayStyle.None;
-        private bool BlockingDialogOpen => SettingsOpen || IndexingOpen || AboutOpen || WorkspaceGameDialogOpen || NewMapDialogOpen || EntExportDialogOpen || PortCompatibilityReportOpen || AssemblySaveOpen || (renameMapOverlay != null && renameMapOverlay.style.display.value != DisplayStyle.None);
+        private bool BlockingDialogOpen => SettingsOpen || IndexingOpen || AboutOpen || WorkspaceGameDialogOpen || NewMapDialogOpen || PortCompatibilityReportOpen || AssemblySaveOpen || (renameMapOverlay != null && renameMapOverlay.style.display.value != DisplayStyle.None);
     }
 
     internal static class WindowsProjectFileDialog

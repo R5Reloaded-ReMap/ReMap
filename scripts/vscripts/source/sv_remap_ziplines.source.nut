@@ -35,8 +35,6 @@ void function ReMap_PrecacheZiplines()
 	PrecacheModel( REMAP_ZIPLINE_MODEL_SUPPORT )
 #if R5F
 	PrecacheScriptSound( "3p_Ziprail_Emit_TowerBy" )
-	if ( !reloadingScripts )
-		AddSpawnCallback( "prop_dynamic", ReMap_OnZiprailSupportSpawned )
 #endif
 }
 
@@ -250,12 +248,3 @@ vector function ReMap_CreateZiplineEndModel( int profile, vector origin, vector 
 
 	return origin
 }
-
-#if R5F
-
-void function ReMap_OnZiprailSupportSpawned( entity prop )
-{
-	if ( prop.GetScriptName() == "remap_ziprail_support" )
-		prop.AllowMantle()
-}
-#endif

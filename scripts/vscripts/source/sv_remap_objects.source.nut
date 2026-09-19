@@ -13,6 +13,7 @@
  */
 
 global function ReMap_ClearProps
+global function ReMap_ConfigureEntProps
 global function ReMap_CreateProp
 global function ReMap_CreateDoor
 global function ReMap_CreateLootBin
@@ -100,6 +101,19 @@ struct
 	int nextTextInfoPanelId = 1000000
 	bool textInfoPanelCallbackRegistered = false
 } file
+
+void function ReMap_ConfigureEntProps()
+{
+	foreach ( entity prop in GetEntArrayByScriptName( "remap_prop" ) )
+	{
+		if ( !IsValid( prop ) || !prop.HasKey( "can_mantle" ) )
+			continue
+
+		string canMantle = expect string( prop.kv.can_mantle )
+		if ( canMantle == "true" || canMantle == "1" )
+			prop.AllowMantle()
+	}
+}
 
 void function ReMap_ClearProps()
 {

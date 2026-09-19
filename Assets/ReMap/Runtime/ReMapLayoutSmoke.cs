@@ -129,6 +129,11 @@ namespace ReMap.Standalone
             TreeClick(codeToolbarButton); await TreeFrames();
             if (codeWindow.parent != root || codeWindow.resolvedStyle.display == DisplayStyle.None || string.IsNullOrWhiteSpace(codePreview.text))
                 throw new Exception("Generated code floating window did not open.");
+            var codeExportPanel = codeWindow.Q(className: "code-export-panel");
+            if (codeExportPanel == null || entExportUseNative == null || entExportMode == null || entExportRestartMap == null)
+                throw new Exception("Generated code window does not contain its map build options.");
+            if (codeExportPanel.worldBound.width < 250 || codeExportPanel.worldBound.xMin < codePreviewScroll.worldBound.xMax - 1 || codeExportPanel.worldBound.xMax > codeWindow.worldBound.xMax + 1)
+                throw new Exception("Map build options are not laid out to the right of the generated code preview.");
             var codeResize = codeWindow.Q("resize-game-code");
             if (codeResize == null) throw new Exception("Generated code resize handle is missing.");
             if (codePreviewScroll.verticalScroller.worldBound.width > 9 || codePreviewScroll.horizontalScroller.worldBound.height > 9 || codeResize.worldBound.width > 14)

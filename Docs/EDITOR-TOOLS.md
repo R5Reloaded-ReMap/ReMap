@@ -59,7 +59,7 @@ Select **World Spawn** in the hierarchy and enable **Set a custom player spawn**
 
 ## Generated code
 
-The main Move/Rotate/Scale toolbar also exposes **Code**, which opens the generated-output window directly. Its Scripts and ENT tabs show both export representations without opening the File menu.
+The main Move/Rotate/Scale toolbar also exposes **Code**, which opens the generated-output window directly. Its Scripts and ENT tabs show both export representations without opening the File menu. Map build and installation options remain visible in the panel on the right, including native ENT versus `.nut`, preservation of base entities, script reset, publication mode, and optional map restart.
 
 ## Locked map reference
 

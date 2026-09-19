@@ -187,7 +187,7 @@ namespace ReMap.Standalone
             GameTargets.Normalize(gameTarget);
             return new[]
             {
-                new ReMapGameScriptEdit(SharedFileName, "Sh_ReMap_PrecacheMap", "\tPrecacheModel( $\"mdl/dev/empty.rmdl\" )"),
+                new ReMapGameScriptEdit(SharedFileName, "Sh_ReMap_PrecacheMap", ""),
                 new ReMapGameScriptEdit(ServerMapFileName, "Sv_ReMap_LoadMap", ""),
                 new ReMapGameScriptEdit(ClientMapFileName, "Cl_ReMap_LoadMap", "")
             };
@@ -203,14 +203,11 @@ namespace ReMap.Standalone
                 code.Append("global function ").AppendLine(edit.FunctionName);
                 code.AppendLine();
                 code.Append("void function ").Append(edit.FunctionName).Append("()");
-                if (edit.Body.Length == 0) code.AppendLine(" {}");
-                else
-                {
-                    code.AppendLine();
-                    code.AppendLine("{");
+                code.AppendLine();
+                code.AppendLine("{");
+                if (edit.Body.Length > 0)
                     code.AppendLine(edit.Body);
-                    code.AppendLine("}");
-                }
+                code.AppendLine("}");
                 code.AppendLine();
             }
             return code.ToString();
@@ -255,7 +252,7 @@ namespace ReMap.Standalone
             map = (map ?? "").Trim();
             if (!Regex.IsMatch(map, @"^mp_[A-Za-z0-9_]{1,124}$", RegexOptions.CultureInvariant))
                 throw new ArgumentException(L.T("#SELECT_EDITED_APEX_MAP_BUILDING"));
-            return "map " + map;
+            return "changelevel " + map;
         }
 
         internal static string[] AdditionalRpaks(string editingMap,
@@ -1025,13 +1022,8 @@ namespace ReMap.Standalone
             string indent = match.Groups["indent"].Value;
             string normalized = (body ?? "").Replace("\r\n", "\n").TrimEnd();
             string signature = indent + "void function " + functionName + "()";
-            string replacement;
-            if (normalized.Length == 0) replacement = signature + " {}";
-            else
-            {
-                string formatted = string.Join(newline, normalized.Split('\n').Select(line => indent + line));
-                replacement = signature + newline + indent + "{" + newline + formatted + newline + indent + "}";
-            }
+            string formatted = normalized.Length == 0 ? "" : string.Join(newline, normalized.Split('\n').Select(line => indent + line)) + newline;
+            string replacement = signature + newline + indent + "{" + newline + formatted + indent + "}";
             return source.Substring(0, match.Index) + replacement + source.Substring(close + 1);
         }
 
@@ -1213,7 +1205,9 @@ namespace ReMap.Standalone
             var refresh = Button("↻", RefreshCodePreview, "dock-tab-action"); refresh.tooltip = L.T("#REFRESH_CODE"); title.Add(refresh);
             var copy = Button("⧉", CopyPreviewCode, "dock-tab-action"); copy.tooltip = L.T("#COPY_CODE"); title.Add(copy);
             title.Add(Button("×", () => ShowCodePreview(false), "dock-close"));
-            var tabs = new VisualElement(); tabs.AddToClassList("code-preview-tabs"); codeWindow.Add(tabs);
+            var body = new VisualElement(); body.AddToClassList("code-preview-body"); codeWindow.Add(body);
+            var previewPane = new VisualElement(); previewPane.AddToClassList("code-preview-pane"); body.Add(previewPane);
+            var tabs = new VisualElement(); tabs.AddToClassList("code-preview-tabs"); previewPane.Add(tabs);
             codePreviewScriptTab = Button(L.T("#SCRIPT_VIEW"), () => SetCodePreviewMode(false), "tool-tab"); tabs.Add(codePreviewScriptTab);
             codePreviewEntTab = Button(L.T("#ENT_VIEW"), () => SetCodePreviewMode(true), "tool-tab"); tabs.Add(codePreviewEntTab);
             codePreviewScroll = new ScrollView(ScrollViewMode.VerticalAndHorizontal) {
@@ -1225,7 +1219,8 @@ namespace ReMap.Standalone
             codePreview = new Label { name = "game-code-content", focusable = true };
             codePreview.selection.isSelectable = true;
             codePreview.AddToClassList("code-preview-content");
-            codePreviewScroll.Add(codePreview); codeWindow.Add(codePreviewScroll);
+            codePreviewScroll.Add(codePreview); previewPane.Add(codePreviewScroll);
+            body.Add(BuildEntExportPanel());
             var resize = new Label("◢") { name = "resize-game-code", tooltip = L.T("#DRAG_RESIZE_DOUBLE_CLICK_DEFAULT") };
             resize.AddToClassList("code-resize-grip"); codeWindow.Add(resize); BindCodePreviewResize(resize);
             root.RegisterCallback<GeometryChangedEvent>(_ => { if (codeWindow.style.display.value == DisplayStyle.Flex) ClampCodePreviewWindow(); });
@@ -1325,7 +1320,7 @@ namespace ReMap.Standalone
             finally { SetLiveButtons(true); }
         }
 
-        private System.Threading.Tasks.Task<int> ReloadMapAsync(string map)
+        private async System.Threading.Tasks.Task<int> ReloadMapAsync(string map)
         {
             string command = ReMapGameScript.ReloadMapCommand(map);
             string gameTarget = snapshot.gameTarget;
@@ -1333,7 +1328,13 @@ namespace ReMap.Standalone
             string address = assetLibrary.Settings.rconAddress;
             string key = assetLibrary.Settings.rconKey;
             string password = assetLibrary.Settings.rconPassword;
-            return System.Threading.Tasks.Task.Run(() => ReMapNetConsole.Send(gameTarget, platform, address, key, password, new[] { command }));
+            int count = await System.Threading.Tasks.Task.Run(() => ReMapNetConsole.Send(gameTarget, platform, address, key, password, new[] { command }));
+            if (GameTargets.Normalize(gameTarget) == GameTargets.R5Flowstate && string.IsNullOrWhiteSpace(key) && string.IsNullOrEmpty(password))
+            {
+                await System.Threading.Tasks.Task.Delay(250);
+                count += await System.Threading.Tasks.Task.Run(() => ReMapLiveBridge.SendClient(new[] { "connect localhost" }));
+            }
+            return count;
         }
 
         private void SetLiveButtons(bool enabled)
@@ -1351,11 +1352,11 @@ namespace ReMap.Standalone
             if (show)
             {
                 float maxWidth = Mathf.Max(1, root.resolvedStyle.width - 16), maxHeight = Mathf.Max(1, root.resolvedStyle.height - 16);
-                float width = Mathf.Clamp(codePreviewWidth, Mathf.Min(380, maxWidth), maxWidth);
+                float width = Mathf.Clamp(codePreviewWidth, Mathf.Min(620, maxWidth), maxWidth);
                 float height = Mathf.Clamp(codePreviewHeight, Mathf.Min(260, maxHeight), maxHeight);
                 codeWindow.style.width = width; codeWindow.style.height = height;
                 ClampCodePreviewWindow(width, height);
-                RefreshCodePreview(); codeWindow.style.display = DisplayStyle.Flex; codeWindow.BringToFront();
+                RefreshCodePreview(); RefreshEntExportTarget(); codeWindow.style.display = DisplayStyle.Flex; codeWindow.BringToFront();
             }
             else codeWindow.style.display = DisplayStyle.None;
         }
@@ -1368,7 +1369,7 @@ namespace ReMap.Standalone
             if (height < 0) height = codeWindow.resolvedStyle.height;
             if (!float.IsFinite(rootWidth) || !float.IsFinite(rootHeight) || !float.IsFinite(width) || !float.IsFinite(height)) return;
             float maxWidth = Mathf.Max(1, rootWidth - 16), maxHeight = Mathf.Max(1, rootHeight - 16);
-            width = Mathf.Clamp(width, Mathf.Min(380, maxWidth), maxWidth);
+            width = Mathf.Clamp(width, Mathf.Min(620, maxWidth), maxWidth);
             height = Mathf.Clamp(height, Mathf.Min(260, maxHeight), maxHeight);
             codeWindow.style.width = width; codeWindow.style.height = height;
             float left = codeWindow.resolvedStyle.left, top = codeWindow.resolvedStyle.top;
@@ -1409,7 +1410,7 @@ namespace ReMap.Standalone
             float rootWidth = root.resolvedStyle.width, rootHeight = root.resolvedStyle.height;
             float left = Mathf.Max(8, codeWindow.resolvedStyle.left), top = Mathf.Max(8, codeWindow.resolvedStyle.top);
             float maxWidth = Mathf.Max(1, rootWidth - left - 8), maxHeight = Mathf.Max(1, rootHeight - top - 8);
-            width = Mathf.Clamp(width, Mathf.Min(380, maxWidth), maxWidth);
+            width = Mathf.Clamp(width, Mathf.Min(620, maxWidth), maxWidth);
             height = Mathf.Clamp(height, Mathf.Min(260, maxHeight), maxHeight);
             codePreviewWidth = width; codePreviewHeight = height;
             codeWindow.style.width = width; codeWindow.style.height = height;
@@ -1426,6 +1427,7 @@ namespace ReMap.Standalone
             }
             catch (Exception ex) { codePreview.text = "// " + ex.Message; }
             codePreviewScroll.scrollOffset = Vector2.zero;
+            RefreshEntExportTarget();
         }
 
         private void SetCodePreviewMode(bool ent, bool refresh = true)

@@ -291,7 +291,9 @@ Button.tool-activation.paused:hover { background-color: rgb(68,71,77); }
 .directional-axis.axis-x { background-color: rgb(147,67,70); }
 .directional-axis.axis-y { background-color: rgb(65,123,72); }
 .directional-axis.axis-z { background-color: rgb(65,102,151); }
-.code-window { left: 120px; top: 72px; width: 720px; height: 520px; min-width: 380px; min-height: 260px; overflow: hidden; }
+.code-window { left: 120px; top: 72px; width: 720px; height: 520px; min-width: 620px; min-height: 260px; overflow: hidden; }
+.code-preview-body { flex-grow: 1; flex-basis: 0; min-height: 0; flex-direction: row; }
+.code-preview-pane { flex-grow: 1; flex-basis: 0; min-width: 0; min-height: 0; }
 .code-preview-tabs { height: 25px; min-height: 25px; flex-shrink: 0; flex-direction: row; padding-left: 5px; background-color: rgb(37,38,42); border-bottom-width: 1px; border-bottom-color: rgb(20,21,24); }
 .code-preview { flex-grow: 1; flex-basis: 0; min-height: 0; margin: 6px; background-color: rgb(27,28,31); border-width: 1px; border-color: rgb(67,69,75); border-radius: 2px; }
 .code-preview-content { flex-shrink: 1; padding: 7px 9px 9px 9px; color: rgb(221,226,234); font-size: 11px; white-space: nowrap; }
@@ -304,6 +306,13 @@ Button.tool-activation.paused:hover { background-color: rgb(68,71,77); }
 .code-preview .unity-scroller--vertical .unity-base-slider__dragger-border { width: 6px; min-width: 6px; max-width: 6px; }
 .code-preview .unity-scroller--horizontal .unity-base-slider__dragger,
 .code-preview .unity-scroller--horizontal .unity-base-slider__dragger-border { height: 6px; min-height: 6px; max-height: 6px; }
+.code-export-panel { width: 270px; min-width: 270px; max-width: 270px; min-height: 0; border-left-width: 1px; border-left-color: rgb(20,21,24); background-color: rgb(37,38,42); }
+.code-export-title { flex-shrink: 0; padding: 8px 9px 6px 9px; color: rgb(225,229,236); -unity-font-style: bold; border-bottom-width: 1px; border-bottom-color: rgb(20,21,24); }
+.code-export-options { flex-grow: 1; flex-basis: 0; min-height: 0; padding: 6px 8px; }
+.code-export-options .note { white-space: normal; margin: 3px 2px 7px 2px; }
+.code-export-options .map-source-warning { white-space: normal; margin: 6px 2px; }
+.code-export-actions { flex-shrink: 0; padding: 6px 8px 8px 8px; border-top-width: 1px; border-top-color: rgb(20,21,24); }
+.code-export-actions Button { width: auto; }
 .code-resize-grip { position: absolute; right: 2px; bottom: 1px; width: 13px; height: 13px; margin: 0; padding: 0; color: rgb(137,149,165); font-size: 11px; -unity-text-align: lower-right; cursor: resize-up-left; background-color: rgba(0,0,0,0); border-width: 0; }
 .code-resize-grip:hover, .code-resize-grip.resizing { color: rgb(126,181,236); background-color: rgba(0,0,0,0); }
 .live-window { left: 150px; top: 105px; width: 470px; min-width: 360px; padding-bottom: 9px; }

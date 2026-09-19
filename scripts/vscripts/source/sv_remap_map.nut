@@ -14,4 +14,6 @@
 
 global function Sv_ReMap_LoadMap
 
-void function Sv_ReMap_LoadMap() {}
+void function Sv_ReMap_LoadMap()
+{
+}

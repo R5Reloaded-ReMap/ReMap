@@ -93,8 +93,12 @@ namespace ReMap.Standalone.Tests
             StringAssert.DoesNotContain("ReMap_CreateZiprail", script);
             StringAssert.DoesNotContain("REMAP_ZIPRAIL_POINT_", script);
             StringAssert.Contains("PrecacheScriptSound( \"3p_Ziprail_Emit_TowerBy\" )", script);
-            StringAssert.Contains("prop.AllowMantle()", script);
-            StringAssert.Contains("prop.GetScriptName() == \"remap_ziprail_support\"", script);
+            StringAssert.DoesNotContain("ReMap_OnZiprailSupportSpawned", script);
+
+            string objectScript = File.ReadAllText(Path.Combine(root, "scripts/vscripts/source/sv_remap_objects.source.nut"));
+            StringAssert.Contains("GetEntArrayByScriptName( \"remap_prop\" )", objectScript);
+            StringAssert.Contains("prop.HasKey( \"can_mantle\" )", objectScript);
+            StringAssert.Contains("prop.AllowMantle()", objectScript);
         }
 
         [Test]
