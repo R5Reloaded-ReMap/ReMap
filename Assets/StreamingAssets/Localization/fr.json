@@ -2064,7 +2064,7 @@
     },
     {
       "key": "#OPTIMIZE_WITH_NATIVE_ENT_HELP",
-      "text": "Désactivez cette option pour générer et installer uniquement les scripts .nut de la carte."
+      "text": "Désactivez cette option pour générer et installer uniquement les scripts .nut de la carte. Les ziplines courbes utilisent toujours la version .nut."
     },
     {
       "key": "#ENT_EXPORT_TITLE",

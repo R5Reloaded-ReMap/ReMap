@@ -42,8 +42,8 @@ namespace ReMap.Standalone
 
         private void InsertZiprail(Vector3 pivot, string parent = "")
         {
-            if (GameTargets.Normalize(snapshot.gameTarget) != GameTargets.R5Flowstate)
-                throw new InvalidOperationException(L.T("#ZIPRAIL_R5FLOWSTATE_ONLY"));
+            if (!GameTargets.SupportsCustomType(snapshot.gameTarget, "ziprail"))
+                throw new InvalidOperationException(L.T("#UNSUPPORTED_TARGET_GAME"));
             var objects = CreateDefaultZiprailObjects(pivot, parent);
             session.Edit(document => {
                 document.objects.AddRange(objects);

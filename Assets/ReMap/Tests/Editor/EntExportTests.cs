@@ -127,6 +127,30 @@ namespace ReMap.Standalone.Tests
         }
 
         [Test]
+        public void NativeExportKeepsTextInfoPanelInNutFallback()
+        {
+            var document = Document();
+            document.gameTarget = GameTargets.R5Reloaded;
+            var panel = new MapObject
+            {
+                customType = "text-info-panel", isGroup = true, displayName = "Instructions",
+                position = new Float3(10, 20, 30), rotation = new Float3(0, 90, 0),
+                textInfoPanelTitle = "Movement", textInfoPanelDescription = "Jump here",
+                textInfoPanelShowPin = false, textInfoPanelScale = 2f
+            };
+
+            ReMapEntFragments fragments = ReMapEntExporter.Generate(document, new[] { panel });
+            IReadOnlyList<MapObject> fallback = ReMapEntExporter.ScriptFallbackObjects(
+                new[] { panel }, fragments);
+            string script = ReMapGameScript.GenerateNativeFallback(document, fallback);
+
+            Assert.That(fragments.NutOnlyObjectIds, Contains.Item(panel.id));
+            Assert.That(fragments.NutOnlyObjects, Has.Some.Contains("text panel requires .nut"));
+            Assert.That(fallback.Select(item => item.id), Is.EquivalentTo(new[] { panel.id }));
+            StringAssert.Contains("ReMap_CreateTextInfoPanel( \"Movement\", \"Jump here\"", script);
+        }
+
+        [Test]
         public void MergesAfterBaseEntitiesAndPreservesHeaderAndTerminalNull()
         {
             string original = "ENTITIES02 num_models=28\r\n{\r\n\"classname\" \"worldspawn\"\r\n}\r\n\0";
@@ -248,7 +272,7 @@ namespace ReMap.Standalone.Tests
         }
 
         [Test]
-        public void CurvedZiplineExportsOneNativeRopePerAuthoredPoint()
+        public void CurvedZiplineUsesOnlyNutFallback()
         {
             var curve = new MapObject { customType = "curved-zipline", isGroup = true, curvedZiplineSegments = 4 };
             var first = new MapObject { customType = "curved-zipline-point", parentId = curve.id,
@@ -260,20 +284,18 @@ namespace ReMap.Standalone.Tests
             var last = new MapObject { customType = "curved-zipline-point", parentId = curve.id,
                 customRole = "3", customProfile = "arm", position = new Float3(6, 0, 12) };
             ReMapEntFragments result = ReMapEntExporter.Generate(Document(), new[] { curve, first, middle, middleEnd, last });
-            Assert.That(result.ScriptEntityCount, Is.EqualTo(7));
-            Assert.That(result.Script.Split(new[] { "\"classname\" \"move_rope\"" }, StringSplitOptions.None).Length - 1, Is.EqualTo(1));
-            Assert.That(result.Script.Split(new[] { "\"classname\" \"keyframe_rope\"" }, StringSplitOptions.None).Length - 1, Is.EqualTo(3));
-            StringAssert.Contains("\"PositionInterpolator\" \"2\"", result.Script);
-            StringAssert.Contains("\"link_guid\"", result.Script);
-            StringAssert.Contains("\"link_to_guid_0\"", result.Script);
-            StringAssert.DoesNotContain("\"targetname\"", result.Script);
-            StringAssert.DoesNotContain("\"NextKey\"", result.Script);
-            StringAssert.Contains("\"solid\" \"0\"", result.Script);
-            StringAssert.Contains("\"contents\" \"0\"", result.Script);
+            IReadOnlyList<MapObject> fallback = ReMapEntExporter.ScriptFallbackObjects(
+                new[] { curve, first, middle, middleEnd, last }, result);
+            string script = ReMapGameScript.GenerateNativeFallback(Document(), fallback);
+            Assert.That(result.ScriptEntityCount, Is.Zero);
+            StringAssert.DoesNotContain("\"classname\" \"move_rope\"", result.Script);
+            Assert.That(fallback.Count, Is.EqualTo(5));
+            Assert.That(result.NutOnlyObjectIds, Contains.Item(curve.id));
+            StringAssert.Contains("ReMap_CreateCurvedZipline( ", script);
         }
 
         [Test]
-        public void R5FlowstateZiprailExportsNativeTrainNodeChainAndModels()
+        public void R5FlowstateZiprailIsOmittedFromNativeExport()
         {
             var document = Document(); document.gameTarget = GameTargets.R5Flowstate;
             var rail = new MapObject { id = "01234567-89ab-cdef-0123-456789abcdef", customType = "ziprail", isGroup = true, ziplineSpeed = 1.75f, ziplineAutoDetachStart = 0f, ziplineAutoDetachEnd = 0f };
@@ -284,30 +306,11 @@ namespace ReMap.Standalone.Tests
             var last = new MapObject { customType = "ziprail-point", parentId = rail.id,
                 customRole = "2", customProfile = "arm", position = new Float3(4, 0, 8) };
             ReMapEntFragments result = ReMapEntExporter.Generate(document, new[] { rail, first, middle, last });
-            Assert.That(result.ScriptEntityCount, Is.EqualTo(11));
-            Assert.That(result.SoundEntityCount, Is.EqualTo(2));
-            Assert.That(result.Script.Split(new[] { "\"classname\" \"script_mover_train_node\"" }, StringSplitOptions.None).Length - 1, Is.EqualTo(3));
-            StringAssert.DoesNotContain("\"script_control_omit_zipline\"", result.Script);
-            StringAssert.Contains("mdl/props/zip_rail/zip_rail_ground_post_01.rmdl", result.Script);
-            Assert.That(result.Script.Split(new[] { "zip_rail_cord_end_01.rmdl" }, StringSplitOptions.None).Length - 1, Is.EqualTo(2));
-            StringAssert.Contains("\"script_name\" \"remap_prop\"", result.Script);
-            StringAssert.Contains("\"can_mantle\" \"1\"", result.Script);
-            StringAssert.Contains("\"solid\" \"6\"", result.Script);
-            StringAssert.Contains("\"soundName\" \"3p_Ziprail_Emit_TowerBy\"", result.Sound);
-            StringAssert.DoesNotContain("\"ZiplineVersion\"", result.Script);
-            Assert.That(result.Script.Split(new[] { "\"ziplineMountReverseDistance\" \"0\"" }, StringSplitOptions.None).Length - 1, Is.EqualTo(2));
-            StringAssert.DoesNotContain("\"useZiprailAutoDetachSpeed\"", result.Script);
-            Assert.That(result.Script.Split(new[] { "\"isZiprailStart\" \"1\"" }, StringSplitOptions.None).Length - 1, Is.EqualTo(2));
-            StringAssert.Contains("\"link_to_guid_0\" \"0123456700000001\"", result.Script);
-            StringAssert.Contains("\"link_to_guid_0\" \"0123456700000002\"", result.Script);
-            StringAssert.Contains("\"link_to_guid_0\" \"0123456700000003\"", result.Script);
-            StringAssert.Contains("\"link_to_guid_0\" \"0123456700000004\"", result.Script);
-            StringAssert.DoesNotContain("\"link_to_guid_0\" \"0123456700000000\"", result.Script);
-
-            rail.ziplineAutoDetachStart = 100f;
-            result = ReMapEntExporter.Generate(document, new[] { rail, first, middle, last });
-            Assert.That(result.Script.Split(new[] { "\"useZiprailAutoDetachSpeed\" \"1\"" }, StringSplitOptions.None).Length - 1, Is.EqualTo(1));
-            StringAssert.DoesNotContain("\"useZiprailAutoDetachSpeed\" \"0\"", result.Script);
+            Assert.That(result.ScriptEntityCount, Is.Zero);
+            Assert.That(result.SoundEntityCount, Is.Zero);
+            StringAssert.DoesNotContain("script_mover_train_node", result.Script);
+            StringAssert.DoesNotContain("zip_rail", result.Script);
+            StringAssert.DoesNotContain("Ziprail", result.Sound);
         }
 
         [Test]

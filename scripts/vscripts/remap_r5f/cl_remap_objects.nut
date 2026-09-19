@@ -19,10 +19,13 @@
 global function ReMap_ClearClientProps
 global function ReMap_CreateClientProp
 global function ReMap_CreateCameraPath
+global function ReMap_CreateClientTextInfoPanel
 
 struct
 {
 	array< entity > props
+	array< int > textInfoPanelIds
+	int nextTextInfoPanelId = 500
 } file
 
 void function ReMap_ClearClientProps()
@@ -34,6 +37,10 @@ void function ReMap_ClearClientProps()
 	}
 
 	file.props.clear()
+	foreach ( int panelId in file.textInfoPanelIds )
+		Dev_DestroyTextInfoPanelWithID( panelId )
+	file.textInfoPanelIds.clear()
+	file.nextTextInfoPanelId = 500
 }
 
 entity function ReMap_CreateClientProp( asset model, vector origin, vector angles, float scale = 1.0 )
@@ -42,6 +49,15 @@ entity function ReMap_CreateClientProp( asset model, vector origin, vector angle
 	prop.SetModelScale( scale )
 	file.props.append( prop )
 	return prop
+}
+
+void function ReMap_CreateClientTextInfoPanel( string title, string description, vector origin, vector angles, bool showPin = true, float textScale = 1.0 )
+{
+	int panelId = file.nextTextInfoPanelId++
+	dev_infoPanelTitleString = title
+	dev_infoPanelTextString = description
+	Dev_CreateTextInfoPanelWithID( origin, angles, showPin, textScale, panelId )
+	file.textInfoPanelIds.append( panelId )
 }
 
 void function ReMap_CreateCameraPath( array<vector> points, array<vector> angles, float fov = 120.0, float transitionTime = 8.0, bool trackTarget = false, vector target = ZERO_VECTOR )

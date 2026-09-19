@@ -12,9 +12,11 @@ namespace ReMap.Standalone
         private CatalogEntry[] CustomCatalogEntries() => new[] {
             new CatalogEntry("custom:zipline", L.T("#ZIPLINE"), L.T("#CUSTOM"), new Vector3(1, 10.16f, 1)) { CustomType = "zipline" },
             new CatalogEntry("custom:door", L.T("#DOOR"), L.T("#CUSTOM"), new Vector3(1.83f, 2.44f, .15f)) { CustomType = "door" },
-            new CatalogEntry("custom:curved-zipline", L.T("#CURVED_ZIPLINE"), L.T("#CUSTOM"), new Vector3(15.24f, 2.04f, 2.54f)) { CustomType = "curved-zipline" },
+            new CatalogEntry("custom:curved-zipline", L.T("#CURVED_ZIPLINE"), L.T("#CUSTOM"), new Vector3(15.24f, 2.04f, 2.54f)) {
+                CustomType = "curved-zipline", SupportedGameTargets = new[] { GameTargets.R5Reloaded }
+            },
             new CatalogEntry("custom:ziprail", L.T("#ZIPRAIL"), L.T("#CUSTOM"), new Vector3(15.24f, 2.04f, 2.54f)) {
-                CustomType = "ziprail", SupportedGameTargets = new[] { GameTargets.R5Flowstate }
+                CustomType = "ziprail", SupportedGameTargets = Array.Empty<string>()
             },
             new CatalogEntry("custom:loot-bin", L.T("#LOOT_BIN"), L.T("#CUSTOM"), new Vector3(2.1f, 1.25f, 1.05f)) { CustomType = "loot-bin" },
             new CatalogEntry("custom:jump-pad", L.T("#JUMP_PAD"), L.T("#CUSTOM"), new Vector3(1.2f, .3f, 1.2f)) { CustomType = "jump-pad" },
@@ -157,7 +159,6 @@ namespace ReMap.Standalone
             PrioritizeVisibleThumbnails();
             RefreshSelectedCustomThumbnail();
             _ = PrepareZiplineModels();
-            _ = PrepareZiprailModels();
             _ = PrepareDoorModels();
             _ = PrepareLootBinModel();
             _ = PrepareJumpPadModel();

@@ -54,7 +54,8 @@ namespace ReMap.Standalone.Core
         }
         public static IEnumerable<MapObject> GenerationObjects(MapDocument doc)
         {
-            doc.Validate(); return doc.objects.Where(o => !o.isGroup && IsEnabled(doc, o.id));
+            doc.Validate(); return doc.objects.Where(o => !o.isGroup && IsEnabled(doc, o.id) &&
+                GameTargets.SupportsCustomType(doc.gameTarget, o.customType));
         }
         public static void Reparent(MapDocument doc, string id, string parent)
         {

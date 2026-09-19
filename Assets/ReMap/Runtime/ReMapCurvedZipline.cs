@@ -39,6 +39,8 @@ namespace ReMap.Standalone
 
         private void InsertCurvedZipline(Vector3 pivot, string parent = "")
         {
+            if (!GameTargets.SupportsCustomType(snapshot.gameTarget, "curved-zipline"))
+                throw new InvalidOperationException(L.T("#UNSUPPORTED_TARGET_GAME"));
             var objects = CreateDefaultCurvedZiplineObjects(pivot, parent);
             session.Edit(document => document.objects.AddRange(objects));
             selectedId = objects[0].id;

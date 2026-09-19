@@ -15,6 +15,16 @@ namespace ReMap.Standalone.Core
 
         public static string DisplayName(string value) =>
             Normalize(value) == R5Flowstate ? "R5Flowstate" : "R5Reloaded";
+
+        public static bool SupportsCustomType(string target, string customType)
+        {
+            if (customType == "ziprail" || customType == "ziprail-point" ||
+                customType == "ziprail-component") return false;
+            if (customType == "curved-zipline" || customType == "curved-zipline-point" ||
+                customType == "curved-zipline-component")
+                return Normalize(target) == R5Reloaded;
+            return true;
+        }
     }
 
     [Serializable]
@@ -340,9 +350,6 @@ namespace ReMap.Standalone.Core
                 if (item.customType == "curved-zipline-point" && (!Finite(item.ziplineArmHeight) ||
                     item.ziplineArmHeight < 70f || item.ziplineArmHeight > 290f))
                     throw new ArgumentException(L.T("#INVALID_ZIPLINE_ARM_HEIGHT"));
-                if ((item.customType == "ziprail" || item.customType == "ziprail-point" ||
-                    item.customType == "ziprail-component") && gameTarget != GameTargets.R5Flowstate)
-                    throw new ArgumentException(L.T("#ZIPRAIL_R5FLOWSTATE_ONLY"));
                 if (item.customType == "ziprail" && (!item.isGroup ||
                     !Finite(item.ziplineWidth) || item.ziplineWidth < .1f || item.ziplineWidth > 32f ||
                     !Finite(item.ziplineSpeed) || item.ziplineSpeed < .1f || item.ziplineSpeed > 10f ||

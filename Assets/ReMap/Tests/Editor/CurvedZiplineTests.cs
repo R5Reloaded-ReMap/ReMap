@@ -16,7 +16,7 @@ namespace ReMap.Standalone.Tests
             objects[1].customProfile = "support";
             objects[2].customProfile = "arm";
             return new MapDocument {
-                name = "curve", gameTarget = GameTargets.R5Flowstate,
+                name = "curve", gameTarget = GameTargets.R5Reloaded,
                 editingMap = "mp_rr_desertlands_hu", objects = objects.ToList()
             };
         }
@@ -61,9 +61,31 @@ namespace ReMap.Standalone.Tests
             StringAssert.Contains("arm.kv.contents = 0", script);
             StringAssert.Contains("support.kv.solid = 0", script);
             StringAssert.Contains("support.kv.contents = 0", script);
+            StringAssert.Contains("array<entity> ropes = [ ReMap_SetCurvedRopeProperties( CreateEntity( \"move_rope\" ), width, speedScale ) ]", script);
+            StringAssert.Contains("CreateEntity( \"keyframe_rope\" )", script);
+            StringAssert.DoesNotContain("CreateEntity( index == 0 ?", script);
+            StringAssert.Contains("rope.kv.MoveSpeed = int( 64.0 * speedScale )", script);
+            StringAssert.Contains("rope.kv.Width = string( width )", script);
             StringAssert.DoesNotContain("MapEditor_", script);
             StringAssert.DoesNotContain("GetBezierOfPath", script);
             StringAssert.DoesNotContain("GetAllPointsOnBezier", script);
+        }
+
+        [Test]
+        public void R5FlowstateOmitsCurvedZiplineFromEveryExport()
+        {
+            var document = Document();
+            document.gameTarget = GameTargets.R5Flowstate;
+
+            string script = ReMapGameScript.Generate(document, document.objects);
+            string live = ReMapGameScript.GenerateLiveCommands(document, document.objects);
+            ReMapEntFragments entities = ReMapEntExporter.Generate(document, document.objects);
+
+            Assert.That(GameTargets.SupportsCustomType(GameTargets.R5Flowstate, "curved-zipline"), Is.False);
+            Assert.That(GameTargets.SupportsCustomType(GameTargets.R5Reloaded, "curved-zipline"), Is.True);
+            StringAssert.DoesNotContain("ReMap_CreateCurvedZipline", script);
+            StringAssert.DoesNotContain("ReMap_CreateCurvedZipline", live);
+            StringAssert.DoesNotContain("\"classname\" \"move_rope\"", entities.Script);
         }
 
         [Test]

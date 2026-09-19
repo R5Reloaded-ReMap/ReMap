@@ -483,6 +483,7 @@ namespace ReMap.Standalone
             var result = new List<MapObject>();
             foreach (var item in document.objects)
             {
+                if (!GameTargets.SupportsCustomType(document.gameTarget, item.customType)) continue;
                 if (item.isGroup && item.customType != "zipline" && item.customType != "zipline-endpoint" &&
                     item.customType != "door" && item.customType != "curved-zipline" &&
                     item.customType != "curved-zipline-point" && item.customType != "ziprail" &&

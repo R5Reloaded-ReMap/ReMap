@@ -15,7 +15,9 @@
 global function ReMap_PrecacheZiplines
 global function ReMap_ClearZiplines
 global function ReMap_CreateZipline
+#if R5R
 global function ReMap_CreateCurvedZipline
+#endif
 
 global const int REMAP_ZIPLINE_END_NONE = 0
 global const int REMAP_ZIPLINE_END_ARM = 1
@@ -104,6 +106,7 @@ void function ReMap_CreateZipline( vector startOrigin, vector startAngles, vecto
 	file.entities.append( endPoint )
 }
 
+#if R5R
 void function ReMap_CreateCurvedZipline( array<vector> controlPoints, int segmentsPerSpan = 8, array<int> pointProfiles = [], array<vector> pointAngles = [], array<float> pointArmHeights = [], float width = 2.0, float speedScale = 1.0 )
 {
 	if ( controlPoints.len() < 2 )
@@ -121,16 +124,20 @@ void function ReMap_CreateCurvedZipline( array<vector> controlPoints, int segmen
 	if ( curvePoints.len() < 2 )
 		return
 
-	array<entity> ropes
-	for ( int index = 0; index < curvePoints.len(); index++ )
+	array<entity> ropes = [ ReMap_SetCurvedRopeProperties( CreateEntity( "move_rope" ), width, speedScale ) ]
+	ropes[0].SetOrigin( curvePoints[0] )
+	for ( int index = 1; index < curvePoints.len(); index++ )
 	{
-		entity rope = ReMap_SetCurvedRopeProperties( CreateEntity( index == 0 ? "move_rope" : "keyframe_rope" ), width, speedScale )
+		entity rope = ReMap_SetCurvedRopeProperties( CreateEntity( "keyframe_rope" ), width, speedScale )
 		rope.SetOrigin( curvePoints[index] )
 		ropes.append( rope )
 	}
 
-	for ( int index = 0; index < ropes.len() - 1; index++ )
-		ropes[index].LinkToEnt( ropes[index + 1] )
+	for ( int index = 0; index < ropes.len(); index++ )
+	{
+		if ( index + 1 < ropes.len() )
+			ropes[index].LinkToEnt( ropes[index + 1] )
+	}
 	foreach ( entity rope in ropes )
 	{
 		DispatchSpawn( rope )
@@ -140,10 +147,10 @@ void function ReMap_CreateCurvedZipline( array<vector> controlPoints, int segmen
 
 entity function ReMap_SetCurvedRopeProperties( entity rope, float width, float speedScale )
 {
-	rope.kv.MoveSpeed = 64.0 * speedScale
+	rope.kv.MoveSpeed = int( 64.0 * speedScale )
 	rope.kv.Slack = 25
 	rope.kv.Subdiv = "2"
-	rope.kv.Width = width
+	rope.kv.Width = string( width )
 	rope.kv.Type = "0"
 	rope.kv.TextureScale = "1"
 	rope.kv.PositionInterpolator = 2
@@ -226,6 +233,7 @@ vector function ReMap_BezierPoint( vector p0, vector p1, vector p2, vector p3, f
 	vector e = b + (c - b) * t
 	return d + (e - d) * t
 }
+#endif
 
 vector function ReMap_CreateZiplineEndModel( int profile, vector origin, vector angles, float armHeight = 180.0 )
 {

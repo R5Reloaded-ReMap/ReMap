@@ -2064,7 +2064,7 @@
     },
     {
       "key": "#OPTIMIZE_WITH_NATIVE_ENT_HELP",
-      "text": "Disable this option to generate and install only the .nut map scripts."
+      "text": "Disable this option to generate and install only the .nut map scripts. Curved ziplines always use the .nut version."
     },
     {
       "key": "#ENT_EXPORT_TITLE",

@@ -31,6 +31,7 @@ namespace ReMap.Standalone.Tests
         {
             string root = Path.GetFullPath(Path.Combine(Application.dataPath, ".."));
             string script = File.ReadAllText(Path.Combine(root, "scripts/vscripts/source/sv_remap_objects.source.nut"));
+            string clientScript = File.ReadAllText(Path.Combine(root, "scripts/vscripts/source/cl_remap_objects.source.nut"));
             StringAssert.Contains("void function ReMap_CreateTextInfoPanel", script);
             StringAssert.Contains("AddCallback_OnClientConnected( ReMap_SendTextInfoPanelsToPlayer )", script);
             StringAssert.Contains("while ( IsValid( player ) && ( !player.IsPlayer() || !player.p.isConnected ) )", script);
@@ -38,6 +39,31 @@ namespace ReMap.Standalone.Tests
             StringAssert.Contains("Dev_CreateTextInfoPanelWithID", script);
             StringAssert.Contains("Dev_DestroyTextInfoPanelWithID", script);
             StringAssert.DoesNotContain("MapEditor_CreateTextInfoPanel", script);
+            StringAssert.Contains("void function ReMap_CreateClientTextInfoPanel", clientScript);
+            StringAssert.Contains("dev_infoPanelTitleString = title", clientScript);
+            StringAssert.Contains("Dev_CreateTextInfoPanelWithID( origin, angles, showPin, textScale, panelId )", clientScript);
+        }
+
+        [Test]
+        public void FlowstateExportsTextInfoPanelsOnTheClient()
+        {
+            var document = new MapDocument
+            {
+                name = "panel", editingMap = "mp_rr_desertlands_hu",
+                gameTarget = GameTargets.R5Flowstate
+            };
+            var panel = new MapObject
+            {
+                customType = "text-info-panel", isGroup = true,
+                textInfoPanelTitle = "Movement", textInfoPanelDescription = "Jump here"
+            };
+
+            string code = ReMapGameScript.Generate(document, new[] { panel });
+            string live = ReMapGameScript.GenerateLiveCommands(document, new[] { panel });
+
+            StringAssert.DoesNotContain("\tReMap_CreateTextInfoPanel( ", code);
+            StringAssert.Contains("\tReMap_CreateClientTextInfoPanel( \"Movement\", \"Jump here\"", code);
+            StringAssert.Contains("script_client ReMap_CreateClientTextInfoPanel( \"Movement\", \"Jump here\"", live);
         }
 
         [Test]

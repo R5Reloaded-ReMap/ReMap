@@ -38,24 +38,29 @@ namespace ReMap.Standalone.Tests
         }
 
         [Test]
-        public void ZiprailIsRejectedOutsideR5Flowstate()
+        public void ZiprailIsDisabledForEveryTarget()
         {
             var document = Document();
-            document.gameTarget = GameTargets.R5Reloaded;
 
-            Assert.Throws<System.ArgumentException>(() => document.Validate());
+            Assert.DoesNotThrow(() => document.Validate());
+            Assert.That(GameTargets.SupportsCustomType(GameTargets.R5Flowstate, "ziprail"), Is.False);
+            Assert.That(GameTargets.SupportsCustomType(GameTargets.R5Reloaded, "ziprail"), Is.False);
         }
 
         [Test]
-        public void NutExportKeepsZiprailsInTheNativeEntBundle()
+        public void EveryExportOmitsZiprails()
         {
             var document = Document();
 
             string code = ReMapGameScript.Generate(document, document.objects);
+            string live = ReMapGameScript.GenerateLiveCommands(document, document.objects);
+            ReMapEntFragments entities = ReMapEntExporter.Generate(document, document.objects);
 
-            StringAssert.Contains("// Ziprails are exported through the native .ent bundle.", code);
+            StringAssert.DoesNotContain("Ziprails are exported", code);
             StringAssert.DoesNotContain("ReMap_CreateZiprail", code);
             StringAssert.DoesNotContain("REMAP_ZIPRAIL_POINT_", code);
+            StringAssert.DoesNotContain("ReMap_CreateZiprail", live);
+            StringAssert.DoesNotContain("script_mover_train_node", entities.Script);
         }
 
         [Test]
@@ -70,10 +75,6 @@ namespace ReMap.Standalone.Tests
             Assert.That(points[1].customProfile, Is.EqualTo("building-claw-02"));
             Assert.That(points[2].customProfile, Is.EqualTo("wall"));
 
-            ReMapEntFragments entities = ReMapEntExporter.Generate(document, document.objects);
-            StringAssert.Contains("mdl/props/zip_rail/zip_rail_building_claw_02.rmdl", entities.Script);
-            StringAssert.Contains("mdl/props/zip_rail/zip_rail_wall_01.rmdl", entities.Script);
-            StringAssert.Contains("mdl/props/zip_rail/zip_rail_ground_claw_01.rmdl", entities.Script);
         }
 
         [Test]
@@ -104,7 +105,7 @@ namespace ReMap.Standalone.Tests
         }
 
         [Test]
-        public void WallMountOwnsClampAndOnlyEndpointsReceiveCordEnds()
+        public void DisabledZiprailExportIgnoresEveryMountProfile()
         {
             var document = Document();
             var points = document.objects.Where(item => item.customType == "ziprail-point").ToArray();
@@ -113,10 +114,10 @@ namespace ReMap.Standalone.Tests
             foreach (var point in points) point.customProfile = "support";
             ReMapEntFragments support = ReMapEntExporter.Generate(document, document.objects);
 
-            Assert.That(wall.Script.Split(new[] { "zip_rail_ground_claw_01.rmdl" }, System.StringSplitOptions.None).Length - 1, Is.EqualTo(3));
-            Assert.That(wall.Script.Split(new[] { "zip_rail_cord_end_01.rmdl" }, System.StringSplitOptions.None).Length - 1, Is.EqualTo(2));
+            StringAssert.DoesNotContain("zip_rail_ground_claw_01.rmdl", wall.Script);
+            StringAssert.DoesNotContain("zip_rail_cord_end_01.rmdl", wall.Script);
             StringAssert.DoesNotContain("zip_rail_ground_claw_01.rmdl", support.Script);
-            Assert.That(support.Script.Split(new[] { "zip_rail_cord_end_01.rmdl" }, System.StringSplitOptions.None).Length - 1, Is.EqualTo(2));
+            StringAssert.DoesNotContain("zip_rail_cord_end_01.rmdl", support.Script);
         }
 
         [TestCase("support", -6f, 4f, 9f)]

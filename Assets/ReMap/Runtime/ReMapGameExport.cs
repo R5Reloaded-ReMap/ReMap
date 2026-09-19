@@ -49,7 +49,8 @@ namespace ReMap.Standalone
             string gameTarget = GameTargets.Normalize(document.gameTarget);
             string map = EditingMap(document);
             AdditionalRpaks(map, selectedRpaks);
-            var world = (worldObjects ?? throw new ArgumentNullException(nameof(worldObjects))).Where(o => o != null).ToList();
+            var world = (worldObjects ?? throw new ArgumentNullException(nameof(worldObjects)))
+                .Where(o => o != null && GameTargets.SupportsCustomType(gameTarget, o.customType)).ToList();
             var objects = Prepare(world);
             var serverObjects = objects.Where(o => !o.clientSide).ToList();
             var clientObjects = objects.Where(o => o.clientSide).ToList();
@@ -149,7 +150,8 @@ namespace ReMap.Standalone
             AppendBubbleShields(server, world, false, originOffset, useOriginOffset);
             AppendSounds(server, world, false, originOffset, useOriginOffset);
             AppendLocationPairs(server, world, false, originOffset, useOriginOffset);
-            AppendTextInfoPanels(server, world, false, originOffset, useOriginOffset);
+            if (gameTarget == GameTargets.R5Reloaded)
+                AppendTextInfoPanels(server, world, false, originOffset, useOriginOffset);
             AppendWindowHints(server, world, false, originOffset, useOriginOffset);
             AppendAnimatedCameras(server, world, false, originOffset, useOriginOffset);
             AppendCurvedZiplines(server, world, false, originOffset, useOriginOffset);
@@ -187,6 +189,8 @@ namespace ReMap.Standalone
                 foreach (var property in item.scriptProperties ?? new List<ScriptProperty>())
                     AppendProperty(client, "ent", property, "\t", true);
             }
+            if (gameTarget == GameTargets.R5Flowstate)
+                AppendClientTextInfoPanels(client, world, false, originOffset, useOriginOffset);
             AppendCameraPaths(client, world, originOffset, useOriginOffset);
             AppendAdditionalCode(client, "Additional client map code", document.additionalClientCode);
             return new[]
@@ -236,7 +240,8 @@ namespace ReMap.Standalone
         {
             EditingMap(document);
             string gameTarget = GameTargets.Normalize(document.gameTarget);
-            var world = (worldObjects ?? throw new ArgumentNullException(nameof(worldObjects))).Where(o => o != null).ToList();
+            var world = (worldObjects ?? throw new ArgumentNullException(nameof(worldObjects)))
+                .Where(o => o != null && GameTargets.SupportsCustomType(gameTarget, o.customType)).ToList();
             var objects = Prepare(world).Where(o => !o.clientSide).ToList();
             Vector3 originOffset = OriginOffset(document);
             var result = new StringBuilder();
@@ -257,7 +262,10 @@ namespace ReMap.Standalone
             AppendBubbleShields(result, world, true, originOffset, false);
             AppendSounds(result, world, true, originOffset, false);
             AppendLocationPairs(result, world, true, originOffset, false);
-            AppendTextInfoPanels(result, world, true, originOffset, false);
+            if (gameTarget == GameTargets.R5Flowstate)
+                AppendClientTextInfoPanels(result, world, true, originOffset, false);
+            else
+                AppendTextInfoPanels(result, world, true, originOffset, false);
             AppendWindowHints(result, world, true, originOffset, false);
             AppendAnimatedCameras(result, world, true, originOffset, false);
             AppendCurvedZiplines(result, world, true, originOffset, false);
@@ -803,6 +811,24 @@ namespace ReMap.Standalone
             }
         }
 
+        private static void AppendClientTextInfoPanels(StringBuilder code, List<MapObject> world, bool live,
+            Vector3 originOffset, bool symbolicOffset)
+        {
+            var panels = world.Where(o => o.customType == "text-info-panel").ToList();
+            if (!live && panels.Count > 0) { code.AppendLine(); code.AppendLine("\t// Text info panels"); }
+            foreach (var panel in panels)
+            {
+                string expression = "ReMap_CreateClientTextInfoPanel( " +
+                    ScriptString(panel.textInfoPanelTitle) + ", " +
+                    ScriptString(panel.textInfoPanelDescription) + ", " +
+                    Position(panel.position, originOffset, symbolicOffset) + ", " +
+                    Vector(ApexDisplay.Angles(WorldView.ToVector(panel.rotation))) + ", " +
+                    (panel.textInfoPanelShowPin ? "true" : "false") + ", " +
+                    Number(panel.textInfoPanelScale) + " )";
+                code.Append(live ? "script_client " : "\t").Append(expression).AppendLine();
+            }
+        }
+
         private static void AppendWindowHints(StringBuilder code, List<MapObject> world, bool live,
             Vector3 originOffset, bool symbolicOffset)
         {
@@ -1079,7 +1105,7 @@ namespace ReMap.Standalone
             string withoutManaged = RemoveManagedPaks(source, path);
             string[] archives = (rpaks ?? Array.Empty<string>())
                 .Where(rpak => !Regex.IsMatch(withoutManaged,
-                    "(?im)^[ \\t]*\"" + Regex.Escape(rpak) + "\"[ \\t]+\"[012]\"[ \\t]*(?://.*)?$"))
+                    "(?im)^[ \\t]*\"" + Regex.Escape(rpak) + "\"[ \\t]+\"[012]\"[ \\t]*(?://.*)?\\r?$"))
                 .ToArray();
             if (archives.Length == 0) return withoutManaged;
 

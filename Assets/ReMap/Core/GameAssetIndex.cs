@@ -127,8 +127,9 @@ namespace ReMap.Standalone.Core
         public static int RemoveUnsupportedObjects(MapDocument document, string gameTarget)
         {
             if (document == null) throw new ArgumentNullException(nameof(document));
-            if (GameTargets.Normalize(gameTarget) == GameTargets.R5Flowstate) return 0;
-            MapObject[] roots = document.objects.Where(item => item.customType == "ziprail").ToArray();
+            MapObject[] roots = document.objects.Where(item =>
+                (item.customType == "ziprail" || item.customType == "curved-zipline") &&
+                !GameTargets.SupportsCustomType(gameTarget, item.customType)).ToArray();
             var removed = new HashSet<string>();
             foreach (var root in roots) removed.UnionWith(MapHierarchy.Subtree(document, root.id));
             document.objects.RemoveAll(item => removed.Contains(item.id));

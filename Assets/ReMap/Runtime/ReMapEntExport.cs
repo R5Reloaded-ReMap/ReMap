@@ -51,8 +51,10 @@ namespace ReMap.Standalone
         {
             if (document == null) throw new ArgumentNullException(nameof(document));
             ValidateMapName(document.editingMap);
+            string gameTarget = GameTargets.Normalize(document.gameTarget);
             var world = (worldObjects ?? throw new ArgumentNullException(nameof(worldObjects)))
-                .Where(item => item != null && !item.disabled).ToList();
+                .Where(item => item != null && !item.disabled &&
+                    GameTargets.SupportsCustomType(gameTarget, item.customType)).ToList();
             var script = new StringBuilder();
             var sound = new StringBuilder();
             var spawn = new StringBuilder();
@@ -95,7 +97,10 @@ namespace ReMap.Standalone
             foreach (var item in world.Where(item => item.customType == "zipline"))
                 scriptCount += AppendZipline(script, item, byId, offset);
             foreach (var item in world.Where(item => item.customType == "curved-zipline"))
-                scriptCount += AppendCurvedZipline(script, item, world, offset);
+            {
+                nutOnly.Add(Display(item) + " (curved zipline uses .nut)");
+                nutOnlyIds.Add(item.id);
+            }
             if (GameTargets.Normalize(document.gameTarget) == GameTargets.R5Flowstate)
             {
                 foreach (var item in world.Where(item => item.customType == "ziprail"))
@@ -116,6 +121,12 @@ namespace ReMap.Standalone
             {
                 scriptCount += AppendJumpTowerModels(script, item, offset);
                 nutOnly.Add(Display(item) + " (gameplay requires .nut)");
+                nutOnlyIds.Add(item.id);
+            }
+
+            foreach (var item in world.Where(item => item.customType == "text-info-panel"))
+            {
+                nutOnly.Add(Display(item) + " (text panel requires .nut)");
                 nutOnlyIds.Add(item.id);
             }
 
@@ -184,7 +195,7 @@ namespace ReMap.Standalone
 
             var represented = new HashSet<string>(StringComparer.Ordinal)
             {
-                "", "door", "door-component", "loot-bin", "window-hint", "sound", "sound-point", "spawn-point",
+                "", "door", "door-component", "loot-bin", "text-info-panel", "window-hint", "sound", "sound-point", "spawn-point",
                 "jump-tower", "jump-tower-component",
                 "zipline", "zipline-endpoint", "zipline-component",
                 "curved-zipline", "curved-zipline-point", "curved-zipline-component",

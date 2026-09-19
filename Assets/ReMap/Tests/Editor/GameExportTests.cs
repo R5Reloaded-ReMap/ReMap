@@ -382,7 +382,8 @@ namespace ReMap.Standalone.Tests
                     new[] { "mp_extra.rpak", "mp_existing.rpak" });
                 string settingsWithExternalEntries = System.IO.File.ReadAllText(levelSettings).Replace(
                     "        // ReMap managed paks - begin",
-                    "        \"native.rpak\" \"0\"\n        \"mp_existing.rpak\" \"1\"\n        // ReMap managed paks - begin");
+                    "        \"native.rpak\" \"0\"\n        \"mp_existing.rpak\" \"1\"\n        // ReMap managed paks - begin")
+                    .Replace("\n", "\r\n");
                 System.IO.File.WriteAllText(levelSettings, settingsWithExternalEntries);
                 document.additionalServerCode = "SecondProjectSetup()";
                 ReMapGameScriptInstaller.Write(platform, document, document.objects,
@@ -546,6 +547,7 @@ namespace ReMap.Standalone.Tests
             StringAssert.Contains("RotateVector( <4, -2.5, armHeight>, angles )", flowstate);
             StringAssert.Contains("return origin + RotateVector( <-58, -2, -14>, angles )", flowstate);
             StringAssert.Contains("return armOrigin + RotateVector( <-58, -2, -14>, angles )", flowstate);
+            StringAssert.DoesNotContain("ReMap_CreateCurvedZipline", flowstate);
             StringAssert.Contains("ReMap_CreateZipline", r5reloaded);
             StringAssert.Contains("CreateEntity( \"zipline\" )", r5reloaded);
             StringAssert.DoesNotContain("MapEditor_", r5reloaded);
@@ -558,6 +560,7 @@ namespace ReMap.Standalone.Tests
             StringAssert.Contains("security_fence_post", r5reloaded);
             StringAssert.Contains("return origin + RotateVector( <-58, -2, -14>, angles )", r5reloaded);
             StringAssert.Contains("return armOrigin + RotateVector( <-58, -2, -14>, angles )", r5reloaded);
+            StringAssert.Contains("ReMap_CreateCurvedZipline", r5reloaded);
 
             string flowstateProps = System.IO.File.ReadAllText(System.IO.Path.Combine(root, "remap_r5f", "sv_remap_objects.nut"));
             string reloadedProps = System.IO.File.ReadAllText(System.IO.Path.Combine(root, "remap_r5r", "sv_remap_objects.nut"));

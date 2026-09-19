@@ -450,12 +450,16 @@ namespace ReMap.Standalone
             {
                 if (!native)
                 {
+                    entExportResetScripts?.SetEnabled(true);
                     int ziprails = world.GenerationObjects(snapshot).Count(item => item.customType == "ziprail");
                     entExportWarning.text = ziprails > 0 ? L.F("#SCRIPT_EXPORT_UNSUPPORTED_ZIPRAILS_ARG0", ziprails) : "";
                 }
                 else
                 {
                     ReMapEntFragments fragments = ReMapEntExporter.Generate(snapshot, world.GenerationObjects(snapshot));
+                    bool requiresScripts = fragments.NutOnlyObjects.Count > 0;
+                    if (requiresScripts) entExportResetScripts?.SetValueWithoutNotify(true);
+                    entExportResetScripts?.SetEnabled(!requiresScripts);
                     entExportWarning.text = fragments.NutOnlyObjects.Count > 0 ? L.F("#ENT_EXPORT_SCRIPT_ONLY_OBJECTS_ARG0", fragments.NutOnlyObjects.Count) : "";
                 }
             }
@@ -558,7 +562,7 @@ namespace ReMap.Standalone
                 string levelDefinition = publish ? ReMapEntExporter.FindLevelDefinition(assetLibrary.GameDirectory, assetLibrary.PlatformDirectory, document.editingMap) : null;
                 string bundle = ReMapEntExporter.WriteMergedBundle(source, document, objects, selectedRpaks, publish, preserveBaseEntities, out ReMapEntFragments fragments, levelDefinition);
                 ReMapLooseMapInstall installed = ReMapEntExporter.InstallLooseMap(bundle, document, assetLibrary.GameDirectory, assetLibrary.PlatformDirectory, publish);
-                if (resetScripts)
+                if (resetScripts || fragments.NutOnlyObjectIds.Count > 0)
                 {
                     MapDocument fallbackDocument = document.Copy();
                     fallbackDocument.editingMap = installed.MapName;

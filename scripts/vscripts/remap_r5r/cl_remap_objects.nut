@@ -44,6 +44,7 @@ entity function ReMap_CreateClientProp( asset model, vector origin, vector angle
 	return prop
 }
 
+
 void function ReMap_CreateCameraPath( array<vector> points, array<vector> angles, float fov = 120.0, float transitionTime = 8.0, bool trackTarget = false, vector target = ZERO_VECTOR )
 {
 	if ( points.len() < 2 || points.len() != angles.len() )

@@ -317,20 +317,28 @@ namespace ReMap.Standalone.Tests
             Assert.That(door.disabled, Is.True);
             Assert.That(compatible.disabled, Is.False);
         }
-        [Test] public void PortToR5ReloadedRemovesUnsupportedZiprailSubtreesOnlyFromTheCopy()
+        [TestCase(GameTargets.R5Reloaded, 1)]
+        [TestCase(GameTargets.R5Flowstate, 2)]
+        public void PortRemovesUnsupportedCableSubtrees(string target, int expectedRemoved)
         {
             var document = new MapDocument();
             var ziprail = new MapObject { customType = "ziprail", isGroup = true };
             var point = new MapObject { customType = "ziprail-point", parentId = ziprail.id };
+            var curved = new MapObject { customType = "curved-zipline", isGroup = true };
+            var curvedPoint = new MapObject { customType = "curved-zipline-point", parentId = curved.id };
             var prop = new MapObject { gameModelPath = "mdl/props/crate.rmdl" };
             document.objects.Add(ziprail);
             document.objects.Add(point);
+            document.objects.Add(curved);
+            document.objects.Add(curvedPoint);
             document.objects.Add(prop);
 
-            int removed = MapPortCompatibility.RemoveUnsupportedObjects(document, GameTargets.R5Reloaded);
+            int removed = MapPortCompatibility.RemoveUnsupportedObjects(document, target);
 
-            Assert.That(removed, Is.EqualTo(1));
-            Assert.That(document.objects, Is.EqualTo(new[] { prop }));
+            Assert.That(removed, Is.EqualTo(expectedRemoved));
+            Assert.That(document.objects.All(item =>
+                GameTargets.SupportsCustomType(target, item.customType)), Is.True);
+            Assert.That(document.objects, Contains.Item(prop));
         }
         [Test] public void CastAcceptsBoundedEmptyNode()
         {
