@@ -2095,6 +2095,14 @@
       "text": "Disable this option to export only entities created in ReMap."
     },
     {
+      "key": "#ENT_EXPORT_RESET_SCRIPTS",
+      "text": "Reset installed .nut map scripts"
+    },
+    {
+      "key": "#ENT_EXPORT_RESET_SCRIPTS_HELP",
+      "text": "Recommended with native ENT files. Clears previously generated map objects from the .nut modules to prevent duplicate spawns."
+    },
+    {
       "key": "#RESTART_MAP_AFTER_INSTALL",
       "text": "Reload the map after installation"
     },

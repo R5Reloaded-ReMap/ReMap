@@ -27,7 +27,7 @@ namespace ReMap.Standalone
         private DropdownField workspaceGameChoice;
         private TextField newMapName, renameMapName;
         private DropdownField newMapGame, newMapPrimary, entExportMode;
-        private Toggle entExportUseNative, entExportPreserveBase, entExportRestartMap;
+        private Toggle entExportUseNative, entExportPreserveBase, entExportResetScripts, entExportRestartMap;
         private Label newMapModeNotice, entExportTarget, entExportWarning;
         private Button newMapConfirm;
         private bool portingMap;
@@ -420,6 +420,9 @@ namespace ReMap.Standalone
             entExportPreserveBase = new Toggle(L.T("#ENT_EXPORT_PRESERVE_BASE")) { value = true };
             entExportNativeOptions.Add(entExportPreserveBase);
             entExportNativeOptions.Add(Label(L.T("#ENT_EXPORT_PRESERVE_BASE_HELP"), "note"));
+            entExportResetScripts = new Toggle(L.T("#ENT_EXPORT_RESET_SCRIPTS")) { value = true };
+            entExportNativeOptions.Add(entExportResetScripts);
+            entExportNativeOptions.Add(Label(L.T("#ENT_EXPORT_RESET_SCRIPTS_HELP"), "note"));
             entExportRestartMap = new Toggle(L.T("#RESTART_MAP_AFTER_INSTALL"));
             content.Add(entExportRestartMap);
             content.Add(Label(L.T("#RESTART_MAP_AFTER_INSTALL_HELP"), "note"));
@@ -439,6 +442,7 @@ namespace ReMap.Standalone
             entExportUseNative.SetValueWithoutNotify(true);
             entExportMode.index = 0;
             entExportPreserveBase.SetValueWithoutNotify(true);
+            entExportResetScripts.SetValueWithoutNotify(true);
             entExportRestartMap.SetValueWithoutNotify(false);
             RefreshEntExportTarget();
             entExportOverlay.style.display = DisplayStyle.Flex; entExportOverlay.BringToFront();
@@ -480,9 +484,10 @@ namespace ReMap.Standalone
             bool native = entExportUseNative.value;
             bool publish = native && entExportMode.index == 1;
             bool preserveBaseEntities = entExportPreserveBase.value;
+            bool resetScripts = native && entExportResetScripts.value;
             bool restartMap = entExportRestartMap.value;
             ShowEntExportDialog(false);
-            if (native) ExportEntBundle(publish, preserveBaseEntities, restartMap);
+            if (native) ExportEntBundle(publish, preserveBaseEntities, resetScripts, restartMap);
             else BuildGameScript(restartMap);
         }
         private void BuildRenameMapDialog()
@@ -551,7 +556,7 @@ namespace ReMap.Standalone
             SetStatus(L.F("#PROJECT_EXPORTED_ARG0", path));
         }
 
-        private async void ExportEntBundle(bool publish, bool preserveBaseEntities, bool restartMap)
+        private async void ExportEntBundle(bool publish, bool preserveBaseEntities, bool resetScripts, bool restartMap)
         {
             CommitInspectorEdit();
             MapDocument document = snapshot;
@@ -568,6 +573,7 @@ namespace ReMap.Standalone
                 if (this == null) return;
                 string bundle = ReMapEntExporter.WriteMergedBundle(source, document, objects, assetLibrary.SelectedMapArchives(Targets), publish, preserveBaseEntities, out _);
                 ReMapLooseMapInstall installed = ReMapEntExporter.InstallLooseMap(bundle, document, assetLibrary.GameDirectory, assetLibrary.PlatformDirectory, publish);
+                if (resetScripts) ReMapGameScriptInstaller.Reset(assetLibrary.PlatformDirectory, document.gameTarget);
                 SetStatus(publish ? L.F("#LOOSE_MAP_INSTALLED_ARG0_ARG1", installed.MapName, installed.LevelSettingsPath) : L.F("#LOOSE_MAP_DEVELOPMENT_INSTALLED_ARG0", installed.MapName));
                 if (restartMap)
                 {

@@ -2095,6 +2095,14 @@
       "text": "Désactivez cette option pour exporter uniquement les entités créées dans ReMap."
     },
     {
+      "key": "#ENT_EXPORT_RESET_SCRIPTS",
+      "text": "Réinitialiser les scripts .nut installés"
+    },
+    {
+      "key": "#ENT_EXPORT_RESET_SCRIPTS_HELP",
+      "text": "Recommandé avec les fichiers ENT natifs. Efface les anciens objets générés dans les modules .nut afin d’éviter les doubles apparitions."
+    },
+    {
       "key": "#RESTART_MAP_AFTER_INSTALL",
       "text": "Recharger la carte après l’installation"
     },
