@@ -22,6 +22,13 @@ namespace ReMap.Standalone
         private const string TeleportDirectionArrowName = "direction";
         private const string LocationPairMarkerName = "__remap_location_pair_marker";
         private const string TextInfoPanelMarkerName = "__remap_text_info_panel_marker";
+        private const string TextInfoPanelBackgroundName = "background";
+        private const string TextInfoPanelTitleName = "title";
+        private const string TextInfoPanelDescriptionName = "description";
+        private const string TextInfoPanelPinName = "pin";
+        private const float TextInfoPanelNativeVisibleSizeApex = 120f;
+        private const float TextInfoPanelNativeVisibleSize =
+            TextInfoPanelNativeVisibleSizeApex * ApexCoordinates.MetersPerUnit;
         private const string WindowHintMarkerName = "__remap_window_hint_marker";
         private MapDocument syncedZiplineDocument;
         private Material ziplineCableMaterial, ziplineDetachMaterial;
@@ -392,21 +399,131 @@ namespace ReMap.Standalone
             GameObject marker;
             if (existing == null)
             {
-                marker = GameObject.CreatePrimitive(PrimitiveType.Cube);
-                marker.name = TextInfoPanelMarkerName; marker.transform.SetParent(instance.transform, false);
-                marker.GetComponent<Collider>().enabled = false;
-                marker.GetComponent<Renderer>().sharedMaterial = lineMaterial;
+                marker = new GameObject(TextInfoPanelMarkerName);
+                marker.transform.SetParent(instance.transform, false);
                 instanceIds[marker] = item.id;
+
+                var background = GameObject.CreatePrimitive(PrimitiveType.Cube);
+                background.name = TextInfoPanelBackgroundName;
+                background.transform.SetParent(marker.transform, false);
+                background.GetComponent<Collider>().enabled = false;
+                background.GetComponent<Renderer>().sharedMaterial = textInfoPanelBackgroundMaterial;
+                instanceIds[background] = item.id;
+
+                CreateTextInfoPanelText(marker.transform, TextInfoPanelTitleName, true);
+                CreateTextInfoPanelText(marker.transform, TextInfoPanelDescriptionName, false);
+
+                var pin = GameObject.CreatePrimitive(PrimitiveType.Cube);
+                pin.name = TextInfoPanelPinName;
+                pin.transform.SetParent(marker.transform, false);
+                pin.GetComponent<Collider>().enabled = false;
+                pin.GetComponent<Renderer>().sharedMaterial = lineMaterial;
+                instanceIds[pin] = item.id;
             }
             else marker = existing.gameObject;
+
             float scale = Mathf.Max(.01f, item.textInfoPanelScale);
             marker.transform.localPosition = Vector3.zero;
-            marker.transform.localRotation = Quaternion.identity;
-            marker.transform.localScale = new Vector3(.08f, 1.2f * scale, 2.4f * scale);
-            var tint = new MaterialPropertyBlock();
-            tint.SetColor("_BaseColor", new Color(.25f, .75f, 1f, .65f));
-            marker.GetComponent<Renderer>().SetPropertyBlock(tint);
+            marker.transform.localRotation = Quaternion.Euler(0f, 180f, 0f);
+            marker.transform.localScale = Vector3.one * scale;
+
+            bool hasTitle = !string.IsNullOrWhiteSpace(item.textInfoPanelTitle);
+            bool hasDescription = !string.IsNullOrWhiteSpace(item.textInfoPanelDescription);
+
+            var title = marker.transform.Find(TextInfoPanelTitleName).GetComponent<TextMesh>();
+            title.text = item.textInfoPanelTitle ?? "";
+            title.gameObject.SetActive(hasTitle);
+            title.characterSize = .24f;
+            title.transform.localScale = Vector3.one;
+
+            var description = marker.transform.Find(TextInfoPanelDescriptionName).GetComponent<TextMesh>();
+            description.text = item.textInfoPanelDescription ?? "";
+            description.gameObject.SetActive(hasDescription);
+            description.characterSize = .13f;
+            description.transform.localScale = Vector3.one;
+
+            Vector2 panelSize = TextInfoPanelPreviewSize(item.textInfoPanelTitle,
+                item.textInfoPanelDescription, item.textInfoPanelShowPin);
+            float width = panelSize.x, height = panelSize.y;
+            float textWidth = width - .5f;
+            Vector2 titleSize = hasTitle ? FitTextInfoPanelText(title, textWidth) : Vector2.zero;
+            if (hasDescription) FitTextInfoPanelText(description, textWidth);
+
+            float top = -.32f;
+            title.transform.localPosition = new Vector3(.026f, top, 0f);
+            if (hasTitle) top -= titleSize.y + (hasDescription ? .16f : 0f);
+            description.transform.localPosition = new Vector3(.026f, top, 0f);
+
+            var backgroundTransform = marker.transform.Find(TextInfoPanelBackgroundName);
+            backgroundTransform.localPosition = new Vector3(0f, -height * .5f, 0f);
+            backgroundTransform.localRotation = Quaternion.identity;
+            backgroundTransform.localScale = new Vector3(.045f, height, width);
+
+            var pinTransform = marker.transform.Find(TextInfoPanelPinName);
+            pinTransform.gameObject.SetActive(item.textInfoPanelShowPin);
+            pinTransform.localPosition = new Vector3(.027f, 0f, 0f);
+            pinTransform.localRotation = Quaternion.Euler(45f, 0f, 0f);
+            float pinDiameter = 8f * ApexCoordinates.MetersPerUnit;
+            pinTransform.localScale = new Vector3(.035f, pinDiameter, pinDiameter);
+            var pinTint = new MaterialPropertyBlock();
+            pinTint.SetColor("_BaseColor", new Color(1f, .78f, .05f));
+            pinTransform.GetComponent<Renderer>().SetPropertyBlock(pinTint);
         }
+
+        private static void CreateTextInfoPanelText(Transform parent, string name, bool title)
+        {
+            var textObject = new GameObject(name, typeof(TextMesh));
+            textObject.transform.SetParent(parent, false);
+            textObject.transform.localRotation = Quaternion.Euler(0f, -90f, 0f);
+            var text = textObject.GetComponent<TextMesh>();
+            text.anchor = TextAnchor.UpperCenter;
+            text.alignment = TextAlignment.Center;
+            text.fontSize = 64;
+            text.fontStyle = title ? FontStyle.Bold : FontStyle.Normal;
+            text.richText = false;
+            text.color = title ? new Color(1f, .78f, .05f) : new Color(.92f, .94f, .96f);
+        }
+
+        internal static Vector2 TextInfoPanelPreviewSize(string title, string description, bool showPin)
+        {
+            return new Vector2(TextInfoPanelNativeVisibleSize, TextInfoPanelNativeVisibleSize);
+        }
+
+        private static Vector2 FitTextInfoPanelText(TextMesh text, float maximumWidth)
+        {
+            Vector2 size = TextInfoPanelRenderedSize(text);
+            float fit = size.x > maximumWidth ? maximumWidth / size.x : 1f;
+            text.transform.localScale = Vector3.one * fit;
+            return size * fit;
+        }
+
+        private static Vector2 TextInfoPanelRenderedSize(TextMesh text)
+        {
+            var renderer = text.GetComponent<Renderer>();
+            Vector3 size = renderer != null ? renderer.localBounds.size : Vector3.zero;
+            if (size.x <= .001f || size.y <= .001f)
+                return new Vector2(TextInfoPanelTextWidth(text.text, text.characterSize),
+                    TextInfoPanelLineCount(text.text) * text.characterSize);
+            return new Vector2(size.x, size.y);
+        }
+
+        private static float TextInfoPanelTextWidth(string text, float characterSize)
+        {
+            if (string.IsNullOrEmpty(text)) return 0f;
+            float widest = 0f;
+            foreach (string line in text.Replace("\r", "").Split('\n'))
+            {
+                float width = 0f;
+                foreach (char character in line)
+                    width += character == ' ' ? .42f : "ilI.,:;!'|".IndexOf(character) >= 0 ? .36f :
+                        "MW@#%&".IndexOf(character) >= 0 ? .92f : .66f;
+                widest = Mathf.Max(widest, width * characterSize);
+            }
+            return widest;
+        }
+
+        private static int TextInfoPanelLineCount(string text) =>
+            string.IsNullOrEmpty(text) ? 0 : text.Replace("\r", "").Split('\n').Length;
 
         private void EnsureWindowHintMarker(GameObject instance, MapObject item)
         {

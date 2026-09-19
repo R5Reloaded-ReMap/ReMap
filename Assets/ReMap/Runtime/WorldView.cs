@@ -18,7 +18,7 @@ namespace ReMap.Standalone
         public int LastSyncTransformWrites { get; private set; }
         private readonly Dictionary<string, string> assetIds = new Dictionary<string, string>();
         public readonly WorkspaceModelProvider models;
-        private readonly Material groundMaterial, lineMaterial;
+        private readonly Material groundMaterial, lineMaterial, textInfoPanelBackgroundMaterial;
         private readonly Collider constructionPlaneCollider;
         private readonly Shader objectShader;
         private readonly LineRenderer outline;
@@ -75,6 +75,24 @@ namespace ReMap.Standalone
             outline.transform.SetParent(root.transform);
             lineMaterial = new Material(lineShader);
             lineMaterial.SetColor("_BaseColor", new Color(.35f, 1, .78f));
+            textInfoPanelBackgroundMaterial = new Material(lineShader) { name = "Text info panel preview" };
+            var panelColor = new Color(.30f, .32f, .35f, .70f);
+            textInfoPanelBackgroundMaterial.SetColor("_BaseColor", panelColor);
+            if (textInfoPanelBackgroundMaterial.HasProperty("_Color"))
+                textInfoPanelBackgroundMaterial.SetColor("_Color", panelColor);
+            if (textInfoPanelBackgroundMaterial.HasProperty("_Surface"))
+                textInfoPanelBackgroundMaterial.SetFloat("_Surface", 1f);
+            if (textInfoPanelBackgroundMaterial.HasProperty("_Blend"))
+                textInfoPanelBackgroundMaterial.SetFloat("_Blend", 0f);
+            if (textInfoPanelBackgroundMaterial.HasProperty("_SrcBlend"))
+                textInfoPanelBackgroundMaterial.SetFloat("_SrcBlend", (float)BlendMode.SrcAlpha);
+            if (textInfoPanelBackgroundMaterial.HasProperty("_DstBlend"))
+                textInfoPanelBackgroundMaterial.SetFloat("_DstBlend", (float)BlendMode.OneMinusSrcAlpha);
+            if (textInfoPanelBackgroundMaterial.HasProperty("_ZWrite"))
+                textInfoPanelBackgroundMaterial.SetFloat("_ZWrite", 0f);
+            textInfoPanelBackgroundMaterial.SetOverrideTag("RenderType", "Transparent");
+            textInfoPanelBackgroundMaterial.EnableKeyword("_SURFACE_TYPE_TRANSPARENT");
+            textInfoPanelBackgroundMaterial.renderQueue = (int)RenderQueue.Transparent;
             outline.sharedMaterial = lineMaterial;
             outline.widthMultiplier = .025f;
             outline.useWorldSpace = true;
@@ -549,6 +567,7 @@ namespace ReMap.Standalone
             models.Dispose();
             UnityEngine.Object.Destroy(groundMaterial);
             UnityEngine.Object.Destroy(lineMaterial);
+            UnityEngine.Object.Destroy(textInfoPanelBackgroundMaterial);
             if (ziplineCableMaterial != null) UnityEngine.Object.Destroy(ziplineCableMaterial);
             if (ziplineDetachMaterial != null) UnityEngine.Object.Destroy(ziplineDetachMaterial);
             UnityEngine.Object.Destroy(root);
