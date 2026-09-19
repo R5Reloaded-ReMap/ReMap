@@ -25,8 +25,9 @@ namespace ReMap.Standalone.Tests
             var restored = new UnityMapCodec().Decode(new UnityMapCodec().Encode(document));
             string code = ReMapGameScript.Generate(restored, restored.objects);
             StringAssert.Contains("ReMap_CreateTextInfoPanel( \"Movement\", \"Jump here\", <10, 20, 30>, <5, 90, 0>, false, 2 )", code);
-            StringAssert.Contains("script ReMap_CreateTextInfoPanel( \"Movement\"",
-                ReMapGameScript.GenerateLiveCommands(restored, restored.objects));
+            string live = ReMapGameScript.GenerateLiveCommands(restored, restored.objects);
+            StringAssert.Contains("script ReMap_CreateTextInfoPanel( \"Movement\"", live);
+            StringAssert.Contains("<5, 90, 0>", live);
         }
 
         [Test]
@@ -38,17 +39,23 @@ namespace ReMap.Standalone.Tests
             StringAssert.Contains("void function ReMap_CreateTextInfoPanel", script);
             StringAssert.Contains("AddCallback_OnClientConnected( ReMap_SendTextInfoPanelsToPlayer )", script);
             StringAssert.Contains("while ( IsValid( player ) && ( !player.IsPlayer() || !player.p.isConnected ) )", script);
+            StringAssert.Contains("table<entity, int> textInfoPanelDeliveries", script);
+            StringAssert.Contains("thread ReMap_SendTextInfoPanelsToPlayerWhenReady", script);
+            StringAssert.Contains("wait 0.25", script);
+            StringAssert.Contains("ReMap_IsTextInfoPanelDeliveryCurrent", script);
+            StringAssert.Contains("WaitFrame()\n\t}", script.Replace("\r", ""));
             StringAssert.Contains("int nextTextInfoPanelId = 500", script);
+            StringAssert.Contains("int nextTextInfoPanelId = 1000000", script);
+            StringAssert.Contains("file.nextTextInfoPanelId += 1000", script);
             StringAssert.Contains("Dev_CreateTextInfoPanelWithID", script);
             StringAssert.Contains("Dev_DestroyTextInfoPanelWithID", script);
             StringAssert.DoesNotContain("MapEditor_CreateTextInfoPanel", script);
-            StringAssert.Contains("void function ReMap_CreateClientTextInfoPanel", clientScript);
-            StringAssert.Contains("dev_infoPanelTitleString = title", clientScript);
-            StringAssert.Contains("Dev_CreateTextInfoPanelWithID( origin, angles, showPin, textScale, panelId )", clientScript);
+            StringAssert.DoesNotContain("ReMap_CreateClientTextInfoPanel", clientScript);
+            StringAssert.DoesNotContain("textInfoPanelIds", clientScript);
         }
 
         [Test]
-        public void FlowstateExportsTextInfoPanelsOnTheClient()
+        public void FlowstateExportsPersistentTextInfoPanelsOnTheServer()
         {
             var document = new MapDocument
             {
@@ -64,9 +71,59 @@ namespace ReMap.Standalone.Tests
             string code = ReMapGameScript.Generate(document, new[] { panel });
             string live = ReMapGameScript.GenerateLiveCommands(document, new[] { panel });
 
-            StringAssert.DoesNotContain("\tReMap_CreateTextInfoPanel( ", code);
-            StringAssert.Contains("\tReMap_CreateClientTextInfoPanel( \"Movement\", \"Jump here\"", code);
-            StringAssert.Contains("script_client ReMap_CreateClientTextInfoPanel( \"Movement\", \"Jump here\"", live);
+            StringAssert.Contains("\tReMap_CreateTextInfoPanel( \"Movement\", \"Jump here\"", code);
+            StringAssert.DoesNotContain("ReMap_CreateClientTextInfoPanel", code);
+            StringAssert.Contains("script ReMap_CreateTextInfoPanel( \"Movement\", \"Jump here\"", live);
+            StringAssert.DoesNotContain("script_client ReMap_CreateClientTextInfoPanel", live);
+            StringAssert.Contains("<0, 0, 0>", code);
+            StringAssert.Contains("<0, 0, 0>", live);
+        }
+
+        [Test]
+        public void ReloadedKeepsLegacyPanelDeliveryWhileFlowstateUsesTheConnectionQueue()
+        {
+            string root = Path.GetFullPath(Path.Combine(Application.dataPath, ".."));
+            string r5r = File.ReadAllText(Path.Combine(root, "scripts/vscripts/remap_r5r/sv_remap_objects.nut"));
+            string r5f = File.ReadAllText(Path.Combine(root, "scripts/vscripts/remap_r5f/sv_remap_objects.nut"));
+
+            StringAssert.DoesNotContain("textInfoPanelDeliveries", r5r);
+            StringAssert.DoesNotContain("wait 0.25", r5r);
+            StringAssert.Contains("thread ReMap_SendTextInfoPanelToPlayerWhenReady( player, panel )", r5r);
+
+            StringAssert.Contains("textInfoPanelDeliveries", r5f);
+            StringAssert.Contains("wait 0.25", r5f);
+            StringAssert.Contains("thread ReMap_SendTextInfoPanelsToPlayerWhenReady( player, delivery )", r5f);
+        }
+
+        [Test]
+        public void InstallerSynchronizesFlowstatePanelIdRuntime()
+        {
+            string root = Path.GetFullPath(Path.Combine(Application.dataPath, ".."));
+            string source = Path.Combine(root, "scripts", "vscripts", "remap_r5f");
+            string installed = Path.Combine(Path.GetTempPath(),
+                "ReMapPanelRuntime-" + System.Guid.NewGuid().ToString("N"));
+            Directory.CreateDirectory(installed);
+            try
+            {
+                foreach (string file in new[] { "sv_remap_objects.nut", "sv_remap_ziplines.nut", "cl_remap_objects.nut" })
+                    File.WriteAllText(Path.Combine(installed, file), "outdated");
+
+                var synchronize = typeof(ReMapGameScriptInstaller).GetMethod(
+                    "SynchronizeRuntimeScripts", BindingFlags.Static | BindingFlags.NonPublic);
+                Assert.That(synchronize, Is.Not.Null);
+                synchronize.Invoke(null, new object[] { installed, GameTargets.R5Flowstate, source });
+
+                string server = File.ReadAllText(Path.Combine(installed, "sv_remap_objects.nut"));
+                string client = File.ReadAllText(Path.Combine(installed, "cl_remap_objects.nut"));
+                StringAssert.Contains("int nextTextInfoPanelId = 1000000", server);
+                StringAssert.Contains("file.nextTextInfoPanelId += 1000", server);
+                StringAssert.Contains("ReMap_SendTextInfoPanelsToPlayerWhenReady", server);
+                StringAssert.DoesNotContain("ReMap_CreateClientTextInfoPanel", client);
+            }
+            finally
+            {
+                if (Directory.Exists(installed)) Directory.Delete(installed, true);
+            }
         }
 
         [Test]

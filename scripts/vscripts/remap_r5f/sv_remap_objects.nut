@@ -100,7 +100,10 @@ struct
 	array< array > textInfoPanels
 	table<entity, bool> jumpPadDoubleJump
 	table<entity, ReMapRespawnHealState> respawnHeals
-	int nextTextInfoPanelId = 500
+	table<entity, int> textInfoPanelDeliveries
+	// Keep ReMap panels away from Flowstate notification IDs.
+	int nextTextInfoPanelId = 1000000
+	int nextTextInfoPanelDelivery = 0
 	bool textInfoPanelCallbackRegistered = false
 } file
 
@@ -145,26 +148,51 @@ void function ReMap_CreateTextInfoPanel( string title, string description, vecto
 	array panel = [ panelId, title, description, origin, angles, showPin, textScale ]
 	file.textInfoPanels.append( panel )
 	foreach ( entity player in GetPlayerArray() )
-		ReMap_SendTextInfoPanelToPlayer( player, panel )
+		ReMap_SendTextInfoPanelsToPlayer( player )
 }
 
 void function ReMap_SendTextInfoPanelsToPlayer( entity player )
 {
-	foreach ( array panel in file.textInfoPanels )
-		ReMap_SendTextInfoPanelToPlayer( player, panel )
+	if ( !IsValid( player ) )
+		return
+	int delivery = ++file.nextTextInfoPanelDelivery
+	if ( player in file.textInfoPanelDeliveries )
+		file.textInfoPanelDeliveries[ player ] = delivery
+	else
+		file.textInfoPanelDeliveries[ player ] <- delivery
+	thread ReMap_SendTextInfoPanelsToPlayerWhenReady( player, delivery )
 }
 
-void function ReMap_SendTextInfoPanelToPlayer( entity player, array panel )
+bool function ReMap_IsTextInfoPanelDeliveryCurrent( entity player, int delivery )
 {
-	thread ReMap_SendTextInfoPanelToPlayerWhenReady( player, panel )
+	return IsValid( player ) && ( player in file.textInfoPanelDeliveries ) &&
+		file.textInfoPanelDeliveries[ player ] == delivery
 }
 
-void function ReMap_SendTextInfoPanelToPlayerWhenReady( entity player, array panel )
+void function ReMap_SendTextInfoPanelsToPlayerWhenReady( entity player, int delivery )
 {
 	while ( IsValid( player ) && ( !player.IsPlayer() || !player.p.isConnected ) )
 		WaitFrame()
 	if ( !IsValid( player ) || !player.IsPlayer() || !player.p.isConnected )
 		return
+
+	// Let Flowstate finish creating the local player RUI after a map reload.
+	wait 0.25
+	if ( !ReMap_IsTextInfoPanelDeliveryCurrent( player, delivery ) )
+		return
+
+	foreach ( array panel in file.textInfoPanels )
+	{
+		if ( !ReMap_IsTextInfoPanelDeliveryCurrent( player, delivery ) )
+			return
+		ReMap_SendTextInfoPanelToPlayer( player, panel )
+		// Flowstate assembles text in shared buffers. Never overlap panels.
+		WaitFrame()
+	}
+}
+
+void function ReMap_SendTextInfoPanelToPlayer( entity player, array panel )
+{
 	if ( !file.textInfoPanels.contains( panel ) )
 		return
 	string title = expect string( panel[1] )
@@ -174,12 +202,14 @@ void function ReMap_SendTextInfoPanelToPlayerWhenReady( entity player, array pan
 
 void function ReMap_ClearTextInfoPanels()
 {
+	file.textInfoPanelDeliveries.clear()
+	file.nextTextInfoPanelDelivery++
 	foreach ( array panel in file.textInfoPanels )
 		foreach ( entity player in GetPlayerArray() )
 			if ( IsValid( player ) )
 				RemovePanelText( player, expect int( panel[0] ) )
 	file.textInfoPanels.clear()
-	file.nextTextInfoPanelId = 500
+	file.nextTextInfoPanelId += 1000
 }
 
 entity function ReMap_CreateWindowHint( vector origin, float halfHeight, float halfWidth, vector right )

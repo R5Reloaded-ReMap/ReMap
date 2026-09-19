@@ -100,7 +100,14 @@ struct
 	array< array > textInfoPanels
 	table<entity, bool> jumpPadDoubleJump
 	table<entity, ReMapRespawnHealState> respawnHeals
+#if R5F
+	table<entity, int> textInfoPanelDeliveries
+	// Keep ReMap panels away from Flowstate notification IDs.
+	int nextTextInfoPanelId = 1000000
+	int nextTextInfoPanelDelivery = 0
+#else
 	int nextTextInfoPanelId = 500
+#endif
 	bool textInfoPanelCallbackRegistered = false
 } file
 
@@ -145,14 +152,68 @@ void function ReMap_CreateTextInfoPanel( string title, string description, vecto
 	array panel = [ panelId, title, description, origin, angles, showPin, textScale ]
 	file.textInfoPanels.append( panel )
 	foreach ( entity player in GetPlayerArray() )
+#if R5F
+		ReMap_SendTextInfoPanelsToPlayer( player )
+#else
 		ReMap_SendTextInfoPanelToPlayer( player, panel )
+#endif
 }
 
 void function ReMap_SendTextInfoPanelsToPlayer( entity player )
 {
+#if R5F
+	if ( !IsValid( player ) )
+		return
+	int delivery = ++file.nextTextInfoPanelDelivery
+	if ( player in file.textInfoPanelDeliveries )
+		file.textInfoPanelDeliveries[ player ] = delivery
+	else
+		file.textInfoPanelDeliveries[ player ] <- delivery
+	thread ReMap_SendTextInfoPanelsToPlayerWhenReady( player, delivery )
+#else
 	foreach ( array panel in file.textInfoPanels )
 		ReMap_SendTextInfoPanelToPlayer( player, panel )
+#endif
 }
+
+#if R5F
+bool function ReMap_IsTextInfoPanelDeliveryCurrent( entity player, int delivery )
+{
+	return IsValid( player ) && ( player in file.textInfoPanelDeliveries ) &&
+		file.textInfoPanelDeliveries[ player ] == delivery
+}
+
+void function ReMap_SendTextInfoPanelsToPlayerWhenReady( entity player, int delivery )
+{
+	while ( IsValid( player ) && ( !player.IsPlayer() || !player.p.isConnected ) )
+		WaitFrame()
+	if ( !IsValid( player ) || !player.IsPlayer() || !player.p.isConnected )
+		return
+
+	// Let Flowstate finish creating the local player RUI after a map reload.
+	wait 0.25
+	if ( !ReMap_IsTextInfoPanelDeliveryCurrent( player, delivery ) )
+		return
+
+	foreach ( array panel in file.textInfoPanels )
+	{
+		if ( !ReMap_IsTextInfoPanelDeliveryCurrent( player, delivery ) )
+			return
+		ReMap_SendTextInfoPanelToPlayer( player, panel )
+		// Flowstate assembles text in shared buffers. Never overlap panels.
+		WaitFrame()
+	}
+}
+
+void function ReMap_SendTextInfoPanelToPlayer( entity player, array panel )
+{
+	if ( !file.textInfoPanels.contains( panel ) )
+		return
+	string title = expect string( panel[1] )
+	string description = expect string( panel[2] )
+	CreatePanelText_Localized( player, "", "", title, description, expect vector( panel[3] ), expect vector( panel[4] ), expect float( panel[6] ), expect int( panel[0] ) )
+}
+#else
 
 void function ReMap_SendTextInfoPanelToPlayer( entity player, array panel )
 {
@@ -169,20 +230,21 @@ void function ReMap_SendTextInfoPanelToPlayerWhenReady( entity player, array pan
 		return
 	string title = expect string( panel[1] )
 	string description = expect string( panel[2] )
-#if R5F
-	CreatePanelText_Localized( player, "", "", title, description, expect vector( panel[3] ), expect vector( panel[4] ), expect float( panel[6] ), expect int( panel[0] ) )
-#else
 	foreach ( int textType, string value in [ title, description ] )
 		for ( int index = 0; index < value.len(); index++ )
 			Remote_CallFunction_NonReplay( player, "Dev_BuildTextInfoPanel", textType, value[index] )
 	vector origin = expect vector( panel[3] )
 	vector angles = expect vector( panel[4] )
 	Remote_CallFunction_NonReplay( player, "Dev_CreateTextInfoPanelWithID", origin.x, origin.y, origin.z, angles.x, angles.y, angles.z, expect bool( panel[5] ), expect float( panel[6] ), expect int( panel[0] ) )
-#endif
 }
+#endif
 
 void function ReMap_ClearTextInfoPanels()
 {
+#if R5F
+	file.textInfoPanelDeliveries.clear()
+	file.nextTextInfoPanelDelivery++
+#endif
 	foreach ( array panel in file.textInfoPanels )
 		foreach ( entity player in GetPlayerArray() )
 			if ( IsValid( player ) )
@@ -192,7 +254,11 @@ void function ReMap_ClearTextInfoPanels()
 				Remote_CallFunction_NonReplay( player, "Dev_DestroyTextInfoPanelWithID", expect int( panel[0] ) )
 #endif
 	file.textInfoPanels.clear()
+#if R5F
+	file.nextTextInfoPanelId += 1000
+#else
 	file.nextTextInfoPanelId = 500
+#endif
 }
 
 entity function ReMap_CreateWindowHint( vector origin, float halfHeight, float halfWidth, vector right )

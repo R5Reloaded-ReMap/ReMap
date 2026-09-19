@@ -154,6 +154,7 @@ void function ReMap_SendTextInfoPanelsToPlayer( entity player )
 		ReMap_SendTextInfoPanelToPlayer( player, panel )
 }
 
+
 void function ReMap_SendTextInfoPanelToPlayer( entity player, array panel )
 {
 	thread ReMap_SendTextInfoPanelToPlayerWhenReady( player, panel )
