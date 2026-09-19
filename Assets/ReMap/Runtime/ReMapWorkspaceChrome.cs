@@ -557,7 +557,8 @@ namespace ReMap.Standalone
                 string source = await MapReferenceExtractor.ExtractEntityLumpsAsync(assetLibrary, document.editingMap, false, progress, default);
                 if (this == null) return;
                 string[] selectedRpaks = assetLibrary.SelectedMapArchives(Targets);
-                string bundle = ReMapEntExporter.WriteMergedBundle(source, document, objects, selectedRpaks, publish, preserveBaseEntities, out ReMapEntFragments fragments);
+                string levelDefinition = publish ? ReMapEntExporter.FindLevelDefinition(assetLibrary.GameDirectory, assetLibrary.PlatformDirectory, document.editingMap) : null;
+                string bundle = ReMapEntExporter.WriteMergedBundle(source, document, objects, selectedRpaks, publish, preserveBaseEntities, out ReMapEntFragments fragments, levelDefinition);
                 ReMapLooseMapInstall installed = ReMapEntExporter.InstallLooseMap(bundle, document, assetLibrary.GameDirectory, assetLibrary.PlatformDirectory, publish);
                 if (resetScripts)
                 {

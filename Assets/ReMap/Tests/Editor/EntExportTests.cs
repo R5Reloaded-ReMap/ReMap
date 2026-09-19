@@ -313,14 +313,18 @@ namespace ReMap.Standalone.Tests
                 foreach (string kind in new[] { "env", "fx", "script", "snd", "spawn" })
                     File.WriteAllText(Path.Combine(root, map + "_" + kind + ".ent"), original,
                         new UTF8Encoding(false));
+                string sourceLevelDefinition = Path.Combine(root, map + ".rson");
+                const string levelDefinition = "When: \"SERVER\"\nScripts:\n[\n\tmp/levels/mp_rr_divided_moon.nut\n]\n";
+                File.WriteAllText(sourceLevelDefinition, levelDefinition, new UTF8Encoding(false));
                 var prop = new MapObject { gameModelPath = "mdl/props/export_test.rmdl" };
                 string output = ReMapEntExporter.WriteMergedBundle(
-                    Path.Combine(root, map + "_script.ent"), Document(), new[] { prop }, null, true, true, out _);
+                    Path.Combine(root, map + "_script.ent"), Document(), new[] { prop }, null, true, true, out _, sourceLevelDefinition);
                 const string published = "mp_remap_ent_test";
 
                 foreach (string kind in new[] { "env", "fx", "script", "snd", "spawn" })
                     Assert.That(File.Exists(Path.Combine(output, published + "_" + kind + ".ent")), Is.True, kind);
                 Assert.That(File.Exists(Path.Combine(output, published + ".kv")), Is.True);
+                Assert.That(File.ReadAllText(Path.Combine(output, published + ".rson")), Is.EqualTo(levelDefinition));
                 string script = File.ReadAllText(Path.Combine(output, published + "_script.ent"));
                 StringAssert.Contains("mdl/props/export_test.rmdl", script);
                 Assert.That(script[script.Length - 1], Is.EqualTo('\0'));
@@ -386,6 +390,11 @@ namespace ReMap.Standalone.Tests
                 foreach (string kind in new[] { "env", "fx", "script", "snd", "spawn" })
                     File.WriteAllText(Path.Combine(bundle, published + "_" + kind + ".ent"), generated, new UTF8Encoding(false));
                 File.WriteAllText(Path.Combine(bundle, published + ".kv"), "\"LevelSet\"\n{\n}\n", new UTF8Encoding(false));
+                const string levelDefinition = "When: \"SERVER\"\nScripts:\n[\n\tmp/levels/mp_rr_divided_moon.nut\n]\n";
+                File.WriteAllText(Path.Combine(bundle, published + ".rson"), levelDefinition, new UTF8Encoding(false));
+                string levels = Path.Combine(platform, "scripts", "levels");
+                Directory.CreateDirectory(levels);
+                File.WriteAllText(Path.Combine(levels, "mp_rr_divided_moon.rson"), levelDefinition, new UTF8Encoding(false));
                 MapDocument document = Document();
                 document.gameTarget = target;
 
@@ -397,6 +406,8 @@ namespace ReMap.Standalone.Tests
                     Assert.That(File.Exists(Path.Combine(entityPlatform, "maps", published + "_" + kind + ".ent")), Is.True, kind);
                 Assert.That(installed.LevelSettingsPath, Is.EqualTo(Path.Combine(platform, "scripts", "levels", "settings", published + ".kv")));
                 Assert.That(File.Exists(installed.LevelSettingsPath), Is.True);
+                Assert.That(installed.LevelDefinitionPath, Is.EqualTo(Path.Combine(platform, "scripts", "levels", published + ".rson")));
+                Assert.That(File.ReadAllText(installed.LevelDefinitionPath), Is.EqualTo(levelDefinition));
             }
             finally
             {
@@ -510,6 +521,30 @@ namespace ReMap.Standalone.Tests
                 Assert.That(File.ReadAllText(soundDestination + ".remap.bak"), Is.EqualTo(original));
                 Assert.That(File.Exists(destination + ".remap.install"), Is.True);
                 Assert.That(File.Exists(soundDestination + ".remap.install"), Is.True);
+            }
+            finally
+            {
+                if (Directory.Exists(root)) Directory.Delete(root, true);
+            }
+        }
+
+        [Test]
+        public void FindsLevelDefinitionInFlowstatePlatformFallback()
+        {
+            string root = Path.Combine(Path.GetTempPath(), "remap-level-definition-" + Guid.NewGuid().ToString("N"));
+            try
+            {
+                const string map = "mp_rr_divided_moon_mu1";
+                string configuredPlatform = Path.Combine(root, "platform");
+                string levels = Path.Combine(root, "platform_", "scripts", "levels");
+                Directory.CreateDirectory(configuredPlatform);
+                Directory.CreateDirectory(levels);
+                string expected = Path.Combine(levels, map + ".rson");
+                File.WriteAllText(expected, "When: \"SERVER\"\nScripts:\n[\n]\n", new UTF8Encoding(false));
+
+                string actual = ReMapEntExporter.FindLevelDefinition(root, configuredPlatform, map);
+
+                Assert.That(actual, Is.EqualTo(expected));
             }
             finally
             {

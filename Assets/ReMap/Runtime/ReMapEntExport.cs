@@ -28,6 +28,7 @@ namespace ReMap.Standalone
     {
         public string MapName { get; internal set; } = "";
         public string LevelSettingsPath { get; internal set; } = "";
+        public string LevelDefinitionPath { get; internal set; } = "";
         public IReadOnlyList<string> EntityLumpPaths { get; internal set; } = Array.Empty<string>();
         public IReadOnlyList<string> DiskPriorityConfigPaths { get; internal set; } = Array.Empty<string>();
     }
@@ -269,7 +270,7 @@ namespace ReMap.Standalone
 
         public static string WriteMergedBundle(string selectedSourceEnt, MapDocument document,
             IEnumerable<MapObject> worldObjects, IEnumerable<string> levelRpaks, bool publish,
-            bool preserveBaseEntities, out ReMapEntFragments fragments)
+            bool preserveBaseEntities, out ReMapEntFragments fragments, string sourceLevelDefinition = null)
         {
             if (string.IsNullOrWhiteSpace(selectedSourceEnt)) throw new ArgumentNullException(nameof(selectedSourceEnt));
             string sourceDirectory = Path.GetDirectoryName(Path.GetFullPath(selectedSourceEnt));
@@ -305,8 +306,13 @@ namespace ReMap.Standalone
                 File.WriteAllText(destination, content, new UTF8Encoding(false));
             }
             if (publish)
+            {
+                if (string.IsNullOrWhiteSpace(sourceLevelDefinition) || !File.Exists(sourceLevelDefinition))
+                    throw new FileNotFoundException(L.F("#ENT_SOURCE_MISSING_ARG0", sourceMap + ".rson"), sourceLevelDefinition);
                 File.WriteAllText(Path.Combine(outputDirectory, outputMap + ".kv"),
                     BuildLevelSettings(document, levelRpaks), new UTF8Encoding(false));
+                File.Copy(sourceLevelDefinition, Path.Combine(outputDirectory, outputMap + ".rson"), true);
+            }
             File.WriteAllText(Path.Combine(outputDirectory, "ReMap-ENT-report.txt"),
                 BuildReport(sourceMap, outputMap, publish, preserveBaseEntities, fragments), new UTF8Encoding(false));
             return outputDirectory;
@@ -369,6 +375,25 @@ namespace ReMap.Standalone
             return result.ToString();
         }
 
+        public static string FindLevelDefinition(string gameDirectory, string platformDirectory, string map)
+        {
+            map = ValidateMapName(map);
+            string game = string.IsNullOrWhiteSpace(gameDirectory) ? "" : Path.GetFullPath(gameDirectory);
+            string platform = string.IsNullOrWhiteSpace(platformDirectory) ? "" : Path.GetFullPath(platformDirectory);
+            string[] roots =
+            {
+                platform,
+                game.Length == 0 ? "" : Path.Combine(game, "platform"),
+                game.Length == 0 ? "" : Path.Combine(game, "platform_")
+            };
+            foreach (string root in roots.Where(value => value.Length > 0).Distinct(StringComparer.OrdinalIgnoreCase))
+            {
+                string path = Path.Combine(root, "scripts", "levels", map + ".rson");
+                if (File.Exists(path)) return path;
+            }
+            throw new FileNotFoundException(L.F("#ENT_SOURCE_MISSING_ARG0", map + ".rson"));
+        }
+
         public static ReMapLooseMapInstall InstallLooseMap(string bundleDirectory, MapDocument document, string gameDirectory, string platformDirectory)
         {
             return InstallLooseMap(bundleDirectory, document, gameDirectory, platformDirectory, false);
@@ -382,22 +407,29 @@ namespace ReMap.Standalone
             var lumps = new List<string>();
             foreach (string kind in LumpKinds)
                 lumps.Add(InstallLump(bundleDirectory, map, kind, document.gameTarget, gameDirectory, platformDirectory));
-            string destination = "";
+            string settingsDestination = "";
+            string definitionDestination = "";
             if (publish)
             {
-                string source = Path.Combine(Path.GetFullPath(bundleDirectory ?? throw new ArgumentNullException(nameof(bundleDirectory))), map + ".kv");
-                if (!File.Exists(source)) throw new FileNotFoundException(L.F("#ENT_SOURCE_MISSING_ARG0", Path.GetFileName(source)), source);
-                string root = Path.GetFullPath(platformDirectory ?? throw new ArgumentNullException(nameof(platformDirectory)));
-                if (!Directory.Exists(root)) throw new DirectoryNotFoundException(root);
-                string settings = Path.Combine(root, "scripts", "levels", "settings");
+                string bundle = Path.GetFullPath(bundleDirectory ?? throw new ArgumentNullException(nameof(bundleDirectory)));
+                string settingsSource = Path.Combine(bundle, map + ".kv");
+                string definitionSource = Path.Combine(bundle, map + ".rson");
+                if (!File.Exists(settingsSource)) throw new FileNotFoundException(L.F("#ENT_SOURCE_MISSING_ARG0", Path.GetFileName(settingsSource)), settingsSource);
+                if (!File.Exists(definitionSource)) throw new FileNotFoundException(L.F("#ENT_SOURCE_MISSING_ARG0", Path.GetFileName(definitionSource)), definitionSource);
+                string baseDefinition = FindLevelDefinition(gameDirectory, platformDirectory, document.editingMap);
+                string levels = Path.GetDirectoryName(baseDefinition);
+                string settings = Path.Combine(levels, "settings");
                 Directory.CreateDirectory(settings);
-                destination = Path.Combine(settings, map + ".kv");
-                BackupAndCopy(source, destination);
+                settingsDestination = Path.Combine(settings, map + ".kv");
+                definitionDestination = Path.Combine(levels, map + ".rson");
+                BackupAndCopy(settingsSource, settingsDestination);
+                BackupAndCopy(definitionSource, definitionDestination);
             }
             return new ReMapLooseMapInstall
             {
                 MapName = map,
-                LevelSettingsPath = destination,
+                LevelSettingsPath = settingsDestination,
+                LevelDefinitionPath = definitionDestination,
                 EntityLumpPaths = lumps,
                 DiskPriorityConfigPaths = configs
             };
@@ -608,7 +640,9 @@ namespace ReMap.Standalone
             result.AppendLine("Generated entities: " + fragments.EntityCount.ToString(CultureInfo.InvariantCulture) +
                 " (script=" + fragments.ScriptEntityCount + ", snd=" + fragments.SoundEntityCount +
                 ", spawn=" + fragments.SpawnEntityCount + ").");
-            result.AppendLine("The five entity lumps and level settings KV can be loaded directly from the game's loose platform folders; no VPK repack is required.");
+            result.AppendLine(publish
+                ? "The five entity lumps, level settings KV, and copied base-map RSON can be loaded directly from the game's loose platform folders; no VPK repack is required."
+                : "The five entity lumps can be loaded directly from the game's loose platform folders; no VPK repack is required.");
             result.AppendLine("Extraction tool: ReVPK from R5Reloaded/r5sdk, primarily authored by Kawe Mazidjatari (Mauler125).");
             result.AppendLine("ReVPK source and license: https://github.com/R5Reloaded/r5sdk");
             if (fragments.NutOnlyObjects.Count > 0)
