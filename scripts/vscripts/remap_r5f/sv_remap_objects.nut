@@ -54,6 +54,7 @@ const asset REMAP_JUMP_PAD_MODEL = $"mdl/props/octane_jump_pad/octane_jump_pad.r
 const asset REMAP_JUMP_PAD_LAUNCH_FX = $"P_launchpad_launch"
 const asset REMAP_JUMP_TOWER_BASE_MODEL = $"mdl/props/zipline_balloon/zipline_balloon_base.rmdl"
 const asset REMAP_JUMP_TOWER_BALLOON_MODEL = $"mdl/props/zipline_balloon/zipline_balloon.rmdl"
+const vector REMAP_JUMP_TOWER_CABLE_OFFSET = < -2.0, 2.65, 0 >
 const asset REMAP_WEAPON_RACK_MODEL = $"mdl/industrial/gun_rack_arm_down.rmdl"
 const asset REMAP_WEAPON_RACK_RESPAWN_FX = $"P_impact_shieldbreaker_sparks"
 const vector REMAP_WEAPON_RACK_ITEM_OFFSET = < 0, 0, 45 >
@@ -735,8 +736,9 @@ void function ReMap_CreateJumpTower( vector origin, vector angles, float height 
 void function ReMap_CreateJumpTowerGameplay( vector origin, vector angles, float height = 2000.0 )
 {
 	vector towerAngles = < 0, angles.y, 0 >
-	vector topCable = origin + < 0, 0, height > + RotateVector( < -1.75, -2.75, 0 >, towerAngles )
-	vector bottomCable = origin + RotateVector( < -1.75, -2.75, 64 >, towerAngles )
+	vector cableOffset = RotateVector( REMAP_JUMP_TOWER_CABLE_OFFSET, towerAngles )
+	vector topCable = origin + < 0, 0, height > + cableOffset
+	vector bottomCable = origin + < 0, 0, 64 > + cableOffset
 	ReMap_CreateZipline( topCable, towerAngles, bottomCable, towerAngles,
 		REMAP_ZIPLINE_END_NONE, REMAP_ZIPLINE_END_NONE, true, 2.0, 1.0,
 		180.0, 180.0, true, 1.0, angles.y, -1.0, 1.0,

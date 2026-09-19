@@ -40,6 +40,8 @@ namespace ReMap.Standalone.Tests
                 "scripts/vscripts/source/sv_remap_objects.source.nut"));
             StringAssert.Contains("void function ReMap_CreateJumpTower", script);
             StringAssert.Contains("REMAP_JUMP_TOWER_BASE_MODEL", script);
+            StringAssert.Contains("const vector REMAP_JUMP_TOWER_CABLE_OFFSET = < -2.0, 2.65, 0 >", script);
+            StringAssert.Contains("RotateVector( REMAP_JUMP_TOWER_CABLE_OFFSET, towerAngles )", script);
             StringAssert.Contains("ReMap_CreateZipline( topCable", script);
             StringAssert.Contains("ForcedSkydiveTriggerThink_EnterCallback", script);
             StringAssert.DoesNotContain("ReMapCreateJumpTower(", script);
