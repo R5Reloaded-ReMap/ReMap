@@ -20,6 +20,7 @@ namespace ReMap.Standalone
         public int SpawnEntityCount { get; internal set; }
         public string PlayerStart { get; internal set; } = "";
         public IReadOnlyList<string> NutOnlyObjects { get; internal set; } = Array.Empty<string>();
+        public IReadOnlyList<string> NutOnlyObjectIds { get; internal set; } = Array.Empty<string>();
         public int EntityCount => ScriptEntityCount + SoundEntityCount + SpawnEntityCount;
     }
 
@@ -55,6 +56,7 @@ namespace ReMap.Standalone
             var spawn = new StringBuilder();
             var playerStart = new StringBuilder();
             var nutOnly = new List<string>();
+            var nutOnlyIds = new HashSet<string>(StringComparer.Ordinal);
             Vector3 offset = WorldView.ToVector(document.originOffset);
             int scriptCount = 0, soundCount = 0, spawnCount = 0;
 
@@ -64,13 +66,17 @@ namespace ReMap.Standalone
                 scriptCount++;
             }
             foreach (var item in world.Where(item => !item.isGroup && item.customType == "" && item.clientSide))
+            {
                 nutOnly.Add(Display(item) + " (client-side prop)");
+                nutOnlyIds.Add(item.id);
+            }
 
             foreach (var item in world.Where(item => item.customType == "door"))
             {
                 if (item.doorGold || item.doorSpawnOpen)
                 {
                     nutOnly.Add(Display(item) + " (door options require .nut)");
+                    nutOnlyIds.Add(item.id);
                     continue;
                 }
                 scriptCount += AppendDoor(script, item, offset);
@@ -95,6 +101,13 @@ namespace ReMap.Standalone
                 AppendAnimatedProp(script, item, offset, ReMapApp.LootBinModelPath,
                     "survival_lootbin", item.lootBinSkin);
                 scriptCount++;
+            }
+
+            foreach (var item in world.Where(item => item.customType == "jump-tower"))
+            {
+                scriptCount += AppendJumpTowerModels(script, item, offset);
+                nutOnly.Add(Display(item) + " (gameplay requires .nut)");
+                nutOnlyIds.Add(item.id);
             }
 
             foreach (var item in world.Where(item => item.customType == "window-hint"))
@@ -163,6 +176,7 @@ namespace ReMap.Standalone
             var represented = new HashSet<string>(StringComparer.Ordinal)
             {
                 "", "door", "door-component", "loot-bin", "window-hint", "sound", "sound-point", "spawn-point",
+                "jump-tower", "jump-tower-component",
                 "zipline", "zipline-endpoint", "zipline-component",
                 "curved-zipline", "curved-zipline-point", "curved-zipline-component",
                 "ziprail", "ziprail-point", "ziprail-component"
@@ -171,15 +185,38 @@ namespace ReMap.Standalone
                 !item.customType.EndsWith("-component", StringComparison.Ordinal) &&
                 !item.customType.EndsWith("-point", StringComparison.Ordinal) &&
                 !item.customType.EndsWith("-target", StringComparison.Ordinal)))
+            {
                 nutOnly.Add(Display(item));
+                nutOnlyIds.Add(item.id);
+            }
 
             return new ReMapEntFragments
             {
                 Script = script.ToString(), Sound = sound.ToString(), Spawn = spawn.ToString(),
                 PlayerStart = playerStart.ToString(),
                 ScriptEntityCount = scriptCount, SoundEntityCount = soundCount,
-                SpawnEntityCount = spawnCount, NutOnlyObjects = nutOnly
+                SpawnEntityCount = spawnCount, NutOnlyObjects = nutOnly,
+                NutOnlyObjectIds = nutOnlyIds.ToArray()
             };
+        }
+
+        public static IReadOnlyList<MapObject> ScriptFallbackObjects(IEnumerable<MapObject> worldObjects,
+            ReMapEntFragments fragments)
+        {
+            if (fragments == null) throw new ArgumentNullException(nameof(fragments));
+            var world = (worldObjects ?? throw new ArgumentNullException(nameof(worldObjects)))
+                .Where(item => item != null).ToList();
+            var ids = new HashSet<string>(fragments.NutOnlyObjectIds ?? Array.Empty<string>(), StringComparer.Ordinal);
+            bool changed;
+            do
+            {
+                changed = false;
+                foreach (var item in world)
+                    if (!string.IsNullOrEmpty(item.parentId) && ids.Contains(item.parentId) && ids.Add(item.id))
+                        changed = true;
+            }
+            while (changed);
+            return world.Where(item => ids.Contains(item.id)).ToArray();
         }
 
         public static string Preview(MapDocument document, IEnumerable<MapObject> worldObjects)
@@ -818,18 +855,34 @@ namespace ReMap.Standalone
             return count;
         }
 
+        private static int AppendJumpTowerModels(StringBuilder output, MapObject tower, Vector3 offset)
+        {
+            MapObject towerBase = Transform(tower, Vector3.zero, Vector3.zero);
+            MapObject balloon = Transform(tower, new Vector3(0f, 0f, tower.jumpTowerHeight), Vector3.zero);
+            AppendNativeProp(output, towerBase, offset, ReMapApp.JumpTowerBaseModelPath, 6, true);
+            AppendNativeProp(output, balloon, offset, ReMapApp.JumpTowerBalloonModelPath, 3, false);
+            return 2;
+        }
+
         private static void AppendNativeProp(StringBuilder output, MapObject item, Vector3 offset,
             string model, bool collision)
         {
+            AppendNativeProp(output, item, offset, model, collision ? 6 : 0, collision);
+        }
+
+        private static void AppendNativeProp(StringBuilder output, MapObject item, Vector3 offset,
+            string model, int solid, bool canMantle)
+        {
+            bool collision = solid != 0;
             var fields = new List<KeyValuePair<string, string>>
             {
                 Pair("StartDisabled", "0"), Pair("spawnflags", "0"),
-                Pair("solid", collision ? "6" : "0"),
+                Pair("solid", solid.ToString(CultureInfo.InvariantCulture)), Pair("fadedist", "-1"),
                 Pair("collide_titan", collision ? "1" : "0"), Pair("collide_ai", collision ? "1" : "0"),
                 Pair("scale", "1"), Pair("angles", Angles(item.rotation)),
                 Pair("origin", Position(item.position, offset)), Pair("model", model),
                 Pair("ClientSide", "0"), Pair("script_name", "remap_prop"),
-                Pair("can_mantle", collision ? "true" : "false")
+                Pair("can_mantle", canMantle ? "1" : "0")
             };
             if (!collision) fields.Add(Pair("contents", "0"));
             fields.Add(Pair("classname", "prop_dynamic"));
@@ -935,7 +988,7 @@ namespace ReMap.Standalone
                 Pair("angles", Angles(item.rotation)), Pair("origin", Position(item.position, offset)),
                 Pair("targetname", "ReMapEntProp"), Pair("solid", solid ? "6" : "0"),
                 Pair("model", model), Pair("ClientSide", "0"), Pair("script_name", "remap_prop"),
-                Pair("can_mantle", item.allowMantle ? "true" : "false")
+                Pair("can_mantle", item.allowMantle ? "1" : "0")
             };
             var used = new HashSet<string>(fields.Select(field => field.Key), StringComparer.OrdinalIgnoreCase);
             foreach (var property in item.scriptProperties ?? new List<ScriptProperty>())

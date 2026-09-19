@@ -22,6 +22,7 @@ global function ReMap_UpdatePlayerStart
 global function ReMap_CreateSpawnPoint
 global function ReMap_CreateTrigger
 global function ReMap_CreateJumpTower
+global function ReMap_CreateJumpTowerGameplay
 global function ReMap_CreateWeaponRack
 global function ReMap_CreateRespawnHeal
 global function ReMap_CreateButton
@@ -106,11 +107,11 @@ void function ReMap_ConfigureEntProps()
 {
 	foreach ( entity prop in GetEntArrayByScriptName( "remap_prop" ) )
 	{
-		if ( !IsValid( prop ) || !prop.HasKey( "can_mantle" ) )
+		if ( !IsValid( prop ) )
 			continue
 
-		string canMantle = expect string( prop.kv.can_mantle )
-		if ( canMantle == "true" || canMantle == "1" )
+		string canMantle = prop.GetValueForKey( "can_mantle" )
+		if ( canMantle == "1" )
 			prop.AllowMantle()
 	}
 }
@@ -822,8 +823,14 @@ void function ReMap_CreateJumpTower( vector origin, vector angles, float height 
 		file.props.append( part )
 	}
 
-	vector topCable = PositionOffsetFromEnt( balloon, -1.75, -2.75, 0 )
-	vector bottomCable = PositionOffsetFromEnt( towerBase, -1.75, -2.75, 64 )
+	ReMap_CreateJumpTowerGameplay( origin, angles, height )
+}
+
+void function ReMap_CreateJumpTowerGameplay( vector origin, vector angles, float height = 2000.0 )
+{
+	vector towerAngles = < 0, angles.y, 0 >
+	vector topCable = origin + < 0, 0, height > + RotateVector( < -1.75, -2.75, 0 >, towerAngles )
+	vector bottomCable = origin + RotateVector( < -1.75, -2.75, 64 >, towerAngles )
 	ReMap_CreateZipline( topCable, towerAngles, bottomCable, towerAngles,
 		REMAP_ZIPLINE_END_NONE, REMAP_ZIPLINE_END_NONE, true, 2.0, 1.0,
 		180.0, 180.0, true, 1.0, angles.y, -1.0, 1.0,

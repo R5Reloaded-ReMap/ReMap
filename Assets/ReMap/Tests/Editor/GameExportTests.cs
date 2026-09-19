@@ -346,6 +346,8 @@ namespace ReMap.Standalone.Tests
                 StringAssert.Contains("ReMap_CreateProp( $\"mdl/props/server.rmdl\"", System.IO.File.ReadAllText(serverMap));
                 StringAssert.DoesNotContain("mdl/props/client.rmdl", System.IO.File.ReadAllText(serverMap));
                 StringAssert.Contains("ReMap_CreateClientProp( $\"mdl/props/client.rmdl\"", System.IO.File.ReadAllText(clientMap));
+                StringAssert.Contains("prop.GetValueForKey( \"can_mantle\" )",
+                    System.IO.File.ReadAllText(System.IO.Path.Combine(remap, "sv_remap_objects.nut")));
                 StringAssert.Contains("void function Sv_ReMap_LoadMap()\n{\n",
                     System.IO.File.ReadAllText(serverMap).Replace("\r\n", "\n"));
                 StringAssert.Contains("void function Cl_ReMap_LoadMap()\n{\n",

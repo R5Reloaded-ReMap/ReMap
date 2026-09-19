@@ -1,7 +1,9 @@
 using NUnit.Framework;
 using ReMap.Standalone.Core;
 using System;
+using System.Collections.Generic;
 using System.IO;
+using System.Linq;
 using System.Text;
 
 namespace ReMap.Standalone.Tests
@@ -63,7 +65,7 @@ namespace ReMap.Standalone.Tests
             StringAssert.Contains("\"model\" \"mdl/props/crate.rmdl\"", result.Script);
             StringAssert.Contains("\"renderamt\" \"128\"", result.Script);
             StringAssert.Contains("\"script_name\" \"remap_prop\"", result.Script);
-            StringAssert.Contains("\"can_mantle\" \"true\"", result.Script);
+            StringAssert.Contains("\"can_mantle\" \"1\"", result.Script);
             StringAssert.Contains("\"classname\" \"func_window_hint\"", result.Script);
             StringAssert.Contains("\"classname\" \"ambient_generic\"", result.Sound);
             StringAssert.Contains("\"polyline_segment_0\"", result.Sound);
@@ -86,6 +88,42 @@ namespace ReMap.Standalone.Tests
             StringAssert.Contains("mdl/props/preview.rmdl", preview);
             StringAssert.Contains("Arena.Ambient", preview);
             StringAssert.Contains("Client preview (client-side prop)", preview);
+        }
+
+        [Test]
+        public void NativeJumpTowerExportsModelsAndKeepsOnlyGameplayInNutFallback()
+        {
+            var tower = new MapObject
+            {
+                customType = "jump-tower", isGroup = true, displayName = "Tower",
+                jumpTowerHeight = 2400f, position = new Float3(10, 20, 30)
+            };
+            var towerBase = new MapObject
+            {
+                customType = "jump-tower-component", customRole = "base", parentId = tower.id
+            };
+            var balloon = new MapObject
+            {
+                customType = "jump-tower-component", customRole = "balloon", parentId = tower.id
+            };
+            MapObject[] world = { tower, towerBase, balloon };
+
+            ReMapEntFragments fragments = ReMapEntExporter.Generate(Document(), world);
+            IReadOnlyList<MapObject> fallback = ReMapEntExporter.ScriptFallbackObjects(world, fragments);
+            string script = ReMapGameScript.GenerateNativeFallback(Document(), fallback);
+
+            Assert.That(fragments.ScriptEntityCount, Is.EqualTo(2));
+            StringAssert.Contains("mdl/props/zipline_balloon/zipline_balloon_base.rmdl", fragments.Script);
+            StringAssert.Contains("mdl/props/zipline_balloon/zipline_balloon.rmdl", fragments.Script);
+            StringAssert.Contains("\"solid\" \"3\"", fragments.Script);
+            StringAssert.Contains("\"can_mantle\" \"1\"", fragments.Script);
+            StringAssert.Contains("\"can_mantle\" \"0\"", fragments.Script);
+            Assert.That(fragments.NutOnlyObjectIds, Contains.Item(tower.id));
+            Assert.That(fallback.Select(item => item.id), Is.EquivalentTo(world.Select(item => item.id)));
+            StringAssert.Contains("ReMap_CreateJumpTowerGameplay( ", script);
+            StringAssert.DoesNotContain("\tReMap_CreateJumpTower( ", script);
+            StringAssert.DoesNotContain("mdl/props/zipline_balloon/zipline_balloon_base.rmdl", script);
+            StringAssert.DoesNotContain("mdl/props/zipline_balloon/zipline_balloon.rmdl", script);
         }
 
         [Test]
@@ -228,7 +266,7 @@ namespace ReMap.Standalone.Tests
             StringAssert.Contains("mdl/props/zip_rail/zip_rail_ground_post_01.rmdl", result.Script);
             Assert.That(result.Script.Split(new[] { "zip_rail_cord_end_01.rmdl" }, StringSplitOptions.None).Length - 1, Is.EqualTo(2));
             StringAssert.Contains("\"script_name\" \"remap_prop\"", result.Script);
-            StringAssert.Contains("\"can_mantle\" \"true\"", result.Script);
+            StringAssert.Contains("\"can_mantle\" \"1\"", result.Script);
             StringAssert.Contains("\"solid\" \"6\"", result.Script);
             StringAssert.Contains("\"soundName\" \"3p_Ziprail_Emit_TowerBy\"", result.Sound);
             StringAssert.DoesNotContain("\"ZiplineVersion\"", result.Script);

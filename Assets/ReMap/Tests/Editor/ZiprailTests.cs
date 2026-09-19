@@ -97,7 +97,9 @@ namespace ReMap.Standalone.Tests
 
             string objectScript = File.ReadAllText(Path.Combine(root, "scripts/vscripts/source/sv_remap_objects.source.nut"));
             StringAssert.Contains("GetEntArrayByScriptName( \"remap_prop\" )", objectScript);
-            StringAssert.Contains("prop.HasKey( \"can_mantle\" )", objectScript);
+            StringAssert.Contains("prop.GetValueForKey( \"can_mantle\" )", objectScript);
+            StringAssert.Contains("canMantle == \"1\"", objectScript);
+            StringAssert.DoesNotContain("prop.kv.can_mantle", objectScript);
             StringAssert.Contains("prop.AllowMantle()", objectScript);
         }
 

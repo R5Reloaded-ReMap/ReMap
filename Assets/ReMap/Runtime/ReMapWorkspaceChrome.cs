@@ -553,9 +553,16 @@ namespace ReMap.Standalone
                 });
                 string source = await MapReferenceExtractor.ExtractEntityLumpsAsync(assetLibrary, document.editingMap, false, progress, default);
                 if (this == null) return;
-                string bundle = ReMapEntExporter.WriteMergedBundle(source, document, objects, assetLibrary.SelectedMapArchives(Targets), publish, preserveBaseEntities, out _);
+                string[] selectedRpaks = assetLibrary.SelectedMapArchives(Targets);
+                string bundle = ReMapEntExporter.WriteMergedBundle(source, document, objects, selectedRpaks, publish, preserveBaseEntities, out ReMapEntFragments fragments);
                 ReMapLooseMapInstall installed = ReMapEntExporter.InstallLooseMap(bundle, document, assetLibrary.GameDirectory, assetLibrary.PlatformDirectory, publish);
-                if (resetScripts) ReMapGameScriptInstaller.Reset(assetLibrary.PlatformDirectory, document.gameTarget);
+                if (resetScripts)
+                {
+                    MapDocument fallbackDocument = document.Copy();
+                    fallbackDocument.editingMap = installed.MapName;
+                    ReMapGameScriptInstaller.Write(assetLibrary.PlatformDirectory, fallbackDocument,
+                        ReMapEntExporter.ScriptFallbackObjects(objects, fragments), selectedRpaks, true);
+                }
                 SetStatus(publish ? L.F("#LOOSE_MAP_INSTALLED_ARG0_ARG1", installed.MapName, installed.LevelSettingsPath) : L.F("#LOOSE_MAP_DEVELOPMENT_INSTALLED_ARG0", installed.MapName));
                 if (restartMap)
                 {

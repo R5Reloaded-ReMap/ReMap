@@ -2096,11 +2096,11 @@
     },
     {
       "key": "#ENT_EXPORT_RESET_SCRIPTS",
-      "text": "Reset installed .nut map scripts"
+      "text": "Reset and update installed .nut scripts"
     },
     {
       "key": "#ENT_EXPORT_RESET_SCRIPTS_HELP",
-      "text": "Recommended with native ENT files. Clears previously generated map objects from the .nut modules to prevent duplicate spawns."
+      "text": "Recommended with native ENT files. Removes duplicate native objects and keeps only the .nut fallback required by unsupported objects."
     },
     {
       "key": "#RESTART_MAP_AFTER_INSTALL",
@@ -2128,7 +2128,7 @@
     },
     {
       "key": "#ENT_EXPORT_SCRIPT_ONLY_OBJECTS_ARG0",
-      "text": "Warning: {0} object(s) do not have a faithful native ENT representation and will be omitted. Disable native ENT optimization to export them as .nut scripts."
+      "text": "{0} object(s) require the .nut fallback and will be included when script reset and update is enabled."
     },
     {
       "key": "#EXPORT_AND_INSTALL",

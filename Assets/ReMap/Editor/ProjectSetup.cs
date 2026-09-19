@@ -80,6 +80,7 @@ namespace ReMap.Standalone.Editor
                     throw new Exception("Windows build failed: " + report.summary.result);
                 string outputDirectory = Path.GetDirectoryName(Path.GetFullPath(report.summary.outputPath));
                 BuildLiveBridge(outputDirectory);
+                BundleGameScripts(outputDirectory);
                 BundleOfficialRsx(outputDirectory);
                 Debug.Log("REMAP_BUILD_OK: " + report.summary.outputPath);
             }
@@ -90,6 +91,22 @@ namespace ReMap.Standalone.Editor
                     PlayerSettings.bundleVersion = originalVersion;
                     AssetDatabase.SaveAssets();
                 }
+            }
+        }
+
+        private static void BundleGameScripts(string outputDirectory)
+        {
+            string projectRoot = Path.GetFullPath(Path.Combine(Application.dataPath, ".."));
+            string sourceRoot = Path.Combine(projectRoot, "scripts", "vscripts");
+            string destinationRoot = Path.Combine(outputDirectory, "GameScripts");
+            foreach (string variant in new[] { "remap_r5r", "remap_r5f" })
+            {
+                string source = Path.Combine(sourceRoot, variant);
+                if (!Directory.Exists(source)) throw new DirectoryNotFoundException(source);
+                string destination = Path.Combine(destinationRoot, variant);
+                Directory.CreateDirectory(destination);
+                foreach (string path in Directory.EnumerateFiles(source, "*.nut", SearchOption.TopDirectoryOnly))
+                    CopyIfChanged(path, Path.Combine(destination, Path.GetFileName(path)));
             }
         }
 

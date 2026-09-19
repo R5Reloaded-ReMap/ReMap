@@ -23,7 +23,9 @@ void function Sh_ReMap_Init()
 #if SERVER
 	ReMap_PrecacheZiplines()
 	ReMap_RegisterTextInfoPanelCallbacks()
-	if ( !reloadingScripts )
+	if ( reloadingScripts )
+		ReMap_ConfigureEntProps()
+	else
 		AddCallback_EntitiesDidLoad( ReMap_ConfigureEntProps )
 #endif
 	Sh_ReMap_PrecacheMap()

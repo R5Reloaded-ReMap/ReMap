@@ -2096,11 +2096,11 @@
     },
     {
       "key": "#ENT_EXPORT_RESET_SCRIPTS",
-      "text": "Réinitialiser les scripts .nut installés"
+      "text": "Réinitialiser et mettre à jour les scripts .nut"
     },
     {
       "key": "#ENT_EXPORT_RESET_SCRIPTS_HELP",
-      "text": "Recommandé avec les fichiers ENT natifs. Efface les anciens objets générés dans les modules .nut afin d’éviter les doubles apparitions."
+      "text": "Recommandé avec les fichiers ENT natifs. Retire les doublons natifs et conserve uniquement le repli .nut requis par les objets non pris en charge."
     },
     {
       "key": "#RESTART_MAP_AFTER_INSTALL",
@@ -2128,7 +2128,7 @@
     },
     {
       "key": "#ENT_EXPORT_SCRIPT_ONLY_OBJECTS_ARG0",
-      "text": "Attention : {0} objet(s) n’ont pas de représentation ENT native fidèle et seront ignorés. Désactivez l’optimisation ENT native pour les exporter dans les scripts .nut."
+      "text": "{0} objet(s) nécessitent le repli .nut et seront inclus si la réinitialisation et mise à jour des scripts est activée."
     },
     {
       "key": "#EXPORT_AND_INSTALL",

@@ -33,8 +33,17 @@ namespace ReMap.Standalone
                 BuildEdits(document, worldObjects, selectedRpaks));
         }
 
-        internal static IReadOnlyList<ReMapGameScriptEdit> BuildEdits(MapDocument document,
+        public static string GenerateNativeFallback(MapDocument document,
             IEnumerable<MapObject> worldObjects, IEnumerable<string> selectedRpaks = null)
+        {
+            if (document == null) throw new ArgumentNullException(nameof(document));
+            return RenderEdits(GameTargets.Normalize(document.gameTarget), MapSourceDescription(document),
+                BuildEdits(document, worldObjects, selectedRpaks, true));
+        }
+
+        internal static IReadOnlyList<ReMapGameScriptEdit> BuildEdits(MapDocument document,
+            IEnumerable<MapObject> worldObjects, IEnumerable<string> selectedRpaks = null,
+            bool nativeEntFallback = false)
         {
             if (document == null) throw new ArgumentNullException(nameof(document));
             string gameTarget = GameTargets.Normalize(document.gameTarget);
@@ -57,7 +66,7 @@ namespace ReMap.Standalone
             if (world.Any(o => o.customType == "spawn-point" && !ReMapApp.IsWorldSpawnPoint(o)) &&
                 !models.Contains(ReMapApp.SpawnPointModelPath, StringComparer.OrdinalIgnoreCase))
                 models.Add(ReMapApp.SpawnPointModelPath);
-            if (world.Any(o => o.customType == "jump-tower"))
+            if (!nativeEntFallback && world.Any(o => o.customType == "jump-tower"))
             {
                 if (!models.Contains(ReMapApp.JumpTowerBaseModelPath, StringComparer.OrdinalIgnoreCase))
                     models.Add(ReMapApp.JumpTowerBaseModelPath);
@@ -129,7 +138,7 @@ namespace ReMap.Standalone
             AppendJumpPads(server, world, false, originOffset, useOriginOffset);
             AppendSpawnPoints(server, world, false, originOffset, useOriginOffset);
             AppendTriggers(server, world, false, originOffset, useOriginOffset);
-            AppendJumpTowers(server, world, false, originOffset, useOriginOffset);
+            AppendJumpTowers(server, world, false, originOffset, useOriginOffset, nativeEntFallback);
             AppendWeaponRacks(server, world, false, originOffset, useOriginOffset);
             AppendRespawnHeals(server, world, false, originOffset, useOriginOffset);
             AppendButtons(server, world, false, originOffset, useOriginOffset);
@@ -511,13 +520,13 @@ namespace ReMap.Standalone
         }
 
         private static void AppendJumpTowers(StringBuilder code, List<MapObject> world, bool live,
-            Vector3 originOffset, bool symbolicOffset)
+            Vector3 originOffset, bool symbolicOffset, bool gameplayOnly = false)
         {
             var towers = world.Where(o => o.customType == "jump-tower").ToList();
             if (!live && towers.Count > 0) { code.AppendLine(); code.AppendLine("\t// Jump towers"); }
             foreach (var tower in towers)
             {
-                string expression = "ReMap_CreateJumpTower( " +
+                string expression = (gameplayOnly ? "ReMap_CreateJumpTowerGameplay( " : "ReMap_CreateJumpTower( ") +
                     Position(tower.position, originOffset, symbolicOffset) + ", " +
                     Vector(ApexDisplay.Angles(WorldView.ToVector(tower.rotation))) + ", " +
                     Number(tower.jumpTowerHeight) + " )";
@@ -851,6 +860,8 @@ namespace ReMap.Standalone
         private const string EmptyLevelSettings = "\"LevelSet\"\n{\n}\n";
         private static readonly string[] ServerFileNames = { "sv_remap_objects.nut", "sv_remap_ziplines.nut", ReMapGameScript.ServerMapFileName, ReMapGameScript.SharedFileName };
         private static readonly string[] ClientFileNames = { "cl_remap_objects.nut", ReMapGameScript.ClientMapFileName, ReMapGameScript.SharedFileName };
+        private static readonly string[] SupportFileNames = { "sv_remap_objects.nut", "sv_remap_ziplines.nut", "cl_remap_objects.nut" };
+        private static readonly string[] SharedSupportFunctions = { "Sh_ReMap_Init", "Sh_ReMap_Clear" };
 
         public static string EnsureInstalled(string platformDirectory, string gameTarget)
         {
@@ -879,11 +890,18 @@ namespace ReMap.Standalone
         public static string Write(string platformDirectory, MapDocument document,
             IEnumerable<MapObject> worldObjects, IEnumerable<string> selectedRpaks = null)
         {
+            return Write(platformDirectory, document, worldObjects, selectedRpaks, false);
+        }
+
+        public static string Write(string platformDirectory, MapDocument document,
+            IEnumerable<MapObject> worldObjects, IEnumerable<string> selectedRpaks,
+            bool nativeEntFallback)
+        {
             if (document == null) throw new ArgumentNullException(nameof(document));
             string map = ReMapGameScript.EditingMap(document);
             string[] rpaks = ReMapGameScript.AdditionalRpaks(map, selectedRpaks);
             return Apply(platformDirectory, document.gameTarget,
-                ReMapGameScript.BuildEdits(document, worldObjects, selectedRpaks), true, map, rpaks);
+                ReMapGameScript.BuildEdits(document, worldObjects, selectedRpaks, nativeEntFallback), true, map, rpaks);
         }
 
         public static string Reset(string platformDirectory, string gameTarget)
@@ -897,6 +915,7 @@ namespace ReMap.Standalone
         {
             gameTarget = GameTargets.Normalize(gameTarget);
             string remap = EnsureInstalled(platformDirectory, gameTarget);
+            SynchronizeRuntimeScripts(remap, gameTarget);
             var changed = new List<KeyValuePair<string, string>>();
             foreach (var edit in edits)
             {
@@ -940,6 +959,68 @@ namespace ReMap.Standalone
                 File.WriteAllText(file.Key, file.Value, new UTF8Encoding(false));
             }
             return remap;
+        }
+
+        internal static void SynchronizeRuntimeScripts(string installedDirectory, string gameTarget,
+            string sourceDirectory = null)
+        {
+            string source = string.IsNullOrWhiteSpace(sourceDirectory)
+                ? ScriptDistributionDirectory(gameTarget) : Path.GetFullPath(sourceDirectory);
+            if (string.IsNullOrEmpty(source) || !Directory.Exists(source)) return;
+            string installed = Path.GetFullPath(installedDirectory ?? throw new ArgumentNullException(nameof(installedDirectory)));
+            foreach (string fileName in SupportFileNames)
+            {
+                string sourcePath = Path.Combine(source, fileName);
+                string destinationPath = Path.Combine(installed, fileName);
+                if (!File.Exists(sourcePath) || !File.Exists(destinationPath)) continue;
+                string content = File.ReadAllText(sourcePath);
+                if (content == File.ReadAllText(destinationPath)) continue;
+                BackupOnce(destinationPath);
+                File.WriteAllText(destinationPath, content, new UTF8Encoding(false));
+            }
+
+            string sharedSourcePath = Path.Combine(source, ReMapGameScript.SharedFileName);
+            string sharedDestinationPath = Path.Combine(installed, ReMapGameScript.SharedFileName);
+            if (!File.Exists(sharedSourcePath) || !File.Exists(sharedDestinationPath)) return;
+            string template = File.ReadAllText(sharedSourcePath);
+            string shared = File.ReadAllText(sharedDestinationPath);
+            foreach (string functionName in SharedSupportFunctions)
+            {
+                if (!TryFunctionBody(template, functionName, sharedSourcePath, out string body) ||
+                    FunctionMatches(shared, functionName).Count != 1) continue;
+                shared = ReplaceFunctionBody(shared, functionName, body, sharedDestinationPath);
+            }
+            if (shared == File.ReadAllText(sharedDestinationPath)) return;
+            BackupOnce(sharedDestinationPath);
+            File.WriteAllText(sharedDestinationPath, shared, new UTF8Encoding(false));
+        }
+
+        private static string ScriptDistributionDirectory(string gameTarget)
+        {
+            string folder = GameTargets.Normalize(gameTarget) == GameTargets.R5Flowstate ? "remap_r5f" : "remap_r5r";
+            string applicationRoot = Path.GetFullPath(Path.Combine(Application.dataPath, ".."));
+            string[] candidates =
+            {
+                Path.Combine(applicationRoot, "GameScripts", folder),
+                Path.Combine(applicationRoot, "scripts", "vscripts", folder)
+            };
+            return candidates.FirstOrDefault(Directory.Exists) ?? "";
+        }
+
+        private static MatchCollection FunctionMatches(string source, string functionName)
+        {
+            return Regex.Matches(source, @"(?m)^(?<indent>[ \t]*)void\s+function\s+" + Regex.Escape(functionName) + @"\s*\(\s*\)\s*\{");
+        }
+
+        private static bool TryFunctionBody(string source, string functionName, string path, out string body)
+        {
+            MatchCollection matches = FunctionMatches(source, functionName);
+            if (matches.Count != 1) { body = ""; return false; }
+            Match match = matches[0];
+            int open = match.Index + match.Value.LastIndexOf('{');
+            int close = FindClosingBrace(source, open, path, functionName);
+            body = source.Substring(open + 1, close - open - 1).Trim('\r', '\n');
+            return true;
         }
 
         private static string SetManagedPaks(string source, IEnumerable<string> rpaks, string path)
@@ -1012,7 +1093,7 @@ namespace ReMap.Standalone
 
         private static string ReplaceFunctionBody(string source, string functionName, string body, string path)
         {
-            var matches = Regex.Matches(source, @"(?m)^(?<indent>[ \t]*)void\s+function\s+" + Regex.Escape(functionName) + @"\s*\(\s*\)\s*\{");
+            MatchCollection matches = FunctionMatches(source, functionName);
             if (matches.Count != 1)
                 throw new InvalidDataException(path + " must contain exactly one " + functionName + "() function.");
             Match match = matches[0];
