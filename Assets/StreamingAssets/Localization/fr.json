@@ -3675,6 +3675,10 @@
       "text": "Jeu en direct"
     },
     {
+      "key": "#GAME_CONNECTION",
+      "text": "Connexion au jeu"
+    },
+    {
       "key": "#LIVE_GAME_F9FC5E",
       "text": "Jeu en direct…"
     },
@@ -3695,8 +3699,16 @@
       "text": "Enregistrer la connexion live"
     },
     {
+      "key": "#SAVE_GAME_CONNECTION",
+      "text": "Enregistrer la connexion au jeu"
+    },
+    {
       "key": "#LIVE_CONNECTION_SAVED",
       "text": "Connexion live enregistrée."
+    },
+    {
+      "key": "#GAME_CONNECTION_SAVED",
+      "text": "Connexion au jeu enregistrée."
     },
     {
       "key": "#SERVER_COMMAND",

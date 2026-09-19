@@ -1216,6 +1216,7 @@ namespace ReMap.Standalone
 
     public sealed partial class ReMapApp
     {
+        private static readonly bool LiveMapEnabled = false;
         private VisualElement codeWindow;
         private ScrollView codePreviewScroll;
         private Label codePreview;
@@ -1311,6 +1312,7 @@ namespace ReMap.Standalone
 
         private void BuildLiveConsoleWindow()
         {
+            if (!LiveMapEnabled) return;
             liveWindow = new VisualElement { name = "live-game-window" }; liveWindow.AddToClassList("floating-window"); liveWindow.AddToClassList("live-window"); root.Add(liveWindow);
             var title = DockTitle(L.T("#LIVE_GAME")); title.AddToClassList("floating-title"); liveWindow.Add(title); BindFloatingPanel(title, liveWindow);
             title.Add(Button("×", () => ShowLiveConsole(false), "dock-close"));
@@ -1326,6 +1328,11 @@ namespace ReMap.Standalone
 
         private void ShowLiveConsole(bool show = true)
         {
+            if (!LiveMapEnabled)
+            {
+                if (liveWindow != null) liveWindow.style.display = DisplayStyle.None;
+                return;
+            }
             if (liveWindow == null) return;
             liveWindow.style.display = show ? DisplayStyle.Flex : DisplayStyle.None;
             if (show)
@@ -1352,7 +1359,7 @@ namespace ReMap.Standalone
 
         private async void SendLive(bool rebuild)
         {
-            if (liveSending) return;
+            if (!LiveMapEnabled || liveSending) return;
             string platform = assetLibrary.PlatformDirectory.Trim();
             string[] commands;
             try
@@ -1384,7 +1391,7 @@ namespace ReMap.Standalone
 
         private async void RestartCurrentMap()
         {
-            if (liveSending) return;
+            if (!LiveMapEnabled || liveSending) return;
             try
             {
                 CommitInspectorEdit();
@@ -1558,6 +1565,7 @@ namespace ReMap.Standalone
 
         private void CopyLiveCommands()
         {
+            if (!LiveMapEnabled) return;
             CommitInspectorEdit();
             string commands = ReMapGameScript.GenerateLiveCommands(snapshot,
                 world.GenerationObjects(snapshot), SelectedScriptRpaks());

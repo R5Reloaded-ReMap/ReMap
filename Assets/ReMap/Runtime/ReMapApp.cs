@@ -328,7 +328,9 @@ namespace ReMap.Standalone
 
             status = Label("", "status"); footer.Add(status); count = Label("", "count"); footer.Add(count);
 
-            BuildSettings(); BuildAbout(); BuildWorkspaceGameDialog(); BuildNewMapDialog(); BuildLoadingUI(); BuildDragUI(); BuildDockLayout(body, workspace); BuildConstructionTools(); BuildCodePreviewWindow(); BuildLiveConsoleWindow(); RefreshCatalog();
+            BuildSettings(); BuildAbout(); BuildWorkspaceGameDialog(); BuildNewMapDialog(); BuildLoadingUI(); BuildDragUI(); BuildDockLayout(body, workspace); BuildConstructionTools(); BuildCodePreviewWindow();
+            if (LiveMapEnabled) BuildLiveConsoleWindow();
+            RefreshCatalog();
 
         }
 

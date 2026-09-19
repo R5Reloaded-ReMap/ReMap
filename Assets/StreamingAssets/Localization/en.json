@@ -3675,6 +3675,10 @@
       "text": "Live game"
     },
     {
+      "key": "#GAME_CONNECTION",
+      "text": "Game connection"
+    },
+    {
       "key": "#LIVE_GAME_F9FC5E",
       "text": "Live game…"
     },
@@ -3695,8 +3699,16 @@
       "text": "Save live connection"
     },
     {
+      "key": "#SAVE_GAME_CONNECTION",
+      "text": "Save game connection"
+    },
+    {
       "key": "#LIVE_CONNECTION_SAVED",
       "text": "Live connection saved."
+    },
+    {
+      "key": "#GAME_CONNECTION_SAVED",
+      "text": "Game connection saved."
     },
     {
       "key": "#SERVER_COMMAND",

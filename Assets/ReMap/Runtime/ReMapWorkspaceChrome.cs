@@ -109,8 +109,11 @@ namespace ReMap.Standalone
             MenuAction(menu, L.T("#BUILD_INSTALL_MAP"), () => ShowCodePreview(), snapshot?.objects.Count > 0);
             MenuAction(menu, L.T("#RESET_INSTALLED_GAME_SCRIPT"), ResetGameScript);
             MenuAction(menu, L.T("#PREVIEW_GAME_CODE"), () => ShowCodePreview(), snapshot?.objects.Count > 0);
-            MenuAction(menu, L.T("#LIVE_GAME_F9FC5E"), () => ShowLiveConsole(), snapshot?.objects.Count > 0);
-            MenuAction(menu, L.T("#COPY_LIVE_COMMANDS"), CopyLiveCommands, snapshot?.objects.Count > 0);
+            if (LiveMapEnabled)
+            {
+                MenuAction(menu, L.T("#LIVE_GAME_F9FC5E"), () => ShowLiveConsole(), snapshot?.objects.Count > 0);
+                MenuAction(menu, L.T("#COPY_LIVE_COMMANDS"), CopyLiveCommands, snapshot?.objects.Count > 0);
+            }
         }
 
         private void BuildEditMenu(VisualElement menu)

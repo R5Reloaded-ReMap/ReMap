@@ -163,10 +163,15 @@ namespace ReMap.Standalone
                 codePreview.worldBound.width > codePreviewScroll.contentViewport.worldBound.width + 1)
                 throw new Exception("Generated code preview does not wrap or scroll vertically.");
             codePreview.text = previewCode; codePreviewScroll.scrollOffset = Vector2.zero;
-            ShowCodePreview(false); ShowLiveConsole(); await TreeFrames();
-            if (liveWindow.resolvedStyle.display == DisplayStyle.None || liveCommand == null || liveSendButton == null || liveRebuildButton == null)
-                throw new Exception("Live game command window did not open.");
-            ShowLiveConsole(false);
+            ShowCodePreview(false);
+            if (LiveMapEnabled)
+            {
+                ShowLiveConsole(); await TreeFrames();
+                if (liveWindow.resolvedStyle.display == DisplayStyle.None || liveCommand == null || liveSendButton == null || liveRebuildButton == null)
+                    throw new Exception("Live game command window did not open.");
+                ShowLiveConsole(false);
+            }
+            else if (liveWindow != null) throw new Exception("Disabled Live Map UI was created.");
             string document = codec.Encode(snapshot);
             float sideBefore = inspectorPanel.worldBound.width;
             await DragDockHandle(sideSplitter, new Vector2(-70, 0));

@@ -91,15 +91,15 @@ namespace ReMap.Standalone
             r5fPaths.Add(Label(L.T("#FIRST_TIME_SETUP_HELP"), "note"));
             r5fPaths.Add(Button(L.T("#SET_UP_REMAP_FIRST_TIME"), () => setupGame(GameTargets.R5Flowstate)));
             scroll.Add(Button(L.T("#SAVE_PATHS"), applyGameSources));
-            scroll.Add(Label(L.T("#LIVE_GAME"), "section-title"));
+            scroll.Add(Label(L.T("#GAME_CONNECTION"), "section-title"));
             string savedAddress = string.IsNullOrWhiteSpace(assetLibrary.Settings.rconAddress) ? "[::ffff:127.0.0.1]:37015" : assetLibrary.Settings.rconAddress;
             var rconAddress = new TextField(L.T("#SERVER_ADDRESS")) { value = savedAddress }; rconAddress.AddToClassList("settings-field"); scroll.Add(rconAddress);
             var rconKey = new TextField(L.T("#RCON_AES_KEY")) { value = assetLibrary.Settings.rconKey ?? "" }; rconKey.AddToClassList("settings-field"); scroll.Add(rconKey);
             var rconPassword = new TextField(L.T("#RCON_PASSWORD")) { value = assetLibrary.Settings.rconPassword ?? "", isPasswordField = true }; rconPassword.AddToClassList("settings-field"); scroll.Add(rconPassword);
             scroll.Add(Label(L.T("#R5FLOWSTATE_USE_OPEN_LAUNCHER_CONSOLE"), "note"));
-            scroll.Add(Button(L.T("#SAVE_LIVE_CONNECTION"), () => {
+            scroll.Add(Button(L.T("#SAVE_GAME_CONNECTION"), () => {
                 assetLibrary.Settings.rconAddress = rconAddress.value.Trim(); assetLibrary.Settings.rconKey = rconKey.value.Trim(); assetLibrary.Settings.rconPassword = rconPassword.value;
-                assetLibrary.SaveSettings(); SetStatus(L.T("#LIVE_CONNECTION_SAVED"));
+                assetLibrary.SaveSettings(); SetStatus(L.T("#GAME_CONNECTION_SAVED"));
             }));
             scroll.Add(Label(L.T("#ASSET_CACHE"), "section-title"));
             scroll.Add(Label(L.T("#COMPATIBLE_MODELS_TEXTURES_SHARED_BETWEEN"), "note"));
