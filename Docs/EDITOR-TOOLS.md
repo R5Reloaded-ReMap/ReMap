@@ -57,6 +57,10 @@ Custom scripted objects and game-code generation remain outside this stage.
 
 Select **World Spawn** in the hierarchy and enable **Set a custom player spawn** to create one managed `mdl/dev/mp_spawn.rmdl` marker at the scene origin. ReMap selects it immediately; move and rotate it like any other object to define the player's spawn position and facing direction. The marker is exported as `info_spawnpoint_human` in both generated `.nut` scripts and native `_spawn.ent` output. Disabling the option removes only this managed marker; advanced player spawn points added from the Custom catalog remain untouched.
 
+## Generated code
+
+The main Move/Rotate/Scale toolbar also exposes **Code**, which opens the generated-output window directly. Its Scripts and ENT tabs show both export representations without opening the File menu.
+
 ## Locked map reference
 
 Select the edited Apex map in Settings, then enable **Show main BSP terrain** and/or **Show MPRT models**. The same two independent switches and a reload action are available in the Scene inspector and from the hierarchy root context menu.

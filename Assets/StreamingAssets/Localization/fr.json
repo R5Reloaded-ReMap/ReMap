@@ -2339,6 +2339,10 @@
       "text": "Visualiser les scripts / ENT"
     },
     {
+      "key": "#CODE",
+      "text": "Code"
+    },
+    {
       "key": "#TOOL",
       "text": "Outil"
     },

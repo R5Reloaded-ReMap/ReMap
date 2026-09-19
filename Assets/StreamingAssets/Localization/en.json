@@ -2339,6 +2339,10 @@
       "text": "Preview scripts / ENT"
     },
     {
+      "key": "#CODE",
+      "text": "Code"
+    },
+    {
       "key": "#TOOL",
       "text": "Tool"
     },

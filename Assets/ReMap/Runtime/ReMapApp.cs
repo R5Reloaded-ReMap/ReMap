@@ -91,7 +91,7 @@ namespace ReMap.Standalone
 
         private Label status, count, mode, fileStatus;
 
-        private Button undoButton, redoButton;
+        private Button undoButton, redoButton, codePreviewToolbarButton;
 
         private DropdownField slot;
         private GenericDropdownMenu activeDropdownMenu;
@@ -285,6 +285,12 @@ namespace ReMap.Standalone
             toolbar.Add(snapToggle);
 
             toolbar.Add(Button(L.T("#FRAME_F"), () => FocusSelection()));
+
+            codePreviewToolbarButton = Button(L.T("#CODE"), () => ShowCodePreview());
+            codePreviewToolbarButton.name = "code-preview-button";
+            codePreviewToolbarButton.tooltip = L.T("#PREVIEW_GAME_CODE");
+            codePreviewToolbarButton.SetEnabled(false);
+            toolbar.Add(codePreviewToolbarButton);
 
             mode = Label(L.T("#SELECTION"), "mode"); toolbar.Add(mode);
 
@@ -542,6 +548,7 @@ namespace ReMap.Standalone
             world.Sync(snapshot, selectedId); world.HighlightSelection(SelectionRoots()); SyncMapReference();
 
             undoButton?.SetEnabled(session.CanUndo); redoButton?.SetEnabled(session.CanRedo);
+            codePreviewToolbarButton?.SetEnabled(snapshot.objects.Count > 0);
 
             fileStatus.text = session.Revision == lastSavedRevision ? L.T("#SAVED") : L.T("#UNSAVED_CHANGES");
 

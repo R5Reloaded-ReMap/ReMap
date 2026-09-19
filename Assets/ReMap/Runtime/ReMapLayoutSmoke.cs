@@ -123,7 +123,10 @@ namespace ReMap.Standalone
                 throw new Exception("Construction tools scroll bar is too wide.");
             if (toolChoice.worldBound.width < toolsWindow.worldBound.width - 20 || toolsScrollBar.worldBound.yMin < toolsPanel.worldBound.yMin - 1 || toolsScrollBar.worldBound.yMax > toolsPanel.worldBound.yMax + 1 || toolsPanel.worldBound.height - toolsScrollBar.worldBound.height > 6)
                 throw new Exception("Tool selector is narrow or the scroll bar does not fill the text rectangle. choice=" + toolChoice.worldBound + " window=" + toolsWindow.worldBound + " scroller=" + toolsScrollBar.worldBound + " panel=" + toolsPanel.worldBound);
-            ShowConstructionTools(false); ShowCodePreview(); await TreeFrames();
+            ShowConstructionTools(false);
+            var codeToolbarButton = root.Q<Button>("code-preview-button");
+            if (codeToolbarButton == null || !codeToolbarButton.enabledInHierarchy || !codeToolbarButton.parent.ClassListContains("toolbar")) throw new Exception("Direct generated-code toolbar button is missing or disabled.");
+            TreeClick(codeToolbarButton); await TreeFrames();
             if (codeWindow.parent != root || codeWindow.resolvedStyle.display == DisplayStyle.None || string.IsNullOrWhiteSpace(codePreview.text))
                 throw new Exception("Generated code floating window did not open.");
             var codeResize = codeWindow.Q("resize-game-code");
