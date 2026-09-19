@@ -17,15 +17,23 @@ namespace ReMap.Standalone
             closedDirection.Normalize();
             openDirection.Normalize();
             up.Normalize();
-            var points = new Vector3[segments + 4];
-            for (int index = 0; index <= segments; index++) points[index] = hinge + Vector3.Slerp(closedDirection, openDirection, index / (float)segments).normalized * radius;
-            Vector3 tip = points[segments];
-            Vector3 tangent = (tip - points[segments - 1]).normalized;
-            Vector3 side = Vector3.Cross(up, tangent).normalized;
+            var arc = new Vector3[segments + 1];
+            for (int index = 0; index <= segments; index++) arc[index] = hinge + Vector3.Slerp(closedDirection, openDirection, index / (float)segments).normalized * radius;
+            var points = new Vector3[segments + 7];
             float head = radius * .28f;
-            points[segments + 1] = tip - tangent * head + side * head * .65f;
-            points[segments + 2] = tip;
-            points[segments + 3] = tip - tangent * head - side * head * .65f;
+            Vector3 startTangent = (arc[1] - arc[0]).normalized;
+            Vector3 startSide = Vector3.Cross(up, startTangent).normalized;
+            points[0] = arc[0] + startTangent * head + startSide * head * .65f;
+            points[1] = arc[0];
+            points[2] = arc[0] + startTangent * head - startSide * head * .65f;
+            points[3] = arc[0];
+            for (int index = 1; index <= segments; index++) points[index + 3] = arc[index];
+            Vector3 tip = arc[segments];
+            Vector3 tangent = (tip - arc[segments - 1]).normalized;
+            Vector3 side = Vector3.Cross(up, tangent).normalized;
+            points[segments + 4] = tip - tangent * head + side * head * .65f;
+            points[segments + 5] = tip;
+            points[segments + 6] = tip - tangent * head - side * head * .65f;
             return points;
         }
 
@@ -42,7 +50,7 @@ namespace ReMap.Standalone
             Vector3 right = instance.transform.right.normalized;
             Vector3 up = instance.transform.up.normalized;
             float elevation = DoorArrowElevation(instance, up);
-            float radius = 112f * ApexCoordinates.MetersPerUnit;
+            float radius = 64f * ApexCoordinates.MetersPerUnit;
             float hingeOffset = 64f * ApexCoordinates.MetersPerUnit;
             Vector3 anchor = instance.transform.position + up * elevation;
             if (door.doorType == "double")

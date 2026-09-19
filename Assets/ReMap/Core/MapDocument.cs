@@ -90,6 +90,10 @@ namespace ReMap.Standalone.Core
         public bool triggerDebug;
         public string triggerEnterCallback = "";
         public string triggerLeaveCallback = "";
+        public bool triggerTeleportEnabled;
+        public bool triggerTeleportPlaySound = true;
+        public Float3 triggerDestination;
+        public Float3 triggerDirection;
         public float jumpTowerHeight = 2000f;
         public string weaponRackWeapon = "mp_weapon_rspn101";
         public float weaponRackRespawnTime = .5f;
@@ -266,6 +270,7 @@ namespace ReMap.Standalone.Core
                     item.customType != "ziprail-component" &&
                     item.customType != "loot-bin" && item.customType != "jump-pad" &&
                     item.customType != "spawn-point" && item.customType != "trigger" &&
+                    item.customType != "trigger-teleport-target" &&
                     item.customType != "jump-tower" && item.customType != "jump-tower-component" &&
                     item.customType != "weapon-rack" && item.customType != "respawn-heal" &&
                     item.customType != "button" && item.customType != "button-teleport-target" &&
@@ -354,6 +359,7 @@ namespace ReMap.Standalone.Core
                 if (item.customType == "trigger" && (!item.isGroup || !Finite(item.triggerRadius) ||
                     !Finite(item.triggerHalfHeight) || item.triggerRadius < .1f || item.triggerRadius > 65535f ||
                     item.triggerHalfHeight < .1f || item.triggerHalfHeight > 65535f ||
+                    !item.triggerDestination.IsFinite || !item.triggerDirection.IsFinite ||
                     item.triggerEnterCallback.Length > 65535 || item.triggerLeaveCallback.Length > 65535 ||
                     item.triggerEnterCallback.IndexOf('\0') >= 0 || item.triggerLeaveCallback.IndexOf('\0') >= 0))
                     throw new ArgumentException(L.T("#INVALID_TRIGGER_SETTINGS"));
@@ -556,6 +562,20 @@ namespace ReMap.Standalone.Core
                     var parent = objects.Find(o => o.id == item.parentId);
                     if (parent == null || parent.customType != "ziprail-point")
                         throw new ArgumentException(L.T("#INVALID_ZIPRAIL_POINT"));
+                }
+                else if (item.customType == "trigger")
+                {
+                    int targets = objects.FindAll(candidate => candidate.parentId == item.id &&
+                        candidate.customType == "trigger-teleport-target").Count;
+                    if (targets > 1 || targets > 0 && !item.triggerTeleportEnabled)
+                        throw new ArgumentException(L.T("#INVALID_TRIGGER_SETTINGS"));
+                }
+                else if (item.customType == "trigger-teleport-target")
+                {
+                    var parent = objects.Find(candidate => candidate.id == item.parentId);
+                    if (!item.isGroup || parent == null || parent.customType != "trigger" ||
+                        item.customRole != "destination")
+                        throw new ArgumentException(L.T("#INVALID_TRIGGER_SETTINGS"));
                 }
                 else if (item.customType == "button")
                 {

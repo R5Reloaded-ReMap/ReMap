@@ -32,6 +32,7 @@ global function ReMap_CreateRespawnHeal
 global function ReMap_CreateButton
 global function ReMap_AddButtonTeleport
 global function ReMap_CreateTeleportButton
+global function ReMap_TeleportPlayer
 global function ReMap_CreateSpeedBoost
 global function ReMap_CreateBubbleShield
 global function ReMap_CreateAnimatedCamera
@@ -98,7 +99,7 @@ struct
 	array< array > textInfoPanels
 	table<entity, bool> jumpPadDoubleJump
 	table<entity, ReMapRespawnHealState> respawnHeals
-	int nextTextInfoPanelId = 1000000
+	int nextTextInfoPanelId = 500
 	bool textInfoPanelCallbackRegistered = false
 } file
 
@@ -154,7 +155,16 @@ void function ReMap_SendTextInfoPanelsToPlayer( entity player )
 
 void function ReMap_SendTextInfoPanelToPlayer( entity player, array panel )
 {
-	if ( !IsValid( player ) || !player.IsPlayer() )
+	thread ReMap_SendTextInfoPanelToPlayerWhenReady( player, panel )
+}
+
+void function ReMap_SendTextInfoPanelToPlayerWhenReady( entity player, array panel )
+{
+	while ( IsValid( player ) && ( !player.IsPlayer() || !player.p.isConnected ) )
+		WaitFrame()
+	if ( !IsValid( player ) || !player.IsPlayer() || !player.p.isConnected )
+		return
+	if ( !file.textInfoPanels.contains( panel ) )
 		return
 	string title = expect string( panel[1] )
 	string description = expect string( panel[2] )
@@ -168,6 +178,7 @@ void function ReMap_ClearTextInfoPanels()
 			if ( IsValid( player ) )
 				RemovePanelText( player, expect int( panel[0] ) )
 	file.textInfoPanels.clear()
+	file.nextTextInfoPanelId = 500
 }
 
 entity function ReMap_CreateWindowHint( vector origin, float halfHeight, float halfWidth, vector right )

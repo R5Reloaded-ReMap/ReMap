@@ -755,9 +755,11 @@ namespace ReMap.Standalone
                 adjusted.Add(cable);
             }
             List<Vector3> curve = BezierPath(adjusted, zipline.curvedZiplineSegments);
-            for (int index = 0; index < curve.Count; index++)
+            // The working script path creates every rope, links the complete chain, then
+            // dispatches it. Entity lumps spawn sequentially, so serialize the chain in
+            // reverse order and use the native link GUID relationship from LinkToEnt.
+            for (int index = curve.Count - 1; index >= 0; index--)
             {
-                string targetName = "remap_rope_" + LinkGuid(zipline.id, index);
                 var fields = new List<KeyValuePair<string, string>>
                 {
                     Pair("MoveSpeed", Number(64f * zipline.ziplineSpeed)), Pair("Slack", "25"),
@@ -766,11 +768,11 @@ namespace ReMap.Standalone
                     Pair("RopeMaterial", "cable/zipline.vmt"), Pair("Zipline", "1"),
                     Pair("ZiplineAutoDetachDistance", "150"), Pair("ZiplineSagEnable", "0"),
                     Pair("ZiplineSagHeight", "50"), Pair("fadedist", "50000"),
-                    Pair("origin", VectorValue(ApexDisplay.Position(curve[index] + offset))),
-                    Pair("targetname", targetName)
+                    Pair("origin", VectorValue(ApexDisplay.Position(curve[index] + offset)))
                 };
                 if (index + 1 < curve.Count)
-                    fields.Add(Pair("NextKey", "remap_rope_" + LinkGuid(zipline.id, index + 1)));
+                    fields.Add(Pair("link_to_guid_0", LinkGuid(zipline.id, index + 1)));
+                fields.Add(Pair("link_guid", LinkGuid(zipline.id, index)));
                 fields.Add(Pair("classname", index == 0 ? "move_rope" : "keyframe_rope"));
                 AppendEntity(output, fields.ToArray());
             }

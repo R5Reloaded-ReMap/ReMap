@@ -3523,6 +3523,26 @@
       "text": "Afficher le debug dans Apex"
     },
     {
+      "key": "#TRIGGER_TELEPORT_ON_ENTER",
+      "text": "Téléporter les joueurs à l’entrée"
+    },
+    {
+      "key": "#TRIGGER_TELEPORT_TARGET",
+      "text": "Destination de téléportation du trigger"
+    },
+    {
+      "key": "#SELECT_TRIGGER_TELEPORT_TARGET",
+      "text": "Sélectionner la destination"
+    },
+    {
+      "key": "#TRIGGER_TELEPORT_TARGET_HELP",
+      "text": "Déplacez et tournez ce marqueur de destination. Sa flèche indique la direction du regard après la téléportation."
+    },
+    {
+      "key": "#SELECT_TRIGGER",
+      "text": "Sélectionner le trigger"
+    },
+    {
       "key": "#TRIGGER_CALLBACKS",
       "text": "Callbacks Squirrel"
     },
@@ -3544,7 +3564,7 @@
     },
     {
       "key": "#INVALID_TRIGGER_SETTINGS",
-      "text": "Rayon, hauteur ou code de callback du trigger invalide."
+      "text": "Rayon, hauteur, destination de téléportation ou code de callback du trigger invalide."
     },
     {
       "key": "#JUMP_TOWER",

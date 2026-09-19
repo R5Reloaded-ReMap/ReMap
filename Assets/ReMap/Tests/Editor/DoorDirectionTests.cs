@@ -41,14 +41,16 @@ namespace ReMap.Standalone.Tests
                 if (!visible) return;
                 Assert.That(arrow.positionCount, Is.GreaterThan(12));
                 Vector3 primaryHinge = instance.transform.position + instance.transform.right * (type == "double" ? 64f : -64f) * ApexCoordinates.MetersPerUnit;
-                Vector3 primaryStart = Vector3.ProjectOnPlane(arrow.GetPosition(0) - primaryHinge, instance.transform.up);
+                Vector3 primaryStart = Vector3.ProjectOnPlane(arrow.GetPosition(1) - primaryHinge, instance.transform.up);
                 Vector3 primaryEnd = Vector3.ProjectOnPlane(arrow.GetPosition(arrow.positionCount - 4) - primaryHinge, instance.transform.up);
+                Assert.That(primaryStart.magnitude, Is.EqualTo(64f * ApexCoordinates.MetersPerUnit).Within(.0001f));
+                Assert.That(primaryEnd.magnitude, Is.EqualTo(64f * ApexCoordinates.MetersPerUnit).Within(.0001f));
                 Assert.That(Mathf.Abs(Vector3.Dot(primaryStart.normalized, instance.transform.right)), Is.GreaterThan(.999f));
                 Assert.That(Vector3.Dot(primaryEnd.normalized, instance.transform.forward), Is.GreaterThan(.999f));
                 if (type == "double")
                 {
                     Vector3 oppositeHinge = instance.transform.position - instance.transform.right * 64f * ApexCoordinates.MetersPerUnit;
-                    Vector3 oppositeStart = Vector3.ProjectOnPlane(opposite.GetPosition(0) - oppositeHinge, instance.transform.up);
+                    Vector3 oppositeStart = Vector3.ProjectOnPlane(opposite.GetPosition(1) - oppositeHinge, instance.transform.up);
                     Assert.That(Vector3.Dot(primaryStart.normalized, oppositeStart.normalized), Is.LessThan(-.999f));
                 }
             }

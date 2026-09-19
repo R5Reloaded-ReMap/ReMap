@@ -17,6 +17,9 @@ namespace ReMap.Standalone
         private const string CameraPathMarkerName = "__remap_camera_path_marker";
         private const string ButtonTeleportTargetMarkerName = "__remap_button_teleport_target_marker";
         private const string ButtonTeleportGuideName = "__remap_button_teleport_guide";
+        private const string TriggerTeleportTargetMarkerName = "__remap_trigger_teleport_target_marker";
+        private const string TriggerTeleportGuideName = "__remap_trigger_teleport_guide";
+        private const string TeleportDirectionArrowName = "direction";
         private const string LocationPairMarkerName = "__remap_location_pair_marker";
         private const string TextInfoPanelMarkerName = "__remap_text_info_panel_marker";
         private const string WindowHintMarkerName = "__remap_window_hint_marker";
@@ -49,6 +52,8 @@ namespace ReMap.Standalone
                     EnsureCameraPathMarker(instance, item);
                 if (item.customType == "button-teleport-target")
                     EnsureButtonTeleportTargetMarker(instance, item);
+                if (item.customType == "trigger-teleport-target")
+                    EnsureTriggerTeleportTargetMarker(instance, item);
                 if (item.customType == "sound" || item.customType == "sound-point")
                     EnsureSoundMarker(instance, item);
                 if (item.customType == "location-pair") EnsureLocationPairMarker(instance, item);
@@ -74,6 +79,34 @@ namespace ReMap.Standalone
                     guide.sharedMaterial = lineMaterial; guide.widthMultiplier = .025f;
                     var tint = new MaterialPropertyBlock();
                     tint.SetColor("_BaseColor", new Color(1f, .25f, .75f));
+                    guide.SetPropertyBlock(tint);
+                }
+                if (guide != null)
+                {
+                    guide.enabled = visible;
+                    if (visible)
+                    {
+                        guide.SetPosition(0, instance.transform.position);
+                        guide.SetPosition(1, targetInstance.transform.position);
+                    }
+                }
+            }
+            foreach (var item in document.objects)
+            {
+                if (item.customType != "trigger" || !instances.TryGetValue(item.id, out var instance)) continue;
+                var target = document.objects.FirstOrDefault(candidate => candidate.parentId == item.id && candidate.customType == "trigger-teleport-target");
+                var existing = instance.transform.Find(TriggerTeleportGuideName);
+                LineRenderer guide = existing?.GetComponent<LineRenderer>();
+                GameObject targetInstance = null;
+                bool visible = item.triggerTeleportEnabled && target != null && instances.TryGetValue(target.id, out targetInstance);
+                if (visible && guide == null)
+                {
+                    guide = new GameObject(TriggerTeleportGuideName, typeof(LineRenderer)).GetComponent<LineRenderer>();
+                    guide.transform.SetParent(instance.transform, false);
+                    guide.useWorldSpace = true; guide.positionCount = 2; guide.numCapVertices = 4;
+                    guide.sharedMaterial = lineMaterial; guide.widthMultiplier = .025f;
+                    var tint = new MaterialPropertyBlock();
+                    tint.SetColor("_BaseColor", new Color(.15f, .7f, 1f));
                     guide.SetPropertyBlock(tint);
                 }
                 if (guide != null)
@@ -279,12 +312,22 @@ namespace ReMap.Standalone
 
         private void EnsureButtonTeleportTargetMarker(GameObject instance, MapObject item)
         {
-            var existing = instance.transform.Find(ButtonTeleportTargetMarkerName);
+            EnsureTeleportTargetMarker(instance, item, ButtonTeleportTargetMarkerName, new Color(1f, .25f, .75f));
+        }
+
+        private void EnsureTriggerTeleportTargetMarker(GameObject instance, MapObject item)
+        {
+            EnsureTeleportTargetMarker(instance, item, TriggerTeleportTargetMarkerName, new Color(.15f, .7f, 1f));
+        }
+
+        private void EnsureTeleportTargetMarker(GameObject instance, MapObject item, string markerName, Color color)
+        {
+            var existing = instance.transform.Find(markerName);
             GameObject marker;
             if (existing == null)
             {
                 marker = GameObject.CreatePrimitive(PrimitiveType.Cube);
-                marker.name = ButtonTeleportTargetMarkerName;
+                marker.name = markerName;
                 marker.transform.SetParent(instance.transform, false);
                 var selection = marker.GetComponent<BoxCollider>();
                 selection.isTrigger = true; selection.enabled = true;
@@ -292,12 +335,35 @@ namespace ReMap.Standalone
                 instanceIds[marker] = item.id;
             }
             else marker = existing.gameObject;
-            marker.transform.localPosition = Vector3.forward * .3f;
+            marker.transform.localPosition = Vector3.zero;
             marker.transform.localRotation = Quaternion.identity;
-            marker.transform.localScale = new Vector3(.22f, .22f, .6f);
+            marker.transform.localScale = Vector3.one * .18f;
             var tint = new MaterialPropertyBlock();
-            tint.SetColor("_BaseColor", new Color(1f, .25f, .75f));
+            tint.SetColor("_BaseColor", color);
             marker.GetComponent<Renderer>().SetPropertyBlock(tint);
+
+            var arrowTransform = marker.transform.Find(TeleportDirectionArrowName);
+            LineRenderer arrow;
+            if (arrowTransform == null)
+            {
+                arrow = new GameObject(TeleportDirectionArrowName, typeof(LineRenderer)).GetComponent<LineRenderer>();
+                arrow.transform.SetParent(marker.transform, false);
+                arrow.useWorldSpace = true; arrow.positionCount = 5; arrow.numCapVertices = 4;
+                arrow.sharedMaterial = lineMaterial; arrow.widthMultiplier = .035f;
+            }
+            else arrow = arrowTransform.GetComponent<LineRenderer>();
+            arrow.SetPropertyBlock(tint);
+            float length = 64f * ApexCoordinates.MetersPerUnit;
+            float head = 12f * ApexCoordinates.MetersPerUnit;
+            Vector3 origin = instance.transform.position;
+            Vector3 direction = instance.transform.forward.normalized;
+            Vector3 side = instance.transform.right.normalized;
+            Vector3 tip = origin + direction * length;
+            arrow.SetPosition(0, origin);
+            arrow.SetPosition(1, tip);
+            arrow.SetPosition(2, tip - direction * head + side * head * .55f);
+            arrow.SetPosition(3, tip);
+            arrow.SetPosition(4, tip - direction * head - side * head * .55f);
         }
 
         private void EnsureLocationPairMarker(GameObject instance, MapObject item)

@@ -255,10 +255,11 @@ namespace ReMap.Standalone.Tests
             StringAssert.Contains("\"classname\" \"move_rope\"", result.Script);
             StringAssert.Contains("\"classname\" \"keyframe_rope\"", result.Script);
             StringAssert.Contains("\"PositionInterpolator\" \"2\"", result.Script);
-            StringAssert.Contains("\"targetname\" \"remap_rope_", result.Script);
-            StringAssert.Contains("\"NextKey\" \"remap_rope_", result.Script);
-            StringAssert.DoesNotContain("\"link_guid\"", result.Script);
-            StringAssert.DoesNotContain("\"link_to_guid_0\"", result.Script);
+            StringAssert.Contains("\"link_guid\"", result.Script);
+            StringAssert.Contains("\"link_to_guid_0\"", result.Script);
+            StringAssert.DoesNotContain("\"targetname\"", result.Script);
+            StringAssert.DoesNotContain("\"NextKey\"", result.Script);
+            Assert.That(result.Script.LastIndexOf("\"classname\" \"keyframe_rope\"", StringComparison.Ordinal), Is.LessThan(result.Script.IndexOf("\"classname\" \"move_rope\"", StringComparison.Ordinal)));
             StringAssert.Contains("\"solid\" \"0\"", result.Script);
             StringAssert.Contains("\"contents\" \"0\"", result.Script);
         }

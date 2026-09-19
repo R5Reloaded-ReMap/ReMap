@@ -80,6 +80,39 @@ namespace ReMap.Standalone.Tests
             finally { Dispose(world); }
         }
 
+        [TestCase("button", "button-teleport-target", "__remap_button_teleport_target_marker")]
+        [TestCase("trigger", "trigger-teleport-target", "__remap_trigger_teleport_target_marker")]
+        public void TeleportTargetsShowPlayerFacingDirection(string sourceType, string targetType, string markerName)
+        {
+            var world = CreateWorld();
+            try
+            {
+                var source = new MapObject {
+                    assetId = "custom:" + sourceType, displayName = "Source", customType = sourceType,
+                    isGroup = true, buttonTeleportEnabled = true, triggerTeleportEnabled = true
+                };
+                var target = new MapObject {
+                    assetId = "custom:" + targetType, displayName = "Destination", customType = targetType,
+                    customRole = "destination", parentId = source.id, isGroup = true,
+                    rotation = WorldView.ToData(new Vector3(0f, 35f, 0f))
+                };
+                var document = new MapDocument();
+                document.objects.Add(source); document.objects.Add(target);
+                world.Sync(document, null);
+
+                var instancesField = typeof(WorldView).GetField("instances", BindingFlags.Instance | BindingFlags.NonPublic);
+                var instances = (Dictionary<string, GameObject>)instancesField.GetValue(world);
+                GameObject targetInstance = instances[target.id];
+                var arrow = targetInstance.transform.Find(markerName + "/direction").GetComponent<LineRenderer>();
+                Vector3 direction = arrow.GetPosition(1) - arrow.GetPosition(0);
+
+                Assert.That(arrow.positionCount, Is.EqualTo(5));
+                Assert.That(direction.magnitude, Is.EqualTo(64f * ApexCoordinates.MetersPerUnit).Within(.0001f));
+                Assert.That(Vector3.Dot(direction.normalized, targetInstance.transform.forward), Is.GreaterThan(.999f));
+            }
+            finally { Dispose(world); }
+        }
+
         private static void Dispose(WorldView world)
         {
             bool previous = LogAssert.ignoreFailingMessages;

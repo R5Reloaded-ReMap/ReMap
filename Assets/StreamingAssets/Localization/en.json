@@ -3523,6 +3523,26 @@
       "text": "Debug draw in Apex"
     },
     {
+      "key": "#TRIGGER_TELEPORT_ON_ENTER",
+      "text": "Teleport players on enter"
+    },
+    {
+      "key": "#TRIGGER_TELEPORT_TARGET",
+      "text": "Trigger teleport destination"
+    },
+    {
+      "key": "#SELECT_TRIGGER_TELEPORT_TARGET",
+      "text": "Select teleport destination"
+    },
+    {
+      "key": "#TRIGGER_TELEPORT_TARGET_HELP",
+      "text": "Move and rotate this destination marker. Its arrow shows the direction players will face after teleporting."
+    },
+    {
+      "key": "#SELECT_TRIGGER",
+      "text": "Select trigger"
+    },
+    {
       "key": "#TRIGGER_CALLBACKS",
       "text": "Squirrel callbacks"
     },
@@ -3544,7 +3564,7 @@
     },
     {
       "key": "#INVALID_TRIGGER_SETTINGS",
-      "text": "Invalid trigger radius, height or callback code."
+      "text": "Invalid trigger radius, height, teleport destination or callback code."
     },
     {
       "key": "#JUMP_TOWER",

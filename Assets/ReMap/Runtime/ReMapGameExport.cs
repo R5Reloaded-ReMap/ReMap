@@ -524,6 +524,11 @@ namespace ReMap.Standalone
             for (int index = 0; index < triggers.Count; index++)
             {
                 var trigger = triggers[index];
+                Vector3 triggerPosition = WorldView.ToVector(trigger.position);
+                Quaternion triggerRotation = Quaternion.Euler(WorldView.ToVector(trigger.rotation));
+                var target = world.FirstOrDefault(candidate => candidate.parentId == trigger.id && candidate.customType == "trigger-teleport-target");
+                Vector3 destination = target != null ? WorldView.ToVector(target.position) : triggerPosition + triggerRotation * WorldView.ToVector(trigger.triggerDestination);
+                Vector3 direction = target != null ? WorldView.ToVector(target.rotation) : (triggerRotation * Quaternion.Euler(WorldView.ToVector(trigger.triggerDirection))).eulerAngles;
                 string variable = "remapTrigger" + index.ToString(CultureInfo.InvariantCulture);
                 code.Append("\tentity ").Append(variable).Append(" = ReMap_CreateTrigger( ")
                     .Append(Position(trigger.position, originOffset, symbolicOffset)).Append(", ")
@@ -532,7 +537,7 @@ namespace ReMap.Standalone
                     .Append(Number(trigger.triggerHalfHeight)).Append(", ")
                     .Append(trigger.triggerDebug ? "true" : "false").Append(", ")
                     .Append(trigger.realmId.ToString(CultureInfo.InvariantCulture)).AppendLine(" )");
-                AppendTriggerCallback(code, variable, "SetEnterCallback", trigger.triggerEnterCallback);
+                AppendTriggerEnterCallback(code, variable, trigger, destination, direction, originOffset, symbolicOffset);
                 AppendTriggerCallback(code, variable, "SetLeaveCallback", trigger.triggerLeaveCallback);
                 code.Append("\tDispatchSpawn( ").Append(variable).AppendLine(" )");
             }
@@ -821,6 +826,23 @@ namespace ReMap.Standalone
                 .AppendLine("( void function( entity trigger, entity ent )");
             code.AppendLine("\t{");
             foreach (string line in callback.Split('\n')) code.Append("\t\t").AppendLine(line);
+            code.AppendLine("\t} )");
+        }
+
+        private static void AppendTriggerEnterCallback(StringBuilder code, string variable, MapObject trigger, Vector3 destination, Vector3 direction, Vector3 originOffset, bool symbolicOffset)
+        {
+            string callback = (trigger.triggerEnterCallback ?? "").Replace("\r\n", "\n").Replace('\r', '\n');
+            if (!trigger.triggerTeleportEnabled)
+            {
+                AppendTriggerCallback(code, variable, "SetEnterCallback", callback);
+                return;
+            }
+            code.Append('\t').Append(variable).AppendLine(".SetEnterCallback( void function( entity trigger, entity ent )");
+            code.AppendLine("\t{");
+            code.AppendLine("\t\tif ( IsValid( ent ) && ent.IsPlayer() )");
+            code.Append("\t\t\tReMap_TeleportPlayer( ent, ").Append(Position(WorldView.ToData(destination), originOffset, symbolicOffset)).Append(", ").Append(Vector(ApexDisplay.Angles(direction))).Append(", ").Append(trigger.triggerTeleportPlaySound ? "true" : "false").AppendLine(" )");
+            if (!string.IsNullOrWhiteSpace(callback))
+                foreach (string line in callback.Split('\n')) code.Append("\t\t").AppendLine(line);
             code.AppendLine("\t} )");
         }
 

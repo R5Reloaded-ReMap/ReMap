@@ -33,6 +33,8 @@ namespace ReMap.Standalone.Tests
             string script = File.ReadAllText(Path.Combine(root, "scripts/vscripts/source/sv_remap_objects.source.nut"));
             StringAssert.Contains("void function ReMap_CreateTextInfoPanel", script);
             StringAssert.Contains("AddCallback_OnClientConnected( ReMap_SendTextInfoPanelsToPlayer )", script);
+            StringAssert.Contains("while ( IsValid( player ) && ( !player.IsPlayer() || !player.p.isConnected ) )", script);
+            StringAssert.Contains("int nextTextInfoPanelId = 500", script);
             StringAssert.Contains("Dev_CreateTextInfoPanelWithID", script);
             StringAssert.Contains("Dev_DestroyTextInfoPanelWithID", script);
             StringAssert.DoesNotContain("MapEditor_CreateTextInfoPanel", script);

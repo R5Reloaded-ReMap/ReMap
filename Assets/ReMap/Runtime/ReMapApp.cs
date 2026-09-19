@@ -874,7 +874,7 @@ namespace ReMap.Standalone
                 item.customType == "curved-zipline-point" || item.customType == "ziprail" ||
                 item.customType == "ziprail-point" || item.customType == "loot-bin" ||
                 item.customType == "jump-pad" || item.customType == "spawn-point" ||
-                item.customType == "trigger" || item.customType == "jump-tower" ||
+                item.customType == "trigger" || item.customType == "trigger-teleport-target" || item.customType == "jump-tower" ||
                 item.customType == "jump-tower-component" ||
                 item.customType == "weapon-rack" || item.customType == "respawn-heal" ||
                 item.customType == "button" || item.customType == "button-teleport-target" ||
@@ -897,6 +897,7 @@ namespace ReMap.Standalone
                 else if (item.customType == "jump-pad") BuildJumpPadInspector(item, remapSettings);
                 else if (item.customType == "spawn-point") BuildSpawnPointInspector(item, remapSettings);
                 else if (item.customType == "trigger") BuildTriggerInspector(item, remapSettings);
+                else if (item.customType == "trigger-teleport-target") BuildTriggerTeleportTargetInspector(item, remapSettings);
                 else if (item.customType == "jump-tower") BuildJumpTowerInspector(item, remapSettings);
                 else if (item.customType == "jump-tower-component")
                     BuildJumpTowerBalloonInspector(item, remapSettings);
@@ -940,6 +941,7 @@ namespace ReMap.Standalone
                 item.customType == "jump-pad" ? L.T("#CUSTOM_OBJECT_JUMP_PAD") :
                 item.customType == "spawn-point" ? L.T("#CUSTOM_OBJECT_SPAWN_POINT") :
                 item.customType == "trigger" ? L.T("#CUSTOM_OBJECT_TRIGGER") :
+                item.customType == "trigger-teleport-target" ? L.T("#TRIGGER_TELEPORT_TARGET") :
                 item.customType == "jump-tower" ? L.T("#CUSTOM_OBJECT_JUMP_TOWER") :
                 item.customType == "jump-tower-component" ? L.T("#JUMP_TOWER_COMPONENT") :
                 item.customType == "weapon-rack" ? L.T("#CUSTOM_OBJECT_WEAPON_RACK") :
