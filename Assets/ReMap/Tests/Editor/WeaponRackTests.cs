@@ -36,10 +36,17 @@ namespace ReMap.Standalone.Tests
             string root = Path.GetFullPath(Path.Combine(Application.dataPath, ".."));
             string script = File.ReadAllText(Path.Combine(root,
                 "scripts/vscripts/source/sv_remap_objects.source.nut"));
+            string r5fScript = File.ReadAllText(Path.Combine(root,
+                "scripts/vscripts/remap_r5f/sv_remap_objects.nut"));
+            string r5rScript = File.ReadAllText(Path.Combine(root,
+                "scripts/vscripts/remap_r5r/sv_remap_objects.nut"));
             StringAssert.Contains("entity function ReMap_CreateWeaponRack", script);
             StringAssert.Contains("rack.SetValueForModelKey( REMAP_WEAPON_RACK_MODEL )", script);
             StringAssert.Contains("entity weapon = SpawnGenericLoot", script);
-            StringAssert.Contains("weapon.WaitSignal( \"OnItemPickup\" )", script);
+            StringAssert.Contains("#if R5F\n\tweapon.WaitSignal( \"OnDestroy\" )\n#else\n\tweapon.WaitSignal( \"OnItemPickup\" )\n#endif", script.Replace("\r\n", "\n"));
+            StringAssert.Contains("weapon.WaitSignal( \"OnDestroy\" )", r5fScript);
+            StringAssert.DoesNotContain("weapon.WaitSignal( \"OnItemPickup\" )", r5fScript);
+            StringAssert.Contains("weapon.WaitSignal( \"OnItemPickup\" )", r5rScript);
             StringAssert.DoesNotContain("entity rack = CreateWeaponRack(", script);
             StringAssert.DoesNotContain("SpawnWeaponOnRack(", script);
             StringAssert.DoesNotContain("MapEditor_", script);

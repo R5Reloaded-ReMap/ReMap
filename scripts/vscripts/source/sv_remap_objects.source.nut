@@ -881,11 +881,14 @@ entity function ReMap_SpawnWeaponRackItem( entity rack, string weaponName )
 	return weapon
 }
 
-void function ReMap_WeaponRackRespawnThread( entity rack, entity weapon, string weaponName,
-	float respawnTime )
+void function ReMap_WeaponRackRespawnThread( entity rack, entity weapon, string weaponName, float respawnTime )
 {
 	rack.EndSignal( "OnDestroy" )
+#if R5F
+	weapon.WaitSignal( "OnDestroy" )
+#else
 	weapon.WaitSignal( "OnItemPickup" )
+#endif
 	wait respawnTime
 
 	if ( !IsValid( rack ) )
@@ -893,8 +896,7 @@ void function ReMap_WeaponRackRespawnThread( entity rack, entity weapon, string 
 	entity replacement = ReMap_SpawnWeaponRackItem( rack, weaponName )
 	if ( !IsValid( replacement ) )
 		return
-	StartParticleEffectInWorld( GetParticleSystemIndex( REMAP_WEAPON_RACK_RESPAWN_FX ),
-		replacement.GetOrigin(), replacement.GetAngles() )
+	StartParticleEffectInWorld( GetParticleSystemIndex( REMAP_WEAPON_RACK_RESPAWN_FX ), replacement.GetOrigin(), replacement.GetAngles() )
 	thread ReMap_WeaponRackRespawnThread( rack, replacement, weaponName, respawnTime )
 }
 
