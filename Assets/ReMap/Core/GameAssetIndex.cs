@@ -38,7 +38,7 @@ namespace ReMap.Standalone.Core
     public static class AssetCompatibility
     {
         private static readonly string[] MapVariantSuffixes = {
-            "_mu1", "_mu2", "_mu3", "_mu4", "_hu", "_night", "_tt"
+            "_mu1", "_mu2", "_mu3", "_mu4", "_hu", "_night", "_tt", "_64k_x_64k"
         };
 
         // Some levels mount another map RPak as part of their native LevelSet. Those assets

@@ -58,6 +58,7 @@ namespace ReMap.Standalone.Tests
         [TestCase("mp_rr_desertlands_hu", "mp_rr_desertlands")]
         [TestCase("mp_rr_olympus_night", "mp_rr_olympus")]
         [TestCase("mp_rr_canyonlands_tt", "mp_rr_canyonlands")]
+        [TestCase("mp_rr_desertlands_64k_x_64k", "mp_rr_desertlands")]
         [TestCase("mp_rr_divided_moonlight", "mp_rr_divided_moonlight")]
         public void BaseMapIdOnlyRecognizesKnownVariantSuffixes(string variant, string expected)
         {
