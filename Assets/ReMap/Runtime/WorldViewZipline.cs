@@ -172,15 +172,17 @@ namespace ReMap.Standalone
                 }
                 line.sharedMaterial = ZiplineCableMaterial();
                 line.widthMultiplier = Mathf.Max(.1f, item.ziplineWidth) * ApexCoordinates.MetersPerUnit;
-                var controls = document.objects.Where(candidate => candidate.parentId == item.id &&
+                var points = document.objects.Where(candidate => candidate.parentId == item.id &&
                     candidate.customType == "ziprail-point")
                     .OrderBy(candidate => int.TryParse(candidate.customRole, out int index)
-                        ? index : int.MaxValue)
+                        ? index : int.MaxValue).ToArray();
+                var controls = points
                     .Select(candidate => instances.TryGetValue(candidate.id, out var point)
-                        ? point.transform.position : Vector3.zero).ToArray();
+                        ? ZiprailCableAnchor(point, candidate) : Vector3.zero).ToArray();
                 line.enabled = controls.Length >= 2;
                 if (!line.enabled) { UpdateZiplineCableSelection(instance, item.id,
                     Array.Empty<Vector3>()); continue; }
+                UpdateZiprailEndModels(document, points, controls);
                 var curve = ZiprailPreviewPoints(controls, item.curvedZiplineSegments);
                 line.positionCount = curve.Length;
                 line.SetPositions(curve);
@@ -377,7 +379,7 @@ namespace ReMap.Standalone
             }
             else marker = markerTransform.gameObject;
             marker.transform.position = item.customType == "ziprail-point"
-                ? instance.transform.position
+                ? ZiprailCableAnchor(instance, item)
                 : ZiplineCableAnchor(instance, item);
             var tint = new MaterialPropertyBlock();
             bool railPoint = item.customType == "curved-zipline-point" || item.customType == "ziprail-point";
@@ -425,8 +427,10 @@ namespace ReMap.Standalone
 
         internal static void ConfigureZiplineComponentColliders(GameObject instance, MapObject item)
         {
-            bool solid = item.customRole == "support" ||
-                (item.customRole?.StartsWith("support-", StringComparison.Ordinal) ?? false);
+            bool solid = item.customType == "ziprail-component"
+                ? item.customRole != "cord-end"
+                : item.customRole == "support" ||
+                    (item.customRole?.StartsWith("support-", StringComparison.Ordinal) ?? false);
             Transform selection = instance.transform.Find(ZiplineModelSelectionName);
             foreach (var collider in instance.GetComponentsInChildren<Collider>(true))
             {
@@ -543,6 +547,31 @@ namespace ReMap.Standalone
             return instance.transform.TransformPoint(ReMapZiplineProfiles.UnityOffset(apexOffset));
         }
 
+        private static Vector3 ZiprailCableAnchor(GameObject instance, MapObject item)
+        {
+            if (instance == null || item == null) return instance == null ? Vector3.zero : instance.transform.position;
+            var profile = ReMapZiprailProfiles.Find(item.customProfile);
+            return instance.transform.TransformPoint(ApexDisplay.UnityPosition(ReMapZiprailProfiles.CableOffsetApex(profile)));
+        }
+
+        private void UpdateZiprailEndModels(MapDocument document, MapObject[] points, Vector3[] anchors)
+        {
+            UpdateZiprailEndModel(document, points[0], anchors[0], anchors[1]);
+            UpdateZiprailEndModel(document, points[points.Length - 1], anchors[points.Length - 1], anchors[points.Length - 2]);
+        }
+
+        private void UpdateZiprailEndModel(MapDocument document, MapObject point, Vector3 anchor, Vector3 adjacentAnchor)
+        {
+            var component = document.objects.FirstOrDefault(candidate => candidate.parentId == point.id && candidate.customType == "ziprail-component" && candidate.customRole == "cord-end");
+            if (component == null || !instances.TryGetValue(component.id, out var instance)) return;
+            Vector3 outward = anchor - adjacentAnchor;
+            outward.y = 0f;
+            if (outward.sqrMagnitude < .000001f) return;
+            Quaternion rotation = Quaternion.FromToRotation(Vector3.right, outward.normalized);
+            instance.transform.position = anchor + rotation * ApexDisplay.UnityPosition(new Vector3(ReMapZiprailProfiles.CordEndOriginOffsetApex, 0f, 0f));
+            instance.transform.rotation = rotation;
+        }
+
         public Vector3 ZiplineCableAnchorPosition(string endpointId)
         {
             if (!instances.TryGetValue(endpointId, out var instance) || syncedZiplineDocument == null)
@@ -620,18 +649,8 @@ namespace ReMap.Standalone
             if (item.customType != "ziprail-point") return instance.transform.position;
 
             var profile = ReMapZiprailProfiles.Find(item.customProfile);
-            string baseRole = profile.HasSupport ? "support-base" : profile.HasArm ? "arm" : null;
-            if (baseRole == null) return instance.transform.position;
-            var component = syncedZiplineDocument.objects.FirstOrDefault(candidate =>
-                candidate.parentId == item.id && candidate.customType == "ziprail-component" &&
-                candidate.customRole == baseRole);
-            if (component != null && instances.TryGetValue(component.id, out var componentInstance))
-                return componentInstance.transform.position;
-            var definition = ReMapZiprailProfiles.Components(profile, item.ziplineArmHeight)
-                .FirstOrDefault(candidate => candidate.Role == baseRole);
-            return definition == null
-                ? instance.transform.position
-                : instance.transform.TransformPoint(definition.Position);
+            return instance.transform.TransformPoint(ApexDisplay.UnityPosition(
+                ReMapZiprailProfiles.PivotOffsetApex(profile, item.ziplineArmHeight)));
         }
 
         private static bool TryLocalGeometryBounds(GameObject instance, out Bounds bounds)

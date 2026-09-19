@@ -2040,7 +2040,7 @@
     },
     {
       "key": "#EXPORT_ENT_BUNDLE",
-      "text": "Exporter le bundle .ent fusionné"
+      "text": "Exporter et installer le _script.ent de la carte"
     },
     {
       "key": "#SELECT_BASE_ENT_LUMP",
@@ -2049,6 +2049,14 @@
     {
       "key": "#ENT_BUNDLE_EXPORTED_ARG0",
       "text": "Bundle .ent exporté : {0}"
+    },
+    {
+      "key": "#ENT_SCRIPT_INSTALLED_ARG0",
+      "text": "_script.ent de la carte installé : {0}"
+    },
+    {
+      "key": "#ENT_SCRIPT_SOUND_INSTALLED_ARG0_ARG1",
+      "text": "_script.ent de la carte installé : {0} · _snd.ent installé : {1}"
     },
     {
       "key": "#ENT_SOURCE_MISSING_ARG0",
@@ -3895,6 +3903,10 @@
       "text": "Fondations techniques : Mauler125, r5sdk et l'ensemble de la communauté de modding Apex."
     },
     {
+      "key": "#ABOUT_REVPK",
+      "text": "L’extraction ENT utilise l’outil externe ReVPK de R5Reloaded/r5sdk, principalement écrit par Kawe Mazidjatari (Mauler125)."
+    },
+    {
       "key": "#LICENSES",
       "text": "Licences"
     },
@@ -3909,6 +3921,10 @@
     {
       "key": "#RSX_SOURCE",
       "text": "Sources de RSX"
+    },
+    {
+      "key": "#REVPK_SOURCE",
+      "text": "Sources et licence de ReVPK"
     },
     {
       "key": "#ABOUT_DISCLAIMER",

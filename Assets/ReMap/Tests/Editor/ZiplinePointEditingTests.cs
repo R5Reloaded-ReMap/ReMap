@@ -103,9 +103,9 @@ namespace ReMap.Standalone.Tests
         }
 
         [TestCase("support", "0", 0f, 0f, -320f)]
-        [TestCase("arm", "2", 0f, 235f, -137f)]
-        [TestCase("building-claw-02", "1", 0f, 235f, -137f)]
-        [TestCase("wall", "1", 0f, 235f, -137f)]
+        [TestCase("arm", "2", 0f, 0f, 0f)]
+        [TestCase("building-claw-02", "1", 0f, 0f, 0f)]
+        [TestCase("wall", "1", -1024f, 0f, 0f)]
         [TestCase("none", "1", 0f, 0f, 0f)]
         public void ZiprailGizmoUsesTheVisualMountBase(string profile, string role,
             float apexX, float apexY, float apexZ)
@@ -147,11 +147,14 @@ namespace ReMap.Standalone.Tests
             }
         }
 
-        [TestCase("support", true)]
-        [TestCase("support-post", true)]
-        [TestCase("arm", false)]
-        [TestCase("cord-end", false)]
-        public void OnlyZiplineSupportModelsKeepSolidColliders(string role, bool solid)
+        [TestCase("curved-zipline-component", "support", true)]
+        [TestCase("curved-zipline-component", "support-post", true)]
+        [TestCase("curved-zipline-component", "arm", false)]
+        [TestCase("ziprail-component", "arm", true)]
+        [TestCase("ziprail-component", "wall", true)]
+        [TestCase("ziprail-component", "ground-claw", true)]
+        [TestCase("ziprail-component", "cord-end", false)]
+        public void SupportModelsKeepSolidColliders(string customType, string role, bool solid)
         {
             var instance = new GameObject("component");
             try
@@ -166,7 +169,7 @@ namespace ReMap.Standalone.Tests
                 var method = typeof(WorldView).GetMethod("ConfigureZiplineComponentColliders",
                     BindingFlags.Static | BindingFlags.NonPublic);
                 method.Invoke(null, new object[] {
-                    instance, new MapObject { customRole = role }
+                    instance, new MapObject { customType = customType, customRole = role }
                 });
 
                 Assert.That(physical.enabled, Is.EqualTo(solid));

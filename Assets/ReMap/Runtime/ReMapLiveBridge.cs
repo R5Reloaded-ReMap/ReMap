@@ -53,5 +53,41 @@ namespace ReMap.Standalone
             }
             return commands.Length;
         }
+
+        internal static string SelectFile(bool save, string title, string suggestedName, string extension)
+        {
+            string helper = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, HelperFileName);
+            if (!File.Exists(helper)) throw new FileNotFoundException("ReMap file dialog helper is missing. Rebuild ReMap.", helper);
+            using (var process = new Process())
+            {
+                process.StartInfo = new ProcessStartInfo
+                {
+                    FileName = helper,
+                    Arguments = "--file-dialog",
+                    UseShellExecute = false,
+                    CreateNoWindow = true,
+                    RedirectStandardInput = true,
+                    RedirectStandardOutput = true,
+                    RedirectStandardError = true
+                };
+                if (!process.Start()) throw new InvalidOperationException("Could not start the ReMap file dialog helper.");
+                process.StandardInput.WriteLine(save ? "save" : "open");
+                process.StandardInput.WriteLine(Encode(title));
+                process.StandardInput.WriteLine(Encode(suggestedName));
+                process.StandardInput.WriteLine(Encode(extension));
+                process.StandardInput.Close();
+                string selected = process.StandardOutput.ReadToEnd().TrimEnd('\r', '\n');
+                string error = process.StandardError.ReadToEnd().Trim();
+                process.WaitForExit();
+                if (process.ExitCode == 2) return null;
+                if (process.ExitCode != 0) throw new InvalidOperationException(error.Length == 0 ? "The ReMap file dialog failed." : error);
+                return selected;
+            }
+        }
+
+        private static string Encode(string value)
+        {
+            return Convert.ToBase64String(Encoding.UTF8.GetBytes(value ?? ""));
+        }
     }
 }

@@ -8,17 +8,14 @@ namespace ReMap.Standalone
     {
         internal readonly string Id;
         internal readonly string Label;
-        internal readonly string ScriptConstant;
         internal readonly bool HasArm;
         internal readonly bool HasSupport;
         internal readonly string ArmModelPath;
 
-        internal ReMapZiprailProfile(string id, string label, string scriptConstant,
-            bool hasArm, bool hasSupport, string armModelPath = null)
+        internal ReMapZiprailProfile(string id, string label, bool hasArm, bool hasSupport, string armModelPath = null)
         {
             Id = id;
             Label = label;
-            ScriptConstant = scriptConstant;
             HasArm = hasArm;
             HasSupport = hasSupport;
             ArmModelPath = armModelPath;
@@ -62,9 +59,10 @@ namespace ReMap.Standalone
             "mdl/props/zip_rail/zip_rail_ground_post_top_01.rmdl";
         internal const string GroundClawModelPath =
             "mdl/props/zip_rail/zip_rail_ground_claw_01.rmdl";
-        internal const float MinSupportHeightApex = 40f;
+        internal const float MinSupportHeightApex = 0f;
         internal const float MaxSupportHeightApex = 1024f;
         internal const float DefaultSupportHeightApex = 320f;
+        internal const float CordEndOriginOffsetApex = 18.7f;
 
         internal static readonly string[] RequiredModelPaths = {
             BuildingClawModelPath, BuildingClaw02ModelPath, WallModelPath,
@@ -73,11 +71,11 @@ namespace ReMap.Standalone
         };
 
         internal static readonly ReMapZiprailProfile[] All = {
-            new ReMapZiprailProfile("none", "#ZIPRAIL_MOUNT_NONE", "REMAP_ZIPRAIL_POINT_NONE", false, false),
-            new ReMapZiprailProfile("arm", "#ZIPRAIL_MOUNT_BUILDING_CLAW_01", "REMAP_ZIPRAIL_POINT_ARM", true, false, BuildingClawModelPath),
-            new ReMapZiprailProfile("building-claw-02", "#ZIPRAIL_MOUNT_BUILDING_CLAW_02", "REMAP_ZIPRAIL_POINT_BUILDING_CLAW_02", true, false, BuildingClaw02ModelPath),
-            new ReMapZiprailProfile("wall", "#ZIPRAIL_MOUNT_WALL", "REMAP_ZIPRAIL_POINT_WALL", true, false, WallModelPath),
-            new ReMapZiprailProfile("support", "#ZIPRAIL_MOUNT_GROUND_TOWER", "REMAP_ZIPRAIL_POINT_SUPPORT", true, true)
+            new ReMapZiprailProfile("none", "#ZIPRAIL_MOUNT_NONE", false, false),
+            new ReMapZiprailProfile("arm", "#ZIPRAIL_MOUNT_BUILDING_CLAW_01", true, false, BuildingClawModelPath),
+            new ReMapZiprailProfile("building-claw-02", "#ZIPRAIL_MOUNT_BUILDING_CLAW_02", true, false, BuildingClaw02ModelPath),
+            new ReMapZiprailProfile("wall", "#ZIPRAIL_MOUNT_WALL", true, false, WallModelPath),
+            new ReMapZiprailProfile("support", "#ZIPRAIL_MOUNT_GROUND_TOWER", true, true)
         };
 
         internal static ReMapZiprailProfile Find(string id) =>
@@ -97,26 +95,47 @@ namespace ReMap.Standalone
                     Vector3.zero, Vector3.zero));
                 result.Add(Component("support-top", "#ZIPLINE_ARM", GroundPostTopModelPath,
                     new Vector3(0f, 4f, -1f), Vector3.zero));
+            }
+            else if (profile.Id == "wall")
+            {
+                result.Add(Component("wall", profile.Label, profile.ArmModelPath,
+                    Vector3.zero, Vector3.zero));
                 result.Add(Component("ground-claw", "#ZIPRAIL_CABLE_CLAMP", GroundClawModelPath,
                     new Vector3(-172f, 0f, 85f), Vector3.zero));
-                result.Add(Component("cord-end", "#ZIPLINE_ARM", CordEndModelPath,
-                    Vector3.zero, new Vector3(0f, 90f, 0f)));
             }
             else
             {
-                // Broken Moon places the cable 235 units in front and 137 units above
-                // the building claw. The editor point remains on the rail itself.
                 result.Add(Component("arm", profile.Label, profile.ArmModelPath,
-                    new Vector3(0f, 235f, -137f), Vector3.zero));
-                result.Add(Component("cord-end", "#ZIPLINE_ARM", CordEndModelPath,
-                    Vector3.zero, new Vector3(0f, 180f, 0f)));
+                    Vector3.zero, Vector3.zero));
             }
             return result;
+        }
+
+        internal static ReMapZiprailComponentDefinition CordEnd(ReMapZiprailProfile profile) =>
+            Component("cord-end", "#ZIPLINE_ARM", CordEndModelPath, CableOffsetApex(profile), Vector3.zero);
+
+        internal static Vector3 CableOffsetApex(ReMapZiprailProfile profile)
+        {
+            if (profile == null) return Vector3.zero;
+            if (profile.Id == "arm" || profile.Id == "building-claw-02")
+                return new Vector3(16f, -235f, 137f);
+            if (profile.Id == "wall") return new Vector3(-113f, 0f, 38f);
+            if (profile.HasSupport) return new Vector3(-6f, 4f, 9f);
+            return Vector3.zero;
+        }
+
+        internal static Vector3 PivotOffsetApex(ReMapZiprailProfile profile, float supportHeightApex)
+        {
+            if (profile == null) return Vector3.zero;
+            if (profile.HasSupport) return new Vector3(0f, 0f, -supportHeightApex);
+            if (profile.Id == "wall") return new Vector3(-1024f, 0f, 0f);
+            return Vector3.zero;
         }
 
         internal static IEnumerable<string> ModelPaths(ReMapZiprailProfile profile) =>
             Components(profile, DefaultSupportHeightApex)
                 .Select(component => component.ModelPath)
+                .Concat(profile != null && profile.HasArm ? new[] { CordEndModelPath } : new string[0])
                 .Distinct(System.StringComparer.OrdinalIgnoreCase);
 
         private static ReMapZiprailComponentDefinition Component(string role, string label,

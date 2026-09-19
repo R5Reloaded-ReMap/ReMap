@@ -78,6 +78,7 @@ namespace ReMap.Standalone
                     : last - Vector3.right * 5f;
                 document.objects.Add(CreateZiprailPoint(ziprailId, points.Length,
                     last + (last - previous)));
+                SyncAllZiprailComponents(document, ziprailId);
             });
             Refresh();
         }
@@ -98,6 +99,7 @@ namespace ReMap.Standalone
                 var point = CreateZiprailPoint(selected.parentId, insertionIndex, position);
                 document.objects.Add(point); createdId = point.id;
                 NormalizeZiprailPoints(document, selected.parentId);
+                SyncAllZiprailComponents(document, selected.parentId);
             });
             if (createdId == null) return;
             selectedId = createdId; RevealHierarchy(createdId); Refresh();
@@ -110,6 +112,7 @@ namespace ReMap.Standalone
                 if (points.Length <= 2) return;
                 var removed = MapHierarchy.Subtree(document, points[points.Length - 1].id);
                 document.objects.RemoveAll(candidate => removed.Contains(candidate.id));
+                SyncAllZiprailComponents(document, ziprailId);
             });
             selectedId = ziprailId;
             Refresh();
@@ -163,14 +166,29 @@ namespace ReMap.Standalone
             point.isGroup = true;
             point.commonAsset = false;
             point.availableMaps = new List<string>();
-            foreach (var definition in ReMapZiprailProfiles.Components(profile, point.ziplineArmHeight))
+            foreach (var definition in ZiprailComponentDefinitions(document, point))
                 document.objects.Add(CreateZiprailComponent(point, definition));
+        }
+
+        private void SyncAllZiprailComponents(MapDocument document, string ziprailId)
+        {
+            foreach (var point in ZiprailPoints(document, ziprailId))
+                SyncZiprailComponents(document, point);
+        }
+
+        private IReadOnlyList<ReMapZiprailComponentDefinition> ZiprailComponentDefinitions(MapDocument document, MapObject point)
+        {
+            var profile = ReMapZiprailProfiles.Find(point.customProfile);
+            var definitions = ReMapZiprailProfiles.Components(profile, point.ziplineArmHeight).ToList();
+            var points = ZiprailPoints(document, point.parentId);
+            bool endpoint = points.Length >= 2 && (points[0].id == point.id || points[points.Length - 1].id == point.id);
+            if (endpoint && profile.HasArm) definitions.Add(ReMapZiprailProfiles.CordEnd(profile));
+            return definitions;
         }
 
         private bool ZiprailComponentsNeedSync(MapDocument document, MapObject point)
         {
-            var expected = ReMapZiprailProfiles.Components(
-                ReMapZiprailProfiles.Find(point.customProfile), point.ziplineArmHeight);
+            var expected = ZiprailComponentDefinitions(document, point);
             var components = document.objects.Where(candidate => candidate.parentId == point.id &&
                 candidate.customType == "ziprail-component").ToArray();
             if (components.Length != expected.Count) return true;

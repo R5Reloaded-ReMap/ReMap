@@ -29,6 +29,8 @@ namespace ReMap.Standalone
     // Locates and unpacks only the selected map VPK, then hands the BSP to our own readers.
     public static class MapReferenceExtractor
     {
+        private static readonly string[] EntityLumpKinds = { "script", "snd", "spawn", "env", "fx" };
+
         public static async Task<MapReferenceData> LoadAsync(RsxAssetLibrary library, string mapId, bool force,
             IProgress<MapReferenceProgress> progress, CancellationToken cancellation)
         {
@@ -41,17 +43,7 @@ namespace ReMap.Standalone
             string bsp = force ? null : FindExtractedBsp(root, mapId);
             if (bsp == null)
             {
-                string archive = FindMapArchive(library.GameDirectory, mapId);
-                if (archive == null) throw new FileNotFoundException("The BSP VPK for " + mapId + " was not found.");
-                string revpkSource = FindRevpk(library);
-                if (revpkSource == null) throw new FileNotFoundException("revpk.exe was not found in the configured game installations.");
-                string revpk = StageRevpk(revpkSource);
-                progress?.Report(new MapReferenceProgress("Extracting " + mapId + " BSP…", .08f));
-                // ReVPK reparses its own command line and loses quotes. Passing only the archive
-                // filename keeps R5Reloaded installations such as "R5R Library" usable; its
-                // working directory still lets ReVPK find the numbered VPK segment beside it.
-                await RunProcessAsync(revpk, "-unpack " + Quote(Path.GetFileName(archive)) + " " +
-                    Quote(CommandPath(root)) + " 0", cancellation, Path.GetDirectoryName(archive));
+                await ExtractMapArchiveAsync(library, mapId, root, progress, cancellation);
                 bsp = FindExtractedBsp(root, mapId);
                 if (bsp == null) throw new InvalidDataException("ReVPK completed but no BSP was produced for " + mapId + ".");
             }
@@ -63,6 +55,38 @@ namespace ReMap.Standalone
             await Task.Run(() => MprtReader.Write(mprt, map.StaticProps), cancellation);
             progress?.Report(new MapReferenceProgress("BSP and MPRT data ready.", .42f));
             return new MapReferenceData { BspPath = bsp, MprtPath = mprt, ExtractionRoot = root, Map = map };
+        }
+
+        public static async Task<string> ExtractEntityLumpsAsync(RsxAssetLibrary library, string mapId, bool force, IProgress<MapReferenceProgress> progress, CancellationToken cancellation)
+        {
+            if (library == null) throw new ArgumentNullException(nameof(library));
+            mapId = (mapId ?? "").Trim();
+            if (!ValidMapId(mapId)) throw new ArgumentException("Select a valid edited map before exporting its entity lumps.");
+            string root = Path.Combine(library.CacheDirectory, "MapReferences", library.TargetGame, mapId);
+            Directory.CreateDirectory(root);
+            if (force || EntityLumpKinds.Any(kind => FindExtractedEntityLump(root, mapId, kind) == null))
+                await ExtractMapArchiveAsync(library, mapId, root, progress, cancellation);
+            foreach (string kind in EntityLumpKinds)
+                if (FindExtractedEntityLump(root, mapId, kind) == null)
+                    throw new FileNotFoundException("ReVPK completed but the " + kind + " entity lump was not produced for " + mapId + ".");
+            return FindExtractedEntityLump(root, mapId, "script");
+        }
+
+        private static async Task ExtractMapArchiveAsync(RsxAssetLibrary library, string mapId, string root, IProgress<MapReferenceProgress> progress, CancellationToken cancellation)
+        {
+            string archive = FindMapArchive(library.GameDirectory, mapId);
+            if (archive == null) throw new FileNotFoundException("The BSP VPK for " + mapId + " was not found.");
+            string revpkSource = FindRevpk(library);
+            if (revpkSource == null) throw new FileNotFoundException("revpk.exe was not found in the configured game installations.");
+            string revpk = StageRevpk(revpkSource);
+            progress?.Report(new MapReferenceProgress("Extracting " + mapId + " BSP and entity lumps…", .08f));
+            await RunProcessAsync(revpk, "-unpack " + Quote(Path.GetFileName(archive)) + " " + Quote(CommandPath(root)) + " 0", cancellation, Path.GetDirectoryName(archive));
+        }
+
+        private static string FindExtractedEntityLump(string root, string mapId, string kind)
+        {
+            if (!Directory.Exists(root)) return null;
+            return Directory.EnumerateFiles(root, mapId + "_" + kind + ".ent", SearchOption.AllDirectories).FirstOrDefault();
         }
 
         public static string FindMapArchive(string gameDirectory, string mapId)

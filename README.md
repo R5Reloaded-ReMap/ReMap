@@ -4,7 +4,7 @@ Unity **6000.3.24f1** project using **URP 17.3.0**, UI Toolkit, and the Input Sy
 
 ReMap continues the work of the original editor created by Zee ([@AyeZeeBB](https://x.com/AyeZeeBB), `zee_x64` on Discord) and Julefox ([@Julefox_](https://x.com/Julefox_), `julefox` on Discord). This standalone rewrite is created and maintained by Julefox — made with love for the Apex modding community. ❤️
 
-The project also owes its technical foundation to [Mauler125](https://github.com/Mauler125) and the Apex modding work surrounding [r5sdk](https://github.com/Mauler125/r5sdk). See [licensing](LICENSING.md), [credits and third-party notices](THIRD_PARTY_NOTICES.md), including the bundled [RSX license](ThirdParty/RSX/LICENSE), before redistribution.
+The project also owes its technical foundation to [Mauler125](https://github.com/Mauler125) and the Apex modding work surrounding [r5sdk](https://github.com/R5Reloaded/r5sdk). ReMap uses its ReVPK tool, primarily authored by Kawe Mazidjatari (Mauler125), for ENT extraction. See [licensing](LICENSING.md), [credits and third-party notices](THIRD_PARTY_NOTICES.md), including the bundled [RSX license](ThirdParty/RSX/LICENSE), before redistribution.
 
 ## Open and run
 
@@ -97,7 +97,7 @@ The editor describes which RPAKs the played map is expected to load. Building a 
 
 A real Common + Desertlands + Olympus pass produced **6,817 unique models**, including **3,590 Common** entries. Static geometry, albedo textures, stock-model `.gnut` export, BSP collision-terrain reference, and MPRT static-model placement are supported. Animation, skinning, complete Apex terrain materials, gameplay entities, custom-model compilation, and editable level geometry remain outside the current scope.
 
-Pipeline details: [Asset pipeline](Docs/AssetPipeline.md). Tool details: [RSX integration](Tools/RSX-BACKEND.md).
+Pipeline details: [Asset pipeline](Docs/AssetPipeline.md). Tool details: [RSX integration](Tools/RSX-BACKEND.md). ReMap invokes the external [ReVPK tool](ThirdParty/ReVPK/README.md) found in the selected R5Reloaded or R5Flowstate installation to extract the original map ENT lumps; the game VPK is never modified. ENT export keeps the complete merged bundle in the cache and installs `<map>_script.ent` and `<map>_snd.ent` directly into `platform/maps` on both R5Reloaded and R5Flowstate.
 
 Game integration: [Apex game script export](Docs/GAME-EXPORT.md) and [game property reference](Docs/GAME-PROPERTIES.md).
 
@@ -226,5 +226,7 @@ Contributions are welcome. Read [`CONTRIBUTING.md`](CONTRIBUTING.md) for setup, 
 ReMap's original code and documentation are licensed under the [Mozilla Public License 2.0](LICENSE). See [`LICENSING.md`](LICENSING.md) for scope and exceptions.
 
 RSX is a separate external program maintained in [`R5Reloaded-ReMap/rsx`](https://github.com/R5Reloaded-ReMap/rsx) under the GNU Affero General Public License v3.0. Its license and source-compliance details are available under [`ThirdParty/RSX`](ThirdParty/RSX/README.md).
+
+ReVPK is an external tool from [`R5Reloaded/r5sdk`](https://github.com/R5Reloaded/r5sdk), primarily authored by Kawe Mazidjatari (Mauler125), and remains governed by the Source 1 SDK license and r5sdk third-party notices. ReMap locates it in an existing game installation and does not bundle it. See [`ThirdParty/ReVPK`](ThirdParty/ReVPK/README.md).
 
 This project is not affiliated with or endorsed by Electronic Arts, Respawn Entertainment, Valve, or Unity Technologies. Product names and trademarks belong to their respective owners.

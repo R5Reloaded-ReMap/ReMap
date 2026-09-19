@@ -96,13 +96,6 @@ namespace ReMap.Standalone
                 if (!models.Contains(ReMapApp.AnimatedCameraHeadModelPath, StringComparer.OrdinalIgnoreCase))
                     models.Add(ReMapApp.AnimatedCameraHeadModelPath);
             }
-            if (gameTarget == GameTargets.R5Flowstate)
-                foreach (string model in world.Where(o => o.customType == "ziprail-point")
-                    .SelectMany(o => ReMapZiprailProfiles.ModelPaths(
-                        ReMapZiprailProfiles.Find(o.customProfile)))
-                    .Distinct(StringComparer.OrdinalIgnoreCase))
-                    if (!models.Contains(model, StringComparer.OrdinalIgnoreCase))
-                        models.Add(model);
             Vector3 originOffset = OriginOffset(document);
             bool useOriginOffset = HasOriginOffset(originOffset);
             var shared = new StringBuilder();
@@ -148,8 +141,11 @@ namespace ReMap.Standalone
             AppendWindowHints(server, world, false, originOffset, useOriginOffset);
             AppendAnimatedCameras(server, world, false, originOffset, useOriginOffset);
             AppendCurvedZiplines(server, world, false, originOffset, useOriginOffset);
-            if (gameTarget == GameTargets.R5Flowstate)
-                AppendZiprails(server, world, false, originOffset, useOriginOffset);
+            if (gameTarget == GameTargets.R5Flowstate && world.Any(item => item.customType == "ziprail"))
+            {
+                server.AppendLine();
+                server.AppendLine("	// Ziprails are exported through the native .ent bundle.");
+            }
             AppendZiplines(server, world, false, originOffset, useOriginOffset);
 
             var client = new StringBuilder();
@@ -250,8 +246,6 @@ namespace ReMap.Standalone
             AppendWindowHints(result, world, true, originOffset, false);
             AppendAnimatedCameras(result, world, true, originOffset, false);
             AppendCurvedZiplines(result, world, true, originOffset, false);
-            if (gameTarget == GameTargets.R5Flowstate)
-                AppendZiprails(result, world, true, originOffset, false);
             AppendZiplines(result, world, true, originOffset, false);
             return result.ToString();
         }
@@ -432,35 +426,6 @@ namespace ReMap.Standalone
             }
         }
 
-        private static void AppendZiprails(StringBuilder code, List<MapObject> world, bool live,
-            Vector3 originOffset, bool symbolicOffset)
-        {
-            var ziprails = world.Where(o => o.customType == "ziprail").ToList();
-            if (!live && ziprails.Count > 0) { code.AppendLine(); code.AppendLine("\t// Ziprails"); }
-            foreach (var ziprail in ziprails)
-            {
-                var points = world.Where(o => o.parentId == ziprail.id &&
-                    o.customType == "ziprail-point")
-                    .OrderBy(o => int.TryParse(o.customRole, out int index)
-                        ? index : int.MaxValue).ToList();
-                if (points.Count < 2)
-                    throw new ArgumentException(L.F("#ARG0_ZIPRAIL_POINTS_MISSING", ziprail.displayName));
-                string pointArray = "[ " + string.Join(", ", points.Select(point =>
-                    Position(point.position, originOffset, symbolicOffset))) + " ]";
-                string profileArray = "[ " + string.Join(", ", points.Select(point =>
-                    ReMapZiprailProfiles.Find(point.customProfile).ScriptConstant)) + " ]";
-                string angleArray = "[ " + string.Join(", ", points.Select(point =>
-                    Vector(ApexDisplay.Angles(WorldView.ToVector(point.rotation))))) + " ]";
-                string heightArray = "[ " + string.Join(", ", points.Select(point =>
-                    FloatLiteral(point.ziplineArmHeight))) + " ]";
-                string expression = "ReMap_CreateZiprail( " + pointArray + ", " + profileArray +
-                    ", " + angleArray + ", " + heightArray + ", " +
-                    Number(ziprail.ziplineWidth) + ", " + Number(ziprail.ziplineSpeed) + ", " +
-                    Number(ziprail.ziplineAutoDetachStart) + ", " +
-                    Number(ziprail.ziplineAutoDetachEnd) + " )";
-                code.Append(live ? "script " : "\t").Append(expression).AppendLine();
-            }
-        }
 
         private static void AppendLootBins(StringBuilder code, List<MapObject> world, bool live,
             Vector3 originOffset, bool symbolicOffset)

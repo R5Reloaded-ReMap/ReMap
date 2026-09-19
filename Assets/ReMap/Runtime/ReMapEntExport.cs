@@ -69,8 +69,13 @@ namespace ReMap.Standalone
             foreach (var item in world.Where(item => item.customType == "curved-zipline"))
                 scriptCount += AppendCurvedZipline(script, item, world, offset);
             if (GameTargets.Normalize(document.gameTarget) == GameTargets.R5Flowstate)
+            {
                 foreach (var item in world.Where(item => item.customType == "ziprail"))
+                {
                     scriptCount += AppendZiprail(script, item, world, offset);
+                    soundCount += AppendZiprailSounds(sound, item, world, offset);
+                }
+            }
 
             foreach (var item in world.Where(item => item.customType == "loot-bin"))
             {
@@ -155,6 +160,12 @@ namespace ReMap.Standalone
         public static string WriteMergedBundle(string selectedSourceEnt, MapDocument document,
             IEnumerable<MapObject> worldObjects)
         {
+            return WriteMergedBundle(selectedSourceEnt, document, worldObjects, out _);
+        }
+
+        public static string WriteMergedBundle(string selectedSourceEnt, MapDocument document,
+            IEnumerable<MapObject> worldObjects, out ReMapEntFragments fragments)
+        {
             if (string.IsNullOrWhiteSpace(selectedSourceEnt)) throw new ArgumentNullException(nameof(selectedSourceEnt));
             string sourceDirectory = Path.GetDirectoryName(Path.GetFullPath(selectedSourceEnt));
             if (File.Exists(Path.Combine(sourceDirectory, "ReMap-ENT-report.txt")))
@@ -168,7 +179,7 @@ namespace ReMap.Standalone
                 ValidateBase(File.ReadAllText(source), source);
             }
 
-            ReMapEntFragments fragments = Generate(document, worldObjects);
+            fragments = Generate(document, worldObjects);
             string project = SafeDirectoryName(document.name);
             string outputDirectory = Path.Combine(sourceDirectory, map + "_remap_ent_" + project);
             Directory.CreateDirectory(outputDirectory);
@@ -185,6 +196,34 @@ namespace ReMap.Standalone
             File.WriteAllText(Path.Combine(outputDirectory, "ReMap-ENT-report.txt"),
                 BuildReport(map, fragments), new UTF8Encoding(false));
             return outputDirectory;
+        }
+
+        public static string InstallScriptLump(string bundleDirectory, string map, string gameTarget, string gameDirectory, string platformDirectory)
+        {
+            return InstallLump(bundleDirectory, map, "script", gameTarget, gameDirectory, platformDirectory);
+        }
+
+        public static string InstallSoundLump(string bundleDirectory, string map, string gameTarget, string gameDirectory, string platformDirectory)
+        {
+            return InstallLump(bundleDirectory, map, "snd", gameTarget, gameDirectory, platformDirectory);
+        }
+
+        private static string InstallLump(string bundleDirectory, string map, string kind, string gameTarget, string gameDirectory, string platformDirectory)
+        {
+            map = ValidateMapName(map);
+            string source = Path.Combine(Path.GetFullPath(bundleDirectory ?? throw new ArgumentNullException(nameof(bundleDirectory))), map + "_" + kind + ".ent");
+            if (!File.Exists(source)) throw new FileNotFoundException(L.F("#ENT_SOURCE_MISSING_ARG0", Path.GetFileName(source)), source);
+            ValidateBase(File.ReadAllText(source), source);
+            string root = GameTargets.Normalize(gameTarget) == GameTargets.R5Flowstate
+                ? Path.Combine(gameDirectory ?? "", "platform")
+                : platformDirectory;
+            if (string.IsNullOrWhiteSpace(root) || !Directory.Exists(root)) throw new DirectoryNotFoundException(root ?? "");
+            string maps = Path.Combine(Path.GetFullPath(root), "maps");
+            Directory.CreateDirectory(maps);
+            string destination = Path.Combine(maps, map + "_" + kind + ".ent");
+            if (File.Exists(destination) && !File.Exists(destination + ".remap.bak")) File.Copy(destination, destination + ".remap.bak");
+            File.Copy(source, destination, true);
+            return destination;
         }
 
         public static string Merge(string baseEnt, string fragment, string sourceName = "base .ent")
@@ -206,7 +245,9 @@ namespace ReMap.Standalone
             result.AppendLine("Generated entities: " + fragments.EntityCount.ToString(CultureInfo.InvariantCulture) +
                 " (script=" + fragments.ScriptEntityCount + ", snd=" + fragments.SoundEntityCount +
                 ", spawn=" + fragments.SpawnEntityCount + ").");
-            result.AppendLine("These files are merged copies of the five selected base-map lumps; use them only in an ENT/BSP repack workflow.");
+            result.AppendLine("These files are merged copies of the five original base-map lumps extracted from the selected game VPK; use them only in an ENT/BSP repack workflow.");
+            result.AppendLine("Extraction tool: ReVPK from R5Reloaded/r5sdk, primarily authored by Kawe Mazidjatari (Mauler125).");
+            result.AppendLine("ReVPK source and license: https://github.com/R5Reloaded/r5sdk");
             if (fragments.NutOnlyObjects.Count > 0)
             {
                 result.AppendLine();
@@ -346,36 +387,44 @@ namespace ReMap.Standalone
             if (points.Count < 2)
                 throw new ArgumentException(L.F("#ARG0_ZIPRAIL_POINTS_MISSING", ziprail.displayName));
             int count = 0;
+            var cablePositions = points.Select(ZiprailCablePosition).ToList();
             foreach (var point in points)
             {
                 var profile = ReMapZiprailProfiles.Find(point.customProfile);
                 foreach (var component in ReMapZiprailProfiles.Components(profile, point.ziplineArmHeight))
                 {
                     MapObject transformed = TransformUnity(point, component.Position, component.Rotation);
-                    AppendNativeProp(output, transformed, offset, component.ModelPath, false);
+                    AppendNativeProp(output, transformed, offset, component.ModelPath, true, "remap_ziprail_support");
                     count++;
                 }
             }
+            count += AppendZiprailEndModel(output, points[0], cablePositions[0], cablePositions[1], offset);
+            count += AppendZiprailEndModel(output, points[points.Count - 1], cablePositions[points.Count - 1], cablePositions[points.Count - 2], offset);
 
-            for (int index = 0; index < points.Count; index++)
+            int pathEntityCount = points.Count + 2;
+            for (int entityIndex = 0; entityIndex < pathEntityCount; entityIndex++)
             {
-                bool endpoint = index == 0 || index == points.Count - 1;
+                bool endpoint = entityIndex == 0 || entityIndex == pathEntityCount - 1;
+                int pointIndex = entityIndex == 0 ? 0 :
+                    entityIndex == pathEntityCount - 1 ? points.Count - 1 : entityIndex - 1;
+                MapObject point = points[pointIndex];
                 var fields = new List<KeyValuePair<string, string>>();
                 if (endpoint)
                 {
-                    Vector3 current = ApexDisplay.Position(WorldView.ToVector(points[index].position) + offset);
-                    int adjacent = index == 0 ? 1 : index - 1;
-                    Vector3 other = ApexDisplay.Position(WorldView.ToVector(points[adjacent].position) + offset);
+                    Vector3 current = ApexDisplay.Position(cablePositions[pointIndex] + offset);
+                    int adjacent = pointIndex == 0 ? 1 : points.Count - 2;
+                    Vector3 other = ApexDisplay.Position(cablePositions[adjacent] + offset);
                     fields.Add(Pair("ziprailMountReverseDistance", "200"));
                     fields.Add(Pair("ZiplineVertical", "0"));
                     fields.Add(Pair("ZiplinePushOffInDirectionX", "0"));
                     fields.Add(Pair("ZiplinePreserveVelocity", "0"));
+                    fields.Add(Pair("ziplineMountReverseDistance", "0"));
                     fields.Add(Pair("ZiplineLengthScale", "1"));
                     fields.Add(Pair("ZiplineFadeDistance", "-1"));
                     fields.Add(Pair("ZiplineDropToBottom", "1"));
                     fields.Add(Pair("useAutoDetachSpeed", "0"));
-                    fields.Add(Pair("useZiprailAutoDetachSpeed", (index == 0 ? ziprail.ziplineAutoDetachStart :
-                        ziprail.ziplineAutoDetachEnd) > 0 ? "1" : "0"));
+                    float autoDetachDistance = pointIndex == 0 ? ziprail.ziplineAutoDetachStart : ziprail.ziplineAutoDetachEnd;
+                    if (autoDetachDistance > 0) fields.Add(Pair("useZiprailAutoDetachSpeed", "1"));
                     fields.Add(Pair("Material", "cable/zipline.vmt"));
                     fields.Add(Pair("gamemode_survival", "1"));
                     fields.Add(Pair("gamemode_freedm", "1"));
@@ -386,8 +435,7 @@ namespace ReMap.Standalone
                     fields.Add(Pair("scale", "1"));
                     fields.Add(Pair("angles", VectorValue(DirectionAngles(current - other))));
                     fields.Add(Pair("ZiplineSpeedScale", Number(ziprail.ziplineSpeed)));
-                    fields.Add(Pair("ZiplineAutoDetachDistance", Number(index == 0 ?
-                        ziprail.ziplineAutoDetachStart : ziprail.ziplineAutoDetachEnd)));
+                    fields.Add(Pair("ZiplineAutoDetachDistance", Number(autoDetachDistance)));
                     fields.Add(Pair("Width", Number(ziprail.ziplineWidth)));
                     fields.Add(Pair("isZiprailStart", "1"));
                 }
@@ -397,14 +445,54 @@ namespace ReMap.Standalone
                     fields.Add(Pair("perfect_circular_rotation", "0"));
                     fields.Add(Pair("num_smooth_points", "-1"));
                 }
-                fields.Add(Pair("origin", Position(points[index].position, offset)));
-                if (index > 0) fields.Add(Pair("link_to_guid_0", LinkGuid(ziprail.id, index - 1)));
-                fields.Add(Pair("link_guid", LinkGuid(ziprail.id, index)));
-                fields.Add(Pair("script_name", "script_control_omit_zipline"));
+                fields.Add(Pair("origin", VectorValue(ApexDisplay.Position(cablePositions[pointIndex] + offset))));
+                if (entityIndex + 1 < pathEntityCount)
+                    fields.Add(Pair("link_to_guid_0", LinkGuid(ziprail.id, entityIndex + 1)));
+                fields.Add(Pair("link_guid", LinkGuid(ziprail.id, entityIndex)));
                 fields.Add(Pair("classname", endpoint ? "zipline" : "script_mover_train_node"));
                 AppendEntity(output, fields.ToArray());
             }
-            return count + points.Count;
+            return count + pathEntityCount;
+        }
+
+        private static int AppendZiprailEndModel(StringBuilder output, MapObject point, Vector3 cablePosition, Vector3 adjacentCablePosition, Vector3 offset)
+        {
+            if (!ReMapZiprailProfiles.Find(point.customProfile).HasArm) return 0;
+            Vector3 outward = cablePosition - adjacentCablePosition;
+            outward.y = 0f;
+            Quaternion rotation = outward.sqrMagnitude < .000001f ? Quaternion.identity : Quaternion.FromToRotation(Vector3.right, outward.normalized);
+            Vector3 modelPosition = cablePosition + rotation * ApexDisplay.UnityPosition(new Vector3(ReMapZiprailProfiles.CordEndOriginOffsetApex, 0f, 0f));
+            var end = new MapObject { position = WorldView.ToData(modelPosition), rotation = WorldView.ToData(rotation.eulerAngles) };
+            AppendNativeProp(output, end, offset, ReMapZiprailProfiles.CordEndModelPath, false);
+            return 1;
+        }
+
+        private static int AppendZiprailSounds(StringBuilder output, MapObject ziprail,
+            List<MapObject> world, Vector3 offset)
+        {
+            int count = 0;
+            foreach (var point in world.Where(item => item.customType == "ziprail-point" &&
+                item.parentId == ziprail.id).OrderBy(PointIndex))
+            {
+                var profile = ReMapZiprailProfiles.Find(point.customProfile);
+                if (!profile.HasArm) continue;
+                Vector3 origin = ApexDisplay.Position(ZiprailCablePosition(point) + offset);
+                AppendEntity(output,
+                    Pair("radius", "0"), Pair("model", "mdl/dev/editor_ambient_generic_node.rmdl"),
+                    Pair("isWaveAmbient", "0"), Pair("enabled", "1"), Pair("scale", "1"),
+                    Pair("angles", Angles(point.rotation)), Pair("origin", VectorValue(origin)),
+                    Pair("soundName", "3p_Ziprail_Emit_TowerBy"), Pair("classname", "ambient_generic"));
+                count++;
+            }
+            return count;
+        }
+
+        private static Vector3 ZiprailCablePosition(MapObject point)
+        {
+            var profile = ReMapZiprailProfiles.Find(point.customProfile);
+            Vector3 position = WorldView.ToVector(point.position);
+            Quaternion rotation = Quaternion.Euler(WorldView.ToVector(point.rotation));
+            return position + rotation * ApexDisplay.UnityPosition(ReMapZiprailProfiles.CableOffsetApex(profile));
         }
 
         private static int AppendZiplinePointModels(StringBuilder output, MapObject point,
@@ -436,7 +524,7 @@ namespace ReMap.Standalone
         }
 
         private static void AppendNativeProp(StringBuilder output, MapObject item, Vector3 offset,
-            string model, bool collision)
+            string model, bool collision, string scriptName = null)
         {
             var fields = new List<KeyValuePair<string, string>>
             {
@@ -448,6 +536,7 @@ namespace ReMap.Standalone
                 Pair("ClientSide", "0")
             };
             if (!collision) fields.Add(Pair("contents", "0"));
+            if (!string.IsNullOrEmpty(scriptName)) fields.Add(Pair("script_name", scriptName));
             fields.Add(Pair("classname", "prop_dynamic"));
             AppendEntity(output, fields.ToArray());
         }

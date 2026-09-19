@@ -35,6 +35,7 @@ namespace ReMap.Standalone
             content.Add(Label(L.T("#ABOUT_ORIGINAL_EDITOR"), "about-copy"));
             content.Add(Label(L.T("#ABOUT_STANDALONE"), "about-copy"));
             content.Add(Label(L.T("#ABOUT_FOUNDATION"), "about-copy"));
+            content.Add(Label(L.T("#ABOUT_REVPK"), "about-copy"));
 
             content.Add(Label(L.T("#LICENSES"), "section-title"));
             content.Add(Label(L.T("#ABOUT_LICENSES"), "about-copy"));
@@ -43,6 +44,7 @@ namespace ReMap.Standalone
             links.AddToClassList("about-links");
             links.Add(Button(L.T("#PROJECT_SOURCE"), () => Application.OpenURL("https://github.com/R5Reloaded-ReMap/ReMap")));
             links.Add(Button(L.T("#RSX_SOURCE"), () => Application.OpenURL("https://github.com/R5Reloaded-ReMap/rsx")));
+            links.Add(Button(L.T("#REVPK_SOURCE"), () => Application.OpenURL("https://github.com/R5Reloaded/r5sdk")));
             content.Add(links);
 
             content.Add(Label(L.T("#ABOUT_DISCLAIMER"), "about-disclaimer"));

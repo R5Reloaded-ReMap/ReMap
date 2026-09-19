@@ -2,7 +2,6 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.IO;
-using System.Runtime.InteropServices;
 using System.Text;
 using ReMap.Standalone.Core;
 using UnityEngine;
@@ -461,14 +460,34 @@ namespace ReMap.Standalone
             SetStatus(L.F("#PROJECT_EXPORTED_ARG0", path));
         }
 
-        private void ExportEntBundle()
+        private async void ExportEntBundle()
         {
             CommitInspectorEdit();
-            string source = WindowsProjectFileDialog.OpenEnt(snapshot?.editingMap);
-            if (string.IsNullOrEmpty(source)) return;
-            string path = ReMapEntExporter.WriteMergedBundle(source, snapshot,
-                world.GenerationObjects(snapshot));
-            SetStatus(L.F("#ENT_BUNDLE_EXPORTED_ARG0", path));
+            MapDocument document = snapshot;
+            MapObject[] objects = world.GenerationObjects(document).ToArray();
+            Loading(true, "Extracting original entity lumps…");
+            try
+            {
+                var progress = new Progress<MapReferenceProgress>(state => {
+                    if (this == null) return;
+                    Loading(true, state.Message, state.Value);
+                    SetStatus(state.Message);
+                });
+                string source = await MapReferenceExtractor.ExtractEntityLumpsAsync(assetLibrary, document.editingMap, false, progress, default);
+                if (this == null) return;
+                string bundle = ReMapEntExporter.WriteMergedBundle(source, document, objects, out _);
+                string installedScript = ReMapEntExporter.InstallScriptLump(bundle, document.editingMap, document.gameTarget, assetLibrary.GameDirectory, assetLibrary.PlatformDirectory);
+                string installedSound = ReMapEntExporter.InstallSoundLump(bundle, document.editingMap, document.gameTarget, assetLibrary.GameDirectory, assetLibrary.PlatformDirectory);
+                SetStatus(L.F("#ENT_SCRIPT_SOUND_INSTALLED_ARG0_ARG1", installedScript, installedSound));
+            }
+            catch (Exception exception)
+            {
+                if (this != null) { SetStatus(exception.Message); Debug.LogWarning(exception); }
+            }
+            finally
+            {
+                if (this != null) Loading(false);
+            }
         }
 
         private void ImportSharedProject()
@@ -686,126 +705,15 @@ namespace ReMap.Standalone
 
     internal static class WindowsProjectFileDialog
     {
-        private const int Explorer = 0x00080000;
-        private const int PathMustExist = 0x00000800;
-        private const int FileMustExist = 0x00001000;
-        private const int OverwritePrompt = 0x00000002;
-        private const int NoChangeDirectory = 0x00000008;
-        private const string Filter = "ReMap project (*.remap-project.json)\0*.remap-project.json\0All files (*.*)\0*.*\0\0";
-        private const string EntFilter = "Apex entity lump (*.ent)\0*.ent\0All files (*.*)\0*.*\0\0";
-
-        [StructLayout(LayoutKind.Sequential, CharSet = CharSet.Unicode)]
-        private struct OpenFileName
-        {
-            public int size;
-            public IntPtr owner, instance;
-            public string filter, customFilter;
-            public int maximumCustomFilter, filterIndex;
-            public StringBuilder file;
-            public int maximumFile;
-            public StringBuilder fileTitle;
-            public int maximumFileTitle;
-            public string initialDirectory, title;
-            public int flags;
-            public short fileOffset, fileExtension;
-            public string defaultExtension;
-            public IntPtr customData, hook;
-            public string templateName;
-            public IntPtr reserved;
-            public int reservedValue, extendedFlags;
-        }
-
-        [DllImport("comdlg32.dll", CharSet = CharSet.Unicode, SetLastError = true)]
-        private static extern bool GetSaveFileNameW(ref OpenFileName dialog);
-        [DllImport("comdlg32.dll", CharSet = CharSet.Unicode, SetLastError = true)]
-        private static extern bool GetOpenFileNameW(ref OpenFileName dialog);
-        [DllImport("comdlg32.dll")]
-        private static extern uint CommDlgExtendedError();
-        [DllImport("user32.dll")]
-        private static extern IntPtr GetActiveWindow();
-        [DllImport("user32.dll")]
-        private static extern IntPtr GetForegroundWindow();
-        [DllImport("user32.dll")]
-        private static extern bool SetForegroundWindow(IntPtr window);
-
         public static string Save(string suggestedName)
         {
-            var dialog = Create(L.T("#EXPORT_CURRENT_PROJECT"), suggestedName,
-                Explorer | PathMustExist | OverwritePrompt | NoChangeDirectory);
-            bool accepted = GetSaveFileNameW(ref dialog);
-            uint error = accepted ? 0 : CommDlgExtendedError();
-            RestoreOwner(dialog.owner);
-            if (!accepted)
-            {
-                if (error != 0) throw new InvalidOperationException(
-                    "Windows save dialog failed (0x" + error.ToString("X4") + ").");
-                return null;
-            }
-            return MapFiles.EnsurePortableExtension(dialog.file.ToString());
+            string path = ReMapLiveBridge.SelectFile(true, L.T("#EXPORT_CURRENT_PROJECT"), suggestedName, MapFiles.PortableExtension.TrimStart('.'));
+            return string.IsNullOrEmpty(path) ? null : MapFiles.EnsurePortableExtension(path);
         }
 
         public static string Open()
         {
-            var dialog = Create(L.T("#IMPORT_SHARED_PROJECT"), "",
-                Explorer | PathMustExist | FileMustExist | NoChangeDirectory);
-            bool accepted = GetOpenFileNameW(ref dialog);
-            uint error = accepted ? 0 : CommDlgExtendedError();
-            RestoreOwner(dialog.owner);
-            if (!accepted)
-            {
-                if (error != 0) throw new InvalidOperationException(
-                    "Windows open dialog failed (0x" + error.ToString("X4") + ").");
-                return null;
-            }
-            return dialog.file.ToString();
-        }
-
-        public static string OpenEnt(string map)
-        {
-            var dialog = Create(L.T("#SELECT_BASE_ENT_LUMP"), (map ?? "") + "_script.ent",
-                Explorer | PathMustExist | FileMustExist | NoChangeDirectory, EntFilter, "ent");
-            bool accepted = GetOpenFileNameW(ref dialog);
-            uint error = accepted ? 0 : CommDlgExtendedError();
-            RestoreOwner(dialog.owner);
-            if (!accepted)
-            {
-                if (error != 0) throw new InvalidOperationException(
-                    "Windows open dialog failed (0x" + error.ToString("X4") + ").");
-                return null;
-            }
-            return dialog.file.ToString();
-        }
-
-        private static IntPtr DialogOwner()
-        {
-            IntPtr active = GetActiveWindow();
-            return active != IntPtr.Zero ? active : GetForegroundWindow();
-        }
-
-        private static void RestoreOwner(IntPtr owner)
-        {
-            if (owner != IntPtr.Zero) SetForegroundWindow(owner);
-        }
-
-        private static OpenFileName Create(string title, string initialName, int flags,
-            string filter = Filter, string extension = null)
-        {
-            var dialog = new OpenFileName
-            {
-                owner = DialogOwner(),
-                filter = filter,
-                filterIndex = 1,
-                file = new StringBuilder(initialName ?? "", 4096),
-                maximumFile = 4096,
-                fileTitle = new StringBuilder(512),
-                maximumFileTitle = 512,
-                initialDirectory = Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments),
-                title = title,
-                flags = flags,
-                defaultExtension = extension ?? MapFiles.PortableExtension.TrimStart('.')
-            };
-            dialog.size = Marshal.SizeOf(dialog);
-            return dialog;
+            return ReMapLiveBridge.SelectFile(false, L.T("#IMPORT_SHARED_PROJECT"), "", MapFiles.PortableExtension.TrimStart('.'));
         }
     }
 }

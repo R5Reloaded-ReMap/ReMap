@@ -2,14 +2,17 @@ using System;
 using System.Diagnostics;
 using System.Linq;
 using System.Runtime.InteropServices;
+using System.Text;
+using Microsoft.Win32;
 using System.Threading;
 using System.Windows.Automation;
 
 internal static class Program
 {
     [STAThread]
-    private static int Main()
+    private static int Main(string[] arguments)
     {
+        if (arguments.Length == 1 && arguments[0] == "--file-dialog") return ShowFileDialog();
         string[] commands = Console.In.ReadToEnd().Split(new[] { "\r\n", "\n" }, StringSplitOptions.RemoveEmptyEntries)
             .Select(command => command.Trim()).Where(command => command.Length > 0).ToArray();
         if (commands.Length == 0) return Fail("No server command was provided.");
@@ -47,6 +50,38 @@ internal static class Program
         }
     }
 
+    private static int ShowFileDialog()
+    {
+        try
+        {
+            string[] options = Console.In.ReadToEnd().Split(new[] { "\r\n", "\n" }, StringSplitOptions.None);
+            if (options.Length < 4) return Fail("The ReMap file dialog request is incomplete.");
+            bool save = options[0] == "save";
+            string title = Decode(options[1]);
+            string suggestedName = Decode(options[2]);
+            string extension = Decode(options[3]).TrimStart('.');
+            FileDialog dialog = save ? (FileDialog)new SaveFileDialog() : new OpenFileDialog();
+            dialog.Title = title;
+            dialog.FileName = suggestedName;
+            dialog.DefaultExt = extension;
+            dialog.AddExtension = true;
+            dialog.CheckPathExists = true;
+            if (save) ((SaveFileDialog)dialog).OverwritePrompt = true;
+            else ((OpenFileDialog)dialog).CheckFileExists = true;
+            string description = extension.Equals("ent", StringComparison.OrdinalIgnoreCase) ? "Apex entity lump" : "ReMap project";
+            dialog.Filter = description + " (*." + extension + ")|*." + extension + "|All files (*.*)|*.*";
+            bool? accepted = dialog.ShowDialog();
+            if (accepted != true) return 2;
+            Console.Out.WriteLine(dialog.FileName);
+            return 0;
+        }
+        catch (Exception exception) { return Fail(exception.Message); }
+    }
+
+    private static string Decode(string value)
+    {
+        return Encoding.UTF8.GetString(Convert.FromBase64String(value ?? ""));
+    }
     private static void OpenConsoleTab(AutomationElement root)
     {
         AutomationElement tab = root.FindFirst(TreeScope.Descendants,

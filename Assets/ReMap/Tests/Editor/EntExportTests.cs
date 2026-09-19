@@ -128,7 +128,7 @@ namespace ReMap.Standalone.Tests
         public void R5FlowstateZiprailExportsNativeTrainNodeChainAndModels()
         {
             var document = Document(); document.gameTarget = GameTargets.R5Flowstate;
-            var rail = new MapObject { customType = "ziprail", isGroup = true, ziplineSpeed = 1.75f };
+            var rail = new MapObject { id = "01234567-89ab-cdef-0123-456789abcdef", customType = "ziprail", isGroup = true, ziplineSpeed = 1.75f, ziplineAutoDetachStart = 0f, ziplineAutoDetachEnd = 0f };
             var first = new MapObject { customType = "ziprail-point", parentId = rail.id,
                 customRole = "0", customProfile = "support", ziplineArmHeight = 320 };
             var middle = new MapObject { customType = "ziprail-point", parentId = rail.id,
@@ -136,13 +136,29 @@ namespace ReMap.Standalone.Tests
             var last = new MapObject { customType = "ziprail-point", parentId = rail.id,
                 customRole = "2", customProfile = "arm", position = new Float3(4, 0, 8) };
             ReMapEntFragments result = ReMapEntExporter.Generate(document, new[] { rail, first, middle, last });
-            Assert.That(result.ScriptEntityCount, Is.EqualTo(10));
-            StringAssert.Contains("\"classname\" \"script_mover_train_node\"", result.Script);
-            StringAssert.Contains("\"script_name\" \"script_control_omit_zipline\"", result.Script);
+            Assert.That(result.ScriptEntityCount, Is.EqualTo(11));
+            Assert.That(result.SoundEntityCount, Is.EqualTo(2));
+            Assert.That(result.Script.Split(new[] { "\"classname\" \"script_mover_train_node\"" }, StringSplitOptions.None).Length - 1, Is.EqualTo(3));
+            StringAssert.DoesNotContain("\"script_control_omit_zipline\"", result.Script);
             StringAssert.Contains("mdl/props/zip_rail/zip_rail_ground_post_01.rmdl", result.Script);
+            Assert.That(result.Script.Split(new[] { "zip_rail_cord_end_01.rmdl" }, StringSplitOptions.None).Length - 1, Is.EqualTo(2));
+            StringAssert.Contains("\"script_name\" \"remap_ziprail_support\"", result.Script);
+            StringAssert.Contains("\"solid\" \"6\"", result.Script);
+            StringAssert.Contains("\"soundName\" \"3p_Ziprail_Emit_TowerBy\"", result.Sound);
             StringAssert.DoesNotContain("\"ZiplineVersion\"", result.Script);
-            Assert.That(result.Script.Split(new[] { "\"isZiprailStart\" \"1\"" },
-                StringSplitOptions.None).Length - 1, Is.EqualTo(2));
+            Assert.That(result.Script.Split(new[] { "\"ziplineMountReverseDistance\" \"0\"" }, StringSplitOptions.None).Length - 1, Is.EqualTo(2));
+            StringAssert.DoesNotContain("\"useZiprailAutoDetachSpeed\"", result.Script);
+            Assert.That(result.Script.Split(new[] { "\"isZiprailStart\" \"1\"" }, StringSplitOptions.None).Length - 1, Is.EqualTo(2));
+            StringAssert.Contains("\"link_to_guid_0\" \"0123456700000001\"", result.Script);
+            StringAssert.Contains("\"link_to_guid_0\" \"0123456700000002\"", result.Script);
+            StringAssert.Contains("\"link_to_guid_0\" \"0123456700000003\"", result.Script);
+            StringAssert.Contains("\"link_to_guid_0\" \"0123456700000004\"", result.Script);
+            StringAssert.DoesNotContain("\"link_to_guid_0\" \"0123456700000000\"", result.Script);
+
+            rail.ziplineAutoDetachStart = 100f;
+            result = ReMapEntExporter.Generate(document, new[] { rail, first, middle, last });
+            Assert.That(result.Script.Split(new[] { "\"useZiprailAutoDetachSpeed\" \"1\"" }, StringSplitOptions.None).Length - 1, Is.EqualTo(1));
+            StringAssert.DoesNotContain("\"useZiprailAutoDetachSpeed\" \"0\"", result.Script);
         }
 
         [Test]
@@ -167,8 +183,54 @@ namespace ReMap.Standalone.Tests
                 StringAssert.Contains("mdl/props/export_test.rmdl", script);
                 Assert.That(script[script.Length - 1], Is.EqualTo('\0'));
                 Assert.That(File.Exists(Path.Combine(output, "ReMap-ENT-report.txt")), Is.True);
+                string report = File.ReadAllText(Path.Combine(output, "ReMap-ENT-report.txt"));
+                StringAssert.Contains("ReVPK from R5Reloaded/r5sdk", report);
+                StringAssert.Contains("Kawe Mazidjatari (Mauler125)", report);
                 Assert.Throws<InvalidDataException>(() => ReMapEntExporter.WriteMergedBundle(
                     Path.Combine(output, map + "_script.ent"), Document(), new[] { prop }));
+            }
+            finally
+            {
+                if (Directory.Exists(root)) Directory.Delete(root, true);
+            }
+        }
+
+        [TestCase(GameTargets.R5Reloaded, false)]
+        [TestCase(GameTargets.R5Flowstate, true)]
+        public void InstallsScriptAndSoundLumpsInTargetMapsDirectory(string target, bool flowstate)
+        {
+            string root = Path.Combine(Path.GetTempPath(), "remap-ent-install-" + Guid.NewGuid().ToString("N"));
+            try
+            {
+                const string map = "mp_rr_divided_moon";
+                const string original = "ENTITIES02 num_models=28\n{\n\"classname\" \"info_player_start\"\n}\n\0";
+                const string generated = "ENTITIES02 num_models=28\n{\n\"classname\" \"prop_dynamic\"\n}\n\0";
+                string game = Path.Combine(root, "game");
+                string platform = Path.Combine(game, flowstate ? "platform_" : "platform");
+                string installPlatform = Path.Combine(game, "platform");
+                string bundle = Path.Combine(root, "bundle");
+                Directory.CreateDirectory(game);
+                Directory.CreateDirectory(platform);
+                Directory.CreateDirectory(installPlatform);
+                Directory.CreateDirectory(bundle);
+                File.WriteAllText(Path.Combine(bundle, map + "_script.ent"), generated, new UTF8Encoding(false));
+                File.WriteAllText(Path.Combine(bundle, map + "_snd.ent"), generated, new UTF8Encoding(false));
+                string maps = Path.Combine(flowstate ? installPlatform : platform, "maps");
+                Directory.CreateDirectory(maps);
+                string destination = Path.Combine(maps, map + "_script.ent");
+                string soundDestination = Path.Combine(maps, map + "_snd.ent");
+                File.WriteAllText(destination, original, new UTF8Encoding(false));
+                File.WriteAllText(soundDestination, original, new UTF8Encoding(false));
+
+                string installed = ReMapEntExporter.InstallScriptLump(bundle, map, target, game, platform);
+                string installedSound = ReMapEntExporter.InstallSoundLump(bundle, map, target, game, platform);
+
+                Assert.That(installed, Is.EqualTo(destination));
+                Assert.That(installedSound, Is.EqualTo(soundDestination));
+                Assert.That(File.ReadAllText(destination), Is.EqualTo(generated));
+                Assert.That(File.ReadAllText(soundDestination), Is.EqualTo(generated));
+                Assert.That(File.ReadAllText(destination + ".remap.bak"), Is.EqualTo(original));
+                Assert.That(File.ReadAllText(soundDestination + ".remap.bak"), Is.EqualTo(original));
             }
             finally
             {

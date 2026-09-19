@@ -162,7 +162,8 @@ namespace ReMap.Standalone.Editor
             string arguments = "/nologo /target:exe /platform:anycpu /optimize+ /out:" + Quote(output) +
                 " /reference:" + Quote(Path.Combine(wpf, "UIAutomationClient.dll")) +
                 " /reference:" + Quote(Path.Combine(wpf, "UIAutomationTypes.dll")) +
-                " /reference:" + Quote(Path.Combine(wpf, "WindowsBase.dll")) + " " + Quote(source);
+                " /reference:" + Quote(Path.Combine(wpf, "WindowsBase.dll")) +
+                " /reference:" + Quote(Path.Combine(wpf, "PresentationFramework.dll")) + " " + Quote(source);
             using (var process = new System.Diagnostics.Process())
             {
                 process.StartInfo = new System.Diagnostics.ProcessStartInfo

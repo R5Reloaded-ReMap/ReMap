@@ -19,6 +19,12 @@ This acknowledgement is not a grant of rights to Valve, Respawn Entertainment, E
 
 The Mauler125 r5sdk repository includes Valve's Source 1 SDK license under `license/LICENSE`, along with third-party legal notices. Those terms are distinct from a permissive license for ReMap's original code.
 
+## ReVPK
+
+ReMap invokes ReVPK from an existing R5Reloaded or R5Flowstate installation to extract the original map ENT lumps. ReVPK is part of [R5Reloaded/r5sdk](https://github.com/R5Reloaded/r5sdk), based on [Mauler125/r5sdk](https://github.com/Mauler125/r5sdk), and was primarily authored by Kawe Mazidjatari (Mauler125). Later contributions include fixes by O-Robotic.
+
+ReVPK runs as a separate external process and is not bundled or relicensed by ReMap. Its source is governed by the Source 1 SDK license and the r5sdk third-party legal notices. See [`ThirdParty/ReVPK`](ThirdParty/ReVPK/README.md).
+
 ## RSX
 
 Windows builds of ReMap bundle a modified RSX executable as an external process. RSX is licensed under the GNU Affero General Public License, version 3. Its license, notices, and the corresponding source for the distributed build must remain available with a release.
