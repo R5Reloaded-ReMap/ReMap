@@ -48,6 +48,17 @@ namespace ReMap.Standalone.Tests
             StringAssert.DoesNotContain("MapEditor_", script);
         }
 
+        [Test]
+        public void UnityPreviewUsesTheNativeCableOffset()
+        {
+            var offset = typeof(ReMapApp).GetField("JumpTowerCableOffsetApex", BindingFlags.Static | BindingFlags.NonPublic);
+            Assert.That((Vector3)offset.GetValue(null), Is.EqualTo(new Vector3(-2f, 2.65f, 0f)));
+            string root = Path.GetFullPath(Path.Combine(Application.dataPath, ".."));
+            string preview = File.ReadAllText(Path.Combine(root, "Assets/ReMap/Runtime/WorldViewZipline.cs"));
+            StringAssert.Contains("ReMapApp.JumpTowerCableOffsetApex", preview);
+            StringAssert.DoesNotContain("new Vector3(-1.75f, -2.75f", preview);
+        }
+
         [TestCase(127f)]
         [TestCase(999f)]
         [TestCase(65536f)]

@@ -13,6 +13,7 @@ namespace ReMap.Standalone
         internal const string JumpTowerBaseModelPath = "mdl/props/zipline_balloon/zipline_balloon_base.rmdl";
         internal const string JumpTowerBalloonModelPath = "mdl/props/zipline_balloon/zipline_balloon.rmdl";
         internal const float JumpTowerMinimumHeight = 1000f;
+        internal static readonly Vector3 JumpTowerCableOffsetApex = new Vector3(-2f, 2.65f, 0f);
         private const float JumpTowerMaximumHeight = 65535f;
         private bool preparingJumpTowerModels;
         private FloatField jumpTowerHeightInput;

@@ -247,11 +247,13 @@ namespace ReMap.Standalone
                     ? baseInstance.transform : instance.transform;
                 var balloonTransform = balloon != null && instances.TryGetValue(balloon.id, out var balloonInstance)
                     ? balloonInstance.transform : instance.transform;
-                var topOffset = ReMapZiplineProfiles.UnityOffset(new Vector3(-1.75f, -2.75f,
-                    balloonTransform == instance.transform ? item.jumpTowerHeight : 0f));
+                var topCableOffset = ReMapApp.JumpTowerCableOffsetApex;
+                topCableOffset.z = balloonTransform == instance.transform ? item.jumpTowerHeight : 0f;
+                var bottomCableOffset = ReMapApp.JumpTowerCableOffsetApex;
+                bottomCableOffset.z = 64f;
+                var topOffset = ReMapZiplineProfiles.UnityOffset(topCableOffset);
                 line.SetPosition(0, balloonTransform.TransformPoint(topOffset));
-                line.SetPosition(1, baseTransform.TransformPoint(ReMapZiplineProfiles.UnityOffset(
-                    new Vector3(-1.75f, -2.75f, 64f))));
+                line.SetPosition(1, baseTransform.TransformPoint(ReMapZiplineProfiles.UnityOffset(bottomCableOffset)));
             }
         }
 
@@ -1001,8 +1003,9 @@ namespace ReMap.Standalone
                     }
                     var towerLine = ghost.AddComponent<LineRenderer>();
                     towerLine.sharedMaterial = lineMaterial; towerLine.useWorldSpace = false;
-                    towerLine.positionCount = 2; towerLine.SetPosition(0, Vector3.up * 1.6f);
-                    towerLine.SetPosition(1, Vector3.up * entry.Size.y); towerLine.widthMultiplier = .05f;
+                    Vector3 cableOffset = ReMapZiplineProfiles.UnityOffset(ReMapApp.JumpTowerCableOffsetApex);
+                    towerLine.positionCount = 2; towerLine.SetPosition(0, cableOffset + Vector3.up * 1.6f);
+                    towerLine.SetPosition(1, cableOffset + Vector3.up * entry.Size.y); towerLine.widthMultiplier = .05f;
                     ghost.transform.position = position.Value;
                     return;
                 }
