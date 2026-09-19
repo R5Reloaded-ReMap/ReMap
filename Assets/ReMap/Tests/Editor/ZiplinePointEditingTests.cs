@@ -64,6 +64,33 @@ namespace ReMap.Standalone.Tests
             Assert.That(position, Is.EqualTo(last + last - previous));
         }
 
+        [TestCase("CreateDefaultCurvedZiplineObjects", "curved-zipline-point", "curved-zipline")]
+        [TestCase("CreateDefaultZiprailObjects", "ziprail-point", "ziprail")]
+        public void HierarchyReorderRenumbersControlPoints(string factory, string pointType,
+            string parentType)
+        {
+            var objects = Create(factory);
+            var document = new MapDocument { gameTarget = GameTargets.R5Flowstate };
+            document.objects.AddRange(objects);
+            var parent = objects.Single(item => item.customType == parentType);
+            var points = objects.Where(item => item.customType == pointType).ToArray();
+            string previousLastId = points[2].id;
+
+            MapHierarchy.Reorder(document, previousLastId, parent.id, points[0].id);
+            var normalize = typeof(ReMapApp).GetMethod("NormalizeControlPointSiblingOrder",
+                BindingFlags.Static | BindingFlags.NonPublic | BindingFlags.Public);
+            string normalizedType = (string)normalize.Invoke(null, new object[] { document, parent.id });
+
+            var reordered = document.objects.Where(item => item.parentId == parent.id && item.customType == pointType).ToArray();
+            Assert.That(normalizedType, Is.EqualTo(parentType));
+            Assert.That(reordered.Select(item => item.id), Is.EqualTo(new[] { previousLastId, points[0].id, points[1].id }));
+            Assert.That(reordered.Select(item => item.customRole), Is.EqualTo(new[] { "0", "1", "2" }));
+            Assert.That(reordered.Select(item => item.displayName), Is.EqualTo(new[] {
+                L.F("#CONTROL_POINT_ARG0", 1), L.F("#CONTROL_POINT_ARG0", 2), L.F("#CONTROL_POINT_ARG0", 3)
+            }));
+            document.Validate();
+        }
+
         [Test] public void ZiprailPreviewCreatesTriggerHitboxesForPointsAndCable()
         {
             var world = new WorldView(Shader.Find("Universal Render Pipeline/Lit"),

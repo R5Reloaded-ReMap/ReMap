@@ -296,7 +296,8 @@ namespace ReMap.Standalone
             foreach(var id in roots) MapHierarchy.Reorder(check,id,parent,beforeSiblingId);
             var changedParents=roots.Where(id=>(snapshot.objects.Find(o=>o.id==id).parentId??"")!=(parent??"")).ToArray();
             var poses=changedParents.ToDictionary(id=>id,id=>world.ReparentPose(id,parent));
-            session.Edit(doc=> { foreach(var id in roots) MapHierarchy.Reorder(doc,id,parent,beforeSiblingId); foreach(var item in doc.objects) if(poses.TryGetValue(item.id,out var p)) { item.position=p.position;item.rotation=p.rotation;item.scale=p.scale; } });
+            var controlPointParents=roots.Select(id=>snapshot.objects.Find(item=>item.id==id)).Where(item=>item.customType=="curved-zipline-point"||item.customType=="ziprail-point").SelectMany(item=>new[]{item.parentId,parent}).ToArray();
+            session.Edit(doc=> { foreach(var id in roots) MapHierarchy.Reorder(doc,id,parent,beforeSiblingId); foreach(var item in doc.objects) if(poses.TryGetValue(item.id,out var p)) { item.position=p.position;item.rotation=p.rotation;item.scale=p.scale; } NormalizeReorderedControlPointParents(doc,controlPointParents); });
             RevealHierarchy(selectedId); Refresh(); FocusHierarchy(selectedId);
         }
         private void SetSelectionEnabled(bool enabled) { CommitInspectorEdit(); var ids=new HashSet<string>(SelectionRoots()); session.Edit(doc=> {foreach(var item in doc.objects)if(ids.Contains(item.id))item.disabled=!enabled;});Refresh(); }

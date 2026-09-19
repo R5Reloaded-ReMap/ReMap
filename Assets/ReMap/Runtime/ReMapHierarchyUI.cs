@@ -398,8 +398,32 @@ namespace ReMap.Standalone
             session.Edit(doc => {
                 MapHierarchy.Reorder(doc, id, parent, beforeSiblingId);
                 if (parentChanged) { var item = doc.objects.Find(o => o.id == id); item.position = pose.position; item.rotation = pose.rotation; item.scale = pose.scale; }
+                if (current.customType == "curved-zipline-point" || current.customType == "ziprail-point")
+                    NormalizeReorderedControlPointParents(doc, new[] { current.parentId, parent });
             });
             selectedId = id; RevealHierarchy(id); Refresh(); FocusHierarchy(id);
+        }
+
+        internal static string NormalizeControlPointSiblingOrder(MapDocument document, string parentId)
+        {
+            var parent = document.objects.Find(item => item.id == parentId);
+            string pointType = parent?.customType == "curved-zipline" ? "curved-zipline-point" :
+                parent?.customType == "ziprail" ? "ziprail-point" : "";
+            if (pointType == "") return "";
+            var points = document.objects.Where(item => item.parentId == parentId && item.customType == pointType).ToArray();
+            for (int index = 0; index < points.Length; index++)
+            {
+                if (pointType == "ziprail-point") SetZiprailPointIndex(points[index], index);
+                else SetCurvedZiplinePointIndex(points[index], index);
+            }
+            return parent.customType;
+        }
+
+        private void NormalizeReorderedControlPointParents(MapDocument document, IEnumerable<string> parentIds)
+        {
+            foreach (string parentId in parentIds.Where(id => !string.IsNullOrEmpty(id)).Distinct())
+                if (NormalizeControlPointSiblingOrder(document, parentId) == "ziprail")
+                    SyncAllZiprailComponents(document, parentId);
         }
         private void RegisterDragSource(VisualElement element, CatalogEntry entry, GameAssetRecord record, string id = null)
         {
