@@ -127,6 +127,7 @@ namespace ReMap.Standalone
             Application.targetFrameRate = 60;
 
             world = new WorldView(objectShader, gridShader, lineShader);
+            session.ConfigureAuxiliaryHistory(CaptureTransformSnapping, RestoreTransformSnapping);
 
             catalog = new DemoCatalog();
             files = new MapFiles(PersistentDirectory("Maps"), codec);
@@ -857,7 +858,7 @@ namespace ReMap.Standalone
 
         {
 
-            inspector.Clear();worldPositionInfo=null; positionInput = rotationInput = scaleInput = null; objectNameInput = null; inspectorLockedZiplineEnd=null; jumpTowerHeightInput=null;
+            inspector.Clear();worldPositionInfo=null; positionInput = rotationInput = scaleInput = null; objectNameInput = null; inspectorLockedPositions=null; jumpTowerHeightInput=null;
 
             var item = snapshot?.objects.Find(o => o.id == selectedId); inspectorEditingId = item?.id;
 
@@ -1077,8 +1078,8 @@ namespace ReMap.Standalone
             var p = positionInput.value; var r = rotationInput.value; var s = scaleInput.value; inspectorDirty = true;
             if (!WorldView.ToData(p).IsFinite || !WorldView.ToData(r).IsFinite || !WorldView.ToData(s).IsFinite || s.x < .01f || s.y < .01f || s.z < .01f) return;
 
-            if(inspectorLockedZiplineEnd==null)inspectorLockedZiplineEnd=CaptureLockedZiplineEnd(SelectionRoots());
-            inspectorDirty = true; if(!world.SetLocalPreview(inspectorEditingId, p, r, s, inspectorLockedZiplineEnd))SetStatus(ApexCoordinates.LimitMessage);RefreshWorldPositionInfo();SyncJumpTowerHeightInput();UpdateGizmoVisual();
+            if(inspectorLockedPositions==null)inspectorLockedPositions=CaptureLockedPositions(SelectionRoots());
+            inspectorDirty = true; if(!world.SetLocalPreview(inspectorEditingId, p, r, s, inspectorLockedPositions))SetStatus(ApexCoordinates.LimitMessage);RefreshWorldPositionInfo();SyncJumpTowerHeightInput();UpdateGizmoVisual();
 
         }
 
@@ -1099,9 +1100,9 @@ namespace ReMap.Standalone
                 catch { Refresh(); throw; }
                 return;
             }
-            if (selectedIds.Count > 1) { inspectorDirty = false; try { ValidateMultipleInspector(); if(inspectorOriginals != null) CommitSelectionPreview(inspectorOriginals); } finally { inspectorOriginals=null; Refresh(); } return; }
+            if (selectedIds.Count > 1) { inspectorDirty = false; try { ValidateMultipleInspector(); if(inspectorOriginals != null) CommitSelectionPreview(IncludeLockedPositions(inspectorOriginals,inspectorLockedPositions)); } finally { inspectorOriginals=null;inspectorLockedPositions=null; Refresh(); } return; }
             string id = inspectorEditingId; var p = positionInput.value; var r = rotationInput.value; var s = scaleInput.value; string name = objectNameInput.value.Trim();
-            var lockedEndLocal=inspectorLockedZiplineEnd==null?null:world.LocalPose(inspectorLockedZiplineEnd.Local.id);
+            var lockedLocals=inspectorLockedPositions?.ToDictionary(locked=>locked.Local.id,locked=>world.LocalPose(locked.Local.id));
             inspectorDirty = false;
             try
             {
@@ -1109,14 +1110,14 @@ namespace ReMap.Standalone
                     item.displayName = name; if (!item.positionLocked) item.position = WorldView.ToData(p); item.rotation = WorldView.ToData(r); item.scale = WorldView.ToData(s);
                     if (IsJumpTowerBalloon(item)) SyncJumpTowerHeightFromBalloon(doc, item);
                     else if (item.customType == "jump-tower") NormalizeJumpTowerRotation(item);
-                    if(lockedEndLocal!=null){var end=doc.objects.Find(o=>o.id==lockedEndLocal.id);if(end!=null)end.position=lockedEndLocal.position;} });
+                    if(lockedLocals!=null)foreach(var locked in doc.objects)if(lockedLocals.TryGetValue(locked.id,out var pose))locked.position=pose.position; });
                 snapshot = session.Snapshot(); world.Sync(snapshot, selectedId); world.HighlightSelection(SelectionRoots());
                 undoButton?.SetEnabled(session.CanUndo); redoButton?.SetEnabled(session.CanRedo);
                 fileStatus.text = session.Revision == lastSavedRevision ? L.T("#SAVED") : L.T("#UNSAVED_CHANGES");
-                inspectorLockedZiplineEnd=null; RefreshObjects(); SyncInspectorValues();
+                inspectorLockedPositions=null; RefreshObjects(); SyncInspectorValues();
                 // Keep the live input elements: rebuilding here steals focus from the next field.
             }
-            catch { inspectorLockedZiplineEnd=null; Refresh(); throw; }
+            catch { inspectorLockedPositions=null; Refresh(); throw; }
         }
 
         private void FinishInspectorInteraction()

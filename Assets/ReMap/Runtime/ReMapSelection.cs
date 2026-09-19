@@ -280,9 +280,9 @@ namespace ReMap.Standalone
                 delta=Vector3.up*delta.y;
             if(delta==Vector3.zero)return;
             var originals=world.CaptureSelection(roots);
-            var lockedEnd=CaptureLockedZiplineEnd(roots);
-            if(!world.PreviewSelection(originals,Vector3.zero,Quaternion.identity,delta,Quaternion.identity,Vector3.one,lockedEnd)) {SetStatus(ApexCoordinates.LimitMessage);return;}
-            CommitSelectionPreview(IncludeLockedPosition(originals,lockedEnd)); Refresh();
+            var lockedPositions=CaptureLockedPositions(roots);
+            if(!world.PreviewSelection(originals,Vector3.zero,Quaternion.identity,delta,Quaternion.identity,Vector3.one,lockedPositions)) {SetStatus(ApexCoordinates.LimitMessage);return;}
+            CommitSelectionPreview(IncludeLockedPositions(originals,lockedPositions)); Refresh();
         }
         private void GroupSelection() {
             CommitInspectorEdit(); var roots=SelectionRoots().ToArray(); if(roots.Length==0)return;
@@ -302,13 +302,13 @@ namespace ReMap.Standalone
         }
         private void SetSelectionEnabled(bool enabled) { CommitInspectorEdit(); var ids=new HashSet<string>(SelectionRoots()); session.Edit(doc=> {foreach(var item in doc.objects)if(ids.Contains(item.id))item.disabled=!enabled;});Refresh(); }
         private List<SelectionPose> inspectorOriginals;
-        private SelectionPose inspectorLockedZiplineEnd;
+        private List<SelectionPose> inspectorLockedPositions;
         private Vector3 inspectorPivot;
         private Quaternion inspectorBasis;
         private Vector3 multiplePositionReference;
         private Vector3Int multiplePositionSharedAxes;
         private void BuildMultipleInspector() {
-            inspectorEditingId=selectedId; inspectorDirty=false; inspectorOriginals=null; inspectorLockedZiplineEnd=null;
+            inspectorEditingId=selectedId; inspectorDirty=false; inspectorOriginals=null; inspectorLockedPositions=null;
             inspector.Add(Label(selectedIds.Count + L.T("#ITEMS") + SelectionRoots().Count + L.T("#ROOTS"), "tool-selection"));
             inspector.Add(Label(L.T("#TRANSFORMS_RELATIVE_SELECTION_WORLD_POSITION"),"note"));
             var rootPositions=SelectionRoots().Select(id=>WorldView.ToVector(world.WorldPose(id).position)).ToArray();
@@ -331,24 +331,34 @@ namespace ReMap.Standalone
         private void PreviewMultipleInspector() {
             var p=MultiplePositionDelta();var r=rotationInput.value;var s=scaleInput.value;inspectorDirty=true;
             if(!WorldView.ToData(p).IsFinite||!WorldView.ToData(r).IsFinite||!WorldView.ToData(s).IsFinite||s.x<=0||s.y<=0||s.z<=0)return;
-            if(inspectorOriginals==null) {inspectorOriginals=world.CaptureSelection(SelectionRoots());inspectorPivot=SelectionPivot();inspectorBasis=SelectionBasis();}
+            if(inspectorOriginals==null) {var roots=SelectionRoots();inspectorOriginals=world.CaptureSelection(roots);inspectorLockedPositions=CaptureLockedPositions(roots);inspectorPivot=SelectionPivot();inspectorBasis=SelectionBasis();}
             inspectorDirty=true; var rotation=inspectorBasis*Quaternion.Euler(r)*Quaternion.Inverse(inspectorBasis);
-            if(!world.PreviewSelection(inspectorOriginals,inspectorPivot,inspectorBasis,p,rotation,s))SetStatus(ApexCoordinates.LimitMessage);UpdateGizmoVisual();
+            if(!world.PreviewSelection(inspectorOriginals,inspectorPivot,inspectorBasis,p,rotation,s,inspectorLockedPositions))SetStatus(ApexCoordinates.LimitMessage);UpdateGizmoVisual();
         }
         private void CommitSelectionPreview(List<SelectionPose> originals) {
             var poses=originals.ToDictionary(o=>o.Local.id,o=>world.LocalPose(o.Local.id));
             bool changed=originals.Any(o=> {var p=poses[o.Local.id];return Vector3.Distance(WorldView.ToVector(p.position),WorldView.ToVector(o.Local.position))>.00001f||Quaternion.Angle(Quaternion.Euler(WorldView.ToVector(p.rotation)),Quaternion.Euler(WorldView.ToVector(o.Local.rotation)))>.0001f||Vector3.Distance(WorldView.ToVector(p.scale),WorldView.ToVector(o.Local.scale))>.00001f;});
             if(changed)session.Edit(doc=> {foreach(var item in doc.objects)if(poses.TryGetValue(item.id,out var p)){item.position=p.position;item.rotation=p.rotation;item.scale=p.scale;if(IsJumpTowerBalloon(item))SyncJumpTowerHeightFromBalloon(doc,item);else if(item.customType=="jump-tower")NormalizeJumpTowerRotation(item);}});
         }
-        private SelectionPose CaptureLockedZiplineEnd(IReadOnlyList<string> roots) {
-            if(roots==null||roots.Count!=1||snapshot==null)return null;
-            var zipline=snapshot.objects.Find(item=>item.id==roots[0]);
-            if(zipline?.customType!="zipline"||!zipline.ziplineLockEnd||string.IsNullOrEmpty(zipline.ziplineEndId))return null;
-            return world.CaptureSelection(new[]{zipline.ziplineEndId}).FirstOrDefault();
+        private List<SelectionPose> CaptureLockedPositions(IReadOnlyList<string> roots) {
+            return world.CaptureSelection(LockedPositionIds(snapshot,roots));
         }
-        private static List<SelectionPose> IncludeLockedPosition(List<SelectionPose> originals,SelectionPose lockedPosition) {
-            if(lockedPosition==null||originals.Any(item=>item.Local.id==lockedPosition.Local.id))return originals;
-            var result=new List<SelectionPose>(originals){lockedPosition};return result;
+        private static string[] LockedPositionIds(MapDocument document,IReadOnlyList<string> roots) {
+            if(document==null||roots==null||roots.Count==0)return Array.Empty<string>();
+            var rootIds=roots.ToHashSet();var branches=new HashSet<string>();
+            foreach(var root in roots)branches.UnionWith(MapHierarchy.Subtree(document,root));
+            var result=document.objects.Where(item=>item.positionLocked&&branches.Contains(item.id)&&!rootIds.Contains(item.id)&&
+                (IsLockableZiplinePoint(item)||IsTeleportTarget(item)||IsJumpTowerBalloon(item))).Select(item=>item.id).ToList();
+            foreach(var rootId in roots) {
+                var zipline=document.objects.Find(item=>item.id==rootId);
+                if(zipline?.customType=="zipline"&&zipline.ziplineLockEnd&&!string.IsNullOrEmpty(zipline.ziplineEndId)&&!result.Contains(zipline.ziplineEndId))result.Add(zipline.ziplineEndId);
+            }
+            return result.ToArray();
+        }
+        private static List<SelectionPose> IncludeLockedPositions(List<SelectionPose> originals,IReadOnlyList<SelectionPose> lockedPositions) {
+            if(lockedPositions==null||lockedPositions.Count==0)return originals;
+            var ids=originals.Select(item=>item.Local.id).ToHashSet();var result=new List<SelectionPose>(originals);
+            result.AddRange(lockedPositions.Where(item=>item!=null&&ids.Add(item.Local.id)));return result;
         }
     }
 }

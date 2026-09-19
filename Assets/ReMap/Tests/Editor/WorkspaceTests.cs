@@ -51,6 +51,27 @@ namespace ReMap.Standalone.Tests
             Assert.That(session.Redo(), Is.True);
             Assert.That(session.Snapshot().objects[0].position.x, Is.EqualTo(3));
         }
+        [Test] public void AuxiliaryEditsShareHistoryWithoutChangingDocumentRevision()
+        {
+            var session = new MapSession(); float snapping = 64;
+            session.ConfigureAuxiliaryHistory(() => snapping, value => snapping = (float)value);
+            session.Replace(Example()); long loaded = session.Revision;
+            session.EditAuxiliary(() => snapping = 32);
+            Assert.That(session.Revision, Is.EqualTo(loaded));
+            session.Edit(doc => doc.name = "Edited"); long edited = session.Revision;
+
+            Assert.That(session.Undo(), Is.True);
+            Assert.That(session.Snapshot().name, Is.EqualTo("Map française"));
+            Assert.That(snapping, Is.EqualTo(32));
+            Assert.That(session.Undo(), Is.True);
+            Assert.That(session.Revision, Is.EqualTo(loaded));
+            Assert.That(snapping, Is.EqualTo(64));
+            Assert.That(session.Redo(), Is.True);
+            Assert.That(snapping, Is.EqualTo(32));
+            Assert.That(session.Redo(), Is.True);
+            Assert.That(session.Revision, Is.EqualTo(edited));
+            Assert.That(session.Snapshot().name, Is.EqualTo("Edited"));
+        }
         [Test] public void SaveRoundTripPreservesReferencesIdsAndTransforms()
         {
             var original = Example(); files.Save("roundtrip", original); var loaded = files.Load("roundtrip");

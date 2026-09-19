@@ -83,13 +83,18 @@ namespace ReMap.Standalone
         }).ToList();
         // Only roots are passed here. All writes happen before a single physics synchronization.
         public bool PreviewSelection(List<SelectionPose> originals, Vector3 pivot, Quaternion basis, Vector3 move, Quaternion rotation, Vector3 factors,
-            SelectionPose lockedPosition = null)
+            IReadOnlyList<SelectionPose> lockedPositions = null)
         {
             previousPreview.Clear();
-            Transform lockedTransform = null;
-            if (lockedPosition != null && instances.TryGetValue(lockedPosition.Local.id, out var lockedInstance)) {
-                lockedTransform = lockedInstance.transform;
-                previousPreview.Add(new PreviewPose(lockedTransform));
+            var preservedPositions = new List<SelectionPose>();
+            var lockedTransforms = new List<Transform>();
+            var originalIds = new HashSet<string>(originals.Select(original => original.Local.id));
+            if (lockedPositions != null) foreach (var lockedPosition in lockedPositions)
+            {
+                if (lockedPosition == null || originalIds.Contains(lockedPosition.Local.id) ||
+                    !instances.TryGetValue(lockedPosition.Local.id, out var lockedInstance)) continue;
+                preservedPositions.Add(lockedPosition);lockedTransforms.Add(lockedInstance.transform);
+                previousPreview.Add(new PreviewPose(lockedInstance.transform));
             }
             foreach (var original in originals) {
                 var t = instances[original.Local.id].transform;previousPreview.Add(new PreviewPose(t));
@@ -99,8 +104,8 @@ namespace ReMap.Standalone
                 t.SetPositionAndRotation(position, rotation * Quaternion.Euler(ToVector(original.World.rotation)));
                 t.localScale = Vector3.Scale(ToVector(original.Local.scale), factors);
             }
-            if (lockedTransform != null)
-                lockedTransform.position = ToVector(lockedPosition.World.position);
+            for (int index = 0; index < lockedTransforms.Count; index++)
+                lockedTransforms[index].position = ToVector(preservedPositions[index].World.position);
             bool valid=WithinWorldLimits();if(!valid)foreach(var before in previousPreview)before.Restore();
             selectionBounds.Clear(); Physics.SyncTransforms(); RefreshZiplineVisuals(); return valid;
         }

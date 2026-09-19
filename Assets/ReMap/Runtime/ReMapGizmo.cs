@@ -11,7 +11,7 @@ namespace ReMap.Standalone
         private GizmoOverlay gizmoVisual;
         private bool rotationGizmo, scaleGizmo, draggingGizmo;
         private List<SelectionPose> dragOriginals;
-        private SelectionPose dragLockedZiplineEnd;
+        private List<SelectionPose> dragLockedPositions;
         private Vector3 dragPivot, dragDirection;
         private Vector3 dragPlaneStart,dragPlaneU,dragPlaneV;
         private Plane dragMovePlane;
@@ -25,6 +25,23 @@ namespace ReMap.Standalone
         private float moveSnap=ApexCoordinates.DefaultGridMeters, rotateSnap=15, scaleSnap=.1f;
         private VisualElement snapPopover;
         private Button snapSettingsButton;
+        private FloatField moveSnapField, rotateSnapField, scaleSnapField;
+        private readonly struct TransformSnappingState
+        {
+            public readonly float Move, Rotate, Scale;
+            public TransformSnappingState(float move,float rotate,float scale)
+            { Move=move;Rotate=rotate;Scale=scale; }
+        }
+        private object CaptureTransformSnapping()=>new TransformSnappingState(moveSnap,rotateSnap,scaleSnap);
+        private void RestoreTransformSnapping(object value)
+        {
+            if(!(value is TransformSnappingState state))return;
+            moveSnap=state.Move;rotateSnap=state.Rotate;scaleSnap=state.Scale;
+            world.GridStep=moveSnap;
+            moveSnapField?.SetValueWithoutNotify(moveSnap/ApexCoordinates.MetersPerUnit);
+            rotateSnapField?.SetValueWithoutNotify(rotateSnap);
+            scaleSnapField?.SetValueWithoutNotify(scaleSnap);
+        }
         private void BuildTransformToolbar(VisualElement toolbar) {
             toolbar.Add(Button(L.T("#SCALE_R"),SetScaleGizmo));
             var space=new Button();space.text=localGizmo?L.T("#LOCAL"):L.T("#GLOBAL");space.tooltip=L.T("#MOVE_ROTATE_USING_WORLD_ACTIVE");
@@ -43,22 +60,26 @@ namespace ReMap.Standalone
             snapPopover.style.display=DisplayStyle.None;
             root.Add(snapPopover);
             snapPopover.Add(Label(L.T("#TRANSFORM_SNAPPING"),"snap-popover-title"));
-            void Step(string name,float initial,System.Action<float> set,float max=1000)
+            FloatField Step(string name,float initial,System.Action<float> set,float max=1000)
             {
                 var field=new FloatField(name) { value=initial, isDelayed=false };
+                field.RegisterCallback<FocusInEvent>(_=>session.BeginContinuousEdit());
+                field.RegisterCallback<FocusOutEvent>(_=>session.EndContinuousEdit());
                 field.RegisterValueChangedCallback(e=> {
                     if(float.IsNaN(e.newValue)||float.IsInfinity(e.newValue)||e.newValue<=0||e.newValue>max)
                     {
                         field.SetValueWithoutNotify(e.previousValue);return;
                     }
-                    set(e.newValue);
+                    session.EditAuxiliary(()=>set(e.newValue));
+                    undoButton?.SetEnabled(session.CanUndo);redoButton?.SetEnabled(session.CanRedo);
                 });
                 snapPopover.Add(field);
+                return field;
             }
-            Step(L.T("#APEX_MOVEMENT_U"),moveSnap/ApexCoordinates.MetersPerUnit,
+            moveSnapField=Step(L.T("#APEX_MOVEMENT_U"),moveSnap/ApexCoordinates.MetersPerUnit,
                 value=>{moveSnap=value*ApexCoordinates.MetersPerUnit;world.GridStep=moveSnap;},ApexCoordinates.MaxWorldCoord);
-            Step(L.T("#ROTATION_109E81"),rotateSnap,value=>rotateSnap=value);
-            Step(L.T("#SCALE_FACTOR"),scaleSnap,value=>scaleSnap=value);
+            rotateSnapField=Step(L.T("#ROTATION_109E81"),rotateSnap,value=>rotateSnap=value);
+            scaleSnapField=Step(L.T("#SCALE_FACTOR"),scaleSnap,value=>scaleSnap=value);
             snapPopover.Add(Label(L.T("#SNAPPING_USE_STEPS_HANDLES_SCALE"),"note"));
             root.RegisterCallback<PointerDownEvent>(e=> {
                 if(snapPopover.style.display.value==DisplayStyle.None)return;
@@ -182,7 +203,7 @@ namespace ReMap.Standalone
                         move=new Vector3(0f,Mathf.Clamp(originalHeight+move.y,minimum,maximum)-originalHeight,0f);
                     }
                 }
-                if(!world.PreviewSelection(dragOriginals,dragPivot,dragBasis,move,rotation,factors,dragLockedZiplineEnd))SetStatus(ApexCoordinates.LimitMessage);
+                if(!world.PreviewSelection(dragOriginals,dragPivot,dragBasis,move,rotation,factors,dragLockedPositions))SetStatus(ApexCoordinates.LimitMessage);
                 world.HighlightSelection(SelectionRoots());SyncInspectorValues();UpdateGizmoVisual();return true;
             }
             if(SurfacePlacementActive())
@@ -244,7 +265,7 @@ namespace ReMap.Standalone
                 if (!rotationGizmo && !scaleGizmo && AllSelectedPositionsLocked()) return false;
                 bool verticalEnd=ConstrainVerticalMovement();int axis=gizmoVisual.Hit(mouse);
                 if(axis<0||(verticalEnd&&axis!=1))return false;
-                CommitInspectorEdit();var roots=SelectionRoots();dragOriginals=world.CaptureSelection(roots);dragLockedZiplineEnd=CaptureLockedZiplineEnd(roots);if(dragOriginals.Count==0)return false;
+                CommitInspectorEdit();var roots=SelectionRoots();dragOriginals=world.CaptureSelection(roots);dragLockedPositions=CaptureLockedPositions(roots);if(dragOriginals.Count==0)return false;
                 draggingGizmo=true;dragAxis=axis;gizmoVisual.ActiveAxis=axis;dragBasis=verticalEnd?Quaternion.identity:SelectionBasis();
                 dragPivot=gizmoVisual.Pivot;dragLength=gizmoVisual.WorldLength;dragStart=mouse;dragScreenCentre=world.Camera.WorldToScreenPoint(dragPivot);
                 if(GizmoOverlay.PlaneAxes(axis,out int first,out int second))
@@ -261,10 +282,10 @@ namespace ReMap.Standalone
         private Vector3 GizmoScaleFactors(float factor,int axis)=>Vector3.one*factor;
         private void FinishGizmoDrag() {
             if(!draggingGizmo)return;draggingGizmo=false;gizmoVisual.ActiveAxis=-1;
-            Run(()=>CommitSelectionPreview(IncludeLockedPosition(dragOriginals,dragLockedZiplineEnd)));dragLockedZiplineEnd=null;Refresh();AlignSelectedAutomaticZiplineEnd();
+            Run(()=>CommitSelectionPreview(IncludeLockedPositions(dragOriginals,dragLockedPositions)));dragLockedPositions=null;Refresh();AlignSelectedAutomaticZiplineEnd();
         }
         private void CancelGizmoDrag() {
-            if(!draggingGizmo)return;draggingGizmo=false;dragLockedZiplineEnd=null;gizmoVisual.ActiveAxis=-1;
+            if(!draggingGizmo)return;draggingGizmo=false;dragLockedPositions=null;gizmoVisual.ActiveAxis=-1;
             if(snapshot!=null){world.Sync(snapshot,selectedId);world.HighlightSelection(SelectionRoots());SyncInspectorValues();if(selectedIds.Count>1)RefreshInspector();}
         }
     }

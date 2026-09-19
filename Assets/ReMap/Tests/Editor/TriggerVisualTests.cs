@@ -113,6 +113,48 @@ namespace ReMap.Standalone.Tests
             finally { Dispose(world); }
         }
 
+        [TestCase("button", "button-teleport-target")]
+        [TestCase("trigger", "trigger-teleport-target")]
+        public void LockedTeleportTargetStaysAtItsWorldPositionWhenOwnerMoves(string sourceType, string targetType)
+        {
+            var world = CreateWorld();
+            try
+            {
+                var source = new MapObject {
+                    assetId = "custom:" + sourceType, displayName = "Source", customType = sourceType,
+                    isGroup = true, buttonTeleportEnabled = true, triggerTeleportEnabled = true
+                };
+                var target = new MapObject {
+                    assetId = "custom:" + targetType, displayName = "Destination", customType = targetType,
+                    customRole = "destination", parentId = source.id, isGroup = true, positionLocked = true,
+                    position = new Float3(2f, 0f, 0f)
+                };
+                var document = new MapDocument(); document.objects.Add(source); document.objects.Add(target);
+                world.Sync(document, null);
+                var lockedIdsMethod = typeof(ReMapApp).GetMethod("LockedPositionIds",
+                    BindingFlags.Static | BindingFlags.NonPublic);
+                var lockedIds = (string[])lockedIdsMethod.Invoke(null, new object[] { document, new[] { source.id } });
+                CollectionAssert.AreEqual(new[] { target.id }, lockedIds);
+                var originals = world.CaptureSelection(new[] { source.id });
+                var lockedPositions = world.CaptureSelection(lockedIds);
+                Vector3 before = WorldView.ToVector(world.WorldPose(target.id).position);
+
+                Assert.That(world.PreviewSelection(originals, Vector3.zero, Quaternion.identity,
+                    Vector3.right * 3f, Quaternion.identity, Vector3.one, lockedPositions), Is.True);
+                Assert.That(Vector3.Distance(WorldView.ToVector(world.WorldPose(target.id).position), before),
+                    Is.LessThan(.0001f));
+
+                var poses = originals.Concat(lockedPositions).ToDictionary(
+                    original => original.Local.id, original => world.LocalPose(original.Local.id));
+                foreach (var item in document.objects) if (poses.TryGetValue(item.id, out var pose))
+                { item.position = pose.position; item.rotation = pose.rotation; item.scale = pose.scale; }
+                world.Sync(document, null);
+                Assert.That(Vector3.Distance(WorldView.ToVector(world.WorldPose(target.id).position), before),
+                    Is.LessThan(.0001f));
+            }
+            finally { Dispose(world); }
+        }
+
         private static void Dispose(WorldView world)
         {
             bool previous = LogAssert.ignoreFailingMessages;

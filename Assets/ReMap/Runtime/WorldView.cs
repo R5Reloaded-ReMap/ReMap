@@ -429,12 +429,15 @@ namespace ReMap.Standalone
             return new MapObject { id = id, position = ToData(t.position), rotation = ToData(t.eulerAngles), scale = ToData(t.lossyScale) };
         }
         public bool SetLocalPreview(string id, Vector3 position, Vector3 rotation, Vector3 scale,
-            SelectionPose lockedPosition = null)
+            IReadOnlyList<SelectionPose> lockedPositions = null)
         {
             var t = instances[id].transform;var before=new PreviewPose(t);
-            Transform lockedTransform = null; PreviewPose lockedBefore = default;
-            if (lockedPosition != null && instances.TryGetValue(lockedPosition.Local.id, out var lockedInstance)) {
-                lockedTransform = lockedInstance.transform; lockedBefore = new PreviewPose(lockedTransform);
+            var preservedPositions = new List<SelectionPose>();var lockedTransforms = new List<Transform>();var lockedBefore = new List<PreviewPose>();
+            if (lockedPositions != null) foreach (var lockedPosition in lockedPositions)
+            {
+                if (lockedPosition == null || lockedPosition.Local.id == id ||
+                    !instances.TryGetValue(lockedPosition.Local.id, out var lockedInstance)) continue;
+                preservedPositions.Add(lockedPosition);lockedTransforms.Add(lockedInstance.transform);lockedBefore.Add(new PreviewPose(lockedInstance.transform));
             }
             t.localPosition = position; t.localRotation = Quaternion.Euler(rotation); t.localScale = scale;
             var previewItem = syncedZiplineDocument?.objects.Find(item => item.id == id);
@@ -449,8 +452,8 @@ namespace ReMap.Standalone
                 t.localRotation = Quaternion.identity;
                 t.localScale = Vector3.one;
             }
-            if (lockedTransform != null) lockedTransform.position = ToVector(lockedPosition.World.position);
-            bool valid=WithinWorldLimits();if(!valid){before.Restore();if(lockedTransform!=null)lockedBefore.Restore();}
+            for(int index=0;index<lockedTransforms.Count;index++)lockedTransforms[index].position=ToVector(preservedPositions[index].World.position);
+            bool valid=WithinWorldLimits();if(!valid){before.Restore();foreach(var pose in lockedBefore)pose.Restore();}
             selectionBounds.Clear(); Physics.SyncTransforms(); RefreshZiplineVisuals(); Highlight(id);return valid;
         }
         public void StoreWorldPose(MapObject item, Vector3 position, Vector3 rotation)

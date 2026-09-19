@@ -144,7 +144,7 @@ namespace ReMap.Standalone
             if(keyboard.escapeKey.wasPressedThisFrame&&holding){EndLibraryDrag();CancelPlacement();SetStatus(L.T("#PLACEMENT_CANCELLED"));return true;}
             var focused=root.panel?.focusController.focusedElement as VisualElement;
             bool historyShortcut=keyboard.ctrlKey.isPressed&&(keyboard.zKey.wasPressedThisFrame||keyboard.yKey.wasPressedThisFrame);
-            if(!BlockingDialogOpen&&historyShortcut&&IsInspectorEditingTarget(focused))
+            if(!BlockingDialogOpen&&historyShortcut&&IsHistoryEditingTarget(focused))
             {
                 Run(()=>ApplyHistory(keyboard.yKey.wasPressedThisFrame||keyboard.shiftKey.isPressed));return true;
             }
@@ -170,14 +170,14 @@ namespace ReMap.Standalone
             for(var current=element;current!=null;current=current.parent)if(current is TextField||current is FloatField||current is IntegerField)return true;
             return false;
         }
-        private bool IsInspectorEditingTarget(VisualElement element)
+        private bool IsHistoryEditingTarget(VisualElement element)
         {
-            for(var current=element;current!=null;current=current.parent)if(current==inspector)return true;
+            for(var current=element;current!=null;current=current.parent)if(current==inspector||current==snapPopover)return true;
             return false;
         }
         private void ApplyHistory(bool redo)
         {
-            FinishInspectorInteraction();CancelPlacement();
+            FinishInspectorInteraction();session.EndContinuousEdit();CancelPlacement();
             if(redo)session.Redo();else session.Undo();
             Refresh();
         }
