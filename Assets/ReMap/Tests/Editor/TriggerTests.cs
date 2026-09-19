@@ -26,6 +26,7 @@ namespace ReMap.Standalone.Tests
             string code = ReMapGameScript.Generate(restored, restored.objects);
             StringAssert.Contains("ReMap_CreateTrigger( <10, 20, 30>, <0, 0, 0>, 120, 60, true, 4 )", code);
             StringAssert.Contains("remapTrigger0.SetEnterCallback( void function( entity trigger, entity ent )", code);
+            StringAssert.Contains("!IsValid( ent ) || !ent.IsPlayer() || ent.GetPhysics() == MOVETYPE_NOCLIP", code);
             StringAssert.Contains("printt( \"enter\" )", code);
             StringAssert.Contains("remapTrigger0.SetLeaveCallback", code);
             StringAssert.Contains("DispatchSpawn( remapTrigger0 )", code);
@@ -66,6 +67,7 @@ namespace ReMap.Standalone.Tests
             document.Validate();
             string code = ReMapGameScript.Generate(document, document.objects);
 
+            StringAssert.Contains("!IsValid( ent ) || !ent.IsPlayer() || ent.GetPhysics() == MOVETYPE_NOCLIP", code);
             StringAssert.Contains("ReMap_TeleportPlayer( ent, <100, 200, 300>, <0, 90, 0>, true )", code);
             StringAssert.Contains("printt( \"recovered\" )", code);
             Assert.That(code.Split(new[] { "remapTrigger0.SetEnterCallback" }, System.StringSplitOptions.None).Length - 1, Is.EqualTo(1));

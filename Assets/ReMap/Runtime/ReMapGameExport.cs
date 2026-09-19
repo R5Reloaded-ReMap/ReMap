@@ -859,8 +859,15 @@ namespace ReMap.Standalone
             code.Append('\t').Append(variable).Append('.').Append(setter)
                 .AppendLine("( void function( entity trigger, entity ent )");
             code.AppendLine("\t{");
+            AppendTriggerPlayerGuard(code);
             foreach (string line in callback.Split('\n')) code.Append("\t\t").AppendLine(line);
             code.AppendLine("\t} )");
+        }
+
+        private static void AppendTriggerPlayerGuard(StringBuilder code)
+        {
+            code.AppendLine("\t\tif ( !IsValid( ent ) || !ent.IsPlayer() || ent.GetPhysics() == MOVETYPE_NOCLIP )");
+            code.AppendLine("\t\t\treturn");
         }
 
         private static void AppendTriggerEnterCallback(StringBuilder code, string variable, MapObject trigger, Vector3 destination, Vector3 direction, Vector3 originOffset, bool symbolicOffset)
@@ -873,8 +880,8 @@ namespace ReMap.Standalone
             }
             code.Append('\t').Append(variable).AppendLine(".SetEnterCallback( void function( entity trigger, entity ent )");
             code.AppendLine("\t{");
-            code.AppendLine("\t\tif ( IsValid( ent ) && ent.IsPlayer() )");
-            code.Append("\t\t\tReMap_TeleportPlayer( ent, ").Append(Position(WorldView.ToData(destination), originOffset, symbolicOffset)).Append(", ").Append(Vector(ApexDisplay.Angles(direction))).Append(", ").Append(trigger.triggerTeleportPlaySound ? "true" : "false").AppendLine(" )");
+            AppendTriggerPlayerGuard(code);
+            code.Append("\t\tReMap_TeleportPlayer( ent, ").Append(Position(WorldView.ToData(destination), originOffset, symbolicOffset)).Append(", ").Append(Vector(ApexDisplay.Angles(direction))).Append(", ").Append(trigger.triggerTeleportPlaySound ? "true" : "false").AppendLine(" )");
             if (!string.IsNullOrWhiteSpace(callback))
                 foreach (string line in callback.Split('\n')) code.Append("\t\t").AppendLine(line);
             code.AppendLine("\t} )");
