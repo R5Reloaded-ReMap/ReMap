@@ -20,15 +20,15 @@ namespace ReMap.Standalone
         private Button activeCommandMenuButton;
         private IVisualElementScheduledItem recoverySave;
         private bool changingProjectSelector;
-        private VisualElement newMapOverlay, newMapSources, renameMapOverlay, entExportOverlay;
+        private VisualElement newMapOverlay, newMapSources, renameMapOverlay, entExportOverlay, entExportNativeOptions;
         private VisualElement portCompatibilityOverlay, portCompatibilityList;
         private Label portCompatibilitySummary;
         private VisualElement workspaceGameOverlay;
         private DropdownField workspaceGameChoice;
         private TextField newMapName, renameMapName;
         private DropdownField newMapGame, newMapPrimary, entExportMode;
-        private Toggle entExportPreserveBase, entExportRestartMap;
-        private Label newMapModeNotice, entExportTarget;
+        private Toggle entExportUseNative, entExportPreserveBase, entExportRestartMap;
+        private Label newMapModeNotice, entExportTarget, entExportWarning;
         private Button newMapConfirm;
         private bool portingMap;
         private MapDocument portSource;
@@ -106,9 +106,7 @@ namespace ReMap.Standalone
             MenuAction(menu, L.T("#RENAME_CURRENT_MAP"), () => ShowRenameMapDialog(true));
             MenuAction(menu, L.T("#SAVE") + "    Ctrl+S", Save);
             MenuSeparator(menu);
-            MenuAction(menu, L.T("#BUILD_GAME_SCRIPT"), () => BuildGameScript(false), snapshot?.objects.Count > 0);
-            MenuAction(menu, L.T("#BUILD_GAME_SCRIPT_RESTART"), () => BuildGameScript(true), snapshot?.objects.Count > 0);
-            MenuAction(menu, L.T("#EXPORT_ENT_BUNDLE"), () => ShowEntExportDialog(true), snapshot?.objects.Count > 0);
+            MenuAction(menu, L.T("#BUILD_INSTALL_MAP"), () => ShowEntExportDialog(true), snapshot?.objects.Count > 0);
             MenuAction(menu, L.T("#RESET_INSTALLED_GAME_SCRIPT"), ResetGameScript);
             MenuAction(menu, L.T("#PREVIEW_GAME_CODE"), () => ShowCodePreview(), snapshot?.objects.Count > 0);
             MenuAction(menu, L.T("#LIVE_GAME_F9FC5E"), () => ShowLiveConsole(), snapshot?.objects.Count > 0);
@@ -403,22 +401,29 @@ namespace ReMap.Standalone
         {
             entExportOverlay = new VisualElement(); entExportOverlay.AddToClassList("modal-overlay"); root.Add(entExportOverlay);
             var panel = new VisualElement(); panel.AddToClassList("new-map-panel"); entExportOverlay.Add(panel);
-            var heading = DockTitle(L.T("#ENT_EXPORT_TITLE")); panel.Add(heading); heading.Add(Button("×", () => ShowEntExportDialog(false), "dock-close"));
+            var heading = DockTitle(L.T("#MAP_EXPORT_TITLE")); panel.Add(heading); heading.Add(Button("×", () => ShowEntExportDialog(false), "dock-close"));
             var content = new VisualElement(); content.AddToClassList("new-map-content"); panel.Add(content);
-            content.Add(Label(L.T("#ENT_EXPORT_MODE_HELP"), "note"));
+            content.Add(Label(L.T("#MAP_EXPORT_HELP"), "note"));
+            entExportUseNative = new Toggle(L.T("#OPTIMIZE_WITH_NATIVE_ENT")) { value = true };
+            entExportUseNative.RegisterValueChangedCallback(_ => RefreshEntExportTarget());
+            content.Add(entExportUseNative);
+            content.Add(Label(L.T("#OPTIMIZE_WITH_NATIVE_ENT_HELP"), "note"));
+            entExportNativeOptions = new VisualElement(); content.Add(entExportNativeOptions);
+            entExportNativeOptions.Add(Label(L.T("#ENT_EXPORT_MODE_HELP"), "note"));
             entExportMode = new DropdownField(L.T("#ENT_EXPORT_MODE"), new List<string>
             {
                 L.T("#ENT_EXPORT_DEVELOPMENT"),
                 L.T("#ENT_EXPORT_PUBLICATION")
             }, 0);
             entExportMode.RegisterValueChangedCallback(_ => RefreshEntExportTarget());
-            content.Add(entExportMode);
+            entExportNativeOptions.Add(entExportMode);
             entExportPreserveBase = new Toggle(L.T("#ENT_EXPORT_PRESERVE_BASE")) { value = true };
-            content.Add(entExportPreserveBase);
-            content.Add(Label(L.T("#ENT_EXPORT_PRESERVE_BASE_HELP"), "note"));
+            entExportNativeOptions.Add(entExportPreserveBase);
+            entExportNativeOptions.Add(Label(L.T("#ENT_EXPORT_PRESERVE_BASE_HELP"), "note"));
             entExportRestartMap = new Toggle(L.T("#RESTART_MAP_AFTER_INSTALL"));
             content.Add(entExportRestartMap);
             content.Add(Label(L.T("#RESTART_MAP_AFTER_INSTALL_HELP"), "note"));
+            entExportWarning = Label("", "map-source-warning"); entExportWarning.style.display = DisplayStyle.None; content.Add(entExportWarning);
             entExportTarget = Label("", "map-source-warning"); content.Add(entExportTarget);
             var actions = new VisualElement(); actions.AddToClassList("dialog-actions"); panel.Add(actions);
             actions.Add(Button(L.T("#CANCEL"), () => ShowEntExportDialog(false)));
@@ -431,6 +436,7 @@ namespace ReMap.Standalone
             if (entExportOverlay == null) return;
             if (!show) { entExportOverlay.style.display = DisplayStyle.None; return; }
             HideCommandMenu(); CommitInspectorEdit();
+            entExportUseNative.SetValueWithoutNotify(true);
             entExportMode.index = 0;
             entExportPreserveBase.SetValueWithoutNotify(true);
             entExportRestartMap.SetValueWithoutNotify(false);
@@ -441,18 +447,43 @@ namespace ReMap.Standalone
         private void RefreshEntExportTarget()
         {
             if (entExportTarget == null || snapshot == null) return;
-            bool publish = entExportMode?.index == 1;
+            bool native = entExportUseNative?.value == true;
+            bool publish = native && entExportMode?.index == 1;
+            entExportNativeOptions.style.display = native ? DisplayStyle.Flex : DisplayStyle.None;
             string map = publish ? ReMapEntExporter.PublishedMapName(snapshot.name) : snapshot.editingMap;
-            entExportTarget.text = publish ? L.F("#ENT_EXPORT_PUBLICATION_TARGET_ARG0", map) : L.F("#ENT_EXPORT_DEVELOPMENT_TARGET_ARG0", map);
+            entExportTarget.text = native ? (publish ? L.F("#ENT_EXPORT_PUBLICATION_TARGET_ARG0", map) : L.F("#ENT_EXPORT_DEVELOPMENT_TARGET_ARG0", map)) : L.F("#SCRIPT_EXPORT_TARGET_ARG0", map);
+            RefreshExportCompatibilityWarning(native);
+        }
+
+        private void RefreshExportCompatibilityWarning(bool native)
+        {
+            if (entExportWarning == null) return;
+            try
+            {
+                if (!native)
+                {
+                    int ziprails = world.GenerationObjects(snapshot).Count(item => item.customType == "ziprail");
+                    entExportWarning.text = ziprails > 0 ? L.F("#SCRIPT_EXPORT_UNSUPPORTED_ZIPRAILS_ARG0", ziprails) : "";
+                }
+                else
+                {
+                    ReMapEntFragments fragments = ReMapEntExporter.Generate(snapshot, world.GenerationObjects(snapshot));
+                    entExportWarning.text = fragments.NutOnlyObjects.Count > 0 ? L.F("#ENT_EXPORT_SCRIPT_ONLY_OBJECTS_ARG0", fragments.NutOnlyObjects.Count) : "";
+                }
+            }
+            catch (Exception exception) { entExportWarning.text = exception.Message; }
+            entExportWarning.style.display = string.IsNullOrEmpty(entExportWarning.text) ? DisplayStyle.None : DisplayStyle.Flex;
         }
 
         private void ConfirmEntExport()
         {
-            bool publish = entExportMode.index == 1;
+            bool native = entExportUseNative.value;
+            bool publish = native && entExportMode.index == 1;
             bool preserveBaseEntities = entExportPreserveBase.value;
             bool restartMap = entExportRestartMap.value;
             ShowEntExportDialog(false);
-            ExportEntBundle(publish, preserveBaseEntities, restartMap);
+            if (native) ExportEntBundle(publish, preserveBaseEntities, restartMap);
+            else BuildGameScript(restartMap);
         }
         private void BuildRenameMapDialog()
         {

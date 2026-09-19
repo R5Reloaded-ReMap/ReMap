@@ -2043,8 +2043,28 @@
       "text": "Build script and reload map"
     },
     {
+      "key": "#BUILD_INSTALL_MAP",
+      "text": "Build and install map"
+    },
+    {
       "key": "#EXPORT_ENT_BUNDLE",
       "text": "Export and install loose map"
+    },
+    {
+      "key": "#MAP_EXPORT_TITLE",
+      "text": "Build and install map"
+    },
+    {
+      "key": "#MAP_EXPORT_HELP",
+      "text": "Choose native ENT files for the most faithful map entities, or generated .nut scripts for script-based installation."
+    },
+    {
+      "key": "#OPTIMIZE_WITH_NATIVE_ENT",
+      "text": "Optimize with native ENT files"
+    },
+    {
+      "key": "#OPTIMIZE_WITH_NATIVE_ENT_HELP",
+      "text": "Disable this option to generate and install only the .nut map scripts."
     },
     {
       "key": "#ENT_EXPORT_TITLE",
@@ -2089,6 +2109,18 @@
     {
       "key": "#ENT_EXPORT_PUBLICATION_TARGET_ARG0",
       "text": "Published name: {0}"
+    },
+    {
+      "key": "#SCRIPT_EXPORT_TARGET_ARG0",
+      "text": "Generated .nut scripts will target: {0}"
+    },
+    {
+      "key": "#SCRIPT_EXPORT_UNSUPPORTED_ZIPRAILS_ARG0",
+      "text": "Warning: {0} ziprail(s) cannot be generated as .nut scripts and will be omitted. Enable native ENT optimization to export them."
+    },
+    {
+      "key": "#ENT_EXPORT_SCRIPT_ONLY_OBJECTS_ARG0",
+      "text": "Warning: {0} object(s) do not have a faithful native ENT representation and will be omitted. Disable native ENT optimization to export them as .nut scripts."
     },
     {
       "key": "#EXPORT_AND_INSTALL",

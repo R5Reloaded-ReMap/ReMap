@@ -2043,8 +2043,28 @@
       "text": "Construire le script et recharger la carte"
     },
     {
+      "key": "#BUILD_INSTALL_MAP",
+      "text": "Construire et installer la carte"
+    },
+    {
       "key": "#EXPORT_ENT_BUNDLE",
       "text": "Exporter et installer la carte loose"
+    },
+    {
+      "key": "#MAP_EXPORT_TITLE",
+      "text": "Construire et installer la carte"
+    },
+    {
+      "key": "#MAP_EXPORT_HELP",
+      "text": "Choisissez les fichiers ENT natifs pour obtenir les entités les plus fidèles, ou les scripts .nut générés pour une installation par scripts."
+    },
+    {
+      "key": "#OPTIMIZE_WITH_NATIVE_ENT",
+      "text": "Optimiser avec les fichiers ENT natifs"
+    },
+    {
+      "key": "#OPTIMIZE_WITH_NATIVE_ENT_HELP",
+      "text": "Désactivez cette option pour générer et installer uniquement les scripts .nut de la carte."
     },
     {
       "key": "#ENT_EXPORT_TITLE",
@@ -2089,6 +2109,18 @@
     {
       "key": "#ENT_EXPORT_PUBLICATION_TARGET_ARG0",
       "text": "Nom publié : {0}"
+    },
+    {
+      "key": "#SCRIPT_EXPORT_TARGET_ARG0",
+      "text": "Les scripts .nut générés cibleront : {0}"
+    },
+    {
+      "key": "#SCRIPT_EXPORT_UNSUPPORTED_ZIPRAILS_ARG0",
+      "text": "Attention : {0} ziprail(s) ne peuvent pas être générées dans les scripts .nut et seront ignorées. Activez l’optimisation ENT native pour les exporter."
+    },
+    {
+      "key": "#ENT_EXPORT_SCRIPT_ONLY_OBJECTS_ARG0",
+      "text": "Attention : {0} objet(s) n’ont pas de représentation ENT native fidèle et seront ignorés. Désactivez l’optimisation ENT native pour les exporter dans les scripts .nut."
     },
     {
       "key": "#EXPORT_AND_INSTALL",
