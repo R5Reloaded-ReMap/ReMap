@@ -2808,7 +2808,7 @@
     },
     {
       "key": "#INSTALLED_REMAP_SCRIPT_RESET_BUILD",
-      "text": "Installed ReMap script reset. Build it again to restore the map."
+      "text": "The ReMap script and installed .ent files for the active map were reset. Build them again to restore the map."
     },
     {
       "key": "#FLOWSTATE_LAUNCHER_S_LOCAL_CONSOLE",

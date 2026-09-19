@@ -992,6 +992,15 @@ namespace ReMap.Standalone
             return Apply(platformDirectory, gameTarget, ReMapGameScript.ResetEdits(gameTarget), false);
         }
 
+        public static string ResetMap(string platformDirectory, string gameDirectory,
+            MapDocument document)
+        {
+            if (document == null) throw new ArgumentNullException(nameof(document));
+            ReMapEntExporter.RestoreLooseMap(ReMapGameScript.EditingMap(document),
+                document.gameTarget, gameDirectory, platformDirectory);
+            return Reset(platformDirectory, document.gameTarget);
+        }
+
         private static string Apply(string platformDirectory, string gameTarget,
             IReadOnlyList<ReMapGameScriptEdit> edits, bool loadMap, string map = null,
             IEnumerable<string> rpaks = null)
@@ -1808,7 +1817,8 @@ namespace ReMap.Standalone
 
         private void ResetGameScript()
         {
-            string path = ReMapGameScriptInstaller.Reset(assetLibrary.PlatformDirectory, snapshot.gameTarget);
+            ReMapGameScriptInstaller.ResetMap(assetLibrary.PlatformDirectory,
+                assetLibrary.GameDirectory, snapshot);
             SetStatus(L.T("#INSTALLED_REMAP_SCRIPT_RESET_BUILD"));
         }
 

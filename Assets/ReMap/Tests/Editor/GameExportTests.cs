@@ -421,7 +421,18 @@ namespace ReMap.Standalone.Tests
                     Assert.That(System.IO.File.Exists(file + ".remap.bak"), Is.True, file);
                 Assert.That(System.IO.File.Exists(levelSettings + ".remap.bak"), Is.True, levelSettings);
 
-                ReMapGameScriptInstaller.Reset(platform, GameTargets.R5Reloaded);
+                string maps = System.IO.Path.Combine(platform, "maps");
+                System.IO.Directory.CreateDirectory(maps);
+                string currentMapEnt = System.IO.Path.Combine(maps,
+                    document.editingMap + "_script.ent");
+                string otherMapEnt = System.IO.Path.Combine(maps,
+                    "mp_rr_divided_moon_script.ent");
+                System.IO.File.WriteAllText(currentMapEnt, "generated");
+                System.IO.File.WriteAllText(currentMapEnt + ".remap.install", "ReMap");
+                System.IO.File.WriteAllText(otherMapEnt, "other map");
+                System.IO.File.WriteAllText(otherMapEnt + ".remap.install", "ReMap");
+
+                ReMapGameScriptInstaller.ResetMap(platform, platform, document);
                 string resetShared = System.IO.File.ReadAllText(shared);
                 string resetServer = System.IO.File.ReadAllText(serverMap);
                 string resetClient = System.IO.File.ReadAllText(clientMap);
@@ -444,6 +455,10 @@ namespace ReMap.Standalone.Tests
                 StringAssert.Contains("\"mp_existing.rpak\" \"1\"", resetSettings);
                 StringAssert.Contains("\"StreamDB\" \"desertlands\"", resetSettings);
                 Assert.That(System.IO.File.ReadAllText(manifestPath), Is.EqualTo(originalManifest));
+                Assert.That(System.IO.File.Exists(currentMapEnt), Is.False);
+                Assert.That(System.IO.File.Exists(currentMapEnt + ".remap.install"), Is.False);
+                Assert.That(System.IO.File.Exists(otherMapEnt), Is.True);
+                Assert.That(System.IO.File.Exists(otherMapEnt + ".remap.install"), Is.True);
                 Assert.That(System.IO.File.Exists(manifestPath + ".remap.bak"), Is.False);
             }
             finally { if (System.IO.Directory.Exists(platform)) System.IO.Directory.Delete(platform, true); }

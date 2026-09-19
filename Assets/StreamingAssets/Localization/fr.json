@@ -2808,7 +2808,7 @@
     },
     {
       "key": "#INSTALLED_REMAP_SCRIPT_RESET_BUILD",
-      "text": "Le script ReMap installé a été réinitialisé. Reconstruisez-le pour restaurer la carte."
+      "text": "Le script ReMap et les fichiers .ent installés pour la carte active ont été réinitialisés. Reconstruisez-les pour restaurer la carte."
     },
     {
       "key": "#FLOWSTATE_LAUNCHER_S_LOCAL_CONSOLE",
