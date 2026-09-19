@@ -47,7 +47,7 @@ namespace ReMap.Standalone.Tests
         }
 
         [Test]
-        public void ExportsStandaloneBezierZiplineWithCollisionFreeSupport()
+        public void ExportsStandaloneBezierZiplineWithSolidSupportAndCollisionFreeArm()
         {
             var document = Document();
             string code = ReMapGameScript.Generate(document, document.objects);
@@ -59,8 +59,8 @@ namespace ReMap.Standalone.Tests
             StringAssert.Contains("array<vector> function ReMap_BuildBezierPath", script);
             StringAssert.Contains("arm.kv.solid = 0", script);
             StringAssert.Contains("arm.kv.contents = 0", script);
-            StringAssert.Contains("support.kv.solid = 0", script);
-            StringAssert.Contains("support.kv.contents = 0", script);
+            StringAssert.Contains("support.kv.solid = SOLID_VPHYSICS", script);
+            StringAssert.DoesNotContain("support.kv.contents = 0", script);
             StringAssert.Contains("array<entity> ropes = [ ReMap_SetCurvedRopeProperties( CreateEntity( \"move_rope\" ), width, speedScale ) ]", script);
             StringAssert.Contains("CreateEntity( \"keyframe_rope\" )", script);
             StringAssert.DoesNotContain("CreateEntity( index == 0 ?", script);

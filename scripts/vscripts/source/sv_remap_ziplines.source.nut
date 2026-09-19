@@ -172,8 +172,7 @@ vector function ReMap_CreateCurvedZiplinePointModel( int profile, vector origin,
 		support.SetOrigin( origin )
 		support.SetAngles( angles )
 		support.SetValueForModelKey( REMAP_ZIPLINE_MODEL_SUPPORT )
-		support.kv.solid = 0
-		support.kv.contents = 0
+		support.kv.solid = SOLID_VPHYSICS
 		DispatchSpawn( support )
 		file.entities.append( support )
 		armOrigin = origin + RotateVector( <4, -2.5, armHeight>, angles )
