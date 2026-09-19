@@ -449,13 +449,16 @@ namespace ReMap.Standalone
             Vector2 titleSize = hasTitle ? FitTextInfoPanelText(title, textWidth) : Vector2.zero;
             if (hasDescription) FitTextInfoPanelText(description, textWidth);
 
-            float top = -.32f;
+            // Apex world-space RUI topologies use the supplied origin as their centre.
+            // Keep the preview content inset from the panel's top edge while leaving
+            // the object/gizmo origin at the centre of the native 120-unit panel.
+            float top = height * .5f - .32f;
             title.transform.localPosition = new Vector3(.026f, top, 0f);
             if (hasTitle) top -= titleSize.y + (hasDescription ? .16f : 0f);
             description.transform.localPosition = new Vector3(.026f, top, 0f);
 
             var backgroundTransform = marker.transform.Find(TextInfoPanelBackgroundName);
-            backgroundTransform.localPosition = new Vector3(0f, -height * .5f, 0f);
+            backgroundTransform.localPosition = Vector3.zero;
             backgroundTransform.localRotation = Quaternion.identity;
             backgroundTransform.localScale = new Vector3(.045f, height, width);
 

@@ -167,8 +167,9 @@ namespace ReMap.Standalone.Tests
                 Assert.That(Mathf.Abs(Mathf.DeltaAngle(marker.localEulerAngles.y, 180f)), Is.LessThan(.001f));
                 Assert.That(background.localScale.z, Is.EqualTo(nativeVisibleSize).Within(.001f));
                 Assert.That(background.localScale.y, Is.EqualTo(nativeVisibleSize).Within(.001f));
-                Assert.That(background.localPosition.y,
-                    Is.EqualTo(-nativeVisibleSize * .5f).Within(.001f));
+                Assert.That(background.localPosition, Is.EqualTo(Vector3.zero));
+                Assert.That(marker.Find("title").localPosition.y,
+                    Is.EqualTo(nativeVisibleSize * .5f - .32f).Within(.001f));
                 Assert.That(marker.Find("title").GetComponent<TextMesh>().text, Is.EqualTo("Go"));
                 Assert.That(marker.Find("description").GetComponent<TextMesh>().text, Is.EqualTo("Jump"));
                 Assert.That(marker.Find("pin").gameObject.activeSelf, Is.True);
