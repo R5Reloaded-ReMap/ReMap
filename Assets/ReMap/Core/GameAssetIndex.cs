@@ -78,22 +78,61 @@ namespace ReMap.Standalone.Core
     }
     public static class MapPortCompatibility
     {
-        public static string[] MissingModels(MapDocument document, IEnumerable<GameAssetRecord> available)
+        private static List<MapObject> MissingModelObjects(MapDocument document, IEnumerable<GameAssetRecord> available)
         {
             if (document == null) throw new ArgumentNullException(nameof(document));
             var records = (available ?? Enumerable.Empty<GameAssetRecord>()).GroupBy(record => GameAssetIndex.NormalizeGuid(record.guid), StringComparer.OrdinalIgnoreCase)
                 .ToDictionary(group => group.Key, group => group.ToArray(), StringComparer.OrdinalIgnoreCase);
-            var missing = new List<string>();
+            var missing = new List<MapObject>();
             foreach (var item in document.objects.Where(item => item.assetId != null && item.assetId.StartsWith("apex:", StringComparison.OrdinalIgnoreCase)))
             {
                 string guid;
                 try { guid = GameAssetIndex.NormalizeGuid(item.assetId.Substring(5)); }
-                catch (InvalidDataException) { missing.Add(item.displayName); continue; }
+                catch (InvalidDataException) { missing.Add(item); continue; }
                 string expectedPath = (item.gameModelPath ?? "").Replace('\\', '/').Trim();
                 if (!records.TryGetValue(guid, out var matches) || (expectedPath.Length > 0 && !matches.Any(record => string.Equals((record.modelPath ?? "").Replace('\\', '/').Trim(), expectedPath, StringComparison.OrdinalIgnoreCase))))
-                    missing.Add(expectedPath.Length > 0 ? expectedPath : item.displayName + " (" + guid + ")");
+                    missing.Add(item);
             }
-            return missing.Distinct(StringComparer.OrdinalIgnoreCase).ToArray();
+            return missing;
+        }
+
+        private static string MissingModelLabel(MapObject item)
+        {
+            string expectedPath = (item.gameModelPath ?? "").Replace('\\', '/').Trim();
+            if (expectedPath.Length > 0) return expectedPath;
+            try { return item.displayName + " (" + GameAssetIndex.NormalizeGuid(item.assetId.Substring(5)) + ")"; }
+            catch (InvalidDataException) { return item.displayName; }
+        }
+
+        public static string[] MissingModels(MapDocument document, IEnumerable<GameAssetRecord> available) =>
+            MissingModelObjects(document, available).Select(MissingModelLabel).Distinct(StringComparer.OrdinalIgnoreCase).ToArray();
+
+        public static string[] DisableObjectsUsingMissingModels(MapDocument document, IEnumerable<GameAssetRecord> available)
+        {
+            var missing = MissingModelObjects(document, available);
+            var byId = document.objects.ToDictionary(item => item.id);
+            foreach (var item in missing)
+            {
+                item.disabled = true;
+                string parentId = item.parentId;
+                while (!string.IsNullOrEmpty(parentId) && byId.TryGetValue(parentId, out var parent) && !string.IsNullOrEmpty(parent.customType))
+                {
+                    parent.disabled = true;
+                    parentId = parent.parentId;
+                }
+            }
+            return missing.Select(MissingModelLabel).Distinct(StringComparer.OrdinalIgnoreCase).ToArray();
+        }
+
+        public static int RemoveUnsupportedObjects(MapDocument document, string gameTarget)
+        {
+            if (document == null) throw new ArgumentNullException(nameof(document));
+            if (GameTargets.Normalize(gameTarget) == GameTargets.R5Flowstate) return 0;
+            MapObject[] roots = document.objects.Where(item => item.customType == "ziprail").ToArray();
+            var removed = new HashSet<string>();
+            foreach (var root in roots) removed.UnionWith(MapHierarchy.Subtree(document, root.id));
+            document.objects.RemoveAll(item => removed.Contains(item.id));
+            return roots.Length;
         }
     }
     public static class GameAssetIndex

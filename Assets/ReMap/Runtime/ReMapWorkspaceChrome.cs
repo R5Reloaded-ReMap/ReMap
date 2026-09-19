@@ -727,20 +727,27 @@ namespace ReMap.Standalone
                 if (assetLibrary.Maps.Count > 0 && targets.Count == 0) throw new InvalidOperationException(L.T("#SELECT_LEAST_ONE_RPAK_SOURCE"));
                 Loading(true, L.T("#VERIFYING_MODELS_TARGET_GAME"));
                 await assetLibrary.IndexAsync(targets.ToArray(), new Progress<string>(message => { if (this != null) SetStatus(message); }));
-                string[] missing = MapPortCompatibility.MissingModels(portSource, assetLibrary.Records.Where(record => record.Supports(targets)));
-                if (missing.Length > 0)
-                {
-                    ShowPortCompatibilityReport(target, missing);
-                    SetStatus(L.F("#CONVERSION_MISSING_MODELS_ARG0_ARG1", missing.Length, GameTargets.DisplayName(target)));
-                    return;
-                }
                 var document = codec.Decode(codec.Encode(portSource));
+                int removed = MapPortCompatibility.RemoveUnsupportedObjects(document, target);
+                string[] missing = MapPortCompatibility.DisableObjectsUsingMissingModels(document, assetLibrary.Records.Where(record => record.Supports(targets)));
                 document.name = name; document.gameTarget = target; document.editingMap = primary; document.targetMaps = targets;
                 document.Validate(); files.Save(name, document);
                 portingMap = false; portSource = null; portSourceSlot = null; newMapOverlay.style.display = DisplayStyle.None;
                 assetLibrary.SelectTarget(target);
                 OpenProject(name, document, false);
-                SetStatus(L.F("#MAP_PORTED_ARG0_ARG1", GameTargets.DisplayName(target), name));
+                if (missing.Length > 0)
+                {
+                    ShowPortCompatibilityReport(target, missing);
+                    string status = L.F("#CONVERSION_MISSING_MODELS_ARG0_ARG1", missing.Length, GameTargets.DisplayName(target));
+                    if (removed > 0) status += " " + L.F("#CONVERSION_UNSUPPORTED_OBJECTS_REMOVED_ARG0", removed);
+                    SetStatus(status);
+                }
+                else
+                {
+                    string status = L.F("#MAP_PORTED_ARG0_ARG1", GameTargets.DisplayName(target), name);
+                    if (removed > 0) status += " " + L.F("#CONVERSION_UNSUPPORTED_OBJECTS_REMOVED_ARG0", removed);
+                    SetStatus(status);
+                }
             }
             catch (Exception exception)
             {

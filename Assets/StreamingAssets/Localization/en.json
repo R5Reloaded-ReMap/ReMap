@@ -4044,19 +4044,23 @@
     },
     {
       "key": "#CONVERSION_BLOCKED",
-      "text": "Conversion blocked"
+      "text": "Conversion completed with disabled objects"
     },
     {
       "key": "#CONVERSION_MISSING_MODELS_HELP",
-      "text": "No copy was created. These model references were not found with the same GUID and internal path in the selected target archives. Change the target map/RPAKs or replace the models in the source project."
+      "text": "The converted copy was created. Objects using these model references were disabled because the same GUID and internal path were not found in the selected target archives. You can replace their models and enable them in the converted project."
     },
     {
       "key": "#BACK_TO_CONVERSION",
-      "text": "Back to conversion"
+      "text": "Continue"
     },
     {
       "key": "#CONVERSION_MISSING_MODELS_ARG0_ARG1",
-      "text": "{0} model(s) are unavailable or incompatible in {1}."
+      "text": "{0} model(s) are unavailable or incompatible in {1}. Objects using them were disabled."
+    },
+    {
+      "key": "#CONVERSION_UNSUPPORTED_OBJECTS_REMOVED_ARG0",
+      "text": "{0} unsupported object(s) were removed from the converted copy."
     },
     {
       "key": "#CLASSIC_PROP_SETTINGS",

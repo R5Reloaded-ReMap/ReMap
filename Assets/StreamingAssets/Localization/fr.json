@@ -4044,19 +4044,23 @@
     },
     {
       "key": "#CONVERSION_BLOCKED",
-      "text": "Conversion bloquée"
+      "text": "Conversion terminée avec des objets désactivés"
     },
     {
       "key": "#CONVERSION_MISSING_MODELS_HELP",
-      "text": "Aucune copie n’a été créée. Ces références de modèles n’ont pas été trouvées avec le même GUID et le même chemin interne dans les archives cibles sélectionnées. Modifiez la carte/les RPAK cibles ou remplacez les modèles dans le projet source."
+      "text": "La copie convertie a été créée. Les objets utilisant ces références de modèles ont été désactivés, car le même GUID et le même chemin interne n’ont pas été trouvés dans les archives cibles sélectionnées. Vous pouvez remplacer leurs modèles puis les réactiver dans le projet converti."
     },
     {
       "key": "#BACK_TO_CONVERSION",
-      "text": "Retour à la conversion"
+      "text": "Continuer"
     },
     {
       "key": "#CONVERSION_MISSING_MODELS_ARG0_ARG1",
-      "text": "{0} modèle(s) sont indisponibles ou incompatibles dans {1}."
+      "text": "{0} modèle(s) sont indisponibles ou incompatibles dans {1}. Les objets qui les utilisent ont été désactivés."
+    },
+    {
+      "key": "#CONVERSION_UNSUPPORTED_OBJECTS_REMOVED_ARG0",
+      "text": "{0} objet(s) non pris en charge ont été supprimés de la copie convertie."
     },
     {
       "key": "#CLASSIC_PROP_SETTINGS",

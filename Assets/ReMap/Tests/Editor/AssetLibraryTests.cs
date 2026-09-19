@@ -285,6 +285,39 @@ namespace ReMap.Standalone.Tests
             Assert.That(MapPortCompatibility.MissingModels(document, wrongPath), Is.EqualTo(new[] { "mdl/props/crate.rmdl" }));
             Assert.That(MapPortCompatibility.MissingModels(document, Array.Empty<GameAssetRecord>()), Is.EqualTo(new[] { "mdl/props/crate.rmdl" }));
         }
+        [Test] public void PortDisablesObjectsAndCustomParentsUsingMissingModels()
+        {
+            var document = new MapDocument();
+            var door = new MapObject { assetId = "custom:door", customType = "door", isGroup = true };
+            var panel = new MapObject { assetId = "apex:abc", parentId = door.id, customType = "door-component", gameModelPath = "mdl/door/panel.rmdl" };
+            var compatible = new MapObject { assetId = "apex:def", gameModelPath = "mdl/props/crate.rmdl" };
+            document.objects.Add(door);
+            document.objects.Add(panel);
+            document.objects.Add(compatible);
+            var available = new[] { Record("def", "mdl/props/crate.rmdl", "", "common.rpak") };
+
+            string[] missing = MapPortCompatibility.DisableObjectsUsingMissingModels(document, available);
+
+            Assert.That(missing, Is.EqualTo(new[] { "mdl/door/panel.rmdl" }));
+            Assert.That(panel.disabled, Is.True);
+            Assert.That(door.disabled, Is.True);
+            Assert.That(compatible.disabled, Is.False);
+        }
+        [Test] public void PortToR5ReloadedRemovesUnsupportedZiprailSubtreesOnlyFromTheCopy()
+        {
+            var document = new MapDocument();
+            var ziprail = new MapObject { customType = "ziprail", isGroup = true };
+            var point = new MapObject { customType = "ziprail-point", parentId = ziprail.id };
+            var prop = new MapObject { gameModelPath = "mdl/props/crate.rmdl" };
+            document.objects.Add(ziprail);
+            document.objects.Add(point);
+            document.objects.Add(prop);
+
+            int removed = MapPortCompatibility.RemoveUnsupportedObjects(document, GameTargets.R5Reloaded);
+
+            Assert.That(removed, Is.EqualTo(1));
+            Assert.That(document.objects, Is.EqualTo(new[] { prop }));
+        }
         [Test] public void CastAcceptsBoundedEmptyNode()
         {
             using (var stream = new MemoryStream())
