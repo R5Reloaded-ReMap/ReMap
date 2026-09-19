@@ -2319,6 +2319,30 @@
       "text": "ENT"
     },
     {
+      "key": "#ADDITIONAL_CODE",
+      "text": "Code additionnel"
+    },
+    {
+      "key": "#ADDITIONAL_CODE_HELP",
+      "text": "Enregistré avec ce projet ReMap. Ces instructions s’exécutent dans les fonctions de carte générées, après la création des objets ReMap. Les fonctions auxiliaires complètes peuvent être écrites hors des fonctions gérées dans les fichiers .nut de carte installés ; ReMap les conserve. Tab et Maj+Tab règlent l’indentation."
+    },
+    {
+      "key": "#ADDITIONAL_SHARED_PRECACHE",
+      "text": "Code de précache partagé"
+    },
+    {
+      "key": "#ADDITIONAL_SERVER_CODE",
+      "text": "Code serveur au chargement"
+    },
+    {
+      "key": "#ADDITIONAL_CLIENT_CODE",
+      "text": "Code client au chargement"
+    },
+    {
+      "key": "#INVALID_ADDITIONAL_CODE",
+      "text": "Chaque section de code additionnel doit contenir au maximum 262 144 caractères et aucun caractère nul."
+    },
+    {
       "key": "#REFRESH_CODE",
       "text": "Actualiser le code"
     },

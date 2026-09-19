@@ -115,6 +115,7 @@ namespace ReMap.Standalone
                 shared.AppendLine("\tPrecacheParticleSystem( $\"P_LL_med_drone_jet_ctr_loop\" )");
             if (world.Any(o => o.customType == "speed-boost"))
                 shared.AppendLine("\tPrecacheParticleSystem( $\"P_sprint_FP\" )");
+            AppendAdditionalCode(shared, "Additional shared precache code", document.additionalSharedCode);
 
             var server = new StringBuilder();
             server.Append("\tif ( GetMapName() != \"").Append(map).AppendLine("\" )");
@@ -156,6 +157,7 @@ namespace ReMap.Standalone
                 server.AppendLine("	// Ziprails are exported through the native .ent bundle.");
             }
             AppendZiplines(server, world, false, originOffset, useOriginOffset);
+            AppendAdditionalCode(server, "Additional server map code", document.additionalServerCode);
 
             var client = new StringBuilder();
             client.Append("\tif ( GetMapName() != \"").Append(map).AppendLine("\" )");
@@ -183,6 +185,7 @@ namespace ReMap.Standalone
                     AppendProperty(client, "ent", property, "\t", true);
             }
             AppendCameraPaths(client, world, originOffset, useOriginOffset);
+            AppendAdditionalCode(client, "Additional client map code", document.additionalClientCode);
             return new[]
             {
                 new ReMapGameScriptEdit(SharedFileName, "Sh_ReMap_PrecacheMap", shared.ToString().TrimEnd()),
@@ -290,6 +293,19 @@ namespace ReMap.Standalone
         private static void AppendClear(StringBuilder code)
         {
             code.AppendLine("\tSh_ReMap_Clear()");
+        }
+
+        private static void AppendAdditionalCode(StringBuilder code, string heading, string source)
+        {
+            if (string.IsNullOrWhiteSpace(source)) return;
+            string normalized = source.Replace("\r\n", "\n").Replace('\r', '\n').Trim('\n');
+            if (code.Length > 0) code.AppendLine();
+            code.Append("\t// ").AppendLine(heading);
+            foreach (string line in normalized.Split('\n'))
+            {
+                if (line.Length == 0) code.AppendLine();
+                else code.Append('\t').AppendLine(line);
+            }
         }
 
         private static string MapSourceDescription(MapDocument document)
@@ -1224,8 +1240,10 @@ namespace ReMap.Standalone
         private VisualElement codeWindow;
         private ScrollView codePreviewScroll;
         private Label codePreview;
-        private Button codePreviewScriptTab, codePreviewEntTab;
-        private bool codePreviewEntMode;
+        private Button codePreviewScriptTab, codePreviewEntTab, codePreviewAdditionalTab;
+        private bool codePreviewEntMode, codePreviewAdditionalMode, additionalCodeDirty, updatingAdditionalCodeEditors;
+        private VisualElement additionalCodePane;
+        private TextField additionalSharedCodeEditor, additionalServerCodeEditor, additionalClientCodeEditor;
         private VisualElement liveWindow;
         private TextField liveCommand;
         private Label liveConnectionStatus;
@@ -1296,6 +1314,7 @@ namespace ReMap.Standalone
             var tabs = new VisualElement(); tabs.AddToClassList("code-preview-tabs"); previewPane.Add(tabs);
             codePreviewScriptTab = Button(L.T("#SCRIPT_VIEW"), () => SetCodePreviewMode(false), "tool-tab"); tabs.Add(codePreviewScriptTab);
             codePreviewEntTab = Button(L.T("#ENT_VIEW"), () => SetCodePreviewMode(true), "tool-tab"); tabs.Add(codePreviewEntTab);
+            codePreviewAdditionalTab = Button(L.T("#ADDITIONAL_CODE"), SetAdditionalCodePreviewMode, "tool-tab"); tabs.Add(codePreviewAdditionalTab);
             codePreviewScroll = new ScrollView(ScrollViewMode.VerticalAndHorizontal) {
                 name = "game-code-scroll",
                 horizontalScrollerVisibility = ScrollerVisibility.Auto,
@@ -1306,6 +1325,16 @@ namespace ReMap.Standalone
             codePreview.selection.isSelectable = true;
             codePreview.AddToClassList("code-preview-content");
             codePreviewScroll.Add(codePreview); previewPane.Add(codePreviewScroll);
+            additionalCodePane = new ScrollView(ScrollViewMode.Vertical) { name = "additional-code-pane" };
+            additionalCodePane.AddToClassList("additional-code-pane");
+            additionalCodePane.Add(Label(L.T("#ADDITIONAL_CODE_HELP"), "note"));
+            additionalSharedCodeEditor = AdditionalCodeEditor(L.T("#ADDITIONAL_SHARED_PRECACHE"));
+            additionalServerCodeEditor = AdditionalCodeEditor(L.T("#ADDITIONAL_SERVER_CODE"));
+            additionalClientCodeEditor = AdditionalCodeEditor(L.T("#ADDITIONAL_CLIENT_CODE"));
+            additionalCodePane.Add(additionalSharedCodeEditor);
+            additionalCodePane.Add(additionalServerCodeEditor);
+            additionalCodePane.Add(additionalClientCodeEditor);
+            previewPane.Add(additionalCodePane);
             body.Add(BuildEntExportPanel());
             var resize = new Label("◢") { name = "resize-game-code", tooltip = L.T("#DRAG_RESIZE_DOUBLE_CLICK_DEFAULT") };
             resize.AddToClassList("code-resize-grip"); codeWindow.Add(resize); BindCodePreviewResize(resize);
@@ -1450,7 +1479,11 @@ namespace ReMap.Standalone
                 ClampCodePreviewWindow(width, height);
                 RefreshCodePreview(); RefreshEntExportTarget(); codeWindow.style.display = DisplayStyle.Flex; codeWindow.BringToFront();
             }
-            else codeWindow.style.display = DisplayStyle.None;
+            else
+            {
+                CommitAdditionalCodeEdits();
+                codeWindow.style.display = DisplayStyle.None;
+            }
         }
 
         private void ClampCodePreviewWindow(float width = -1, float height = -1)
@@ -1512,6 +1545,12 @@ namespace ReMap.Standalone
         private void RefreshCodePreview()
         {
             CommitInspectorEdit();
+            if (codePreviewAdditionalMode)
+            {
+                RefreshAdditionalCodeEditors(true);
+                RefreshEntExportTarget();
+                return;
+            }
             try
             {
                 MapObject[] objects = world.GenerationObjects(snapshot).ToArray();
@@ -1524,17 +1563,111 @@ namespace ReMap.Standalone
 
         private void SetCodePreviewMode(bool ent, bool refresh = true)
         {
+            CommitAdditionalCodeEdits();
             codePreviewEntMode = ent;
+            codePreviewAdditionalMode = false;
             codePreviewScriptTab?.EnableInClassList("active", !ent);
             codePreviewEntTab?.EnableInClassList("active", ent);
+            codePreviewAdditionalTab?.EnableInClassList("active", false);
+            if (codePreviewScroll != null) codePreviewScroll.style.display = DisplayStyle.Flex;
+            if (additionalCodePane != null) additionalCodePane.style.display = DisplayStyle.None;
             if (refresh && codeWindow?.style.display.value == DisplayStyle.Flex) RefreshCodePreview();
+        }
+
+        private void SetAdditionalCodePreviewMode()
+        {
+            CommitAdditionalCodeEdits();
+            codePreviewEntMode = false;
+            codePreviewAdditionalMode = true;
+            codePreviewScriptTab?.EnableInClassList("active", false);
+            codePreviewEntTab?.EnableInClassList("active", false);
+            codePreviewAdditionalTab?.EnableInClassList("active", true);
+            if (codePreviewScroll != null) codePreviewScroll.style.display = DisplayStyle.None;
+            if (additionalCodePane != null) additionalCodePane.style.display = DisplayStyle.Flex;
+            RefreshAdditionalCodeEditors(true);
+        }
+
+        private TextField AdditionalCodeEditor(string label)
+        {
+            var field = new TextField(label) { multiline = true, isDelayed = false };
+            field.AddToClassList("additional-code-editor");
+            field.RegisterValueChangedCallback(_ => { if (!updatingAdditionalCodeEditors) additionalCodeDirty = true; });
+            field.RegisterCallback<FocusOutEvent>(_ => root.schedule.Execute(() => Run(CommitAdditionalCodeEdits)));
+            field.RegisterCallback<KeyDownEvent>(e => InsertCodeIndent(field, e), TrickleDown.TrickleDown);
+            return field;
+        }
+
+        private void InsertCodeIndent(TextField field, KeyDownEvent e)
+        {
+            if (e.keyCode != KeyCode.Tab) return;
+            string source = field.value ?? "";
+            int cursor = Mathf.Clamp(field.cursorIndex, 0, source.Length);
+            int selection = Mathf.Clamp(field.selectIndex, 0, source.Length);
+            int start = Math.Min(cursor, selection), end = Math.Max(cursor, selection);
+            if (e.shiftKey)
+            {
+                int lineStart = start == 0 ? 0 : source.LastIndexOf('\n', start - 1) + 1;
+                int remove = lineStart < source.Length && source[lineStart] == '\t' ? 1 : 0;
+                if (remove == 0)
+                    while (remove < 4 && lineStart + remove < source.Length && source[lineStart + remove] == ' ') remove++;
+                if (remove > 0)
+                {
+                    field.SetValueWithoutNotify(source.Remove(lineStart, remove));
+                    field.cursorIndex = Math.Max(lineStart, cursor - remove);
+                    field.selectIndex = Math.Max(lineStart, selection - remove);
+                    additionalCodeDirty = true;
+                }
+            }
+            else
+            {
+                field.SetValueWithoutNotify(source.Remove(start, end - start).Insert(start, "\t"));
+                field.cursorIndex = field.selectIndex = start + 1;
+                additionalCodeDirty = true;
+            }
+            e.StopImmediatePropagation();
+        }
+
+        private void RefreshAdditionalCodeEditors(bool force = false)
+        {
+            if (snapshot == null || additionalSharedCodeEditor == null || additionalCodeDirty && !force) return;
+            updatingAdditionalCodeEditors = true;
+            additionalSharedCodeEditor.SetValueWithoutNotify(snapshot.additionalSharedCode ?? "");
+            additionalServerCodeEditor.SetValueWithoutNotify(snapshot.additionalServerCode ?? "");
+            additionalClientCodeEditor.SetValueWithoutNotify(snapshot.additionalClientCode ?? "");
+            updatingAdditionalCodeEditors = false;
+            additionalCodeDirty = false;
+        }
+
+        private void CommitAdditionalCodeEdits()
+        {
+            if (!additionalCodeDirty || snapshot == null || additionalSharedCodeEditor == null) return;
+            string shared = additionalSharedCodeEditor.value ?? "";
+            string server = additionalServerCodeEditor.value ?? "";
+            string client = additionalClientCodeEditor.value ?? "";
+            session.Edit(document =>
+            {
+                document.additionalSharedCode = shared;
+                document.additionalServerCode = server;
+                document.additionalClientCode = client;
+            });
+            snapshot = session.Snapshot();
+            additionalCodeDirty = false;
+            undoButton?.SetEnabled(session.CanUndo);
+            redoButton?.SetEnabled(session.CanRedo);
+            fileStatus.text = session.Revision == lastSavedRevision ? L.T("#SAVED") : L.T("#UNSAVED_CHANGES");
+            QueueWorkspaceRecovery();
         }
 
         private void CopyPreviewCode()
         {
-            RefreshCodePreview(); GUIUtility.systemCopyBuffer = codePreview.text;
+            RefreshCodePreview();
+            GUIUtility.systemCopyBuffer = codePreviewAdditionalMode
+                ? "// Shared precache\n" + (snapshot.additionalSharedCode ?? "") + "\n\n// Server map load\n" + (snapshot.additionalServerCode ?? "") + "\n\n// Client map load\n" + (snapshot.additionalClientCode ?? "")
+                : codePreview.text;
             SetStatus(L.T("#GENERATED_OUTPUT_COPIED"));
         }
+
+        private bool CanOpenGameCode() => snapshot != null && (snapshot.objects.Count > 0 || !string.IsNullOrWhiteSpace(snapshot.editingMap));
 
         private bool PointerOverFloatingPanel(Vector2 position) =>
             toolsOpen && toolsWindow?.style.display.value == DisplayStyle.Flex && toolsWindow.worldBound.Contains(position) ||

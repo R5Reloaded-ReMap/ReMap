@@ -96,6 +96,33 @@ namespace ReMap.Standalone.Tests
         }
 
         [Test]
+        public void AdditionalCodeIsProjectScopedAndKeepsRelativeIndentation()
+        {
+            var document = new MapDocument
+            {
+                name = "Additional code",
+                editingMap = "mp_rr_desertlands_hu",
+                additionalSharedCode = "PrecacheParticleSystem( $\"P_test\" )",
+                additionalServerCode = "SetupPlayers()\nif ( GetGameState() == eGameState.Playing )\n{\n\tStartCustomMode()\n}",
+                additionalClientCode = "CreateClientHud()"
+            };
+
+            string code = ReMapGameScript.Generate(document, System.Array.Empty<MapObject>()).Replace("\r\n", "\n");
+
+            StringAssert.Contains("\t// Additional shared precache code\n\tPrecacheParticleSystem( $\"P_test\" )", code);
+            StringAssert.Contains("\t// Additional server map code\n\tSetupPlayers()\n\tif ( GetGameState() == eGameState.Playing )\n\t{\n\t\tStartCustomMode()\n\t}", code);
+            StringAssert.Contains("\t// Additional client map code\n\tCreateClientHud()", code);
+
+            var copy = document.Copy();
+            copy.additionalServerCode = "OtherMapSetup()";
+            Assert.That(document.additionalServerCode, Does.StartWith("SetupPlayers()"));
+            var roundTrip = new UnityMapCodec().Decode(new UnityMapCodec().Encode(document));
+            Assert.That(roundTrip.additionalSharedCode, Is.EqualTo(document.additionalSharedCode));
+            Assert.That(roundTrip.additionalServerCode, Is.EqualTo(document.additionalServerCode));
+            Assert.That(roundTrip.additionalClientCode, Is.EqualTo(document.additionalClientCode));
+        }
+
+        [Test]
         public void NonZeroSceneOriginOffsetsPropsAndZiplinesOnlyInGame()
         {
             var document = new MapDocument
@@ -331,11 +358,12 @@ namespace ReMap.Standalone.Tests
                 System.IO.File.WriteAllText(System.IO.Path.Combine(remap, "sv_remap_ziplines.nut"), "global function ReMap_CreateZipline\n");
                 System.IO.File.WriteAllText(System.IO.Path.Combine(remap, "cl_remap_objects.nut"), "global function ReMap_CreateClientProp\n");
                 System.IO.File.WriteAllText(shared, "global const bool REMAP_LOAD_MAP = false\n// shared customization\nvoid function Sh_ReMap_PrecacheMap() {\n\tPrecacheModel( $\"mdl/dev/empty.rmdl\" )\n}\n");
-                System.IO.File.WriteAllText(serverMap, "// server customization\nvoid function Sv_ReMap_LoadMap() {}\n");
+                System.IO.File.WriteAllText(serverMap, "// server customization\nglobal function ManualServerHelper\nvoid function ManualServerHelper()\n{\n\tprint( \"manual\" )\n}\nvoid function Sv_ReMap_LoadMap() {}\n");
                 System.IO.File.WriteAllText(clientMap, "// client customization\nvoid function Cl_ReMap_LoadMap() {}\n");
                 System.IO.File.WriteAllText(levelSettings,
                     "\"LevelSet\"\n{\n    \"StreamDB\" \"desertlands\"\n}\n");
                 var document = new MapDocument { gameTarget = GameTargets.R5Reloaded, editingMap = "mp_rr_desertlands_64k_x_64k" };
+                document.additionalServerCode = "FirstProjectSetup()";
                 var server = new MapObject { displayName = "Server", gameModelPath = "mdl/props/server.rmdl" };
                 var client = new MapObject { displayName = "Client", gameModelPath = "mdl/props/client.rmdl", clientSide = true };
                 document.objects.Add(server); document.objects.Add(client);
@@ -346,6 +374,7 @@ namespace ReMap.Standalone.Tests
                     "        // ReMap managed paks - begin",
                     "        \"native.rpak\" \"0\"\n        \"mp_existing.rpak\" \"1\"\n        // ReMap managed paks - begin");
                 System.IO.File.WriteAllText(levelSettings, settingsWithExternalEntries);
+                document.additionalServerCode = "SecondProjectSetup()";
                 ReMapGameScriptInstaller.Write(platform, document, document.objects,
                     new[] { "mp_replacement.rpak", "mp_existing.rpak" });
 
@@ -354,6 +383,9 @@ namespace ReMap.Standalone.Tests
                 StringAssert.Contains("PrecacheModel( $\"mdl/props/server.rmdl\" )", System.IO.File.ReadAllText(shared));
                 StringAssert.Contains("PrecacheModel( $\"mdl/props/client.rmdl\" )", System.IO.File.ReadAllText(shared));
                 StringAssert.Contains("ReMap_CreateProp( $\"mdl/props/server.rmdl\"", System.IO.File.ReadAllText(serverMap));
+                StringAssert.Contains("SecondProjectSetup()", System.IO.File.ReadAllText(serverMap));
+                StringAssert.DoesNotContain("FirstProjectSetup()", System.IO.File.ReadAllText(serverMap));
+                StringAssert.Contains("void function ManualServerHelper()", System.IO.File.ReadAllText(serverMap));
                 StringAssert.DoesNotContain("mdl/props/client.rmdl", System.IO.File.ReadAllText(serverMap));
                 StringAssert.Contains("ReMap_CreateClientProp( $\"mdl/props/client.rmdl\"", System.IO.File.ReadAllText(clientMap));
                 StringAssert.Contains("prop.GetValueForKey( \"can_mantle\" )",
@@ -390,6 +422,7 @@ namespace ReMap.Standalone.Tests
                 StringAssert.DoesNotContain("ReMap_CreateClientProp", resetClient);
                 StringAssert.Contains("void function Sv_ReMap_LoadMap() {}", resetServer);
                 StringAssert.Contains("void function Cl_ReMap_LoadMap() {}", resetClient);
+                StringAssert.Contains("void function ManualServerHelper()", resetServer);
                 StringAssert.Contains("// shared customization", resetShared);
                 StringAssert.Contains("// server customization", resetServer);
                 StringAssert.Contains("// client customization", resetClient);

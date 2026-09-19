@@ -170,6 +170,9 @@ namespace ReMap.Standalone.Core
         public string gameTarget = GameTargets.R5Reloaded;
         public string editingMap = "";
         public List<string> targetMaps = new List<string>();
+        public string additionalSharedCode = "";
+        public string additionalServerCode = "";
+        public string additionalClientCode = "";
         // Scene-root translation. Objects stay local to the editor origin; game output adds this offset.
         public Float3 originOffset;
         public List<MapObject> objects = new List<MapObject>();
@@ -178,7 +181,8 @@ namespace ReMap.Standalone.Core
         {
             var result = new MapDocument { schemaVersion = schemaVersion, name = name,
                 coordinateSystem = coordinateSystem, gameTarget = gameTarget, editingMap = editingMap,
-                originOffset = originOffset,
+                additionalSharedCode = additionalSharedCode, additionalServerCode = additionalServerCode,
+                additionalClientCode = additionalClientCode, originOffset = originOffset,
                 targetMaps = new List<string>(targetMaps ?? new List<string>()) };
             foreach (var item in objects) result.objects.Add(item.Copy());
             return result;
@@ -201,8 +205,14 @@ namespace ReMap.Standalone.Core
             else if (!GameTargets.IsSupported(gameTarget))
                 throw new ArgumentException(L.T("#UNSUPPORTED_TARGET_GAME"));
             editingMap = editingMap ?? "";
+            additionalSharedCode = additionalSharedCode ?? "";
+            additionalServerCode = additionalServerCode ?? "";
+            additionalClientCode = additionalClientCode ?? "";
             if (editingMap.Length > 128)
                 throw new ArgumentException(L.T("#INVALID_EDITED_MAP"));
+            if (additionalSharedCode.Length > 262144 || additionalServerCode.Length > 262144 || additionalClientCode.Length > 262144 ||
+                additionalSharedCode.IndexOf('\0') >= 0 || additionalServerCode.IndexOf('\0') >= 0 || additionalClientCode.IndexOf('\0') >= 0)
+                throw new ArgumentException(L.T("#INVALID_ADDITIONAL_CODE"));
             if (targetMaps.Count > 64 || targetMaps.Exists(m => string.IsNullOrWhiteSpace(m) || m.Length > 128))
                 throw new ArgumentException(L.T("#INVALID_TARGET_MAP_LIST"));
             var ids = new HashSet<string>(StringComparer.Ordinal);

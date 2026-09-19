@@ -106,9 +106,9 @@ namespace ReMap.Standalone
             MenuAction(menu, L.T("#RENAME_CURRENT_MAP"), () => ShowRenameMapDialog(true));
             MenuAction(menu, L.T("#SAVE") + "    Ctrl+S", Save);
             MenuSeparator(menu);
-            MenuAction(menu, L.T("#BUILD_INSTALL_MAP"), () => ShowCodePreview(), snapshot?.objects.Count > 0);
+            MenuAction(menu, L.T("#BUILD_INSTALL_MAP"), () => ShowCodePreview(), CanOpenGameCode());
             MenuAction(menu, L.T("#RESET_INSTALLED_GAME_SCRIPT"), ResetGameScript);
-            MenuAction(menu, L.T("#PREVIEW_GAME_CODE"), () => ShowCodePreview(), snapshot?.objects.Count > 0);
+            MenuAction(menu, L.T("#PREVIEW_GAME_CODE"), () => ShowCodePreview(), CanOpenGameCode());
             if (LiveMapEnabled)
             {
                 MenuAction(menu, L.T("#LIVE_GAME_F9FC5E"), () => ShowLiveConsole(), snapshot?.objects.Count > 0);
@@ -355,7 +355,9 @@ namespace ReMap.Standalone
 
         private void SaveWorkspaceRecovery()
         {
-            if (files == null || slot == null || snapshot == null || Environment.GetCommandLineArgs().AnySmokeFlag()) return;
+            if (Environment.GetCommandLineArgs().AnySmokeFlag()) return;
+            CommitAdditionalCodeEdits();
+            if (files == null || slot == null || snapshot == null) return;
             try
             {
                 files.Save(RecoverySlot(snapshot.gameTarget), session.Snapshot());

@@ -2319,6 +2319,30 @@
       "text": "ENT"
     },
     {
+      "key": "#ADDITIONAL_CODE",
+      "text": "Additional code"
+    },
+    {
+      "key": "#ADDITIONAL_CODE_HELP",
+      "text": "Saved with this ReMap project. These statements run inside the generated map functions after ReMap objects are created. Complete helper functions may be written outside the managed functions in the installed map .nut files; ReMap preserves them. Tab and Shift+Tab adjust indentation."
+    },
+    {
+      "key": "#ADDITIONAL_SHARED_PRECACHE",
+      "text": "Shared precache code"
+    },
+    {
+      "key": "#ADDITIONAL_SERVER_CODE",
+      "text": "Server map-load code"
+    },
+    {
+      "key": "#ADDITIONAL_CLIENT_CODE",
+      "text": "Client map-load code"
+    },
+    {
+      "key": "#INVALID_ADDITIONAL_CODE",
+      "text": "Additional code must not exceed 262,144 characters per section or contain null characters."
+    },
+    {
       "key": "#REFRESH_CODE",
       "text": "Refresh code"
     },

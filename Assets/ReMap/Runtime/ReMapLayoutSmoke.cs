@@ -133,6 +133,8 @@ namespace ReMap.Standalone
             TreeClick(codeToolbarButton); await TreeFrames();
             if (codeWindow.parent != root || codeWindow.resolvedStyle.display == DisplayStyle.None || string.IsNullOrWhiteSpace(codePreview.text))
                 throw new Exception("Generated code floating window did not open.");
+            if (codePreviewAdditionalTab == null || additionalCodePane == null || additionalSharedCodeEditor == null || additionalServerCodeEditor == null || additionalClientCodeEditor == null)
+                throw new Exception("Project additional-code editors are missing.");
             var codeExportPanel = codeWindow.Q(className: "code-export-panel");
             if (codeExportPanel == null || entExportUseNative == null || entExportMode == null || entExportRestartMap == null)
                 throw new Exception("Generated code window does not contain its map build options.");
@@ -145,6 +147,10 @@ namespace ReMap.Standalone
                 throw new Exception("Generated code scroll bars or resize corner are oversized.");
             if (codePreviewScroll.verticalScroller.worldBound.yMin < codePreviewScroll.worldBound.yMin - 1 || codePreviewScroll.verticalScroller.worldBound.yMax > codePreviewScroll.worldBound.yMax + 1 || codePreviewScroll.worldBound.height - codePreviewScroll.verticalScroller.worldBound.height > 6)
                 throw new Exception("Generated code scroll bar does not fill its text rectangle.");
+            TreeClick(codePreviewAdditionalTab); await TreeFrames();
+            if (additionalCodePane.resolvedStyle.display == DisplayStyle.None || additionalServerCodeEditor.worldBound.width < 250 || additionalServerCodeEditor.worldBound.height < 90)
+                throw new Exception("Project additional-code editor is hidden or clipped.");
+            SetCodePreviewMode(false); await TreeFrames();
             Vector2 codeSize = codeWindow.worldBound.size, codeResizeStart = codeResize.worldBound.center, codeResizeDelta = new Vector2(55, 35);
             using (var e = PointerDownEvent.GetPooled(new Event { type = EventType.MouseDown, button = 0, mousePosition = codeResizeStart })) codeResize.SendEvent(e);
             using (var e = PointerMoveEvent.GetPooled(new Event { type = EventType.MouseDrag, button = 0, mousePosition = codeResizeStart + codeResizeDelta, delta = codeResizeDelta })) codeResize.SendEvent(e);
@@ -157,11 +163,11 @@ namespace ReMap.Standalone
             string previewCode = codePreview.text;
             codePreview.text = string.Join("\n", Enumerable.Range(0, 80).Select(i => previewCode + i + new string('x', 220))); await TreeFrames();
             codePreviewScroll.scrollOffset = new Vector2(codePreviewScroll.horizontalScroller.highValue, codePreviewScroll.verticalScroller.highValue); await TreeFrames();
-            if (codePreviewScroll.horizontalScrollerVisibility != ScrollerVisibility.Hidden ||
+            bool horizontalOverflow = codePreviewScroll.horizontalScroller.highValue > 1;
+            if (codePreviewScroll.horizontalScrollerVisibility != ScrollerVisibility.Auto ||
                 codePreviewScroll.verticalScrollerVisibility != ScrollerVisibility.AlwaysVisible ||
-                codePreviewScroll.scrollOffset.x > 1 || codePreviewScroll.scrollOffset.y < 1 ||
-                codePreview.worldBound.width > codePreviewScroll.contentViewport.worldBound.width + 1)
-                throw new Exception("Generated code preview does not wrap or scroll vertically.");
+                codePreviewScroll.scrollOffset.y < 1 || horizontalOverflow && codePreviewScroll.scrollOffset.x < 1)
+                throw new Exception("Generated code preview does not scroll to its long content.");
             codePreview.text = previewCode; codePreviewScroll.scrollOffset = Vector2.zero;
             ShowCodePreview(false);
             if (LiveMapEnabled)

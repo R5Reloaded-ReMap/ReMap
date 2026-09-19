@@ -550,7 +550,7 @@ namespace ReMap.Standalone
             world.Sync(snapshot, selectedId); world.HighlightSelection(SelectionRoots()); SyncMapReference();
 
             undoButton?.SetEnabled(session.CanUndo); redoButton?.SetEnabled(session.CanRedo);
-            codePreviewToolbarButton?.SetEnabled(snapshot.objects.Count > 0);
+            codePreviewToolbarButton?.SetEnabled(CanOpenGameCode());
 
             fileStatus.text = session.Revision == lastSavedRevision ? L.T("#SAVED") : L.T("#UNSAVED_CHANGES");
 
@@ -1025,6 +1025,7 @@ namespace ReMap.Standalone
 
         private void CommitInspectorEdit()
         {
+            CommitAdditionalCodeEdits();
             if (!inspectorDirty || inspectorEditingId == null || positionInput == null) return;
             if(inspectorEditingId==SceneRootInspectorId)
             {
