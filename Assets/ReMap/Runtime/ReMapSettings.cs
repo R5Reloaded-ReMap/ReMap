@@ -14,6 +14,7 @@ namespace ReMap.Standalone
     public sealed partial class ReMapApp
     {
         private VisualElement settingsOverlay, indexingOverlay, libraryDock, inspectorPanel;
+        private ScrollView settingsScroll;
         private System.Threading.Tasks.Task settingsIndexTask;
         private DropdownField editingMapChoice;
         private Label missingMapNotice;
@@ -26,7 +27,7 @@ namespace ReMap.Standalone
             var heading = DockTitle(L.T("#SETTINGS")); heading.name = "settings-drag-title"; panel.Add(heading); BindResize(heading, "settings-move");
 
             heading.Add(Button("×", () => ShowSettings(false), "dock-close"));
-            var scroll = new ScrollView(); scroll.AddToClassList("settings-scroll"); panel.Add(scroll);
+            var scroll = settingsScroll = new ScrollView(); scroll.AddToClassList("settings-scroll"); panel.Add(scroll);
             scroll.Add(Label(L.T("#SETTINGS_PAGE_INTRO"), "settings-intro"));
             scroll.Add(Label(L.T("#INTERFACE"), "section-title"));
             var languages = AppLocalization.Languages;
@@ -89,19 +90,6 @@ namespace ReMap.Standalone
             r5fPaths.Add(Label(L.T("#FIRST_TIME_SETUP_HELP"), "note"));
             r5fPaths.Add(Button(L.T("#SET_UP_REMAP_FIRST_TIME"), () => setupGame(GameTargets.R5Flowstate)));
             scroll.Add(Button(L.T("#SAVE_PATHS"), applyGameSources));
-            if (LiveMapEnabled)
-            {
-                scroll.Add(Label(L.T("#GAME_CONNECTION"), "section-title"));
-                string savedAddress = string.IsNullOrWhiteSpace(assetLibrary.Settings.rconAddress) ? "[::ffff:127.0.0.1]:37015" : assetLibrary.Settings.rconAddress;
-                var rconAddress = new TextField(L.T("#SERVER_ADDRESS")) { value = savedAddress }; rconAddress.AddToClassList("settings-field"); scroll.Add(rconAddress);
-                var rconKey = new TextField(L.T("#RCON_AES_KEY")) { value = assetLibrary.Settings.rconKey ?? "" }; rconKey.AddToClassList("settings-field"); scroll.Add(rconKey);
-                var rconPassword = new TextField(L.T("#RCON_PASSWORD")) { value = assetLibrary.Settings.rconPassword ?? "", isPasswordField = true }; rconPassword.AddToClassList("settings-field"); scroll.Add(rconPassword);
-                scroll.Add(Label(L.T("#R5FLOWSTATE_USE_OPEN_LAUNCHER_CONSOLE"), "note"));
-                scroll.Add(Button(L.T("#SAVE_GAME_CONNECTION"), () => {
-                    assetLibrary.Settings.rconAddress = rconAddress.value.Trim(); assetLibrary.Settings.rconKey = rconKey.value.Trim(); assetLibrary.Settings.rconPassword = rconPassword.value;
-                    assetLibrary.SaveSettings(); SetStatus(L.T("#GAME_CONNECTION_SAVED"));
-                }));
-            }
             scroll.Add(Label(L.T("#ASSET_CACHE"), "section-title"));
             scroll.Add(Label(L.T("#COMPATIBLE_MODELS_TEXTURES_SHARED_BETWEEN"), "note"));
             var cachePath = new TextField(L.T("#ASSET_EXPORT_FOLDER")) { value = assetLibrary.AssetExportDirectory, isDelayed = true }; cachePath.AddToClassList("settings-field"); scroll.Add(cachePath);
@@ -119,6 +107,19 @@ namespace ReMap.Standalone
                 Directory.CreateDirectory(assetLibrary.AssetExportDirectory);
                 Process.Start(new ProcessStartInfo { FileName = assetLibrary.AssetExportDirectory, UseShellExecute = true });
             }));
+            if (LiveMapEnabled)
+            {
+                scroll.Add(Label(L.T("#GAME_CONNECTION"), "section-title"));
+                string savedAddress = string.IsNullOrWhiteSpace(assetLibrary.Settings.rconAddress) ? "[::ffff:127.0.0.1]:37015" : assetLibrary.Settings.rconAddress;
+                var rconAddress = new TextField(L.T("#SERVER_ADDRESS")) { value = savedAddress }; rconAddress.AddToClassList("settings-field"); scroll.Add(rconAddress);
+                var rconKey = new TextField(L.T("#RCON_AES_KEY")) { value = assetLibrary.Settings.rconKey ?? "" }; rconKey.AddToClassList("settings-field"); scroll.Add(rconKey);
+                var rconPassword = new TextField(L.T("#RCON_PASSWORD")) { value = assetLibrary.Settings.rconPassword ?? "", isPasswordField = true }; rconPassword.AddToClassList("settings-field"); scroll.Add(rconPassword);
+                scroll.Add(Label(L.T("#R5FLOWSTATE_USE_OPEN_LAUNCHER_CONSOLE"), "note"));
+                scroll.Add(Button(L.T("#SAVE_GAME_CONNECTION"), () => {
+                    assetLibrary.Settings.rconAddress = rconAddress.value.Trim(); assetLibrary.Settings.rconKey = rconKey.value.Trim(); assetLibrary.Settings.rconPassword = rconPassword.value;
+                    assetLibrary.SaveSettings(); SetStatus(L.T("#GAME_CONNECTION_SAVED"));
+                }));
+            }
             scroll.Add(Label(L.T("#MAP_REFERENCE_DISPLAY"), "section-title"));
             var showMainBsp = new Toggle(L.T("#SHOW_MAIN_BSP")) { value = assetLibrary.Settings.showMainBsp };
             showMainBsp.tooltip = L.T("#SHOW_MAIN_BSP_HELP");
@@ -228,6 +229,7 @@ namespace ReMap.Standalone
             if (show)
             {
                 CommitInspectorEdit(); CancelGizmoDrag(); world.ClearPreview();
+                settingsScroll?.schedule.Execute(() => settingsScroll.scrollOffset = Vector2.zero);
             }
             settingsOverlay.style.display = show ? DisplayStyle.Flex : DisplayStyle.None;
             if (show) { AdaptLayout(); settingsOverlay.BringToFront(); } else { EndLayoutResize(); SaveLayout(); }
