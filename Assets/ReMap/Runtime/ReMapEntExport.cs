@@ -74,7 +74,7 @@ namespace ReMap.Standalone
 
             foreach (var item in world.Where(item => item.customType == "door"))
             {
-                if (item.doorGold || item.doorSpawnOpen)
+                if (item.doorSpawnOpen)
                 {
                     nutOnly.Add(Display(item) + " (door options require .nut)");
                     nutOnlyIds.Add(item.id);
@@ -626,13 +626,13 @@ namespace ReMap.Standalone
             if (profile.Id == "double")
             {
                 string first = LinkGuid(door.id, 0), second = LinkGuid(door.id, 1);
-                AppendPropDoor(output, Transform(door, new Vector3(0, -60, 0), Vector3.zero), offset, first, second);
-                AppendPropDoor(output, Transform(door, new Vector3(0, 60, 0), new Vector3(0, 180, 0)), offset, second, null);
+                AppendPropDoor(output, Transform(door, new Vector3(0, -60, 0), Vector3.zero), offset, first, second, door.doorGold);
+                AppendPropDoor(output, Transform(door, new Vector3(0, 60, 0), new Vector3(0, 180, 0)), offset, second, null, door.doorGold);
                 return 2;
             }
             if (profile.Id == "single")
             {
-                AppendPropDoor(output, Transform(door, Vector3.zero, Vector3.zero), offset, null, null);
+                AppendPropDoor(output, Transform(door, Vector3.zero, Vector3.zero), offset, null, null, door.doorGold);
                 return 1;
             }
             AppendAnimatedProp(output, door, offset, profile.ModelPath, "survival_door_plain", 0);
@@ -723,6 +723,7 @@ namespace ReMap.Standalone
             List<Vector3> curve = BezierPath(adjusted, zipline.curvedZiplineSegments);
             for (int index = 0; index < curve.Count; index++)
             {
+                string targetName = "remap_rope_" + LinkGuid(zipline.id, index);
                 var fields = new List<KeyValuePair<string, string>>
                 {
                     Pair("MoveSpeed", Number(64f * zipline.ziplineSpeed)), Pair("Slack", "25"),
@@ -732,10 +733,10 @@ namespace ReMap.Standalone
                     Pair("ZiplineAutoDetachDistance", "150"), Pair("ZiplineSagEnable", "0"),
                     Pair("ZiplineSagHeight", "50"), Pair("fadedist", "50000"),
                     Pair("origin", VectorValue(ApexDisplay.Position(curve[index] + offset))),
-                    Pair("link_guid", LinkGuid(zipline.id, index))
+                    Pair("targetname", targetName)
                 };
                 if (index + 1 < curve.Count)
-                    fields.Add(Pair("link_to_guid_0", LinkGuid(zipline.id, index + 1)));
+                    fields.Add(Pair("NextKey", "remap_rope_" + LinkGuid(zipline.id, index + 1)));
                 fields.Add(Pair("classname", index == 0 ? "move_rope" : "keyframe_rope"));
                 AppendEntity(output, fields.ToArray());
             }
@@ -982,7 +983,7 @@ namespace ReMap.Standalone
         }
 
         private static void AppendPropDoor(StringBuilder output, MapObject item, Vector3 offset,
-            string linkGuid, string linkTo)
+            string linkGuid, string linkTo, bool gold)
         {
             var fields = new List<KeyValuePair<string, string>>
             {
@@ -991,6 +992,7 @@ namespace ReMap.Standalone
             };
             if (linkTo != null) fields.Add(Pair("link_to_guid_0", linkTo));
             if (linkGuid != null) fields.Add(Pair("link_guid", linkGuid));
+            fields.Add(Pair("skin", gold ? "1" : "0"));
             fields.Add(Pair("model", ReMapDoorProfiles.SingleModelPath));
             fields.Add(Pair("classname", "prop_door"));
             AppendEntity(output, fields.ToArray());

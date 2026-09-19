@@ -191,6 +191,18 @@ namespace ReMap.Standalone.Tests
             Assert.That(result.NutOnlyObjects, Has.Some.Contains("Open gold door"));
         }
 
+        [TestCase(false, "0")]
+        [TestCase(true, "1")]
+        public void SwingDoorEntUsesTheSelectedSkin(bool gold, string skin)
+        {
+            var door = new MapObject { customType = "door", isGroup = true, doorType = "single", doorGold = gold };
+            ReMapEntFragments result = ReMapEntExporter.Generate(Document(), new[] { door });
+
+            Assert.That(result.ScriptEntityCount, Is.EqualTo(1));
+            StringAssert.Contains("\"skin\" \"" + skin + "\"", result.Script);
+            Assert.That(result.NutOnlyObjects, Is.Empty);
+        }
+
         [Test]
         public void ClosedDoubleDoorUsesTwoLinkedNativeDoorEntities()
         {
@@ -243,6 +255,10 @@ namespace ReMap.Standalone.Tests
             StringAssert.Contains("\"classname\" \"move_rope\"", result.Script);
             StringAssert.Contains("\"classname\" \"keyframe_rope\"", result.Script);
             StringAssert.Contains("\"PositionInterpolator\" \"2\"", result.Script);
+            StringAssert.Contains("\"targetname\" \"remap_rope_", result.Script);
+            StringAssert.Contains("\"NextKey\" \"remap_rope_", result.Script);
+            StringAssert.DoesNotContain("\"link_guid\"", result.Script);
+            StringAssert.DoesNotContain("\"link_to_guid_0\"", result.Script);
             StringAssert.Contains("\"solid\" \"0\"", result.Script);
             StringAssert.Contains("\"contents\" \"0\"", result.Script);
         }
