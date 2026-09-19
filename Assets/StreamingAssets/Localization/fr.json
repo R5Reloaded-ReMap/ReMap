@@ -2324,19 +2324,31 @@
     },
     {
       "key": "#ADDITIONAL_CODE_HELP",
-      "text": "Enregistré avec ce projet ReMap. Ces instructions s’exécutent dans les fonctions de carte générées, après la création des objets ReMap. Les fonctions auxiliaires complètes peuvent être écrites hors des fonctions gérées dans les fichiers .nut de carte installés ; ReMap les conserve. Tab et Maj+Tab règlent l’indentation."
+      "text": "Enregistré avec ce projet ReMap. Les sections avant s’exécutent avant le précache ou les objets générés ; les sections après s’exécutent ensuite. Les fonctions auxiliaires complètes peuvent être écrites hors des fonctions gérées dans les fichiers .nut de carte installés ; ReMap les conserve. Tab et Maj+Tab règlent l’indentation."
+    },
+    {
+      "key": "#ADDITIONAL_SHARED_BEFORE_CODE",
+      "text": "Code partagé avant le précache généré"
+    },
+    {
+      "key": "#ADDITIONAL_SERVER_BEFORE_CODE",
+      "text": "Code serveur avant les objets générés"
+    },
+    {
+      "key": "#ADDITIONAL_CLIENT_BEFORE_CODE",
+      "text": "Code client avant les objets générés"
     },
     {
       "key": "#ADDITIONAL_SHARED_PRECACHE",
-      "text": "Code de précache partagé"
+      "text": "Code partagé après le précache généré"
     },
     {
       "key": "#ADDITIONAL_SERVER_CODE",
-      "text": "Code serveur au chargement"
+      "text": "Code serveur après les objets générés"
     },
     {
       "key": "#ADDITIONAL_CLIENT_CODE",
-      "text": "Code client au chargement"
+      "text": "Code client après les objets générés"
     },
     {
       "key": "#INVALID_ADDITIONAL_CODE",

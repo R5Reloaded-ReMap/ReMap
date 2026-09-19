@@ -133,7 +133,9 @@ namespace ReMap.Standalone
             TreeClick(codeToolbarButton); await TreeFrames();
             if (codeWindow.parent != root || codeWindow.resolvedStyle.display == DisplayStyle.None || string.IsNullOrWhiteSpace(codePreview.text))
                 throw new Exception("Generated code floating window did not open.");
-            if (codePreviewAdditionalTab == null || additionalCodePane == null || additionalSharedCodeEditor == null || additionalServerCodeEditor == null || additionalClientCodeEditor == null)
+            if (codePreviewAdditionalTab == null || additionalCodePane == null ||
+                additionalSharedBeforeCodeEditor == null || additionalServerBeforeCodeEditor == null || additionalClientBeforeCodeEditor == null ||
+                additionalSharedCodeEditor == null || additionalServerCodeEditor == null || additionalClientCodeEditor == null)
                 throw new Exception("Project additional-code editors are missing.");
             var codeExportPanel = codeWindow.Q(className: "code-export-panel");
             if (codeExportPanel == null || entExportUseNative == null || entExportMode == null || entExportRestartMap == null)
@@ -148,7 +150,7 @@ namespace ReMap.Standalone
             if (codePreviewScroll.verticalScroller.worldBound.yMin < codePreviewScroll.worldBound.yMin - 1 || codePreviewScroll.verticalScroller.worldBound.yMax > codePreviewScroll.worldBound.yMax + 1 || codePreviewScroll.worldBound.height - codePreviewScroll.verticalScroller.worldBound.height > 6)
                 throw new Exception("Generated code scroll bar does not fill its text rectangle.");
             TreeClick(codePreviewAdditionalTab); await TreeFrames();
-            if (additionalCodePane.resolvedStyle.display == DisplayStyle.None || additionalServerCodeEditor.worldBound.width < 250 || additionalServerCodeEditor.worldBound.height < 90)
+            if (additionalCodePane.resolvedStyle.display == DisplayStyle.None || additionalServerBeforeCodeEditor.worldBound.width < 250 || additionalServerBeforeCodeEditor.worldBound.height < 90 || additionalServerCodeEditor.worldBound.width < 250 || additionalServerCodeEditor.worldBound.height < 90)
                 throw new Exception("Project additional-code editor is hidden or clipped.");
             SetCodePreviewMode(false); await TreeFrames();
             Vector2 codeSize = codeWindow.worldBound.size, codeResizeStart = codeResize.worldBound.center, codeResizeDelta = new Vector2(55, 35);

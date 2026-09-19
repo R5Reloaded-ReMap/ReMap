@@ -2324,19 +2324,31 @@
     },
     {
       "key": "#ADDITIONAL_CODE_HELP",
-      "text": "Saved with this ReMap project. These statements run inside the generated map functions after ReMap objects are created. Complete helper functions may be written outside the managed functions in the installed map .nut files; ReMap preserves them. Tab and Shift+Tab adjust indentation."
+      "text": "Saved with this ReMap project. Before sections run before generated precache or objects; after sections run afterwards. Complete helper functions may be written outside the managed functions in the installed map .nut files; ReMap preserves them. Tab and Shift+Tab adjust indentation."
+    },
+    {
+      "key": "#ADDITIONAL_SHARED_BEFORE_CODE",
+      "text": "Shared code before generated precache"
+    },
+    {
+      "key": "#ADDITIONAL_SERVER_BEFORE_CODE",
+      "text": "Server code before generated objects"
+    },
+    {
+      "key": "#ADDITIONAL_CLIENT_BEFORE_CODE",
+      "text": "Client code before generated objects"
     },
     {
       "key": "#ADDITIONAL_SHARED_PRECACHE",
-      "text": "Shared precache code"
+      "text": "Shared code after generated precache"
     },
     {
       "key": "#ADDITIONAL_SERVER_CODE",
-      "text": "Server map-load code"
+      "text": "Server code after generated objects"
     },
     {
       "key": "#ADDITIONAL_CLIENT_CODE",
-      "text": "Client map-load code"
+      "text": "Client code after generated objects"
     },
     {
       "key": "#INVALID_ADDITIONAL_CODE",

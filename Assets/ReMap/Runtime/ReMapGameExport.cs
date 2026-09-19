@@ -108,6 +108,7 @@ namespace ReMap.Standalone
             Vector3 originOffset = OriginOffset(document);
             bool useOriginOffset = HasOriginOffset(originOffset);
             var shared = new StringBuilder();
+            AppendAdditionalCode(shared, "Additional shared code before generated precache", document.additionalSharedBeforeCode);
             foreach (string model in models) shared.Append("\tPrecacheModel( $\"").Append(model).AppendLine("\" )");
             if (world.Any(o => o.customType == "weapon-rack"))
                 shared.AppendLine("\tPrecacheParticleSystem( $\"P_impact_shieldbreaker_sparks\" )");
@@ -120,6 +121,7 @@ namespace ReMap.Standalone
             var server = new StringBuilder();
             server.Append("\tif ( GetMapName() != \"").Append(map).AppendLine("\" )");
             server.AppendLine("\t\treturn");
+            AppendAdditionalCode(server, "Additional server code before generated objects", document.additionalServerBeforeCode);
             server.AppendLine();
             AppendClear(server);
             if (useOriginOffset)
@@ -162,6 +164,7 @@ namespace ReMap.Standalone
             var client = new StringBuilder();
             client.Append("\tif ( GetMapName() != \"").Append(map).AppendLine("\" )");
             client.AppendLine("\t\treturn");
+            AppendAdditionalCode(client, "Additional client code before generated objects", document.additionalClientBeforeCode);
             client.AppendLine();
             AppendClear(client);
             if (useOriginOffset)
@@ -1265,6 +1268,7 @@ namespace ReMap.Standalone
         private Button codePreviewScriptTab, codePreviewEntTab, codePreviewAdditionalTab;
         private bool codePreviewEntMode, codePreviewAdditionalMode, additionalCodeDirty, updatingAdditionalCodeEditors;
         private VisualElement additionalCodePane;
+        private TextField additionalSharedBeforeCodeEditor, additionalServerBeforeCodeEditor, additionalClientBeforeCodeEditor;
         private TextField additionalSharedCodeEditor, additionalServerCodeEditor, additionalClientCodeEditor;
         private VisualElement liveWindow;
         private TextField liveCommand;
@@ -1350,11 +1354,17 @@ namespace ReMap.Standalone
             additionalCodePane = new ScrollView(ScrollViewMode.Vertical) { name = "additional-code-pane" };
             additionalCodePane.AddToClassList("additional-code-pane");
             additionalCodePane.Add(Label(L.T("#ADDITIONAL_CODE_HELP"), "note"));
+            additionalSharedBeforeCodeEditor = AdditionalCodeEditor(L.T("#ADDITIONAL_SHARED_BEFORE_CODE"));
+            additionalServerBeforeCodeEditor = AdditionalCodeEditor(L.T("#ADDITIONAL_SERVER_BEFORE_CODE"));
+            additionalClientBeforeCodeEditor = AdditionalCodeEditor(L.T("#ADDITIONAL_CLIENT_BEFORE_CODE"));
             additionalSharedCodeEditor = AdditionalCodeEditor(L.T("#ADDITIONAL_SHARED_PRECACHE"));
             additionalServerCodeEditor = AdditionalCodeEditor(L.T("#ADDITIONAL_SERVER_CODE"));
             additionalClientCodeEditor = AdditionalCodeEditor(L.T("#ADDITIONAL_CLIENT_CODE"));
+            additionalCodePane.Add(additionalSharedBeforeCodeEditor);
             additionalCodePane.Add(additionalSharedCodeEditor);
+            additionalCodePane.Add(additionalServerBeforeCodeEditor);
             additionalCodePane.Add(additionalServerCodeEditor);
+            additionalCodePane.Add(additionalClientBeforeCodeEditor);
             additionalCodePane.Add(additionalClientCodeEditor);
             previewPane.Add(additionalCodePane);
             body.Add(BuildEntExportPanel());
@@ -1653,6 +1663,9 @@ namespace ReMap.Standalone
         {
             if (snapshot == null || additionalSharedCodeEditor == null || additionalCodeDirty && !force) return;
             updatingAdditionalCodeEditors = true;
+            additionalSharedBeforeCodeEditor.SetValueWithoutNotify(snapshot.additionalSharedBeforeCode ?? "");
+            additionalServerBeforeCodeEditor.SetValueWithoutNotify(snapshot.additionalServerBeforeCode ?? "");
+            additionalClientBeforeCodeEditor.SetValueWithoutNotify(snapshot.additionalClientBeforeCode ?? "");
             additionalSharedCodeEditor.SetValueWithoutNotify(snapshot.additionalSharedCode ?? "");
             additionalServerCodeEditor.SetValueWithoutNotify(snapshot.additionalServerCode ?? "");
             additionalClientCodeEditor.SetValueWithoutNotify(snapshot.additionalClientCode ?? "");
@@ -1663,11 +1676,17 @@ namespace ReMap.Standalone
         private void CommitAdditionalCodeEdits()
         {
             if (!additionalCodeDirty || snapshot == null || additionalSharedCodeEditor == null) return;
+            string sharedBefore = additionalSharedBeforeCodeEditor.value ?? "";
+            string serverBefore = additionalServerBeforeCodeEditor.value ?? "";
+            string clientBefore = additionalClientBeforeCodeEditor.value ?? "";
             string shared = additionalSharedCodeEditor.value ?? "";
             string server = additionalServerCodeEditor.value ?? "";
             string client = additionalClientCodeEditor.value ?? "";
             session.Edit(document =>
             {
+                document.additionalSharedBeforeCode = sharedBefore;
+                document.additionalServerBeforeCode = serverBefore;
+                document.additionalClientBeforeCode = clientBefore;
                 document.additionalSharedCode = shared;
                 document.additionalServerCode = server;
                 document.additionalClientCode = client;
@@ -1684,7 +1703,7 @@ namespace ReMap.Standalone
         {
             RefreshCodePreview();
             GUIUtility.systemCopyBuffer = codePreviewAdditionalMode
-                ? "// Shared precache\n" + (snapshot.additionalSharedCode ?? "") + "\n\n// Server map load\n" + (snapshot.additionalServerCode ?? "") + "\n\n// Client map load\n" + (snapshot.additionalClientCode ?? "")
+                ? "// Shared before generated precache\n" + (snapshot.additionalSharedBeforeCode ?? "") + "\n\n// Shared after generated precache\n" + (snapshot.additionalSharedCode ?? "") + "\n\n// Server before generated objects\n" + (snapshot.additionalServerBeforeCode ?? "") + "\n\n// Server after generated objects\n" + (snapshot.additionalServerCode ?? "") + "\n\n// Client before generated objects\n" + (snapshot.additionalClientBeforeCode ?? "") + "\n\n// Client after generated objects\n" + (snapshot.additionalClientCode ?? "")
                 : codePreview.text;
             SetStatus(L.T("#GENERATED_OUTPUT_COPIED"));
         }

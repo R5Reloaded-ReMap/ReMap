@@ -174,6 +174,9 @@ namespace ReMap.Standalone.Core
         public string gameTarget = GameTargets.R5Reloaded;
         public string editingMap = "";
         public List<string> targetMaps = new List<string>();
+        public string additionalSharedBeforeCode = "";
+        public string additionalServerBeforeCode = "";
+        public string additionalClientBeforeCode = "";
         public string additionalSharedCode = "";
         public string additionalServerCode = "";
         public string additionalClientCode = "";
@@ -185,6 +188,8 @@ namespace ReMap.Standalone.Core
         {
             var result = new MapDocument { schemaVersion = schemaVersion, name = name,
                 coordinateSystem = coordinateSystem, gameTarget = gameTarget, editingMap = editingMap,
+                additionalSharedBeforeCode = additionalSharedBeforeCode, additionalServerBeforeCode = additionalServerBeforeCode,
+                additionalClientBeforeCode = additionalClientBeforeCode,
                 additionalSharedCode = additionalSharedCode, additionalServerCode = additionalServerCode,
                 additionalClientCode = additionalClientCode, originOffset = originOffset,
                 targetMaps = new List<string>(targetMaps ?? new List<string>()) };
@@ -209,12 +214,17 @@ namespace ReMap.Standalone.Core
             else if (!GameTargets.IsSupported(gameTarget))
                 throw new ArgumentException(L.T("#UNSUPPORTED_TARGET_GAME"));
             editingMap = editingMap ?? "";
+            additionalSharedBeforeCode = additionalSharedBeforeCode ?? "";
+            additionalServerBeforeCode = additionalServerBeforeCode ?? "";
+            additionalClientBeforeCode = additionalClientBeforeCode ?? "";
             additionalSharedCode = additionalSharedCode ?? "";
             additionalServerCode = additionalServerCode ?? "";
             additionalClientCode = additionalClientCode ?? "";
             if (editingMap.Length > 128)
                 throw new ArgumentException(L.T("#INVALID_EDITED_MAP"));
-            if (additionalSharedCode.Length > 262144 || additionalServerCode.Length > 262144 || additionalClientCode.Length > 262144 ||
+            if (additionalSharedBeforeCode.Length > 262144 || additionalServerBeforeCode.Length > 262144 || additionalClientBeforeCode.Length > 262144 ||
+                additionalSharedCode.Length > 262144 || additionalServerCode.Length > 262144 || additionalClientCode.Length > 262144 ||
+                additionalSharedBeforeCode.IndexOf('\0') >= 0 || additionalServerBeforeCode.IndexOf('\0') >= 0 || additionalClientBeforeCode.IndexOf('\0') >= 0 ||
                 additionalSharedCode.IndexOf('\0') >= 0 || additionalServerCode.IndexOf('\0') >= 0 || additionalClientCode.IndexOf('\0') >= 0)
                 throw new ArgumentException(L.T("#INVALID_ADDITIONAL_CODE"));
             if (targetMaps.Count > 64 || targetMaps.Exists(m => string.IsNullOrWhiteSpace(m) || m.Length > 128))

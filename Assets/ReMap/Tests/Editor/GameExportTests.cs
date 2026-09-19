@@ -102,6 +102,9 @@ namespace ReMap.Standalone.Tests
             {
                 name = "Additional code",
                 editingMap = "mp_rr_desertlands_hu",
+                additionalSharedBeforeCode = "SharedDeclaration()",
+                additionalServerBeforeCode = "entity customEnt",
+                additionalClientBeforeCode = "var hud = null",
                 additionalSharedCode = "PrecacheParticleSystem( $\"P_test\" )",
                 additionalServerCode = "SetupPlayers()\nif ( GetGameState() == eGameState.Playing )\n{\n\tStartCustomMode()\n}",
                 additionalClientCode = "CreateClientHud()"
@@ -109,6 +112,9 @@ namespace ReMap.Standalone.Tests
 
             string code = ReMapGameScript.Generate(document, System.Array.Empty<MapObject>()).Replace("\r\n", "\n");
 
+            Assert.That(code.IndexOf("\tSharedDeclaration()", System.StringComparison.Ordinal), Is.LessThan(code.IndexOf("\t// Additional shared precache code", System.StringComparison.Ordinal)));
+            Assert.That(code.IndexOf("\tentity customEnt", System.StringComparison.Ordinal), Is.LessThan(code.IndexOf("\tSh_ReMap_Clear()", System.StringComparison.Ordinal)));
+            Assert.That(code.IndexOf("\tvar hud = null", System.StringComparison.Ordinal), Is.LessThan(code.LastIndexOf("\tSh_ReMap_Clear()", System.StringComparison.Ordinal)));
             StringAssert.Contains("\t// Additional shared precache code\n\tPrecacheParticleSystem( $\"P_test\" )", code);
             StringAssert.Contains("\t// Additional server map code\n\tSetupPlayers()\n\tif ( GetGameState() == eGameState.Playing )\n\t{\n\t\tStartCustomMode()\n\t}", code);
             StringAssert.Contains("\t// Additional client map code\n\tCreateClientHud()", code);
@@ -116,7 +122,11 @@ namespace ReMap.Standalone.Tests
             var copy = document.Copy();
             copy.additionalServerCode = "OtherMapSetup()";
             Assert.That(document.additionalServerCode, Does.StartWith("SetupPlayers()"));
+            Assert.That(copy.additionalServerBeforeCode, Is.EqualTo("entity customEnt"));
             var roundTrip = new UnityMapCodec().Decode(new UnityMapCodec().Encode(document));
+            Assert.That(roundTrip.additionalSharedBeforeCode, Is.EqualTo(document.additionalSharedBeforeCode));
+            Assert.That(roundTrip.additionalServerBeforeCode, Is.EqualTo(document.additionalServerBeforeCode));
+            Assert.That(roundTrip.additionalClientBeforeCode, Is.EqualTo(document.additionalClientBeforeCode));
             Assert.That(roundTrip.additionalSharedCode, Is.EqualTo(document.additionalSharedCode));
             Assert.That(roundTrip.additionalServerCode, Is.EqualTo(document.additionalServerCode));
             Assert.That(roundTrip.additionalClientCode, Is.EqualTo(document.additionalClientCode));
