@@ -19,7 +19,8 @@ namespace ReMap.Standalone.Core
         public static bool SupportsCustomType(string target, string customType)
         {
             if (customType == "ziprail" || customType == "ziprail-point" ||
-                customType == "ziprail-component") return false;
+                customType == "ziprail-component")
+                return Normalize(target) == R5Flowstate;
             if (customType == "curved-zipline" || customType == "curved-zipline-point" ||
                 customType == "curved-zipline-component")
                 return Normalize(target) == R5Reloaded;

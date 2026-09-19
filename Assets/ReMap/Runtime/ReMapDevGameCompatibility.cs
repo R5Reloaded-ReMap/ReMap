@@ -82,13 +82,14 @@ namespace ReMap.Standalone
                 string launchError = ActiveSceneLaunchError();
                 if (!string.IsNullOrEmpty(launchError)) throw new InvalidOperationException(launchError);
                 string map = ReMapGameScript.EditingMap(snapshot);
+                string source = "";
                 Vector3 anchor = SelectionPivot();
                 try
                 {
                     var progress = new Progress<MapReferenceProgress>(state => {
                         if (this != null) Loading(true, state.Message, state.Value);
                     });
-                    string source = await MapReferenceExtractor.ExtractEntityLumpsAsync(
+                    source = await MapReferenceExtractor.ExtractEntityLumpsAsync(
                         assetLibrary, map, false, progress, default);
                     if (this == null) return;
                     if (ReMapEntExporter.TryReadSinglePlayerStart(File.ReadAllText(source),
@@ -105,11 +106,24 @@ namespace ReMap.Standalone
                 MapDocument test = BuildDevGameCompatibilityDocument(snapshot, anchor, report);
                 List<MapObject> generatedObjects = DevGameGenerationObjects(test);
                 test.Validate();
-                ReMapGameScript.Generate(test, generatedObjects, SelectedScriptRpaks());
-                ReMapEntExporter.RestoreLooseMap(map, test.gameTarget,
+                string[] selectedRpaks = SelectedScriptRpaks();
+                IReadOnlyList<MapObject> scriptObjects = generatedObjects;
+                bool nativeEntFallback = generatedObjects.Any(item => item.customType == "ziprail");
+                if (nativeEntFallback)
+                {
+                    if (string.IsNullOrWhiteSpace(source))
+                        throw new InvalidOperationException(L.T("#ENT_SOURCE_MUST_BE_ORIGINAL"));
+                    string bundle = ReMapEntExporter.WriteMergedBundle(source, test,
+                        generatedObjects, selectedRpaks, false, true,
+                        out ReMapEntFragments fragments);
+                    ReMapEntExporter.InstallLooseMap(bundle, test, assetLibrary.GameDirectory,
+                        assetLibrary.PlatformDirectory, false);
+                    scriptObjects = ReMapEntExporter.ScriptFallbackObjects(generatedObjects, fragments);
+                }
+                else ReMapEntExporter.RestoreLooseMap(map, test.gameTarget,
                     assetLibrary.GameDirectory, assetLibrary.PlatformDirectory);
                 report.ScriptPath = ReMapGameScriptInstaller.Write(assetLibrary.PlatformDirectory,
-                    test, generatedObjects, SelectedScriptRpaks());
+                    test, scriptObjects, selectedRpaks, nativeEntFallback);
                 ShowDevGameCompatibilityReport(report);
                 Loading(true, L.T("#RESTARTING_CURRENT_MAP"));
                 await ReloadMapAsync(map);
@@ -229,7 +243,32 @@ namespace ReMap.Standalone
                 }
             }
 
-            report.Ignored.Add(L.T("#DEV_GAME_TEST_ZIPRAIL_DISABLED"));
+            if (!GameTargets.SupportsCustomType(test.gameTarget, "ziprail"))
+                report.Ignored.Add(L.T("#DEV_GAME_TEST_ZIPRAIL_DISABLED"));
+            else
+            {
+                int ziprailIndex = 0;
+                foreach (var profile in ReMapZiprailProfiles.All)
+                {
+                    string label = L.T("#ZIPRAIL") + " — " + L.T(profile.Label);
+                    if (!ReMapModelAvailability.ZiprailProfile(assetLibrary.Records, Targets, profile))
+                    {
+                        report.Ignored.Add(label + " — " + L.T("#CUSTOM_OBJECT_MODELS_UNAVAILABLE"));
+                        continue;
+                    }
+                    Vector3 pivot = anchor + new Vector3(15f + ziprailIndex * 18f, 6f, 120f);
+                    MapObject[] created = CreateDefaultZiprailObjects(pivot);
+                    created[0].displayName = label;
+                    test.objects.AddRange(created);
+                    foreach (MapObject point in created.Where(item => item.customType == "ziprail-point"))
+                    {
+                        point.customProfile = profile.Id;
+                        SyncZiprailComponents(test, point);
+                    }
+                    report.Generated.Add(label);
+                    ziprailIndex++;
+                }
+            }
             AddDevCustomObjectConfigurations(test, anchor, report);
             return test;
         }
@@ -551,6 +590,7 @@ namespace ReMap.Standalone
                 if (!MapHierarchy.IsEnabled(document, item.id) ||
                     !GameTargets.SupportsCustomType(document.gameTarget, item.customType)) continue;
                 bool generatedGroup = item.customType == "zipline" || item.customType == "zipline-endpoint" ||
+                    item.customType == "ziprail" || item.customType == "ziprail-point" ||
                     item.customType == "curved-zipline" || item.customType == "curved-zipline-point" ||
                     item.customType == "spawn-point" || item.customType == "door" ||
                     item.customType == "loot-bin" || item.customType == "jump-pad" ||
@@ -569,7 +609,8 @@ namespace ReMap.Standalone
                 copy.position = WorldView.ToData(matrix.MultiplyPoint3x4(Vector3.zero));
                 copy.rotation = WorldView.ToData(matrix.rotation.eulerAngles);
                 copy.scale = WorldView.ToData(matrix.lossyScale);
-                bool keepParent = item.customType == "curved-zipline-point" ||
+                bool keepParent = item.customType == "ziprail-point" ||
+                    item.customType == "curved-zipline-point" ||
                     item.customType == "camera-path-point" || item.customType == "camera-path-target" ||
                     item.customType == "sound-point" || item.customType == "button-teleport-target" ||
                     item.customType == "trigger-teleport-target";

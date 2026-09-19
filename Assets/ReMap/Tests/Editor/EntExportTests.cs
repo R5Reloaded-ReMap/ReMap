@@ -295,7 +295,7 @@ namespace ReMap.Standalone.Tests
         }
 
         [Test]
-        public void R5FlowstateZiprailIsOmittedFromNativeExport()
+        public void R5FlowstateZiprailExportsNativeTrainNodeChainAndModels()
         {
             var document = Document(); document.gameTarget = GameTargets.R5Flowstate;
             var rail = new MapObject { id = "01234567-89ab-cdef-0123-456789abcdef", customType = "ziprail", isGroup = true, ziplineSpeed = 1.75f, ziplineAutoDetachStart = 0f, ziplineAutoDetachEnd = 0f };
@@ -306,11 +306,30 @@ namespace ReMap.Standalone.Tests
             var last = new MapObject { customType = "ziprail-point", parentId = rail.id,
                 customRole = "2", customProfile = "arm", position = new Float3(4, 0, 8) };
             ReMapEntFragments result = ReMapEntExporter.Generate(document, new[] { rail, first, middle, last });
-            Assert.That(result.ScriptEntityCount, Is.Zero);
-            Assert.That(result.SoundEntityCount, Is.Zero);
-            StringAssert.DoesNotContain("script_mover_train_node", result.Script);
-            StringAssert.DoesNotContain("zip_rail", result.Script);
-            StringAssert.DoesNotContain("Ziprail", result.Sound);
+            Assert.That(result.ScriptEntityCount, Is.EqualTo(11));
+            Assert.That(result.SoundEntityCount, Is.EqualTo(2));
+            Assert.That(result.Script.Split(new[] { "\"classname\" \"script_mover_train_node\"" }, StringSplitOptions.None).Length - 1, Is.EqualTo(3));
+            StringAssert.DoesNotContain("\"script_control_omit_zipline\"", result.Script);
+            StringAssert.Contains("mdl/props/zip_rail/zip_rail_ground_post_01.rmdl", result.Script);
+            Assert.That(result.Script.Split(new[] { "zip_rail_cord_end_01.rmdl" }, StringSplitOptions.None).Length - 1, Is.EqualTo(2));
+            StringAssert.Contains("\"script_name\" \"remap_prop\"", result.Script);
+            StringAssert.Contains("\"can_mantle\" \"1\"", result.Script);
+            StringAssert.Contains("\"solid\" \"6\"", result.Script);
+            StringAssert.Contains("\"soundName\" \"3p_Ziprail_Emit_TowerBy\"", result.Sound);
+            StringAssert.DoesNotContain("\"ZiplineVersion\"", result.Script);
+            Assert.That(result.Script.Split(new[] { "\"ziplineMountReverseDistance\" \"0\"" }, StringSplitOptions.None).Length - 1, Is.EqualTo(2));
+            StringAssert.DoesNotContain("\"useZiprailAutoDetachSpeed\"", result.Script);
+            Assert.That(result.Script.Split(new[] { "\"isZiprailStart\" \"1\"" }, StringSplitOptions.None).Length - 1, Is.EqualTo(2));
+            StringAssert.Contains("\"link_to_guid_0\" \"0123456700000001\"", result.Script);
+            StringAssert.Contains("\"link_to_guid_0\" \"0123456700000002\"", result.Script);
+            StringAssert.Contains("\"link_to_guid_0\" \"0123456700000003\"", result.Script);
+            StringAssert.Contains("\"link_to_guid_0\" \"0123456700000004\"", result.Script);
+            StringAssert.DoesNotContain("\"link_to_guid_0\" \"0123456700000000\"", result.Script);
+
+            rail.ziplineAutoDetachStart = 100f;
+            result = ReMapEntExporter.Generate(document, new[] { rail, first, middle, last });
+            Assert.That(result.Script.Split(new[] { "\"useZiprailAutoDetachSpeed\" \"1\"" }, StringSplitOptions.None).Length - 1, Is.EqualTo(1));
+            StringAssert.DoesNotContain("\"useZiprailAutoDetachSpeed\" \"0\"", result.Script);
         }
 
         [Test]

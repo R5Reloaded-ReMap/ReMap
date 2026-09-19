@@ -318,7 +318,7 @@ namespace ReMap.Standalone.Tests
             Assert.That(compatible.disabled, Is.False);
         }
         [TestCase(GameTargets.R5Reloaded, 1)]
-        [TestCase(GameTargets.R5Flowstate, 2)]
+        [TestCase(GameTargets.R5Flowstate, 1)]
         public void PortRemovesUnsupportedCableSubtrees(string target, int expectedRemoved)
         {
             var document = new MapDocument();
