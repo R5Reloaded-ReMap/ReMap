@@ -103,25 +103,10 @@ namespace ReMap.Standalone.Tests
                 string script = File.ReadAllText(Path.Combine(root, relative));
                 StringAssert.Contains("void function ReMap_CreateDoor", script);
                 StringAssert.Contains("entity function ReMap_CreateDoorEntity", script);
+                StringAssert.Contains("DispatchSpawn( door )\n\t\t\tif ( gold )\n\t\t\t\tdoor.SetSkin( 1 )", script.Replace("\r\n", "\n"));
+                StringAssert.Contains("panel.kv.solid = visible ? SOLID_VPHYSICS : 0", script);
                 StringAssert.DoesNotContain("MapEditor_", script);
             }
-        }
-
-        [Test]
-        public void OpeningGuideIsAClearBidirectionalQuarterTurnArrow()
-        {
-            Vector3 hinge = new Vector3(2f, 3f, 4f);
-            var method = typeof(WorldView).GetMethod("DoorOpeningArc", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Static);
-            Assert.That(method, Is.Not.Null);
-            Vector3[] points = (Vector3[])method.Invoke(null, new object[] { hinge, Vector3.right, Vector3.forward, Vector3.up, 2f, 18 });
-
-            Assert.That(points.Length, Is.EqualTo(25));
-            Assert.That(Vector3.Distance(points[1], hinge + Vector3.right * 2f), Is.LessThan(.0001f));
-            Assert.That(Vector3.Distance(points[21], hinge + Vector3.forward * 2f), Is.LessThan(.0001f));
-            Assert.That(Vector3.Distance(points[1], points[0]), Is.GreaterThan(.5f));
-            Assert.That(Vector3.Distance(points[1], points[2]), Is.GreaterThan(.5f));
-            Assert.That(Vector3.Distance(points[21], points[22]), Is.GreaterThan(.5f));
-            Assert.That(Vector3.Distance(points[21], points[24]), Is.GreaterThan(.5f));
         }
     }
 }

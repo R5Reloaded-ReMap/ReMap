@@ -136,7 +136,7 @@ namespace ReMap.Standalone
                 server.AppendLine("\tentity ent");
             }
             for (int i = 0; i < serverObjects.Count; i++) AppendObject(server, serverObjects[i], originOffset, useOriginOffset);
-            AppendDoors(server, world, false, originOffset, useOriginOffset);
+            AppendDoors(server, world, false, originOffset, useOriginOffset, nativeEntFallback);
             AppendLootBins(server, world, false, originOffset, useOriginOffset);
             AppendJumpPads(server, world, false, originOffset, useOriginOffset);
             AppendSpawnPoints(server, world, false, originOffset, useOriginOffset);
@@ -245,7 +245,7 @@ namespace ReMap.Standalone
             result.Append("script Sh_ReMap_Clear()\n");
             for (int i = 0; i < objects.Count; i++)
                 result.Append("script ").Append(CreateExpression(objects[i], originOffset, false)).AppendLine();
-            AppendDoors(result, world, true, originOffset, false);
+            AppendDoors(result, world, true, originOffset, false, false);
             AppendLootBins(result, world, true, originOffset, false);
             AppendJumpPads(result, world, true, originOffset, false);
             AppendSpawnPoints(result, world, true, originOffset, false);
@@ -416,13 +416,18 @@ namespace ReMap.Standalone
         }
 
         private static void AppendDoors(StringBuilder code, List<MapObject> world, bool live,
-            Vector3 originOffset, bool symbolicOffset)
+            Vector3 originOffset, bool symbolicOffset, bool nativeEntFallback)
         {
             var doors = world.Where(o => o.customType == "door").ToList();
             if (!live && doors.Count > 0) { code.AppendLine(); code.AppendLine("\t// Doors"); }
             foreach (var door in doors)
             {
                 var profile = ReMapDoorProfiles.Find(door.doorType);
+                if (nativeEntFallback && door.doorSpawnOpen && (profile.Id == "single" || profile.Id == "double"))
+                {
+                    code.Append("\tReMap_OpenEntDoorAtSpawn( ").Append(ScriptString(ReMapEntExporter.DoorScriptName(door.id))).AppendLine(" )");
+                    continue;
+                }
                 string expression = "ReMap_CreateDoor( " +
                     Position(door.position, originOffset, symbolicOffset) + ", " +
                     Vector(ApexDisplay.Angles(WorldView.ToVector(door.rotation))) + ", " +

@@ -1,6 +1,7 @@
 using NUnit.Framework;
 using ReMap.Standalone.Core;
 using System.IO;
+using System.Linq;
 using System.Reflection;
 using UnityEngine;
 
@@ -85,12 +86,31 @@ namespace ReMap.Standalone.Tests
             StringAssert.Contains("void function ReMap_CreateTeleportButton", script);
             StringAssert.Contains("EmitSoundOnEntityOnlyToPlayer( player, player, \"PhaseGate_Enter_1p\" )", script);
             StringAssert.Contains("EmitSoundOnEntityExceptToPlayer( player, player, \"PhaseGate_Enter_3p\" )", script);
+            StringAssert.Contains("panel.kv.solid = visible ? SOLID_VPHYSICS : 0", script);
             StringAssert.DoesNotContain("Wraith_phasegate_Travel", script);
             StringAssert.DoesNotContain("EmitDifferentSoundsOnEntityForPlayerAndWorld", script);
             StringAssert.Contains("panel.MakeInvisible()", script);
             StringAssert.Contains("player.SetVelocity( ZERO_VECTOR )", script);
             StringAssert.DoesNotContain("Invis_Button(", script);
             StringAssert.DoesNotContain("MapEditor_CreateButton", script);
+        }
+
+        [Test]
+        public void TeleportTargetPositionLockIsSaved()
+        {
+            var document = new MapDocument();
+            document.objects.Add(new MapObject {
+                assetId = "custom:button", displayName = "Button", customType = "button"
+            });
+            document.objects.Add(new MapObject {
+                assetId = "custom:button-teleport-target", displayName = "Teleport destination",
+                customType = "button-teleport-target", customRole = "destination",
+                parentId = document.objects[0].id, isGroup = true, positionLocked = true
+            });
+
+            var restored = new UnityMapCodec().Decode(new UnityMapCodec().Encode(document));
+
+            Assert.That(restored.objects.Single(item => item.customType == "button-teleport-target").positionLocked, Is.True);
         }
 
         [TestCase("console", "mdl/props/global_access_panel_button/global_access_panel_button_console.rmdl")]

@@ -260,7 +260,28 @@ namespace ReMap.Standalone
         {
             section.Add(Label(L.T("#BUTTON_TELEPORT_TARGET"), "inspector-subsection-title"));
             section.Add(Label(L.T("#BUTTON_TELEPORT_TARGET_HELP"), "note"));
+            AddTeleportTargetPositionLock(item, section);
             section.Add(Button(L.T("#SELECT_BUTTON"), () => Select(item.parentId)));
+        }
+
+        private static bool IsTeleportTarget(MapObject item) => item != null &&
+            (item.customType == "button-teleport-target" || item.customType == "trigger-teleport-target");
+
+        private void AddTeleportTargetPositionLock(MapObject item, VisualElement section)
+        {
+            var locked = CompactInspectorField(new Toggle(L.T("#LOCK_TELEPORT_TARGET_POSITION")) {
+                value = item.positionLocked
+            });
+            locked.tooltip = L.T("#LOCK_TELEPORT_TARGET_POSITION_HELP");
+            section.Add(locked);
+            locked.RegisterValueChangedCallback(change => Run(() => {
+                CommitInspectorEdit();
+                session.Edit(document => {
+                    var target = document.objects.Find(candidate => candidate.id == item.id);
+                    if (IsTeleportTarget(target)) target.positionLocked = change.newValue;
+                });
+                Refresh();
+            }));
         }
 
         private void ChangeButton(string id, Action<MapObject> change, bool refreshInspector = false)

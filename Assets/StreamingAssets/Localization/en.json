@@ -2372,7 +2372,7 @@
     },
     {
       "key": "#PREVIEW_GAME_CODE",
-      "text": "Preview scripts / ENT"
+      "text": "Code and export…"
     },
     {
       "key": "#CODE",
@@ -3063,6 +3063,14 @@
       "text": "Prevents this control point from being moved while keeping its rotation and model editable."
     },
     {
+      "key": "#LOCK_TELEPORT_TARGET_POSITION",
+      "text": "Lock teleport target position"
+    },
+    {
+      "key": "#LOCK_TELEPORT_TARGET_POSITION_HELP",
+      "text": "Prevents this teleport target from being moved while keeping its facing direction editable."
+    },
+    {
       "key": "#ARM_HEIGHT_APEX_U",
       "text": "Arm height (u)"
     },
@@ -3560,7 +3568,7 @@
     },
     {
       "key": "#TRIGGER_CALLBACKS_HELP",
-      "text": "Code runs inside void function(entity trigger, entity ent). Triggers are included in built scripts, not live RCON rebuilds."
+      "text": "Code runs inside void function(entity trigger, entity ent). Triggers are included in installed game scripts."
     },
     {
       "key": "#TRIGGER_ENTER_CALLBACK",
@@ -3680,7 +3688,7 @@
     },
     {
       "key": "#REMAP_DETECTS_PAKS_WIN64_AVAILABLE",
-      "text": "ReMap detects paks/Win64, available RPAKs and model entries automatically for the selected game."
+      "text": "Choose the game root only. ReMap finds platform/platform_, paks/Win64, available RPAKs and model entries automatically."
     },
     {
       "key": "#R5RELOADED_DEFAULT_CHOICE_STORED_PROJECT",
@@ -4064,7 +4072,7 @@
     },
     {
       "key": "#SETTINGS_PAGE_INTRO",
-      "text": "Global ReMap preferences, game installation paths, live connection, preview quality, and map-reference display. Project archive choices are managed on the separate Indexing page."
+      "text": "Global ReMap preferences, game installation paths, preview quality, and map-reference display. Project archive choices are managed on the separate Indexing page."
     },
     {
       "key": "#PATHS_SAVED_OPEN_INDEXING",
@@ -4428,7 +4436,7 @@
     },
     {
       "key": "#BUTTON_VISIBLE_HELP",
-      "text": "Teleportation runs first when enabled. The callback remains available for extra Apex code and receives panel, ent and input. Live export skips visible callback buttons."
+      "text": "Teleportation runs first when enabled. The callback remains available for extra Apex code and receives panel, ent and input. Visible callback buttons are included in installed game scripts."
     },
     {
       "key": "#BUTTON_INVISIBLE_HELP",
@@ -4584,7 +4592,7 @@
     },
     {
       "key": "#CAMERA_PATH_CUSTOM_HELP",
-      "text": "Client-side cinematic camera moving through ordered control points. Live export is not supported."
+      "text": "Client-side cinematic camera moving through ordered control points. Included in installed game scripts."
     },
     {
       "key": "#CAMERA_PATH_HELP",

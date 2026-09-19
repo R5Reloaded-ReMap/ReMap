@@ -46,7 +46,6 @@ namespace ReMap.Standalone
                     ConfigureZiplineComponentColliders(instance, item);
                     EnsureZiplineModelSelection(instance, item.id);
                 }
-                if (item.customType == "door") EnsureDoorOpeningArrow(instance, item);
                 if (item.customType == "trigger") EnsureTriggerVisual(instance, item);
                 if (item.customType == "camera-path-point" || item.customType == "camera-path-target")
                     EnsureCameraPathMarker(instance, item);
@@ -356,8 +355,8 @@ namespace ReMap.Standalone
             float length = 64f * ApexCoordinates.MetersPerUnit;
             float head = 12f * ApexCoordinates.MetersPerUnit;
             Vector3 origin = instance.transform.position;
-            Vector3 direction = instance.transform.forward.normalized;
-            Vector3 side = instance.transform.right.normalized;
+            Vector3 direction = instance.transform.right.normalized;
+            Vector3 side = instance.transform.forward.normalized;
             Vector3 tip = origin + direction * length;
             arrow.SetPosition(0, origin);
             arrow.SetPosition(1, tip);

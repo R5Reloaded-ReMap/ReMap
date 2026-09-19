@@ -2372,7 +2372,7 @@
     },
     {
       "key": "#PREVIEW_GAME_CODE",
-      "text": "Visualiser les scripts / ENT"
+      "text": "Code et export…"
     },
     {
       "key": "#CODE",
@@ -3063,6 +3063,14 @@
       "text": "Empêche le déplacement de ce point de contrôle tout en laissant sa rotation et son modèle modifiables."
     },
     {
+      "key": "#LOCK_TELEPORT_TARGET_POSITION",
+      "text": "Verrouiller la position du point TP"
+    },
+    {
+      "key": "#LOCK_TELEPORT_TARGET_POSITION_HELP",
+      "text": "Empêche le déplacement de cette destination de téléportation tout en laissant sa direction modifiable."
+    },
+    {
       "key": "#ARM_HEIGHT_APEX_U",
       "text": "Hauteur du bras (u)"
     },
@@ -3560,7 +3568,7 @@
     },
     {
       "key": "#TRIGGER_CALLBACKS_HELP",
-      "text": "Le code s’exécute dans void function(entity trigger, entity ent). Les triggers sont inclus dans les scripts construits, pas dans la reconstruction RCON live."
+      "text": "Le code s’exécute dans void function(entity trigger, entity ent). Les triggers sont inclus dans les scripts de jeu installés."
     },
     {
       "key": "#TRIGGER_ENTER_CALLBACK",
@@ -3680,7 +3688,7 @@
     },
     {
       "key": "#REMAP_DETECTS_PAKS_WIN64_AVAILABLE",
-      "text": "ReMap détecte automatiquement paks/Win64, les RPAK disponibles et leurs modèles pour le jeu sélectionné."
+      "text": "Choisissez uniquement la racine du jeu. ReMap détecte automatiquement platform/platform_, paks/Win64, les RPAK disponibles et leurs modèles."
     },
     {
       "key": "#R5RELOADED_DEFAULT_CHOICE_STORED_PROJECT",
@@ -4064,7 +4072,7 @@
     },
     {
       "key": "#SETTINGS_PAGE_INTRO",
-      "text": "Préférences globales de ReMap, chemins des jeux, connexion live, qualité des aperçus et affichage de la référence de carte. Les choix d’archives du projet sont gérés dans la page Indexation séparée."
+      "text": "Préférences globales de ReMap, chemins des jeux, qualité des aperçus et affichage de la référence de carte. Les choix d’archives du projet sont gérés dans la page Indexation séparée."
     },
     {
       "key": "#PATHS_SAVED_OPEN_INDEXING",
@@ -4428,7 +4436,7 @@
     },
     {
       "key": "#BUTTON_VISIBLE_HELP",
-      "text": "La téléportation est exécutée en premier lorsqu’elle est active. Le callback reste disponible pour ajouter du code Apex et reçoit panel, ent et input. L’export live ignore les boutons visibles à callback."
+      "text": "La téléportation est exécutée en premier lorsqu’elle est active. Le callback reste disponible pour ajouter du code Apex et reçoit panel, ent et input. Les boutons visibles à callback sont inclus dans les scripts de jeu installés."
     },
     {
       "key": "#BUTTON_INVISIBLE_HELP",
@@ -4584,7 +4592,7 @@
     },
     {
       "key": "#CAMERA_PATH_CUSTOM_HELP",
-      "text": "Caméra cinématique côté client se déplaçant entre des points ordonnés. L’export live n’est pas pris en charge."
+      "text": "Caméra cinématique côté client se déplaçant entre des points ordonnés. Incluse dans les scripts de jeu installés."
     },
     {
       "key": "#CAMERA_PATH_HELP",

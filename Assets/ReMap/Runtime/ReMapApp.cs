@@ -272,7 +272,8 @@ namespace ReMap.Standalone
             toolbar.Add(Button(L.T("#ROTATE_E"), () => SetGizmoMode(true)));
             BuildTransformToolbar(toolbar);
 
-            var snapToggle = new Toggle(L.T("#SNAPPING")) { value = snap };
+            var snapControls = new VisualElement(); snapControls.AddToClassList("toolbar-snap-controls"); toolbar.Add(snapControls);
+            var snapToggle = new Toggle(L.T("#SNAPPING")) { value = snap }; snapToggle.AddToClassList("toolbar-snap-toggle");
             snapToggle.RegisterValueChangedCallback(e =>
             {
                 snap = e.newValue;
@@ -282,7 +283,8 @@ namespace ReMap.Standalone
                     PlayerPrefs.Save();
                 }
             });
-            toolbar.Add(snapToggle);
+            snapControls.Add(snapToggle);
+            BuildSnapSettingsButton(snapControls);
 
             toolbar.Add(Button(L.T("#FRAME_F"), () => FocusSelection()));
 
@@ -558,6 +560,12 @@ namespace ReMap.Standalone
 
             count.text = L.F("#ARG0_OBJECTS_ARG1_LOADED_MODELS", snapshot.objects.Count, world.LoadedModelCount);
 
+            if (liveInspectorNumericField != null)
+            {
+                RefreshWorldPositionInfo(); UpdateGizmoVisual(); QueueWorkspaceRecovery();
+                return;
+            }
+
             RefreshObjects(); RefreshInspector(); RefreshAssetTargets(); QueueWorkspaceRecovery();
 
         }
@@ -570,11 +578,49 @@ namespace ReMap.Standalone
         private const string SceneRootInspectorId = "__scene_root__";
 
         private bool inspectorDirty;
+        private VisualElement liveInspectorNumericField;
+        private int liveInspectorNumericPointerId = -1;
+        private bool liveInspectorNumericPreviousDelayed;
+        private Action<bool> setLiveInspectorNumericDelayed;
 
-        private static T CompactInspectorField<T>(T field) where T : VisualElement
+        private T CompactInspectorField<T>(T field) where T : VisualElement
         {
             field.AddToClassList("inspector-field-row");
+            if (field is FloatField floating && !(field is EndlessFloatField))
+                ConfigureLiveInspectorNumber(field, floating.labelElement, () => floating.isDelayed,
+                    value => floating.isDelayed = value);
+            else if (field is IntegerField integer)
+                ConfigureLiveInspectorNumber(field, integer.labelElement, () => integer.isDelayed,
+                    value => integer.isDelayed = value);
             return field;
+        }
+
+        private void ConfigureLiveInspectorNumber(VisualElement field, VisualElement dragHandle,
+            Func<bool> getDelayed, Action<bool> setDelayed)
+        {
+            field.RegisterCallback<PointerDownEvent>(e => {
+                if (e.button != 0 || !dragHandle.worldBound.Contains(e.position)) return;
+                EndLiveInspectorNumber(liveInspectorNumericField, false);
+                liveInspectorNumericField = field; liveInspectorNumericPointerId = e.pointerId;
+                liveInspectorNumericPreviousDelayed = getDelayed(); setLiveInspectorNumericDelayed = setDelayed;
+                setDelayed(false); session.BeginContinuousEdit();
+            }, TrickleDown.TrickleDown);
+            field.RegisterCallback<PointerUpEvent>(e => {
+                if (field == liveInspectorNumericField && e.pointerId == liveInspectorNumericPointerId)
+                    root.schedule.Execute(() => EndLiveInspectorNumber(field, true));
+            }, TrickleDown.TrickleDown);
+            field.RegisterCallback<PointerCancelEvent>(_ => EndLiveInspectorNumber(field, true));
+            field.RegisterCallback<DetachFromPanelEvent>(_ => EndLiveInspectorNumber(field, false));
+        }
+
+        private void EndLiveInspectorNumber(VisualElement field, bool refresh)
+        {
+            if (field == null || field != liveInspectorNumericField) return;
+            setLiveInspectorNumericDelayed?.Invoke(liveInspectorNumericPreviousDelayed);
+            session.EndContinuousEdit();
+            liveInspectorNumericField = null; liveInspectorNumericPointerId = -1;
+            setLiveInspectorNumericDelayed = null;
+            if (refresh) Refresh();
         }
 
         private VisualElement InspectorSection(string title, string name)
@@ -853,7 +899,7 @@ namespace ReMap.Standalone
 
             }
 
-            if (item.positionLocked && (IsLockableZiplinePoint(item) || IsJumpTowerBalloon(item)))
+            if (item.positionLocked && (IsLockableZiplinePoint(item) || IsTeleportTarget(item) || IsJumpTowerBalloon(item)))
             {
                 positionInput.SetEnabled(false);
                 positionInput.tooltip = L.T("#LOCK_CONTROL_POINT_POSITION_HELP");

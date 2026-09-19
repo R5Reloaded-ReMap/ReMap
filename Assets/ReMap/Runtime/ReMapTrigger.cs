@@ -137,6 +137,7 @@ namespace ReMap.Standalone
         {
             section.Add(Label(L.T("#TRIGGER_TELEPORT_TARGET"), "inspector-subsection-title"));
             section.Add(Label(L.T("#TRIGGER_TELEPORT_TARGET_HELP"), "note"));
+            AddTeleportTargetPositionLock(item, section);
             section.Add(Button(L.T("#SELECT_TRIGGER"), () => Select(item.parentId)));
         }
     }

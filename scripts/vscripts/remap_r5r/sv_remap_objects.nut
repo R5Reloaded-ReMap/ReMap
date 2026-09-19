@@ -20,6 +20,7 @@ global function ReMap_ClearProps
 global function ReMap_ConfigureEntProps
 global function ReMap_CreateProp
 global function ReMap_CreateDoor
+global function ReMap_OpenEntDoorAtSpawn
 global function ReMap_CreateLootBin
 global function ReMap_CreateJumpPad
 global function ReMap_UpdatePlayerStart
@@ -229,8 +230,10 @@ void function ReMap_CreateDoor( vector origin, vector angles, int type = REMAP_D
 	{
 		case REMAP_DOOR_SINGLE:
 		{
-			entity door = ReMap_CreateDoorEntity( "prop_door", REMAP_DOOR_MODEL_SINGLE, "", origin, angles, gold )
+			entity door = ReMap_CreateDoorEntity( "prop_door", REMAP_DOOR_MODEL_SINGLE, "", origin, angles )
 			DispatchSpawn( door )
+			if ( gold )
+				door.SetSkin( 1 )
 			if ( spawnOpen )
 				ReMap_OpenCodeDoorAtSpawn( door )
 			file.props.append( door )
@@ -239,14 +242,18 @@ void function ReMap_CreateDoor( vector origin, vector angles, int type = REMAP_D
 
 		case REMAP_DOOR_DOUBLE:
 		{
-			entity door = ReMap_CreateDoorEntity( "prop_door", REMAP_DOOR_MODEL_SINGLE, "", origin, angles, gold )
+			entity door = ReMap_CreateDoorEntity( "prop_door", REMAP_DOOR_MODEL_SINGLE, "", origin, angles )
 			door.SetOrigin( origin + door.GetRightVector() * 60.0 )
 			DispatchSpawn( door )
+			if ( gold )
+				door.SetSkin( 1 )
 
-			entity oppositeDoor = ReMap_CreateDoorEntity( "prop_door", REMAP_DOOR_MODEL_SINGLE, "", origin, < -angles.x, angles.y + 180.0, -angles.z >, gold )
+			entity oppositeDoor = ReMap_CreateDoorEntity( "prop_door", REMAP_DOOR_MODEL_SINGLE, "", origin, < -angles.x, angles.y + 180.0, -angles.z > )
 			oppositeDoor.SetOrigin( origin + oppositeDoor.GetRightVector() * 60.0 )
 			oppositeDoor.LinkToEnt( door )
 			DispatchSpawn( oppositeDoor )
+			if ( gold )
+				oppositeDoor.SetSkin( 1 )
 
 			if ( spawnOpen )
 				ReMap_OpenCodeDoorAtSpawn( door )
@@ -257,7 +264,7 @@ void function ReMap_CreateDoor( vector origin, vector angles, int type = REMAP_D
 
 		case REMAP_DOOR_VERTICAL:
 		{
-			entity door = ReMap_CreateDoorEntity( "prop_dynamic", REMAP_DOOR_MODEL_VERTICAL, "survival_door_plain", origin, angles, false )
+			entity door = ReMap_CreateDoorEntity( "prop_dynamic", REMAP_DOOR_MODEL_VERTICAL, "survival_door_plain", origin, angles )
 			DispatchSpawn( door )
 			if ( spawnOpen )
 				ReMap_OpenPlainDoorAtSpawn( door )
@@ -267,7 +274,7 @@ void function ReMap_CreateDoor( vector origin, vector angles, int type = REMAP_D
 
 		case REMAP_DOOR_HORIZONTAL:
 		{
-			entity door = ReMap_CreateDoorEntity( "prop_dynamic", REMAP_DOOR_MODEL_HORIZONTAL, "survival_door_plain", origin, angles, false )
+			entity door = ReMap_CreateDoorEntity( "prop_dynamic", REMAP_DOOR_MODEL_HORIZONTAL, "survival_door_plain", origin, angles )
 			DispatchSpawn( door )
 			if ( spawnOpen )
 				ReMap_OpenPlainDoorAtSpawn( door )
@@ -277,7 +284,7 @@ void function ReMap_CreateDoor( vector origin, vector angles, int type = REMAP_D
 	}
 }
 
-entity function ReMap_CreateDoorEntity( string entityType, asset model, string scriptName, vector origin, vector angles, bool gold )
+entity function ReMap_CreateDoorEntity( string entityType, asset model, string scriptName, vector origin, vector angles )
 {
 	entity door = CreateEntity( entityType )
 	door.SetOrigin( origin )
@@ -289,10 +296,15 @@ entity function ReMap_CreateDoorEntity( string entityType, asset model, string s
 		door.SetScriptName( scriptName )
 		door.kv.solid = 6
 	}
-	if ( gold )
-		door.SetSkin( 1 )
-
 	return door
+}
+
+void function ReMap_OpenEntDoorAtSpawn( string scriptName )
+{
+	array<entity> doors = GetEntArrayByScriptName( scriptName )
+	if ( doors.len() == 0 || !IsValid( doors[0] ) )
+		return
+	ReMap_OpenCodeDoorAtSpawn( doors[0] )
 }
 
 void function ReMap_OpenCodeDoorAtSpawn( entity door )
@@ -331,7 +343,7 @@ entity function ReMap_CreateButton( vector origin, vector angles, bool visible =
 	panel.SetValueForModelKey( model )
 	panel.SetOrigin( origin )
 	panel.SetAngles( angles )
-	panel.kv.solid = 0
+	panel.kv.solid = visible ? SOLID_VPHYSICS : 0
 	DispatchSpawn( panel )
 	panel.SetUsable()
 	panel.SetUsableByGroup( "pilot" )

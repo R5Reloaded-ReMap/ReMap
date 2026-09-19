@@ -179,7 +179,7 @@ namespace ReMap.Standalone.Tests
         }
 
         [Test]
-        public void DoorsWithRuntimeOnlyStateRemainNutOnly()
+        public void OpenGoldSwingDoorKeepsItsNativeSkinAndUsesNutOnlyForOpening()
         {
             var door = new MapObject
             {
@@ -187,8 +187,15 @@ namespace ReMap.Standalone.Tests
                 doorType = "double", doorGold = true, doorSpawnOpen = true
             };
             ReMapEntFragments result = ReMapEntExporter.Generate(Document(), new[] { door });
-            Assert.That(result.ScriptEntityCount, Is.Zero);
+            IReadOnlyList<MapObject> fallback = ReMapEntExporter.ScriptFallbackObjects(new[] { door }, result);
+            string script = ReMapGameScript.GenerateNativeFallback(Document(), fallback);
+
+            Assert.That(result.ScriptEntityCount, Is.EqualTo(2));
+            Assert.That(result.Script.Split(new[] { "\"skin\" \"1\"" }, StringSplitOptions.None).Length - 1, Is.EqualTo(2));
+            StringAssert.Contains("\"script_name\" \"" + ReMapEntExporter.DoorScriptName(door.id) + "\"", result.Script);
             Assert.That(result.NutOnlyObjects, Has.Some.Contains("Open gold door"));
+            StringAssert.Contains("ReMap_OpenEntDoorAtSpawn( \"" + ReMapEntExporter.DoorScriptName(door.id) + "\" )", script);
+            StringAssert.DoesNotContain("ReMap_CreateDoor( ", script);
         }
 
         [TestCase(false, "0")]

@@ -75,13 +75,20 @@ namespace ReMap.Standalone
 
             foreach (var item in world.Where(item => item.customType == "door"))
             {
-                if (item.doorSpawnOpen)
+                var profile = ReMapDoorProfiles.Find(item.doorType);
+                bool nativeSwingDoor = profile.Id == "single" || profile.Id == "double";
+                if (item.doorSpawnOpen && !nativeSwingDoor)
                 {
                     nutOnly.Add(Display(item) + " (door options require .nut)");
                     nutOnlyIds.Add(item.id);
                     continue;
                 }
                 scriptCount += AppendDoor(script, item, offset);
+                if (item.doorSpawnOpen)
+                {
+                    nutOnly.Add(Display(item) + " (spawn-open state requires .nut)");
+                    nutOnlyIds.Add(item.id);
+                }
             }
 
             var byId = world.ToDictionary(item => item.id, StringComparer.Ordinal);
@@ -657,16 +664,17 @@ namespace ReMap.Standalone
         private static int AppendDoor(StringBuilder output, MapObject door, Vector3 offset)
         {
             var profile = ReMapDoorProfiles.Find(door.doorType);
+            string scriptName = DoorScriptName(door.id);
             if (profile.Id == "double")
             {
                 string first = LinkGuid(door.id, 0), second = LinkGuid(door.id, 1);
-                AppendPropDoor(output, Transform(door, new Vector3(0, -60, 0), Vector3.zero), offset, first, second, door.doorGold);
-                AppendPropDoor(output, Transform(door, new Vector3(0, 60, 0), new Vector3(0, 180, 0)), offset, second, null, door.doorGold);
+                AppendPropDoor(output, Transform(door, new Vector3(0, -60, 0), Vector3.zero), offset, first, second, scriptName, door.doorGold);
+                AppendPropDoor(output, Transform(door, new Vector3(0, 60, 0), new Vector3(0, 180, 0)), offset, second, null, "", door.doorGold);
                 return 2;
             }
             if (profile.Id == "single")
             {
-                AppendPropDoor(output, Transform(door, Vector3.zero, Vector3.zero), offset, null, null, door.doorGold);
+                AppendPropDoor(output, Transform(door, Vector3.zero, Vector3.zero), offset, null, null, scriptName, door.doorGold);
                 return 1;
             }
             AppendAnimatedProp(output, door, offset, profile.ModelPath, "survival_door_plain", 0);
@@ -1018,8 +1026,10 @@ namespace ReMap.Standalone
             };
         }
 
+        public static string DoorScriptName(string id) => "remap_door_" + (id ?? "").Replace("-", "");
+
         private static void AppendPropDoor(StringBuilder output, MapObject item, Vector3 offset,
-            string linkGuid, string linkTo, bool gold)
+            string linkGuid, string linkTo, string scriptName, bool gold)
         {
             var fields = new List<KeyValuePair<string, string>>
             {
@@ -1028,6 +1038,7 @@ namespace ReMap.Standalone
             };
             if (linkTo != null) fields.Add(Pair("link_to_guid_0", linkTo));
             if (linkGuid != null) fields.Add(Pair("link_guid", linkGuid));
+            if (scriptName.Length > 0) fields.Add(Pair("script_name", scriptName));
             fields.Add(Pair("skin", gold ? "1" : "0"));
             fields.Add(Pair("model", ReMapDoorProfiles.SingleModelPath));
             fields.Add(Pair("classname", "prop_door"));

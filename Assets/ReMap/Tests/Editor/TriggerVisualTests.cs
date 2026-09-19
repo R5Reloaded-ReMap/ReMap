@@ -108,7 +108,7 @@ namespace ReMap.Standalone.Tests
 
                 Assert.That(arrow.positionCount, Is.EqualTo(5));
                 Assert.That(direction.magnitude, Is.EqualTo(64f * ApexCoordinates.MetersPerUnit).Within(.0001f));
-                Assert.That(Vector3.Dot(direction.normalized, targetInstance.transform.forward), Is.GreaterThan(.999f));
+                Assert.That(Vector3.Dot(direction.normalized, targetInstance.transform.right), Is.GreaterThan(.999f));
             }
             finally { Dispose(world); }
         }
