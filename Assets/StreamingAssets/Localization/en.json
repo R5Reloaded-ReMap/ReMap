@@ -3467,6 +3467,30 @@
       "text": "R5Flowstate platform folder"
     },
     {
+      "key": "#BROWSE_FOLDER",
+      "text": "Browse…"
+    },
+    {
+      "key": "#SELECT_FOLDER",
+      "text": "Select a folder"
+    },
+    {
+      "key": "#SET_UP_REMAP_FIRST_TIME",
+      "text": "Set up ReMap for first use"
+    },
+    {
+      "key": "#FIRST_TIME_SETUP_HELP",
+      "text": "Adds ReMap's managed disk-priority setting to the shared client and server startup configuration. Safe to run again."
+    },
+    {
+      "key": "#FIRST_TIME_SETUP_COMPLETE_ARG0_ARG1",
+      "text": "{0} is ready for ReMap. Updated {1} startup configuration file(s)."
+    },
+    {
+      "key": "#FIRST_TIME_SETUP_FAILED_ARG0",
+      "text": "ReMap setup failed: {0}"
+    },
+    {
       "key": "#REMAP_DETECTS_PAKS_WIN64_AVAILABLE",
       "text": "ReMap detects paks/Win64, available RPAKs and model entries automatically for the selected game."
     },

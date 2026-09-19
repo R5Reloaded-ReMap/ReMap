@@ -4,6 +4,8 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
 using System.Linq;
+using System.Runtime.InteropServices;
+using System.Text;
 using UnityEngine;
 using UnityEngine.UIElements;
 
@@ -53,11 +55,11 @@ namespace ReMap.Standalone
             string currentTarget = snapshot?.gameTarget ?? assetLibrary.TargetGame;
             scroll.Add(Label(L.T("#GAME_INSTALLATIONS"), "section-title"));
             var r5rPaths = new Foldout { text = "R5Reloaded", value = currentTarget != GameTargets.R5Flowstate }; r5rPaths.AddToClassList("game-paths-foldout"); scroll.Add(r5rPaths);
-            var r5rGame = new TextField(L.T("#R5RELOADED_FOLDER")) { value = assetLibrary.Settings.r5ReloadedGameDirectory }; r5rGame.AddToClassList("settings-field"); r5rPaths.Add(r5rGame);
-            var r5rPlatform = new TextField(L.T("#R5RELOADED_PLATFORM_FOLDER")) { value = assetLibrary.Settings.r5ReloadedPlatformDirectory }; r5rPlatform.AddToClassList("settings-field"); r5rPaths.Add(r5rPlatform);
+            var r5rGame = AddFolderPicker(r5rPaths, L.T("#R5RELOADED_FOLDER"), assetLibrary.Settings.r5ReloadedGameDirectory, () => "");
+            var r5rPlatform = AddFolderPicker(r5rPaths, L.T("#R5RELOADED_PLATFORM_FOLDER"), assetLibrary.Settings.r5ReloadedPlatformDirectory, () => r5rGame.value);
             var r5fPaths = new Foldout { text = "R5Flowstate", value = currentTarget == GameTargets.R5Flowstate }; r5fPaths.AddToClassList("game-paths-foldout"); scroll.Add(r5fPaths);
-            var r5fGame = new TextField(L.T("#R5FLOWSTATE_FOLDER")) { value = assetLibrary.Settings.r5FlowstateGameDirectory }; r5fGame.AddToClassList("settings-field"); r5fPaths.Add(r5fGame);
-            var r5fPlatform = new TextField(L.T("#R5FLOWSTATE_PLATFORM_FOLDER")) { value = assetLibrary.Settings.r5FlowstatePlatformDirectory }; r5fPlatform.AddToClassList("settings-field"); r5fPaths.Add(r5fPlatform);
+            var r5fGame = AddFolderPicker(r5fPaths, L.T("#R5FLOWSTATE_FOLDER"), assetLibrary.Settings.r5FlowstateGameDirectory, () => "");
+            var r5fPlatform = AddFolderPicker(r5fPaths, L.T("#R5FLOWSTATE_PLATFORM_FOLDER"), assetLibrary.Settings.r5FlowstatePlatformDirectory, () => r5fGame.value);
             scroll.Add(Label(L.T("#REMAP_DETECTS_PAKS_WIN64_AVAILABLE"), "note"));
             Action applyGameSources = () => {
                 string selectedTarget = snapshot?.gameTarget ?? assetLibrary.TargetGame;
@@ -69,6 +71,25 @@ namespace ReMap.Standalone
                 previewText.text = L.T("#SOURCES_CHANGED_RUN_INDEXING_AGAIN"); previewFailures.Clear(); Refresh(); FillMapChoices(); RefreshProjectSelector(slot.value);
                 SetStatus(assetLibrary.Configured ? L.T("#PATHS_SAVED_OPEN_INDEXING") : L.T("#PATHS_SAVED"));
             };
+            Action<string> setupGame = target => {
+                try
+                {
+                    applyGameSources();
+                    bool flowstate = target == GameTargets.R5Flowstate;
+                    string game = flowstate ? assetLibrary.Settings.r5FlowstateGameDirectory : assetLibrary.Settings.r5ReloadedGameDirectory;
+                    string platform = flowstate ? assetLibrary.Settings.r5FlowstatePlatformDirectory : assetLibrary.Settings.r5ReloadedPlatformDirectory;
+                    int count = ReMapEntExporter.EnsureDiskPriority(game, platform).Count;
+                    SetStatus(L.F("#FIRST_TIME_SETUP_COMPLETE_ARG0_ARG1", GameTargets.DisplayName(target), count));
+                }
+                catch (Exception exception)
+                {
+                    SetStatus(L.F("#FIRST_TIME_SETUP_FAILED_ARG0", exception.Message));
+                }
+            };
+            r5rPaths.Add(Label(L.T("#FIRST_TIME_SETUP_HELP"), "note"));
+            r5rPaths.Add(Button(L.T("#SET_UP_REMAP_FIRST_TIME"), () => setupGame(GameTargets.R5Reloaded)));
+            r5fPaths.Add(Label(L.T("#FIRST_TIME_SETUP_HELP"), "note"));
+            r5fPaths.Add(Button(L.T("#SET_UP_REMAP_FIRST_TIME"), () => setupGame(GameTargets.R5Flowstate)));
             scroll.Add(Button(L.T("#SAVE_PATHS"), applyGameSources));
             scroll.Add(Label(L.T("#LIVE_GAME"), "section-title"));
             string savedAddress = string.IsNullOrWhiteSpace(assetLibrary.Settings.rconAddress) ? "[::ffff:127.0.0.1]:37015" : assetLibrary.Settings.rconAddress;
@@ -114,6 +135,18 @@ namespace ReMap.Standalone
             var grip = ResizeHandle("settings", false); grip.AddToClassList("settings-resize-grip"); panel.Add(grip);
             ShowSettings(false);
             BuildIndexingPage();
+        }
+
+        private TextField AddFolderPicker(VisualElement parent, string label, string value, Func<string> fallback)
+        {
+            var row = new VisualElement(); row.AddToClassList("folder-picker"); parent.Add(row);
+            var field = new TextField(label) { value = value ?? "" }; field.AddToClassList("settings-field"); row.Add(field);
+            row.Add(Button(L.T("#BROWSE_FOLDER"), () => {
+                string initial = Directory.Exists(field.value) ? field.value : fallback?.Invoke();
+                string selected = WindowsFolderPicker.Open(L.T("#SELECT_FOLDER"), initial);
+                if (!string.IsNullOrWhiteSpace(selected)) field.value = selected;
+            }));
+            return field;
         }
 
         private void BuildIndexingPage()
@@ -235,5 +268,72 @@ namespace ReMap.Standalone
             if (index < 0 || index >= editingMapChoice.choices.Count) index = 0;
             editingMapChoice.SetValueWithoutNotify(editingMapChoice.choices[index]);
         }
+    }
+
+    internal static class WindowsFolderPicker
+    {
+        private const uint BrowseInitialized = 1;
+        private const uint SetSelection = 0x467;
+        private const uint ReturnOnlyFileSystemDirectories = 0x0001;
+        private const uint UseNewUserInterface = 0x0050;
+
+        [UnmanagedFunctionPointer(CallingConvention.StdCall)]
+        private delegate int BrowseCallback(IntPtr window, uint message, IntPtr parameter, IntPtr data);
+
+        [StructLayout(LayoutKind.Sequential, CharSet = CharSet.Unicode)]
+        private struct BrowseInfo
+        {
+            public IntPtr owner, root, displayName;
+            [MarshalAs(UnmanagedType.LPWStr)] public string title;
+            public uint flags;
+            [MarshalAs(UnmanagedType.FunctionPtr)] public BrowseCallback callback;
+            public IntPtr data;
+            public int image;
+        }
+
+        public static string Open(string title, string initialDirectory)
+        {
+            if (Application.platform != RuntimePlatform.WindowsEditor && Application.platform != RuntimePlatform.WindowsPlayer)
+                return "";
+            IntPtr initial = IntPtr.Zero;
+            IntPtr item = IntPtr.Zero;
+            try
+            {
+                if (!string.IsNullOrWhiteSpace(initialDirectory) && Directory.Exists(initialDirectory))
+                    initial = Marshal.StringToHGlobalUni(Path.GetFullPath(initialDirectory));
+                BrowseCallback callback = (window, message, parameter, data) => {
+                    if (message == BrowseInitialized && data != IntPtr.Zero)
+                        SendMessage(window, SetSelection, new IntPtr(1), data);
+                    return 0;
+                };
+                var info = new BrowseInfo
+                {
+                    owner = GetActiveWindow(), title = title, flags = ReturnOnlyFileSystemDirectories | UseNewUserInterface,
+                    callback = callback, data = initial
+                };
+                item = SHBrowseForFolder(ref info);
+                if (item == IntPtr.Zero) return "";
+                var path = new StringBuilder(32768);
+                return SHGetPathFromIDList(item, path) ? path.ToString() : "";
+            }
+            finally
+            {
+                if (item != IntPtr.Zero) Marshal.FreeCoTaskMem(item);
+                if (initial != IntPtr.Zero) Marshal.FreeHGlobal(initial);
+            }
+        }
+
+        [DllImport("shell32.dll", CharSet = CharSet.Unicode)]
+        private static extern IntPtr SHBrowseForFolder(ref BrowseInfo info);
+
+        [DllImport("shell32.dll", CharSet = CharSet.Unicode)]
+        [return: MarshalAs(UnmanagedType.Bool)]
+        private static extern bool SHGetPathFromIDList(IntPtr item, StringBuilder path);
+
+        [DllImport("user32.dll")]
+        private static extern IntPtr GetActiveWindow();
+
+        [DllImport("user32.dll", CharSet = CharSet.Unicode)]
+        private static extern IntPtr SendMessage(IntPtr window, uint message, IntPtr parameter, IntPtr data);
     }
 }

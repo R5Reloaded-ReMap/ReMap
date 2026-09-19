@@ -338,6 +338,37 @@ namespace ReMap.Standalone.Tests
             }
         }
 
+        [Test]
+        public void FirstTimeSetupConfiguresEveryStartupFileWithoutDuplicatingManagedBlocks()
+        {
+            string root = Path.Combine(Path.GetTempPath(), "remap-first-setup-" + Guid.NewGuid().ToString("N"));
+            try
+            {
+                string system = Path.Combine(root, "platform", "cfg", "system");
+                Directory.CreateDirectory(system);
+                string existing = Path.Combine(system, "startup_client.cfg");
+                File.WriteAllText(existing, "// existing client setting\r\n", new UTF8Encoding(false));
+
+                var first = ReMapEntExporter.EnsureDiskPriority(root, Path.Combine(root, "platform"));
+                var second = ReMapEntExporter.EnsureDiskPriority(root, Path.Combine(root, "platform"));
+
+                Assert.That(first.Count, Is.EqualTo(5));
+                Assert.That(second, Is.EquivalentTo(first));
+                foreach (string path in first)
+                {
+                    string content = File.ReadAllText(path);
+                    Assert.That(content.Split(new[] { "// ReMap loose ENT disk priority - begin" }, StringSplitOptions.None).Length - 1, Is.EqualTo(1), path);
+                }
+                StringAssert.StartsWith("// existing client setting", File.ReadAllText(existing));
+                StringAssert.Contains("+fs_vpk_prioritizeDisk 1", File.ReadAllText(existing));
+                StringAssert.Contains("fs_vpk_prioritizeDisk \"1\"", File.ReadAllText(Path.Combine(system, "autoexec.cfg")));
+            }
+            finally
+            {
+                if (Directory.Exists(root)) Directory.Delete(root, true);
+            }
+        }
+
         [TestCase(GameTargets.R5Reloaded, false)]
         [TestCase(GameTargets.R5Flowstate, true)]
         public void InstallsScriptAndSoundLumpsInTargetMapsDirectory(string target, bool flowstate)

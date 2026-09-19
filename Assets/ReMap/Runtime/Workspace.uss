@@ -491,6 +491,9 @@ Button.script-property-remove-button:hover { background-color: rgb(91,65,66); }
 .game-paths-foldout { flex-shrink: 0; margin: 3px 0; padding: 2px 6px 5px 6px; background-color: rgb(38,40,45); border-width: 1px; border-color: rgb(62,65,71); border-radius: 2px; }
 .game-paths-foldout > Toggle { height: 23px; -unity-font-style: bold; color: rgb(214,222,232); }
 .game-paths-foldout > .unity-foldout__content { padding-left: 8px; }
+.folder-picker { flex-direction: row; align-items: flex-end; flex-shrink: 0; }
+.folder-picker > .settings-field { flex-grow: 1; }
+.folder-picker > Button { width: 92px; height: 24px; margin: 5px 0 5px 6px; }
 .map-source-warning { flex-shrink: 0; margin: 6px 0; padding: 6px 8px; white-space: normal; color: rgb(245,190,111); background-color: rgb(62,49,34); border-left-width: 3px; border-left-color: rgb(203,131,50); }
 
 .compact .current-map-label, .compact .file-status { display: none; }
