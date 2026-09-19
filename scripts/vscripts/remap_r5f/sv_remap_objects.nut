@@ -423,7 +423,7 @@ void function ReMap_CreateSpeedBoost( vector origin, vector color = < 255, 255, 
 
 entity function ReMap_CreateBubbleShield( vector origin, vector angles, float scale = 1.0, vector color = < 128, 255, 128 > )
 {
-	entity shield = CreateEntity( "prop_dynamic" )
+	entity shield = CreateEntity( "prop_script" )
 	shield.SetValueForModelKey( REMAP_BUBBLE_SHIELD_MODEL )
 	shield.SetOrigin( origin )
 	shield.SetAngles( angles )
@@ -432,7 +432,12 @@ entity function ReMap_CreateBubbleShield( vector origin, vector angles, float sc
 	shield.kv.rendercolor = VectorToString( color )
 	shield.kv.contents = int( shield.kv.contents ) | CONTENTS_NOGRAPPLE
 	shield.kv.CollisionGroup = TRACE_COLLISION_GROUP_BLOCK_WEAPONS
+	shield.SetScriptName( BUBBLE_SHIELD_SCRIPTNAME )
+	shield.SetScriptPropFlags( SPF_BLOCKS_AI_NAVIGATION )
+	shield.SetBlocksRadiusDamage( true )
+	shield.SetBlocksLOS( false )
 	DispatchSpawn( shield )
+	SetTeam( shield, TEAM_UNASSIGNED )
 	EmitSoundOnEntity( shield, "Gibraltar_BubbleShield_Sustain" )
 	file.props.append( shield )
 	return shield

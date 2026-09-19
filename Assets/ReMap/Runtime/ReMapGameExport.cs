@@ -1544,6 +1544,7 @@ namespace ReMap.Standalone
         private async void BuildGameScript(bool restartMap)
         {
             CommitInspectorEdit();
+            ReMapEntExporter.RestoreLooseMap(ReMapGameScript.EditingMap(snapshot), snapshot.gameTarget, assetLibrary.GameDirectory, assetLibrary.PlatformDirectory);
             string path = ReMapGameScriptInstaller.Write(assetLibrary.PlatformDirectory, snapshot,
                 world.GenerationObjects(snapshot), SelectedScriptRpaks());
             SetStatus(L.T("#GAME_SCRIPT_BUILT") + path);

@@ -32,6 +32,7 @@ namespace ReMap.Standalone.Tests
             string root = Path.GetFullPath(Path.Combine(Application.dataPath, ".."));
             string script = File.ReadAllText(Path.Combine(root, "scripts/vscripts/source/sv_remap_objects.source.nut"));
             StringAssert.Contains("entity function ReMap_CreateBubbleShield", script);
+            StringAssert.Contains("#if R5F\n\tentity shield = CreateEntity( \"prop_script\" )\n#else\n\tentity shield = CreateEntity( \"prop_dynamic\" )", script.Replace("\r\n", "\n"));
             StringAssert.Contains("TRACE_COLLISION_GROUP_BLOCK_WEAPONS", script);
             StringAssert.Contains("CONTENTS_NOGRAPPLE", script);
             StringAssert.DoesNotContain("MapEditor_CreateBubbleShieldWithSettings", script);

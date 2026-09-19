@@ -40,6 +40,7 @@ namespace ReMap.Standalone
         private static readonly string[] LumpKinds = { "env", "fx", "script", "snd", "spawn" };
         private const string DiskPriorityBegin = "// ReMap loose ENT disk priority - begin";
         private const string DiskPriorityEnd = "// ReMap loose ENT disk priority - end";
+        private const string InstallMarkerSuffix = ".remap.install";
         private static readonly Regex Header = new Regex(@"\AENTITIES02 num_models=\d+(?:\r?\n|\z)",
             RegexOptions.CultureInvariant);
         private static readonly Regex EntityBlock = new Regex(@"(?ms)^\{\r?\n.*?^\}", RegexOptions.CultureInvariant);
@@ -402,6 +403,35 @@ namespace ReMap.Standalone
             };
         }
 
+        public static IReadOnlyList<string> RestoreLooseMap(string map, string gameTarget, string gameDirectory, string platformDirectory)
+        {
+            map = ValidateMapName(map);
+            string root = GameTargets.Normalize(gameTarget) == GameTargets.R5Flowstate ? Path.Combine(gameDirectory ?? "", "platform") : platformDirectory;
+            if (string.IsNullOrWhiteSpace(root) || !Directory.Exists(root)) throw new DirectoryNotFoundException(root ?? "");
+            string maps = Path.Combine(Path.GetFullPath(root), "maps");
+            if (!Directory.Exists(maps)) return Array.Empty<string>();
+            var restored = new List<string>();
+            foreach (string kind in LumpKinds)
+            {
+                string destination = Path.Combine(maps, map + "_" + kind + ".ent");
+                string backup = destination + ".remap.bak";
+                string marker = destination + InstallMarkerSuffix;
+                if (File.Exists(backup))
+                {
+                    File.Copy(backup, destination, true);
+                    File.Delete(backup);
+                    restored.Add(destination);
+                }
+                else if (File.Exists(marker) && File.Exists(destination))
+                {
+                    File.Delete(destination);
+                    restored.Add(destination);
+                }
+                if (File.Exists(marker)) File.Delete(marker);
+            }
+            return restored;
+        }
+
         public static IReadOnlyList<string> EnsureDiskPriority(string gameDirectory, string platformDirectory)
         {
             var roots = new[]
@@ -476,6 +506,7 @@ namespace ReMap.Standalone
             Directory.CreateDirectory(maps);
             string destination = Path.Combine(maps, map + "_" + kind + ".ent");
             BackupAndCopy(source, destination);
+            File.WriteAllText(destination + InstallMarkerSuffix, "ReMap loose-map override\n", new UTF8Encoding(false));
             return destination;
         }
 

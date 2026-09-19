@@ -492,6 +492,50 @@ namespace ReMap.Standalone.Tests
                 Assert.That(File.ReadAllText(soundDestination), Is.EqualTo(generated));
                 Assert.That(File.ReadAllText(destination + ".remap.bak"), Is.EqualTo(original));
                 Assert.That(File.ReadAllText(soundDestination + ".remap.bak"), Is.EqualTo(original));
+                Assert.That(File.Exists(destination + ".remap.install"), Is.True);
+                Assert.That(File.Exists(soundDestination + ".remap.install"), Is.True);
+            }
+            finally
+            {
+                if (Directory.Exists(root)) Directory.Delete(root, true);
+            }
+        }
+
+        [TestCase(GameTargets.R5Reloaded, false)]
+        [TestCase(GameTargets.R5Flowstate, true)]
+        public void ScriptModeRestoresBaseEntityLumpsAndRemovesFirstTimeOverrides(string target, bool flowstate)
+        {
+            string root = Path.Combine(Path.GetTempPath(), "remap-ent-restore-" + Guid.NewGuid().ToString("N"));
+            try
+            {
+                const string map = "mp_rr_divided_moon";
+                const string original = "ENTITIES02 num_models=28\n{\n\"classname\" \"info_player_start\"\n}\n\0";
+                const string generated = "ENTITIES02 num_models=28\n{\n\"classname\" \"prop_dynamic\"\n}\n\0";
+                string game = Path.Combine(root, "game");
+                string platform = Path.Combine(game, flowstate ? "platform_" : "platform");
+                string installPlatform = Path.Combine(game, "platform");
+                string bundle = Path.Combine(root, "bundle");
+                Directory.CreateDirectory(platform);
+                Directory.CreateDirectory(installPlatform);
+                Directory.CreateDirectory(Path.Combine(platform, "cfg", "system"));
+                Directory.CreateDirectory(Path.Combine(installPlatform, "cfg", "system"));
+                Directory.CreateDirectory(bundle);
+                foreach (string kind in new[] { "env", "fx", "script", "snd", "spawn" }) File.WriteAllText(Path.Combine(bundle, map + "_" + kind + ".ent"), generated, new UTF8Encoding(false));
+                string maps = Path.Combine(flowstate ? installPlatform : platform, "maps");
+                Directory.CreateDirectory(maps);
+                string script = Path.Combine(maps, map + "_script.ent");
+                File.WriteAllText(script, original, new UTF8Encoding(false));
+
+                var document = Document();
+                document.gameTarget = target;
+                ReMapEntExporter.InstallLooseMap(bundle, document, game, platform);
+                IReadOnlyList<string> restored = ReMapEntExporter.RestoreLooseMap(map, target, game, platform);
+
+                Assert.That(restored, Does.Contain(script));
+                Assert.That(File.ReadAllText(script), Is.EqualTo(original));
+                Assert.That(File.Exists(script + ".remap.bak"), Is.False);
+                Assert.That(File.Exists(script + ".remap.install"), Is.False);
+                Assert.That(File.Exists(Path.Combine(maps, map + "_snd.ent")), Is.False);
             }
             finally
             {
