@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
 using System.Runtime.InteropServices;
@@ -14,6 +15,14 @@ internal static class Program
     private const uint FileTypePipe = 0x0003;
     private const uint FlowstateConsoleWriteAccess = 0x0116;
     private const int ObjectNameInformation = 1;
+    private const uint GenericRead = 0x80000000;
+    private const uint GenericWrite = 0x40000000;
+    private const uint FileShareRead = 0x00000001;
+    private const uint FileShareWrite = 0x00000002;
+    private const uint OpenExisting = 3;
+    private const ushort KeyEvent = 0x0001;
+    private const ushort VirtualKeyReturn = 0x000D;
+    private static readonly IntPtr InvalidHandleValue = new IntPtr(-1);
 
     [StructLayout(LayoutKind.Sequential)]
     private struct SystemHandleEntry
@@ -28,14 +37,34 @@ internal static class Program
         internal uint Reserved;
     }
 
+    [StructLayout(LayoutKind.Explicit, CharSet = CharSet.Unicode, Size = 20)]
+    private struct ConsoleInputRecord
+    {
+        [FieldOffset(0)] internal ushort EventType;
+        [FieldOffset(4)] internal ConsoleKeyEvent KeyEvent;
+    }
+
+    [StructLayout(LayoutKind.Sequential, CharSet = CharSet.Unicode)]
+    private struct ConsoleKeyEvent
+    {
+        [MarshalAs(UnmanagedType.Bool)] internal bool KeyDown;
+        internal ushort RepeatCount;
+        internal ushort VirtualKeyCode;
+        internal ushort VirtualScanCode;
+        internal char UnicodeChar;
+        internal uint ControlKeyState;
+    }
+
     [STAThread]
     private static int Main(string[] arguments)
     {
         if (arguments.Length == 1 && arguments[0] == "--file-dialog") return ShowFileDialog();
         bool clientConsole = arguments.Length == 1 && arguments[0] == "--client-console";
+        bool r5ReloadedConsole = arguments.Length == 1 && arguments[0] == "--r5r-console";
         string[] commands = Console.In.ReadToEnd().Split(new[] { "\r\n", "\n" }, StringSplitOptions.RemoveEmptyEntries)
             .Select(command => command.Trim()).Where(command => command.Length > 0).ToArray();
         if (commands.Length == 0) return Fail("No console command was provided.");
+        if (r5ReloadedConsole) return SendR5Reloaded(commands);
         Process launcher = Process.GetProcessesByName("R5FlowstateLauncher").FirstOrDefault(process => process.MainWindowHandle != IntPtr.Zero);
         if (launcher == null) return Fail("Start the Flowstate launcher and a local game first.");
         try
@@ -59,6 +88,69 @@ internal static class Program
         }
         catch (Exception exception) { return Fail(exception.Message); }
         finally { launcher.Dispose(); }
+    }
+
+    private static int SendR5Reloaded(string[] commands)
+    {
+        Process game = Process.GetProcessesByName("r5apex").FirstOrDefault(process => !process.HasExited);
+        if (game == null) return Fail("Start R5Reloaded and a local game first.");
+        IntPtr input = InvalidHandleValue;
+        bool attached = false;
+        try
+        {
+            FreeConsole();
+            if (!AttachConsole((uint)game.Id))
+                return Fail("Could not attach to the R5Reloaded console. Windows error " +
+                    Marshal.GetLastWin32Error() + ".");
+            attached = true;
+            input = CreateFile("CONIN$", GenericRead | GenericWrite,
+                FileShareRead | FileShareWrite, IntPtr.Zero, OpenExisting, 0, IntPtr.Zero);
+            if (input == InvalidHandleValue)
+                return Fail("Could not open the R5Reloaded console input. Windows error " +
+                    Marshal.GetLastWin32Error() + ".");
+
+            foreach (string command in commands)
+            {
+                ConsoleInputRecord[] records = ConsoleInput(command);
+                uint written;
+                if (!WriteConsoleInput(input, records, (uint)records.Length, out written) ||
+                    written != (uint)records.Length)
+                    return Fail("The R5Reloaded console did not accept the command. Windows error " +
+                        Marshal.GetLastWin32Error() + ".");
+            }
+            return 0;
+        }
+        catch (Exception exception) { return Fail(exception.Message); }
+        finally
+        {
+            if (input != InvalidHandleValue) CloseHandle(input);
+            if (attached) FreeConsole();
+            game.Dispose();
+        }
+    }
+
+    private static ConsoleInputRecord[] ConsoleInput(string command)
+    {
+        var records = new List<ConsoleInputRecord>((command.Length + 1) * 2);
+        foreach (char character in command)
+        {
+            records.Add(ConsoleKey(character, 0, true));
+            records.Add(ConsoleKey(character, 0, false));
+        }
+        records.Add(ConsoleKey('\r', VirtualKeyReturn, true));
+        records.Add(ConsoleKey('\r', VirtualKeyReturn, false));
+        return records.ToArray();
+    }
+
+    private static ConsoleInputRecord ConsoleKey(char character, ushort virtualKey, bool down)
+    {
+        return new ConsoleInputRecord {
+            EventType = KeyEvent,
+            KeyEvent = new ConsoleKeyEvent {
+                KeyDown = down, RepeatCount = 1, VirtualKeyCode = virtualKey,
+                VirtualScanCode = 0, UnicodeChar = character, ControlKeyState = 0
+            }
+        };
     }
 
     private static int ShowFileDialog()
@@ -167,5 +259,9 @@ internal static class Program
     [DllImport("kernel32.dll")] private static extern IntPtr GetCurrentProcess();
     [DllImport("kernel32.dll")] private static extern uint GetFileType(IntPtr handle);
     [DllImport("kernel32.dll", SetLastError = true)] private static extern bool WriteFile(IntPtr handle, byte[] buffer, uint bytesToWrite, out uint bytesWritten, IntPtr overlapped);
+    [DllImport("kernel32.dll", SetLastError = true)] private static extern bool AttachConsole(uint processId);
+    [DllImport("kernel32.dll", SetLastError = true)] private static extern bool FreeConsole();
+    [DllImport("kernel32.dll", CharSet = CharSet.Unicode, SetLastError = true)] private static extern IntPtr CreateFile(string fileName, uint desiredAccess, uint shareMode, IntPtr securityAttributes, uint creationDisposition, uint flagsAndAttributes, IntPtr templateFile);
+    [DllImport("kernel32.dll", CharSet = CharSet.Unicode, SetLastError = true, EntryPoint = "WriteConsoleInputW")] private static extern bool WriteConsoleInput(IntPtr consoleInput, ConsoleInputRecord[] buffer, uint length, out uint written);
     [DllImport("kernel32.dll")] private static extern bool CloseHandle(IntPtr handle);
 }

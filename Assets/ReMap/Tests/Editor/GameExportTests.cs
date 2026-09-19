@@ -18,6 +18,22 @@ namespace ReMap.Standalone.Tests
         }
 
         [Test]
+        public void LocalLiveBridgeCanWriteCommandsToR5ReloadedConsole()
+        {
+            string root = System.IO.Path.GetFullPath(
+                System.IO.Path.Combine(Application.dataPath, ".."));
+            string helper = System.IO.File.ReadAllText(
+                System.IO.Path.Combine(root, "Tools", "LiveBridge", "Program.cs"));
+            string runtime = System.IO.File.ReadAllText(
+                System.IO.Path.Combine(root, "Assets", "ReMap", "Runtime", "ReMapLiveBridge.cs"));
+            StringAssert.Contains("Process.GetProcessesByName(\"r5apex\")", helper);
+            StringAssert.Contains("AttachConsole", helper);
+            StringAssert.Contains("WriteConsoleInput", helper);
+            StringAssert.Contains("--r5r-console", helper);
+            StringAssert.Contains("SendReloaded", runtime);
+        }
+
+        [Test]
         public void ReloadMapCommandAcceptsOnlyApexMapCodes()
         {
             Assert.That(ReMapGameScript.ReloadMapCommand("mp_rr_divided_moon"), Is.EqualTo("changelevel mp_rr_divided_moon"));

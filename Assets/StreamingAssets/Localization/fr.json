@@ -2819,6 +2819,10 @@
       "text": "Connexion locale automatique via le lanceur Flowstate."
     },
     {
+      "key": "#AUTOMATIC_LOCAL_CONNECTION_R5RELOADED_PROCESS",
+      "text": "Connexion locale automatique au processus R5Reloaded actif."
+    },
+    {
       "key": "#REMAP_USES_OPEN_FLOWSTATE_LAUNCHER",
       "text": "ReMap utilise automatiquement la console Serveur du lanceur Flowstate ouvert. Laissez la clé et le mot de passe RCON vides pour ce mode ; renseignez-les uniquement pour une connexion RCON manuelle séparée."
     },
@@ -3736,7 +3740,7 @@
     },
     {
       "key": "#R5FLOWSTATE_USE_OPEN_LAUNCHER_CONSOLE",
-      "text": "R5Flowstate peut utiliser automatiquement la console de son launcher ouvert. R5Reloaded utilise la connexion RCON configurée."
+      "text": "Avec la clé et le mot de passe RCON vides, ReMap envoie directement les commandes au launcher Flowstate ou au processus R5Reloaded actif. Renseignez les deux champs uniquement pour utiliser RCON."
     },
     {
       "key": "#LIVE_GAME",
@@ -3816,7 +3820,7 @@
     },
     {
       "key": "#CONFIGURE_RCON_AES_KEY_PASSWORD",
-      "text": "Configurez la clé AES et le mot de passe RCON pour R5Reloaded."
+      "text": "Laissez les deux champs RCON vides pour la connexion locale automatique, ou configurez la clé AES et le mot de passe."
     },
     {
       "key": "#ENTER_VALID_RCON_SERVER_ADDRESS",
@@ -3852,7 +3856,7 @@
     },
     {
       "key": "#COMMAND_EXECUTED_RUNNING_SERVER_RCON",
-      "text": "Commande exécutée par le serveur actif, sans le préfixe rcon"
+      "text": "Commande exécutée par le serveur actif"
     },
     {
       "key": "#SENDING_COMMAND",

@@ -1227,8 +1227,12 @@ namespace ReMap.Standalone
             var commands = (sourceCommands ?? Enumerable.Empty<string>()).SelectMany(command => (command ?? "").Split(new[] { "\r\n", "\n" }, StringSplitOptions.RemoveEmptyEntries)).Select(command => command.Trim()).Where(command => command.Length > 0).ToArray();
             if (commands.Length == 0) throw new ArgumentException(L.T("#ENTER_COMMAND_SEND"));
             key = (key ?? "").Trim(); password = password ?? "";
-            if (GameTargets.Normalize(gameTarget) == GameTargets.R5Flowstate && key.Length == 0 && password.Length == 0)
-                return ReMapLiveBridge.Send(commands);
+            string target = GameTargets.Normalize(gameTarget);
+            if (key.Length == 0 && password.Length == 0)
+            {
+                if (target == GameTargets.R5Flowstate) return ReMapLiveBridge.Send(commands);
+                if (target == GameTargets.R5Reloaded) return ReMapLiveBridge.SendReloaded(commands);
+            }
             if (key.Length == 0 || password.Length == 0)
                 throw new InvalidOperationException(L.T("#CONFIGURE_RCON_AES_KEY_PASSWORD"));
 
@@ -1442,9 +1446,14 @@ namespace ReMap.Standalone
             if (show)
             {
                 string launchError = ActiveSceneLaunchError();
-                bool launcherMode = snapshot.gameTarget == GameTargets.R5Flowstate && string.IsNullOrWhiteSpace(assetLibrary.Settings.rconKey) && string.IsNullOrEmpty(assetLibrary.Settings.rconPassword);
+                bool localMode = string.IsNullOrWhiteSpace(assetLibrary.Settings.rconKey) &&
+                    string.IsNullOrEmpty(assetLibrary.Settings.rconPassword);
                 string address = string.IsNullOrWhiteSpace(assetLibrary.Settings.rconAddress) ? "[::ffff:127.0.0.1]:37015" : assetLibrary.Settings.rconAddress;
-                liveConnectionStatus.text = string.IsNullOrEmpty(launchError) ? (launcherMode ? L.T("#AUTOMATIC_LOCAL_CONNECTION_FLOWSTATE_LAUNCHER") : L.T("#RCON_TARGET") + address) : launchError;
+                string localStatus = snapshot.gameTarget == GameTargets.R5Reloaded
+                    ? L.T("#AUTOMATIC_LOCAL_CONNECTION_R5RELOADED_PROCESS")
+                    : L.T("#AUTOMATIC_LOCAL_CONNECTION_FLOWSTATE_LAUNCHER");
+                liveConnectionStatus.text = string.IsNullOrEmpty(launchError)
+                    ? (localMode ? localStatus : L.T("#RCON_TARGET") + address) : launchError;
                 liveRebuildButton.SetEnabled(snapshot.objects.Count > 0 && string.IsNullOrEmpty(launchError));
                 liveRestartButton.SetEnabled(string.IsNullOrEmpty(launchError));
                 liveWindow.BringToFront(); liveCommand.Focus();

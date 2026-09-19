@@ -19,10 +19,15 @@ namespace ReMap.Standalone
 
         internal static int SendClient(IEnumerable<string> sourceCommands)
         {
-            return Send(sourceCommands, true);
+            return Send(sourceCommands, true, false);
         }
 
-        private static int Send(IEnumerable<string> sourceCommands, bool clientConsole)
+        internal static int SendReloaded(IEnumerable<string> sourceCommands)
+        {
+            return Send(sourceCommands, false, true);
+        }
+
+        private static int Send(IEnumerable<string> sourceCommands, bool clientConsole, bool r5ReloadedConsole = false)
         {
             string[] commands = (sourceCommands ?? Enumerable.Empty<string>())
                 .SelectMany(command => (command ?? "").Split(new[] { "\r\n", "\n" }, StringSplitOptions.RemoveEmptyEntries))
@@ -39,7 +44,8 @@ namespace ReMap.Standalone
                 process.StartInfo = new ProcessStartInfo
                 {
                     FileName = helper,
-                    Arguments = clientConsole ? "--client-console" : "",
+                    Arguments = r5ReloadedConsole ? "--r5r-console" :
+                        clientConsole ? "--client-console" : "",
                     UseShellExecute = false,
                     CreateNoWindow = true,
                     RedirectStandardInput = true,
