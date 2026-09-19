@@ -212,11 +212,14 @@ namespace ReMap.Standalone
                 code.Append("global function ").AppendLine(edit.FunctionName);
                 code.AppendLine();
                 code.Append("void function ").Append(edit.FunctionName).Append("()");
-                code.AppendLine();
-                code.AppendLine("{");
-                if (edit.Body.Length > 0)
+                if (edit.Body.Length == 0) code.AppendLine(" {}");
+                else
+                {
+                    code.AppendLine();
+                    code.AppendLine("{");
                     code.AppendLine(edit.Body);
-                code.AppendLine("}");
+                    code.AppendLine("}");
+                }
                 code.AppendLine();
             }
             return code.ToString();
@@ -1105,7 +1108,7 @@ namespace ReMap.Standalone
             string normalized = (body ?? "").Replace("\r\n", "\n").TrimEnd();
             string signature = indent + "void function " + functionName + "()";
             string formatted = normalized.Length == 0 ? "" : string.Join(newline, normalized.Split('\n').Select(line => indent + line)) + newline;
-            string replacement = signature + newline + indent + "{" + newline + formatted + indent + "}";
+            string replacement = normalized.Length == 0 ? signature + " {}" : signature + newline + indent + "{" + newline + formatted + indent + "}";
             return source.Substring(0, match.Index) + replacement + source.Substring(close + 1);
         }
 

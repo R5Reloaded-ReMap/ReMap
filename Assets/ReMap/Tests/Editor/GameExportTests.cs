@@ -163,9 +163,9 @@ namespace ReMap.Standalone.Tests
             StringAssert.Contains("Original ReMap by Zee", code);
             StringAssert.Contains("Made with love", code);
             StringAssert.Contains("Mauler125/r5sdk", code);
-            StringAssert.Contains("void function Sh_ReMap_PrecacheMap()\n{\n}", code.Replace("\r\n", "\n"));
-            StringAssert.Contains("void function Sv_ReMap_LoadMap()\n{\n}", code.Replace("\r\n", "\n"));
-            StringAssert.Contains("void function Cl_ReMap_LoadMap()\n{\n}", code.Replace("\r\n", "\n"));
+            StringAssert.Contains("void function Sh_ReMap_PrecacheMap() {}", code);
+            StringAssert.Contains("void function Sv_ReMap_LoadMap() {}", code);
+            StringAssert.Contains("void function Cl_ReMap_LoadMap() {}", code);
             StringAssert.DoesNotContain("ReMap_CreateProp", code);
             StringAssert.DoesNotContain("PrecacheModel", code);
         }
@@ -383,13 +383,13 @@ namespace ReMap.Standalone.Tests
                 string resetServer = System.IO.File.ReadAllText(serverMap);
                 string resetClient = System.IO.File.ReadAllText(clientMap);
                 StringAssert.Contains("global const bool REMAP_LOAD_MAP = false", resetShared);
-                StringAssert.Contains("void function Sh_ReMap_PrecacheMap()\n{\n}", resetShared.Replace("\r\n", "\n"));
+                StringAssert.Contains("void function Sh_ReMap_PrecacheMap() {}", resetShared);
                 StringAssert.DoesNotContain("PrecacheModel", resetShared);
                 StringAssert.DoesNotContain("mdl/props/server.rmdl", resetShared);
                 StringAssert.DoesNotContain("ReMap_CreateProp", resetServer);
                 StringAssert.DoesNotContain("ReMap_CreateClientProp", resetClient);
-                StringAssert.Contains("void function Sv_ReMap_LoadMap()\n{\n}", resetServer.Replace("\r\n", "\n"));
-                StringAssert.Contains("void function Cl_ReMap_LoadMap()\n{\n}", resetClient.Replace("\r\n", "\n"));
+                StringAssert.Contains("void function Sv_ReMap_LoadMap() {}", resetServer);
+                StringAssert.Contains("void function Cl_ReMap_LoadMap() {}", resetClient);
                 StringAssert.Contains("// shared customization", resetShared);
                 StringAssert.Contains("// server customization", resetServer);
                 StringAssert.Contains("// client customization", resetClient);

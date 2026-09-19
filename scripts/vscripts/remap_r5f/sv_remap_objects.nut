@@ -226,8 +226,7 @@ void function ReMap_CreateDoor( vector origin, vector angles, int type = REMAP_D
 			door.SetOrigin( origin + door.GetRightVector() * 60.0 )
 			DispatchSpawn( door )
 
-			entity oppositeDoor = ReMap_CreateDoorEntity( "prop_door", REMAP_DOOR_MODEL_SINGLE, "", origin,
-				< -angles.x, angles.y + 180.0, -angles.z >, gold )
+			entity oppositeDoor = ReMap_CreateDoorEntity( "prop_door", REMAP_DOOR_MODEL_SINGLE, "", origin, < -angles.x, angles.y + 180.0, -angles.z >, gold )
 			oppositeDoor.SetOrigin( origin + oppositeDoor.GetRightVector() * 60.0 )
 			oppositeDoor.LinkToEnt( door )
 			DispatchSpawn( oppositeDoor )
@@ -261,8 +260,7 @@ void function ReMap_CreateDoor( vector origin, vector angles, int type = REMAP_D
 	}
 }
 
-entity function ReMap_CreateDoorEntity( string entityType, asset model, string scriptName,
-	vector origin, vector angles, bool gold )
+entity function ReMap_CreateDoorEntity( string entityType, asset model, string scriptName, vector origin, vector angles, bool gold )
 {
 	entity door = CreateEntity( entityType )
 	door.SetOrigin( origin )
@@ -358,8 +356,7 @@ void function ReMap_TeleportPlayer( entity player, vector destination, vector di
 
 void function ReMap_AddButtonTeleport( entity panel, vector destination, vector direction, bool playSound = true )
 {
-	AddCallback_OnUseEntity( panel, void function( entity usedPanel, entity ent, int input ) :
-		( destination, direction, playSound )
+	AddCallback_OnUseEntity( panel, void function( entity usedPanel, entity ent, int input ) : ( destination, direction, playSound )
 	{
 		if ( !IsValid( ent ) || !ent.IsPlayer() )
 			return
@@ -370,8 +367,7 @@ void function ReMap_AddButtonTeleport( entity panel, vector destination, vector 
 void function ReMap_CreateTeleportButton( vector origin, vector angles, bool up, vector destination, vector direction, string message = "", string subMessage = "", int messageType = 4, float duration = 5.0, string token = "#FS_STRING_VAR", bool playSound = true )
 {
 	entity panel = ReMap_CreateButton( origin, angles, false, up )
-	AddCallback_OnUseEntity( panel, void function( entity usedPanel, entity ent, int input ) :
-		( destination, direction, message, subMessage, messageType, duration, token, playSound )
+	AddCallback_OnUseEntity( panel, void function( entity usedPanel, entity ent, int input ) : ( destination, direction, message, subMessage, messageType, duration, token, playSound )
 	{
 		if ( !IsValid( ent ) || !ent.IsPlayer() )
 			return
@@ -422,8 +418,7 @@ void function ReMap_CreateSpeedBoost( vector origin, vector color = < 255, 255, 
 	trigger.SetParent( mover )
 	DispatchSpawn( trigger )
 	file.props.append( trigger )
-	thread ReMap_SpeedBoostThink( mover, trigger, origin, color, respawnTime,
-		strength, duration, fadeTime )
+	thread ReMap_SpeedBoostThink( mover, trigger, origin, color, respawnTime, strength, duration, fadeTime )
 }
 
 entity function ReMap_CreateBubbleShield( vector origin, vector angles, float scale = 1.0, vector color = < 128, 255, 128 > )
@@ -488,20 +483,17 @@ LocPair function ReMap_NewLocPair( vector origin, vector angles )
 	return NewLocPair( origin, angles )
 }
 
-void function ReMap_AnimateCamera( entity cameraHead, float maxLeft, float maxRight,
-	float rotationTime, float transitionTime )
+void function ReMap_AnimateCamera( entity cameraHead, float maxLeft, float maxRight, float rotationTime, float transitionTime )
 {
 	vector baseAngles = cameraHead.GetAngles()
 	float blendTime = rotationTime * 0.5
 	while ( IsValid( cameraHead ) )
 	{
-		cameraHead.NonPhysicsRotateTo( baseAngles + < 0, maxLeft, 0 >,
-			rotationTime, blendTime, blendTime )
+		cameraHead.NonPhysicsRotateTo( baseAngles + < 0, maxLeft, 0 >, rotationTime, blendTime, blendTime )
 		wait rotationTime + transitionTime
 		if ( !IsValid( cameraHead ) )
 			return
-		cameraHead.NonPhysicsRotateTo( baseAngles - < 0, maxRight, 0 >,
-			rotationTime, blendTime, blendTime )
+		cameraHead.NonPhysicsRotateTo( baseAngles - < 0, maxRight, 0 >, rotationTime, blendTime, blendTime )
 		wait rotationTime + transitionTime
 	}
 }
@@ -514,8 +506,7 @@ void function ReMap_SpeedBoostThink( entity mover, entity trigger, vector origin
 		{
 			if ( !IsValid( touchingEnt ) || !touchingEnt.IsPlayer() )
 				continue
-			StatusEffect_AddTimed( touchingEnt, eStatusEffect.speed_boost,
-				strength, duration, fadeTime )
+			StatusEffect_AddTimed( touchingEnt, eStatusEffect.speed_boost, strength, duration, fadeTime )
 			thread ReMap_PlaySpeedBoostFx( touchingEnt, duration )
 			if ( IsValid( mover ) )
 				mover.Destroy()
@@ -544,8 +535,7 @@ void function ReMap_PlaySpeedBoostFx( entity player, float duration )
 
 entity function ReMap_CreateJumpPad( vector origin, vector angles, bool allowMantle = true, float fadeDistance = 50000.0, int realmId = -1, float scale = 1.0, float launchVelocity = 1000.0, float forwardScale = 1.7, float radius = 45.0, bool doubleJump = true )
 {
-	entity jumpPad = ReMap_CreateProp( REMAP_JUMP_PAD_MODEL, origin, angles, allowMantle,
-		fadeDistance, realmId, scale )
+	entity jumpPad = ReMap_CreateProp( REMAP_JUMP_PAD_MODEL, origin, angles, allowMantle, fadeDistance, realmId, scale )
 	jumpPad.SetScriptName( "remap_jump_pad" )
 	jumpPad.kv.contents = CONTENTS_HITBOX | CONTENTS_BULLETCLIP
 	PlayAnimNoWait( jumpPad, "prop_octane_jump_pad_deploy_idle" )
@@ -677,8 +667,7 @@ entity function ReMap_CreateSpawnPoint( vector origin, vector angles, int teamNu
 	return spawnPoint
 }
 
-entity function ReMap_CreateTrigger( vector origin, vector angles, float radius,
-	float halfHeight, bool debugDraw = false, int realmId = -1 )
+entity function ReMap_CreateTrigger( vector origin, vector angles, float radius, float halfHeight, bool debugDraw = false, int realmId = -1 )
 {
 	entity trigger = CreateEntity( "trigger_cylinder" )
 	trigger.SetRadius( radius )
@@ -693,10 +682,8 @@ entity function ReMap_CreateTrigger( vector origin, vector angles, float radius,
 	}
 	if ( debugDraw )
 	{
-		DebugDrawCylinder( origin, < -90, 0, 0 >, radius, halfHeight,
-			0, 165, 255, true, 9999.9 )
-		DebugDrawCylinder( origin, < -90, 0, 0 >, radius, -halfHeight,
-			255, 90, 0, true, 9999.9 )
+		DebugDrawCylinder( origin, < -90, 0, 0 >, radius, halfHeight, 0, 165, 255, true, 9999.9 )
+		DebugDrawCylinder( origin, < -90, 0, 0 >, radius, -halfHeight, 255, 90, 0, true, 9999.9 )
 	}
 	file.props.append( trigger )
 	return trigger
@@ -738,19 +725,14 @@ void function ReMap_CreateJumpTowerGameplay( vector origin, vector angles, float
 	vector cableOffset = RotateVector( REMAP_JUMP_TOWER_CABLE_OFFSET, towerAngles )
 	vector topCable = origin + < 0, 0, height > + cableOffset
 	vector bottomCable = origin + < 0, 0, 64 > + cableOffset
-	ReMap_CreateZipline( topCable, towerAngles, bottomCable, towerAngles,
-		REMAP_ZIPLINE_END_NONE, REMAP_ZIPLINE_END_NONE, true, 2.0, 1.0,
-		180.0, 180.0, true, 1.0, angles.y, -1.0, 1.0,
-		false, true, 200.0, 200.0, false, false, false )
+	ReMap_CreateZipline( topCable, towerAngles, bottomCable, towerAngles, REMAP_ZIPLINE_END_NONE, REMAP_ZIPLINE_END_NONE, true, 2.0, 1.0, 180.0, 180.0, true, 1.0, angles.y, -1.0, 1.0, false, true, 200.0, 200.0, false, false, false )
 
-	entity skydiveTrigger = ReMap_CreateTrigger( origin + < 0, 0, height - 20.0 >,
-		towerAngles, 200.0, 200.0, false, -1 )
+	entity skydiveTrigger = ReMap_CreateTrigger( origin + < 0, 0, height - 20.0 >, towerAngles, 200.0, 200.0, false, -1 )
 	skydiveTrigger.SetEnterCallback( ForcedSkydiveTriggerThink_EnterCallback )
 	DispatchSpawn( skydiveTrigger )
 }
 
-entity function ReMap_CreateWeaponRack( vector origin, vector angles, string weaponName,
-	float respawnTime = 0.5 )
+entity function ReMap_CreateWeaponRack( vector origin, vector angles, string weaponName, float respawnTime = 0.5 )
 {
 	entity rack = CreateEntity( "prop_dynamic" )
 	rack.SetScriptName( "weaponrack_spawned" )
@@ -921,8 +903,7 @@ array<entity> function ReMap_StartRespawnHealEffects( entity pickup )
 	array<entity> effects
 	for ( int index = 0; index < 4; index++ )
 	{
-		entity fx = StartParticleEffectInWorld_ReturnEntity( GetParticleSystemIndex( REMAP_HEAL_IDLE_FX ),
-			pickup.GetOrigin(), < 0, index * 90, 0 > )
+		entity fx = StartParticleEffectInWorld_ReturnEntity( GetParticleSystemIndex( REMAP_HEAL_IDLE_FX ), pickup.GetOrigin(), < 0, index * 90, 0 > )
 		fx.SetParent( pickup )
 		effects.append( fx )
 	}
