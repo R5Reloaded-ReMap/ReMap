@@ -69,12 +69,16 @@ namespace ReMap.Standalone.Editor
                 if (!string.IsNullOrWhiteSpace(configuredVersion))
                     PlayerSettings.bundleVersion = configuredVersion.Trim();
                 bool development = Environment.GetEnvironmentVariable("REMAP_DEVELOPMENT_BUILD") == "1";
+                bool developerTools = Environment.GetEnvironmentVariable("REMAP_DEVELOPER_TOOLS") == "1";
                 BuildOptions options = development
                     ? BuildOptions.Development | BuildOptions.AllowDebugging
                     : BuildOptions.None;
                 var report = BuildPipeline.BuildPlayer(new BuildPlayerOptions {
                     scenes = new[] { ScenePath }, locationPathName = output,
-                    target = BuildTarget.StandaloneWindows64, options = options
+                    target = BuildTarget.StandaloneWindows64, options = options,
+                    extraScriptingDefines = developerTools
+                        ? new[] { "REMAP_DEVELOPER_TOOLS" }
+                        : Array.Empty<string>()
                 });
                 if (report.summary.result != BuildResult.Succeeded)
                     throw new Exception("Windows build failed: " + report.summary.result);

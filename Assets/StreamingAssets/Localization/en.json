@@ -4055,6 +4055,74 @@
       "text": "Workspace game…"
     },
     {
+      "key": "#DEV_GAME_TEST",
+      "text": "In-game compatibility test (Dev)…"
+    },
+    {
+      "key": "#DEV_GAME_TEST_HELP",
+      "text": "Developer tool only. Creates a temporary blank script for the active map with one reference prop, spawn points, every custom-object family, and each available discrete variant (including horizontal/vertical ziplines and their supports). Incompatible entries are reported as ignored. The open project is not modified; the installed ReMap game script is replaced and the map is restarted."
+    },
+    {
+      "key": "#RUN_DEV_GAME_TEST",
+      "text": "Install and run test"
+    },
+    {
+      "key": "#DEV_GAME_TEST_READY",
+      "text": "Ready. The generated and ignored configurations will be listed here."
+    },
+    {
+      "key": "#DEV_GAME_TEST_RUNNING",
+      "text": "Building the development compatibility scenario…"
+    },
+    {
+      "key": "#DEV_GAME_TEST_DONE_ARG0_ARG1",
+      "text": "Compatibility test installed: {0} generated, {1} ignored."
+    },
+    {
+      "key": "#DEV_GAME_TEST_FAILED_ARG0",
+      "text": "Compatibility test failed: {0}"
+    },
+    {
+      "key": "#DEV_GAME_TEST_GENERATED_ARG0",
+      "text": "Generated ({0})"
+    },
+    {
+      "key": "#DEV_GAME_TEST_IGNORED_ARG0",
+      "text": "Ignored ({0})"
+    },
+    {
+      "key": "#DEV_GAME_TEST_SCRIPT_ARG0",
+      "text": "Installed script: {0}"
+    },
+    {
+      "key": "#DEV_GAME_TEST_SPAWN_MODEL",
+      "text": "Visible spawn model"
+    },
+    {
+      "key": "#DEV_GAME_TEST_SPAWN_MODEL_MISSING",
+      "text": "Visible spawn model — model unavailable on the active map"
+    },
+    {
+      "key": "#DEV_GAME_TEST_SPAWN_FALLBACK_ARG0",
+      "text": "Base player start — expected one entity, found {0}; used the editor pivot"
+    },
+    {
+      "key": "#DEV_GAME_TEST_SPAWN_READ_FAILED_ARG0",
+      "text": "Base player start — could not read it; used the editor pivot ({0})"
+    },
+    {
+      "key": "#DEV_GAME_TEST_PROFILE_MISSING_ARG0",
+      "text": "Support profile {0} — required model unavailable on the active map"
+    },
+    {
+      "key": "#DEV_GAME_TEST_CURVED_DISABLED",
+      "text": "Curved ziplines — disabled for this game target"
+    },
+    {
+      "key": "#DEV_GAME_TEST_ZIPRAIL_DISABLED",
+      "text": "Ziprails — disabled for this game target"
+    },
+    {
       "key": "#WORKSPACE_GAME_HELP",
       "text": "Choose which game installation and project list ReMap uses. This does not convert the current project."
     },

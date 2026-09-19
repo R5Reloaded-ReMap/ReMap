@@ -11,6 +11,7 @@ param(
     [switch]$Clean,
     [switch]$ValidateOnly,
     [switch]$Development,
+    [switch]$DeveloperTools,
     [switch]$Interactive
 )
 
@@ -169,8 +170,8 @@ if ($interactiveMode) {
     $choice = (Read-Host "Choose an action [1]").Trim()
     if ([string]::IsNullOrWhiteSpace($choice)) { $choice = "1" }
     switch ($choice.ToUpperInvariant()) {
-        "1" { $BuildRsx = "IfMissing" }
-        "2" { $BuildRsx = "Always"; $Clean = $true }
+        "1" { $BuildRsx = "IfMissing"; $DeveloperTools = $true }
+        "2" { $BuildRsx = "Always"; $Clean = $true; $DeveloperTools = $true }
         "3" { $ValidateOnly = $true }
         "4" {
             if (-not (Test-Path -LiteralPath $publisher -PathType Leaf)) {
@@ -234,7 +235,7 @@ if ($shouldBuildRsx -or $ValidateOnly) {
 
 Write-Host "ReMap project : $projectRoot"
 Write-Host "App version   : $Version"
-Write-Host "Build type    : $(if ($Development) { 'Unity development/debug' } else { 'optimized' })"
+Write-Host "Build type    : $(if ($Development) { 'Unity development/debug' } elseif ($DeveloperTools) { 'optimized + developer tools' } else { 'optimized release' })"
 Write-Host "Unity         : $resolvedUnity"
 Write-Host "RSX source   : $resolvedRsxRoot"
 if ($null -ne $resolvedMSBuild) {
@@ -286,11 +287,13 @@ $unityLog = Join-Path $logDirectory $(if ($Development) { "unity-development-bui
 $previousRsxRoot = $env:REMAP_RSX_ROOT
 $previousBuildVersion = $env:REMAP_BUILD_VERSION
 $previousDevelopmentBuild = $env:REMAP_DEVELOPMENT_BUILD
+$previousDeveloperTools = $env:REMAP_DEVELOPER_TOOLS
 $previousBuildOutput = $env:REMAP_BUILD_OUTPUT
 try {
     $env:REMAP_RSX_ROOT = $resolvedRsxRoot
     $env:REMAP_BUILD_VERSION = $Version
     $env:REMAP_DEVELOPMENT_BUILD = if ($Development) { "1" } else { "0" }
+    $env:REMAP_DEVELOPER_TOOLS = if ($DeveloperTools) { "1" } else { "0" }
     $env:REMAP_BUILD_OUTPUT = Join-Path $windowsBuildRoot "ReMap.exe"
     Write-Host "Building ReMap for Windows x64..."
     $unityArguments = @(
@@ -330,6 +333,12 @@ finally {
     }
     else {
         $env:REMAP_DEVELOPMENT_BUILD = $previousDevelopmentBuild
+    }
+    if ($null -eq $previousDeveloperTools) {
+        Remove-Item Env:REMAP_DEVELOPER_TOOLS -ErrorAction SilentlyContinue
+    }
+    else {
+        $env:REMAP_DEVELOPER_TOOLS = $previousDeveloperTools
     }
     if ($null -eq $previousBuildOutput) {
         Remove-Item Env:REMAP_BUILD_OUTPUT -ErrorAction SilentlyContinue

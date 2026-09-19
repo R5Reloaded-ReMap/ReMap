@@ -4055,6 +4055,74 @@
       "text": "Jeu de l’espace de travail…"
     },
     {
+      "key": "#DEV_GAME_TEST",
+      "text": "Test de compatibilité en jeu (Dev)…"
+    },
+    {
+      "key": "#DEV_GAME_TEST_HELP",
+      "text": "Outil développeur uniquement. Crée un script temporaire vierge pour la carte active avec un seul prop témoin, les spawns, toutes les familles d’objets custom et leurs variantes discrètes disponibles (dont les ziplines horizontales/verticales et leurs supports). Les éléments incompatibles sont listés comme ignorés. Le projet ouvert n’est pas modifié ; le script ReMap installé dans le jeu est remplacé puis la carte est redémarrée."
+    },
+    {
+      "key": "#RUN_DEV_GAME_TEST",
+      "text": "Installer et lancer le test"
+    },
+    {
+      "key": "#DEV_GAME_TEST_READY",
+      "text": "Prêt. Les configurations générées et ignorées seront affichées ici."
+    },
+    {
+      "key": "#DEV_GAME_TEST_RUNNING",
+      "text": "Construction du scénario de compatibilité de développement…"
+    },
+    {
+      "key": "#DEV_GAME_TEST_DONE_ARG0_ARG1",
+      "text": "Test de compatibilité installé : {0} générés, {1} ignorés."
+    },
+    {
+      "key": "#DEV_GAME_TEST_FAILED_ARG0",
+      "text": "Échec du test de compatibilité : {0}"
+    },
+    {
+      "key": "#DEV_GAME_TEST_GENERATED_ARG0",
+      "text": "Générés ({0})"
+    },
+    {
+      "key": "#DEV_GAME_TEST_IGNORED_ARG0",
+      "text": "Ignorés ({0})"
+    },
+    {
+      "key": "#DEV_GAME_TEST_SCRIPT_ARG0",
+      "text": "Script installé : {0}"
+    },
+    {
+      "key": "#DEV_GAME_TEST_SPAWN_MODEL",
+      "text": "Modèle de spawn visible"
+    },
+    {
+      "key": "#DEV_GAME_TEST_SPAWN_MODEL_MISSING",
+      "text": "Modèle de spawn visible — modèle indisponible sur la carte active"
+    },
+    {
+      "key": "#DEV_GAME_TEST_SPAWN_FALLBACK_ARG0",
+      "text": "Spawn joueur de base — une entité attendue, {0} trouvée(s) ; pivot de l’éditeur utilisé"
+    },
+    {
+      "key": "#DEV_GAME_TEST_SPAWN_READ_FAILED_ARG0",
+      "text": "Spawn joueur de base — lecture impossible ; pivot de l’éditeur utilisé ({0})"
+    },
+    {
+      "key": "#DEV_GAME_TEST_PROFILE_MISSING_ARG0",
+      "text": "Profil de support {0} — modèle requis indisponible sur la carte active"
+    },
+    {
+      "key": "#DEV_GAME_TEST_CURVED_DISABLED",
+      "text": "Ziplines courbes — désactivées pour cette cible de jeu"
+    },
+    {
+      "key": "#DEV_GAME_TEST_ZIPRAIL_DISABLED",
+      "text": "Ziprails — désactivés pour cette cible de jeu"
+    },
+    {
       "key": "#WORKSPACE_GAME_HELP",
       "text": "Choisissez l’installation de jeu et la liste de projets utilisées par ReMap. Cette action ne convertit pas le projet actuel."
     },

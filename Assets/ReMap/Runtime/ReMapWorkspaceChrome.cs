@@ -228,6 +228,9 @@ namespace ReMap.Standalone
         private void BuildToolsMenu(VisualElement menu)
         {
             MenuAction(menu, L.T("#CONSTRUCTION_TOOLS_6E6587"), () => ShowConstructionTools(true));
+#if UNITY_EDITOR || DEVELOPMENT_BUILD || REMAP_DEVELOPER_TOOLS
+            MenuAction(menu, L.T("#DEV_GAME_TEST"), () => ShowDevGameCompatibilityDialog(true));
+#endif
             MenuSeparator(menu);
             MenuAction(menu, L.T("#WORKSPACE_GAME"), () => ShowWorkspaceGameDialog(true));
             MenuAction(menu, L.T("#INDEXING_PAGE"), () => ShowIndexing(true), !indexRequested);
