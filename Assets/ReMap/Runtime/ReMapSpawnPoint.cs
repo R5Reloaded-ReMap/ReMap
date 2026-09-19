@@ -1,6 +1,7 @@
 using ReMap.Standalone.Core;
 using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 using System.Threading.Tasks;
 using UnityEngine;
@@ -12,7 +13,7 @@ namespace ReMap.Standalone
     {
         internal const string SpawnPointModelPath = "mdl/dev/mp_spawn.rmdl";
         internal const string WorldSpawnPointRole = "world-spawn";
-        private bool preparingSpawnPointModel;
+        private bool preparingSpawnPointModel, preparingWorldSpawnPoint;
 
         internal static bool IsWorldSpawnPoint(MapObject item)
         {
@@ -50,45 +51,78 @@ namespace ReMap.Standalone
             SetStatus(L.T("#SPAWN_POINT_CREATED"));
         }
 
-        private void SetWorldSpawnPoint(bool enabled)
+        private async void SetWorldSpawnPoint(bool enabled)
         {
             CommitInspectorEdit();
             MapObject existing = WorldSpawnPoint();
-            if (enabled)
+            if (!enabled)
             {
-                if (existing == null)
+                if (existing != null)
                 {
-                    existing = CreateSpawnPoint(Vector3.zero);
-                    existing.customRole = WorldSpawnPointRole;
-                    existing.displayName = L.T("#WORLD_PLAYER_SPAWN_MARKER");
-                    MapObject created = existing;
-                    session.Edit(document => document.objects.Add(created));
+                    session.Edit(document => document.objects.RemoveAll(IsWorldSpawnPoint));
+                    selectedId = null;
+                    sceneRootSelected = true;
+                    Refresh();
                 }
-                else
-                {
-                    string id = existing.id;
-                    session.Edit(document => {
-                        MapObject marker = document.objects.Find(item => item.id == id);
-                        marker.disabled = false;
-                    });
-                }
-                selectedId = existing.id;
-                RevealHierarchy(existing.id);
-                Refresh();
-                FocusHierarchy(existing.id);
-                _ = PrepareSpawnPointModel();
-                SetStatus(L.T("#WORLD_PLAYER_SPAWN_ENABLED"));
+                SetStatus(L.T("#WORLD_PLAYER_SPAWN_DISABLED"));
                 return;
             }
 
             if (existing != null)
             {
-                session.Edit(document => document.objects.RemoveAll(IsWorldSpawnPoint));
-                selectedId = null;
-                sceneRootSelected = true;
+                string id = existing.id;
+                session.Edit(document => document.objects.Find(item => item.id == id).disabled = false);
+                selectedId = id;
                 Refresh();
+                RevealHierarchy(id);
+                FocusHierarchy(id);
+                SetStatus(L.T("#WORLD_PLAYER_SPAWN_ENABLED"));
+                return;
             }
-            SetStatus(L.T("#WORLD_PLAYER_SPAWN_DISABLED"));
+
+            if (preparingWorldSpawnPoint) return;
+            preparingWorldSpawnPoint = true;
+            MapDocument document = snapshot;
+            Loading(true, L.T("#READING_WORLD_PLAYER_SPAWN"));
+            try
+            {
+                var progress = new Progress<MapReferenceProgress>(state => {
+                    if (this != null) Loading(true, state.Message, state.Value);
+                });
+                string source = await MapReferenceExtractor.ExtractEntityLumpsAsync(assetLibrary, document.editingMap, false, progress, default);
+                if (this == null || snapshot.editingMap != document.editingMap) return;
+                string entityLump = File.ReadAllText(source);
+                if (!ReMapEntExporter.TryReadSinglePlayerStart(entityLump, out Vector3 origin, out Vector3 angles, out int count))
+                    throw new InvalidDataException(L.F("#BASE_PLAYER_START_COUNT_ARG0", count));
+
+                Vector3 position = ApexDisplay.UnityPosition(origin) - WorldView.ToVector(document.originOffset);
+                existing = CreateSpawnPoint(position);
+                existing.rotation = WorldView.ToData(ApexDisplay.UnityAngles(angles));
+                existing.customRole = WorldSpawnPointRole;
+                existing.displayName = L.T("#WORLD_PLAYER_SPAWN_MARKER");
+                MapObject created = existing;
+                session.Edit(map => map.objects.Add(created));
+                selectedId = existing.id;
+                Refresh();
+                RevealHierarchy(existing.id);
+                FocusHierarchy(existing.id);
+                _ = PrepareSpawnPointModel();
+                SetStatus(L.T("#WORLD_PLAYER_SPAWN_ENABLED"));
+            }
+            catch (Exception exception)
+            {
+                if (this != null)
+                {
+                    SetStatus(exception.Message);
+                    RefreshInspector();
+                    Debug.LogWarning(exception);
+                }
+            }
+            finally
+            {
+                preparingWorldSpawnPoint = false;
+                if (this != null) Loading(false);
+            }
         }
 
         private void SelectWorldSpawnPoint()
@@ -105,7 +139,11 @@ namespace ReMap.Standalone
         private void BuildSpawnPointInspector(MapObject item, VisualElement section)
         {
             section.Add(Label(L.T(IsWorldSpawnPoint(item) ? "#WORLD_PLAYER_SPAWN_MARKER" : "#SPAWN_POINT"), "inspector-subsection-title"));
-            if (IsWorldSpawnPoint(item)) section.Add(Label(L.T("#WORLD_PLAYER_SPAWN_MARKER_HELP"), "note"));
+            if (IsWorldSpawnPoint(item))
+            {
+                section.Add(Label(L.T("#WORLD_PLAYER_SPAWN_MARKER_HELP"), "note"));
+                return;
+            }
             var team = CompactInspectorField(new IntegerField(L.T("#SPAWN_POINT_TEAM")) {
                 value = item.spawnPointTeam, isDelayed = true
             });

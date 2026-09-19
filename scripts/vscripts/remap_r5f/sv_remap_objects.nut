@@ -21,6 +21,7 @@ global function ReMap_CreateProp
 global function ReMap_CreateDoor
 global function ReMap_CreateLootBin
 global function ReMap_CreateJumpPad
+global function ReMap_UpdatePlayerStart
 global function ReMap_CreateSpawnPoint
 global function ReMap_CreateTrigger
 global function ReMap_CreateJumpTower
@@ -615,6 +616,21 @@ void function ReMap_RestoreJumpPadGravity( entity player )
 		WaitFrame()
 }
 
+
+entity function ReMap_UpdatePlayerStart( vector origin, vector angles )
+{
+	array<entity> spawnPoints = GetEntArrayByClass_Expensive( "info_player_start" )
+	if ( spawnPoints.len() != 1 )
+	{
+		printt( "[ReMap] Expected exactly one info_player_start, found", spawnPoints.len() )
+		return null
+	}
+
+	entity spawnPoint = spawnPoints[0]
+	spawnPoint.SetOrigin( origin )
+	spawnPoint.SetAngles( angles )
+	return spawnPoint
+}
 
 entity function ReMap_CreateSpawnPoint( vector origin, vector angles, int teamNumber = 0 )
 {

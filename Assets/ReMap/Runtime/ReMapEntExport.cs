@@ -18,6 +18,7 @@ namespace ReMap.Standalone
         public int ScriptEntityCount { get; internal set; }
         public int SoundEntityCount { get; internal set; }
         public int SpawnEntityCount { get; internal set; }
+        public string PlayerStart { get; internal set; } = "";
         public IReadOnlyList<string> NutOnlyObjects { get; internal set; } = Array.Empty<string>();
         public int EntityCount => ScriptEntityCount + SoundEntityCount + SpawnEntityCount;
     }
@@ -40,6 +41,7 @@ namespace ReMap.Standalone
         private const string DiskPriorityEnd = "// ReMap loose ENT disk priority - end";
         private static readonly Regex Header = new Regex(@"\AENTITIES02 num_models=\d+(?:\r?\n|\z)",
             RegexOptions.CultureInvariant);
+        private static readonly Regex EntityBlock = new Regex(@"(?ms)^\{\r?\n.*?^\}", RegexOptions.CultureInvariant);
 
         public static ReMapEntFragments Generate(MapDocument document,
             IEnumerable<MapObject> worldObjects)
@@ -51,6 +53,7 @@ namespace ReMap.Standalone
             var script = new StringBuilder();
             var sound = new StringBuilder();
             var spawn = new StringBuilder();
+            var playerStart = new StringBuilder();
             var nutOnly = new List<string>();
             Vector3 offset = WorldView.ToVector(document.originOffset);
             int scriptCount = 0, soundCount = 0, spawnCount = 0;
@@ -129,7 +132,18 @@ namespace ReMap.Standalone
                 soundCount++;
             }
 
-            foreach (var item in world.Where(item => item.customType == "spawn-point"))
+            MapObject[] playerStarts = world.Where(ReMapApp.IsWorldSpawnPoint).ToArray();
+            if (playerStarts.Length > 1) throw new InvalidDataException(L.F("#REMAP_PLAYER_START_COUNT_ARG0", playerStarts.Length));
+            if (playerStarts.Length == 1)
+            {
+                MapObject item = playerStarts[0];
+                AppendEntity(playerStart,
+                    Pair("spawnflags", "0"), Pair("scale", "1"), Pair("angles", Angles(item.rotation)),
+                    Pair("origin", Position(item.position, offset)), Pair("classname", "info_player_start"));
+                scriptCount++;
+            }
+
+            foreach (var item in world.Where(item => item.customType == "spawn-point" && !ReMapApp.IsWorldSpawnPoint(item)))
             {
                 AppendEntity(spawn,
                     Pair("teamnumber", item.spawnPointTeam.ToString(CultureInfo.InvariantCulture)),
@@ -162,6 +176,7 @@ namespace ReMap.Standalone
             return new ReMapEntFragments
             {
                 Script = script.ToString(), Sound = sound.ToString(), Spawn = spawn.ToString(),
+                PlayerStart = playerStart.ToString(),
                 ScriptEntityCount = scriptCount, SoundEntityCount = soundCount,
                 SpawnEntityCount = spawnCount, NutOnlyObjects = nutOnly
             };
@@ -175,7 +190,7 @@ namespace ReMap.Standalone
             var preview = new StringBuilder();
             preview.AppendLine("// ReMap ENT preview for " + map);
             preview.AppendLine("// Generated additions only. Base entities are merged or excluded when the ENT bundle is exported.");
-            AppendPreviewLump(preview, map + "_script.ent", fragments.Script);
+            AppendPreviewLump(preview, map + "_script.ent", JoinFragments(fragments.PlayerStart, fragments.Script));
             AppendPreviewLump(preview, map + "_snd.ent", fragments.Sound);
             AppendPreviewLump(preview, map + "_spawn.ent", fragments.Spawn);
             if (fragments.NutOnlyObjects.Count > 0)
@@ -243,6 +258,11 @@ namespace ReMap.Standalone
                 string fragment = kind == "script" ? fragments.Script : kind == "snd" ? fragments.Sound :
                     kind == "spawn" ? fragments.Spawn : "";
                 string original = File.ReadAllText(source);
+                if (kind == "script" && fragments.PlayerStart.Length > 0)
+                {
+                    if (preserveBaseEntities) original = ReplaceSinglePlayerStart(original, fragments.PlayerStart, source);
+                    else fragment = JoinFragments(fragments.PlayerStart, fragment);
+                }
                 string content = preserveBaseEntities ? Merge(original, fragment, source) : ReplaceEntities(original, fragment, source);
                 File.WriteAllText(destination, content, new UTF8Encoding(false));
             }
@@ -439,6 +459,29 @@ namespace ReMap.Standalone
             return body + newline + addition + newline + "\0";
         }
 
+        public static bool TryReadSinglePlayerStart(string source, out Vector3 origin, out Vector3 angles, out int count)
+        {
+            ValidateBase(source, "base .ent");
+            Match[] matches = PlayerStartMatches(source);
+            count = matches.Length;
+            origin = angles = Vector3.zero;
+            if (count != 1) return false;
+            return TryEntityVector(matches[0].Value, "origin", out origin) && TryEntityVector(matches[0].Value, "angles", out angles);
+        }
+
+        public static string ReplaceSinglePlayerStart(string source, string replacement, string sourceName = "base .ent")
+        {
+            ValidateBase(source, sourceName);
+            Match[] sourceMatches = PlayerStartMatches(source);
+            Match[] replacementMatches = PlayerStartMatches(replacement);
+            if (sourceMatches.Length != 1) throw new InvalidDataException(L.F("#BASE_PLAYER_START_COUNT_ARG0", sourceMatches.Length));
+            if (replacementMatches.Length != 1 || !TryEntityVector(replacementMatches[0].Value, "origin", out Vector3 origin) || !TryEntityVector(replacementMatches[0].Value, "angles", out Vector3 angles))
+                throw new InvalidDataException(L.T("#GENERATED_PLAYER_START_INVALID"));
+            string updated = ReplaceEntityVector(sourceMatches[0].Value, "origin", VectorValue(origin));
+            updated = ReplaceEntityVector(updated, "angles", VectorValue(angles));
+            return source.Remove(sourceMatches[0].Index, sourceMatches[0].Length).Insert(sourceMatches[0].Index, updated);
+        }
+
         public static string ReplaceEntities(string baseEnt, string fragment, string sourceName = "base .ent")
         {
             ValidateBase(baseEnt, sourceName);
@@ -447,6 +490,42 @@ namespace ReMap.Standalone
             string addition = (fragment ?? "").Replace("\r\n", "\n").Trim();
             if (addition.Length == 0) return header + newline + "\0";
             return header + newline + addition.Replace("\n", newline) + newline + "\0";
+        }
+
+        private static string JoinFragments(string first, string second)
+        {
+            first = (first ?? "").Trim();
+            second = (second ?? "").Trim();
+            if (first.Length == 0) return second;
+            if (second.Length == 0) return first;
+            return first + "\n" + second;
+        }
+
+        private static Match[] PlayerStartMatches(string source)
+        {
+            return EntityBlock.Matches(source ?? "").Cast<Match>().Where(match => string.Equals(EntityValue(match.Value, "classname"), "info_player_start", StringComparison.Ordinal)).ToArray();
+        }
+
+        private static string EntityValue(string block, string key)
+        {
+            Match match = Regex.Match(block ?? "", "(?m)^\"" + Regex.Escape(key) + "\"\\s+\"(?<value>[^\"]*)\"\\s*$", RegexOptions.CultureInvariant);
+            return match.Success ? match.Groups["value"].Value : "";
+        }
+
+        private static bool TryEntityVector(string block, string key, out Vector3 value)
+        {
+            value = Vector3.zero;
+            string[] parts = EntityValue(block, key).Split((char[])null, StringSplitOptions.RemoveEmptyEntries);
+            if (parts.Length != 3 || !float.TryParse(parts[0], NumberStyles.Float, CultureInfo.InvariantCulture, out float x) || !float.TryParse(parts[1], NumberStyles.Float, CultureInfo.InvariantCulture, out float y) || !float.TryParse(parts[2], NumberStyles.Float, CultureInfo.InvariantCulture, out float z)) return false;
+            value = new Vector3(x, y, z);
+            return float.IsFinite(x) && float.IsFinite(y) && float.IsFinite(z);
+        }
+
+        private static string ReplaceEntityVector(string block, string key, string value)
+        {
+            var expression = new Regex("(?m)^\"" + Regex.Escape(key) + "\"\\s+\"[^\"]*\"\\s*$", RegexOptions.CultureInvariant);
+            if (expression.Matches(block).Count != 1) throw new InvalidDataException(L.T("#GENERATED_PLAYER_START_INVALID"));
+            return expression.Replace(block, "\"" + key + "\" \"" + value + "\"", 1);
         }
 
         private static string BuildReport(string sourceMap, string outputMap, bool publish,

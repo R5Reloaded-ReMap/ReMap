@@ -98,6 +98,35 @@ namespace ReMap.Standalone.Tests
         }
 
         [Test]
+        public void ReadsAndUpdatesTheUniqueNativePlayerStartInPlace()
+        {
+            const string original = "ENTITIES02 num_models=28\n{\n\"spawnflags\" \"0\"\n\"scale\" \"1\"\n\"angles\" \"0 90 0\"\n\"origin\" \"100 200 300\"\n\"script_name\" \"keep_me\"\n\"classname\" \"info_player_start\"\n}\n\0";
+            Assert.That(ReMapEntExporter.TryReadSinglePlayerStart(original, out UnityEngine.Vector3 origin, out UnityEngine.Vector3 angles, out int count), Is.True);
+            Assert.That(count, Is.EqualTo(1));
+            Assert.That(origin, Is.EqualTo(new UnityEngine.Vector3(100, 200, 300)));
+            Assert.That(angles, Is.EqualTo(new UnityEngine.Vector3(0, 90, 0)));
+
+            const string replacement = "{\n\"spawnflags\" \"0\"\n\"scale\" \"1\"\n\"angles\" \"1 2 3\"\n\"origin\" \"400 500 600\"\n\"classname\" \"info_player_start\"\n}";
+            string updated = ReMapEntExporter.ReplaceSinglePlayerStart(original, replacement, "test.ent");
+
+            StringAssert.Contains("\"origin\" \"400 500 600\"", updated);
+            StringAssert.Contains("\"angles\" \"1 2 3\"", updated);
+            StringAssert.Contains("\"script_name\" \"keep_me\"", updated);
+            Assert.That(updated.Split(new[] { "\"classname\" \"info_player_start\"" }, StringSplitOptions.None).Length - 1, Is.EqualTo(1));
+            Assert.That(updated[updated.Length - 1], Is.EqualTo('\0'));
+        }
+
+        [Test]
+        public void RejectsAmbiguousNativePlayerStarts()
+        {
+            const string entity = "{\n\"angles\" \"0 0 0\"\n\"origin\" \"0 0 0\"\n\"classname\" \"info_player_start\"\n}\n";
+            string source = "ENTITIES02 num_models=28\n" + entity + entity + "\0";
+            Assert.That(ReMapEntExporter.TryReadSinglePlayerStart(source, out _, out _, out int count), Is.False);
+            Assert.That(count, Is.EqualTo(2));
+            Assert.Throws<InvalidDataException>(() => ReMapEntExporter.ReplaceSinglePlayerStart(source, entity));
+        }
+
+        [Test]
         public void ReplacingBaseEntitiesKeepsOnlyHeaderAndGeneratedEntities()
         {
             string original = "ENTITIES02 num_models=28\n{\n\"classname\" \"info_player_start\"\n}\n\0";

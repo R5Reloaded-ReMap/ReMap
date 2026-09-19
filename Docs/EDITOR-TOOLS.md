@@ -55,7 +55,7 @@ Custom scripted objects and game-code generation remain outside this stage.
 
 ## World player spawn
 
-Select **World Spawn** in the hierarchy and enable **Set a custom player spawn** to create one managed `mdl/dev/mp_spawn.rmdl` marker at the scene origin. ReMap selects it immediately; move and rotate it like any other object to define the player's spawn position and facing direction. The marker is exported as `info_spawnpoint_human` in both generated `.nut` scripts and native `_spawn.ent` output. Disabling the option removes only this managed marker; advanced player spawn points added from the Custom catalog remain untouched.
+Select **World Spawn** in the hierarchy and enable **Set a custom player spawn**. ReMap extracts the base `_script.ent`, requires exactly one native `info_player_start`, and creates a managed `mdl/dev/mp_spawn.rmdl` editor marker at that entity’s position and angles. Move and rotate the marker like any other object to redefine the player's spawn position and facing direction. Native ENT export updates the original block in place without creating a duplicate; `.nut` export calls `ReMap_UpdatePlayerStart` to update the unique loaded entity without creating another one. The model is editor-only. Disabling the option removes only this managed marker; advanced `info_spawnpoint_human` objects added from the Custom catalog remain untouched.
 
 ## Generated code
 

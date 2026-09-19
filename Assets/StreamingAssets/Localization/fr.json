@@ -3428,7 +3428,7 @@
     },
     {
       "key": "#OVERRIDE_PLAYER_SPAWN_HELP",
-      "text": "Crée un marqueur mdl/dev/mp_spawn.rmdl déplaçable à l’origine de la scène. Sa position et sa rotation sont exportées comme info_spawnpoint_human."
+      "text": "Lit l’unique info_player_start de la carte et crée un marqueur d’éditeur mdl/dev/mp_spawn.rmdl déplaçable à sa position et ses angles natifs."
     },
     {
       "key": "#WORLD_PLAYER_SPAWN_MARKER",
@@ -3436,7 +3436,7 @@
     },
     {
       "key": "#WORLD_PLAYER_SPAWN_MARKER_HELP",
-      "text": "Ce marqueur est géré par l’option World Spawn. Déplacez-le et faites-le pivoter pour choisir le spawn du joueur."
+      "text": "Ce marqueur visible uniquement dans l’éditeur remplace la position et les angles du info_player_start natif dans _script.ent. Déplacez-le et faites-le pivoter pour choisir le spawn du joueur."
     },
     {
       "key": "#SELECT_PLAYER_SPAWN_MARKER",
@@ -3449,6 +3449,22 @@
     {
       "key": "#WORLD_PLAYER_SPAWN_DISABLED",
       "text": "Spawn joueur personnalisé supprimé."
+    },
+    {
+      "key": "#READING_WORLD_PLAYER_SPAWN",
+      "text": "Lecture du spawn joueur natif…"
+    },
+    {
+      "key": "#BASE_PLAYER_START_COUNT_ARG0",
+      "text": "La carte de base doit contenir exactement un info_player_start ; {0} ont été trouvés."
+    },
+    {
+      "key": "#REMAP_PLAYER_START_COUNT_ARG0",
+      "text": "Le projet ReMap doit contenir au maximum un marqueur World Spawn géré ; {0} ont été trouvés."
+    },
+    {
+      "key": "#GENERATED_PLAYER_START_INVALID",
+      "text": "Le info_player_start généré n’a pas de valeur origin ou angles valide."
     },
     {
       "key": "#SPAWN_POINT_PREVIEW_ERROR",

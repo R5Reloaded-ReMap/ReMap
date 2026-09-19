@@ -54,7 +54,7 @@ namespace ReMap.Standalone
             if (world.Any(o => o.customType == "jump-pad") &&
                 !models.Contains(ReMapApp.JumpPadModelPath, StringComparer.OrdinalIgnoreCase))
                 models.Add(ReMapApp.JumpPadModelPath);
-            if (world.Any(o => o.customType == "spawn-point") &&
+            if (world.Any(o => o.customType == "spawn-point" && !ReMapApp.IsWorldSpawnPoint(o)) &&
                 !models.Contains(ReMapApp.SpawnPointModelPath, StringComparer.OrdinalIgnoreCase))
                 models.Add(ReMapApp.SpawnPointModelPath);
             if (world.Any(o => o.customType == "jump-tower"))
@@ -479,8 +479,10 @@ namespace ReMap.Standalone
             if (!live && spawnPoints.Count > 0) { code.AppendLine(); code.AppendLine("\t// Player spawn points"); }
             foreach (var spawnPoint in spawnPoints)
             {
-                string expression = "ReMap_CreateSpawnPoint( " +
+                string expression = ReMapApp.IsWorldSpawnPoint(spawnPoint) ? "ReMap_UpdatePlayerStart( " +
                     Position(spawnPoint.position, originOffset, symbolicOffset) + ", " +
+                    Vector(ApexDisplay.Angles(WorldView.ToVector(spawnPoint.rotation))) + " )" :
+                    "ReMap_CreateSpawnPoint( " + Position(spawnPoint.position, originOffset, symbolicOffset) + ", " +
                     Vector(ApexDisplay.Angles(WorldView.ToVector(spawnPoint.rotation))) + ", " +
                     spawnPoint.spawnPointTeam.ToString(CultureInfo.InvariantCulture) + " )";
                 code.Append(live ? "script " : "\t").Append(expression).AppendLine();

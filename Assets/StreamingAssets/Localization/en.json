@@ -3428,7 +3428,7 @@
     },
     {
       "key": "#OVERRIDE_PLAYER_SPAWN_HELP",
-      "text": "Creates a movable mdl/dev/mp_spawn.rmdl marker at the scene origin. Its position and rotation are exported as an info_spawnpoint_human."
+      "text": "Reads the map’s unique info_player_start and creates a movable mdl/dev/mp_spawn.rmdl editor marker at its native position and angles."
     },
     {
       "key": "#WORLD_PLAYER_SPAWN_MARKER",
@@ -3436,7 +3436,7 @@
     },
     {
       "key": "#WORLD_PLAYER_SPAWN_MARKER_HELP",
-      "text": "This marker is managed by the World Spawn option. Move and rotate it to choose the player spawn."
+      "text": "This editor-only marker replaces the native info_player_start position and angles in _script.ent. Move and rotate it to choose the player spawn."
     },
     {
       "key": "#SELECT_PLAYER_SPAWN_MARKER",
@@ -3449,6 +3449,22 @@
     {
       "key": "#WORLD_PLAYER_SPAWN_DISABLED",
       "text": "Custom player spawn removed."
+    },
+    {
+      "key": "#READING_WORLD_PLAYER_SPAWN",
+      "text": "Reading the native player spawn…"
+    },
+    {
+      "key": "#BASE_PLAYER_START_COUNT_ARG0",
+      "text": "The base map must contain exactly one info_player_start; {0} were found."
+    },
+    {
+      "key": "#REMAP_PLAYER_START_COUNT_ARG0",
+      "text": "The ReMap project must contain at most one managed World Spawn marker; {0} were found."
+    },
+    {
+      "key": "#GENERATED_PLAYER_START_INVALID",
+      "text": "The generated info_player_start is missing a valid origin or angles value."
     },
     {
       "key": "#SPAWN_POINT_PREVIEW_ERROR",

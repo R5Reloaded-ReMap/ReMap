@@ -37,6 +37,7 @@ namespace ReMap.Standalone.Tests
             StringAssert.Contains("spawnPoint.kv.gamemode_tdm = 1", script);
             StringAssert.Contains("spawnPoint.kv.gamemode_ffa = 1", script);
             StringAssert.Contains("spawnPoint.kv.gamemode_ctf = 1", script);
+            StringAssert.Contains("GetEntArrayByClass_Expensive( \"info_player_start\" )", script);
             StringAssert.DoesNotContain("MapEditor_", script);
         }
 
@@ -58,9 +59,11 @@ namespace ReMap.Standalone.Tests
             string code = ReMapGameScript.Generate(document, document.objects);
             ReMapEntFragments entities = ReMapEntExporter.Generate(document, document.objects);
 
-            StringAssert.Contains("ReMap_CreateSpawnPoint( <0, 0, 0>, <0, 0, 0>, 0 )", code);
-            StringAssert.Contains("\"classname\" \"info_spawnpoint_human\"", entities.Spawn);
-            StringAssert.Contains("\"model\" \"mdl/dev/mp_spawn.rmdl\"", entities.Spawn);
+            StringAssert.Contains("ReMap_UpdatePlayerStart( <0, 0, 0>, <0, 0, 0> )", code);
+            StringAssert.DoesNotContain("ReMap_CreateSpawnPoint", code);
+            StringAssert.Contains("\"classname\" \"info_player_start\"", entities.PlayerStart);
+            StringAssert.DoesNotContain("info_player_start", entities.Spawn);
+            StringAssert.DoesNotContain("mdl/dev/mp_spawn.rmdl", entities.PlayerStart);
         }
 
         [TestCase(-1)]
