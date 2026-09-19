@@ -37,7 +37,6 @@ void function ReMap_PrecacheZiplines()
 {
 	PrecacheModel( REMAP_ZIPLINE_MODEL_ARM )
 	PrecacheModel( REMAP_ZIPLINE_MODEL_SUPPORT )
-	PrecacheScriptSound( "3p_Ziprail_Emit_TowerBy" )
 }
 
 void function ReMap_ClearZiplines()

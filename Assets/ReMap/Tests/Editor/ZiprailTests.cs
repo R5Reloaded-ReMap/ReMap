@@ -92,7 +92,7 @@ namespace ReMap.Standalone.Tests
             string script = File.ReadAllText(Path.Combine(root, "scripts/vscripts/source/sv_remap_ziplines.source.nut"));
             StringAssert.DoesNotContain("ReMap_CreateZiprail", script);
             StringAssert.DoesNotContain("REMAP_ZIPRAIL_POINT_", script);
-            StringAssert.Contains("PrecacheScriptSound( \"3p_Ziprail_Emit_TowerBy\" )", script);
+            StringAssert.DoesNotContain("PrecacheScriptSound", script);
             StringAssert.DoesNotContain("ReMap_OnZiprailSupportSpawned", script);
 
             string objectScript = File.ReadAllText(Path.Combine(root, "scripts/vscripts/source/sv_remap_objects.source.nut"));
