@@ -101,19 +101,14 @@ namespace ReMap.Standalone
             menu.Add(Label(L.F("#CURRENT_PROJECT_ARG0", slot.value), "menu-caption"));
             MenuAction(menu, L.T("#NEW_MAP"), NewMap);
             MenuAction(menu, L.T("#IMPORT_SHARED_PROJECT"), ImportSharedProject);
+            MenuSeparator(menu);
+            MenuAction(menu, L.T("#SAVE") + "    Ctrl+S", Save);
+            MenuAction(menu, L.T("#RENAME_CURRENT_MAP"), () => ShowRenameMapDialog(true));
+            MenuSeparator(menu);
             MenuAction(menu, L.T("#EXPORT_CURRENT_PROJECT"), ExportCurrentProject, snapshot != null);
             MenuAction(menu, L.T("#PORT_CURRENT_MAP_OTHER_GAME"), BeginMapPort, snapshot != null);
-            MenuAction(menu, L.T("#RENAME_CURRENT_MAP"), () => ShowRenameMapDialog(true));
-            MenuAction(menu, L.T("#SAVE") + "    Ctrl+S", Save);
             MenuSeparator(menu);
-            MenuAction(menu, L.T("#BUILD_INSTALL_MAP"), () => ShowCodePreview(), CanOpenGameCode());
-            MenuAction(menu, L.T("#RESET_INSTALLED_GAME_SCRIPT"), ResetGameScript);
             MenuAction(menu, L.T("#PREVIEW_GAME_CODE"), () => ShowCodePreview(), CanOpenGameCode());
-            if (LiveMapEnabled)
-            {
-                MenuAction(menu, L.T("#LIVE_GAME_F9FC5E"), () => ShowLiveConsole(), snapshot?.objects.Count > 0);
-                MenuAction(menu, L.T("#COPY_LIVE_COMMANDS"), CopyLiveCommands, snapshot?.objects.Count > 0);
-            }
         }
 
         private void BuildEditMenu(VisualElement menu)
@@ -129,6 +124,8 @@ namespace ReMap.Standalone
             MenuAction(menu, L.T("#PLACE_DUPLICATE") + "    Ctrl+D", BeginSelectionDuplicatePlacement, selectedIds.Count > 0);
             MenuAction(menu, L.T("#GROUP_SELECTION") + "    Ctrl+G", GroupSelection, selectedIds.Count > 0);
             MenuAction(menu, L.T("#DELETE") + "    Del", Delete, selectedIds.Count > 0);
+            MenuSeparator(menu);
+            MenuAction(menu, L.T("#SETTINGS_7A0408"), () => ShowSettings(true));
         }
 
         private void BuildHelpMenu(VisualElement menu)
@@ -231,11 +228,9 @@ namespace ReMap.Standalone
         private void BuildToolsMenu(VisualElement menu)
         {
             MenuAction(menu, L.T("#CONSTRUCTION_TOOLS_6E6587"), () => ShowConstructionTools(true));
-            MenuAction(menu, L.T("#TRANSFORM_STEPS"), () => ShowTool("transform-snap"));
             MenuSeparator(menu);
             MenuAction(menu, L.T("#WORKSPACE_GAME"), () => ShowWorkspaceGameDialog(true));
             MenuAction(menu, L.T("#INDEXING_PAGE"), () => ShowIndexing(true), !indexRequested);
-            MenuAction(menu, L.T("#SETTINGS_7A0408"), () => ShowSettings(true));
         }
 
         private void BuildWorkspaceGameDialog()
@@ -432,6 +427,7 @@ namespace ReMap.Standalone
             entExportWarning = Label("", "map-source-warning"); entExportWarning.style.display = DisplayStyle.None; content.Add(entExportWarning);
             entExportTarget = Label("", "map-source-warning"); content.Add(entExportTarget);
             var actions = new VisualElement(); actions.AddToClassList("code-export-actions"); panel.Add(actions);
+            actions.Add(Button(L.T("#RESET_INSTALLED_GAME_SCRIPT"), ResetGameScript));
             actions.Add(Button(L.T("#EXPORT_AND_INSTALL"), ConfirmEntExport, "primary"));
             return panel;
         }

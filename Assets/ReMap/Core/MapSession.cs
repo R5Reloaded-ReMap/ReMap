@@ -15,6 +15,7 @@ namespace ReMap.Standalone.Core
         private readonly List<State> undo = new List<State>();
         private readonly List<State> redo = new List<State>();
         private long nextRevision;
+        private bool continuousEditing, continuousEditRemembered;
         public long Revision { get; private set; }
         private readonly int historyLimit;
         public bool CanUndo => undo.Count > 0;
@@ -34,7 +35,11 @@ namespace ReMap.Standalone.Core
             var next = document.Copy();
             edit(next);
             next.Validate();
-            Remember(undo, new State(document, Revision));
+            if (!continuousEditing || !continuousEditRemembered)
+            {
+                Remember(undo, new State(document, Revision));
+                continuousEditRemembered = continuousEditing;
+            }
             document = next.Copy(); // The caller cannot retain a writable reference to the session.
             Revision = ++nextRevision;
             redo.Clear();
@@ -42,6 +47,7 @@ namespace ReMap.Standalone.Core
 
         public void Replace(MapDocument next)
         {
+            EndContinuousEdit();
             if (next == null) throw new ArgumentException(L.T("#EMPTY_SAVE_FILE"));
             next.Validate();
             var copy = next.Copy();
@@ -53,6 +59,7 @@ namespace ReMap.Standalone.Core
 
         public bool Undo()
         {
+            EndContinuousEdit();
             if (!CanUndo) return false;
             Remember(redo, new State(document, Revision));
             var previous = Pop(undo); document = previous.Document; Revision = previous.Revision;
@@ -61,10 +68,24 @@ namespace ReMap.Standalone.Core
 
         public bool Redo()
         {
+            EndContinuousEdit();
             if (!CanRedo) return false;
             Remember(undo, new State(document, Revision));
             var next = Pop(redo); document = next.Document; Revision = next.Revision;
             return true;
+        }
+
+        public void BeginContinuousEdit()
+        {
+            if (continuousEditing) return;
+            continuousEditing = true;
+            continuousEditRemembered = false;
+        }
+
+        public void EndContinuousEdit()
+        {
+            continuousEditing = false;
+            continuousEditRemembered = false;
         }
 
         private void Remember(List<State> history, State value)

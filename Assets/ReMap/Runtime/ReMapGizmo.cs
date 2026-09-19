@@ -23,20 +23,59 @@ namespace ReMap.Standalone
         private int duplicateDirectionHandle=-1, directionalTargetHandle=-1, cornerTargetHandle=-1, placementHandle=-1, cornerSideTurn, cornerOrbitTurn, cornerObjectTurn;
         private bool directionalMirrorCopy;
         private float moveSnap=ApexCoordinates.DefaultGridMeters, rotateSnap=15, scaleSnap=.1f;
+        private VisualElement snapPopover;
+        private Button snapSettingsButton;
         private void BuildTransformToolbar(VisualElement toolbar) {
             toolbar.Add(Button(L.T("#SCALE_R"),SetScaleGizmo));
             var space=new Button();space.text=localGizmo?L.T("#LOCAL"):L.T("#GLOBAL");space.tooltip=L.T("#MOVE_ROTATE_USING_WORLD_ACTIVE");
             space.clicked+=()=> {CommitInspectorEdit();CancelGizmoDrag();localGizmo=!localGizmo;space.text=localGizmo?L.T("#LOCAL"):L.T("#GLOBAL");viewport.Focus();};toolbar.Add(space);
             var pivot=new Button();pivot.text=centrePivot?L.T("#CENTER"):L.T("#PIVOT");pivot.tooltip=L.T("#CENTER_SELECTION_BOUNDS_ACTIVE_OBJECT");
             pivot.clicked+=()=> {CommitInspectorEdit();CancelGizmoDrag();centrePivot=!centrePivot;PlayerPrefs.SetInt(CentrePivotPreferenceKey,centrePivot?1:0);PlayerPrefs.Save();pivot.text=centrePivot?L.T("#CENTER"):L.T("#PIVOT");viewport.Focus();};toolbar.Add(pivot);
-            toolbar.Add(Button(L.T("#STEPS"),()=>ShowTool("transform-snap")));
         }
-        private VisualElement snapSection;
-        private void BuildSnapSettings() {
-            snapSection=ToolSection(L.T("#TRANSFORM_SNAPPING"),"transform-snap");
-            void Step(string name,float initial,System.Action<float> set,float max=1000) {var f=ToolFloat(snapSection,name,initial);f.isDelayed=true;f.RegisterValueChangedCallback(e=> {if(float.IsNaN(e.newValue)||float.IsInfinity(e.newValue)||e.newValue<=0||e.newValue>max){f.SetValueWithoutNotify(e.previousValue);return;}set(e.newValue);});}
-            Step(L.T("#APEX_MOVEMENT_U"),moveSnap/ApexCoordinates.MetersPerUnit,v=>{moveSnap=v*ApexCoordinates.MetersPerUnit;world.GridStep=moveSnap;},ApexCoordinates.MaxWorldCoord);Step(L.T("#ROTATION_109E81"),rotateSnap,v=>rotateSnap=v);Step(L.T("#SCALE_FACTOR"),scaleSnap,v=>scaleSnap=v);
-            snapSection.Add(Label(L.T("#SNAPPING_USE_STEPS_HANDLES_SCALE"),"note"));
+        private void BuildSnapSettingsButton(VisualElement parent)
+        {
+            snapSettingsButton=Button("▾",ToggleSnapSettings,"toolbar-snap-settings");
+            snapSettingsButton.name="snap-settings-button";
+            snapSettingsButton.tooltip=L.T("#TRANSFORM_SNAPPING");
+            parent.Add(snapSettingsButton);
+            snapPopover=new VisualElement { name="snap-settings-popover" };
+            snapPopover.AddToClassList("snap-popover");
+            snapPopover.style.display=DisplayStyle.None;
+            root.Add(snapPopover);
+            snapPopover.Add(Label(L.T("#TRANSFORM_SNAPPING"),"snap-popover-title"));
+            void Step(string name,float initial,System.Action<float> set,float max=1000)
+            {
+                var field=new FloatField(name) { value=initial, isDelayed=false };
+                field.RegisterValueChangedCallback(e=> {
+                    if(float.IsNaN(e.newValue)||float.IsInfinity(e.newValue)||e.newValue<=0||e.newValue>max)
+                    {
+                        field.SetValueWithoutNotify(e.previousValue);return;
+                    }
+                    set(e.newValue);
+                });
+                snapPopover.Add(field);
+            }
+            Step(L.T("#APEX_MOVEMENT_U"),moveSnap/ApexCoordinates.MetersPerUnit,
+                value=>{moveSnap=value*ApexCoordinates.MetersPerUnit;world.GridStep=moveSnap;},ApexCoordinates.MaxWorldCoord);
+            Step(L.T("#ROTATION_109E81"),rotateSnap,value=>rotateSnap=value);
+            Step(L.T("#SCALE_FACTOR"),scaleSnap,value=>scaleSnap=value);
+            snapPopover.Add(Label(L.T("#SNAPPING_USE_STEPS_HANDLES_SCALE"),"note"));
+            root.RegisterCallback<PointerDownEvent>(e=> {
+                if(snapPopover.style.display.value==DisplayStyle.None)return;
+                if(snapPopover.worldBound.Contains(e.position)||snapSettingsButton.worldBound.Contains(e.position))return;
+                snapPopover.style.display=DisplayStyle.None;
+            },TrickleDown.TrickleDown);
+        }
+        private void ToggleSnapSettings()
+        {
+            bool show=snapPopover.style.display.value==DisplayStyle.None;
+            snapPopover.style.display=show?DisplayStyle.Flex:DisplayStyle.None;
+            if(!show)return;
+            const float width=270f;
+            snapPopover.style.left=Mathf.Clamp(snapSettingsButton.worldBound.xMin-root.worldBound.xMin,4f,
+                Mathf.Max(4f,root.resolvedStyle.width-width-4f));
+            snapPopover.style.top=snapSettingsButton.worldBound.yMax-root.worldBound.yMin+2f;
+            snapPopover.BringToFront();
         }
         private void SetGizmoMode(bool rotation) { CommitInspectorEdit(); CancelPlacement(); rotationGizmo=rotation;scaleGizmo=false; mode.RemoveFromClassList("mode-warning");mode.text=rotation?L.T("#ROTATION"):L.T("#MOVEMENT");viewport.Focus(); }
         private void SetScaleGizmo() {CommitInspectorEdit();CancelPlacement();rotationGizmo=false;scaleGizmo=true;ShowScaleModeNotice();viewport.Focus();}

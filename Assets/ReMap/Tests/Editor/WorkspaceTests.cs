@@ -37,6 +37,20 @@ namespace ReMap.Standalone.Tests
             Assert.Throws<ArgumentException>(() => session.Edit(d => d.objects[0].scale.x = 0));
             Assert.That(session.Revision, Is.EqualTo(valid));
         }
+        [Test] public void ContinuousEditsUseOneUndoStep()
+        {
+            var session = new MapSession(); session.Replace(Example());
+            session.BeginContinuousEdit();
+            session.Edit(doc => doc.objects[0].position.x = 1);
+            session.Edit(doc => doc.objects[0].position.x = 2);
+            session.Edit(doc => doc.objects[0].position.x = 3);
+            session.EndContinuousEdit();
+            Assert.That(session.Snapshot().objects[0].position.x, Is.EqualTo(3));
+            Assert.That(session.Undo(), Is.True);
+            Assert.That(session.Snapshot().objects[0].position.x, Is.EqualTo(-12.5f));
+            Assert.That(session.Redo(), Is.True);
+            Assert.That(session.Snapshot().objects[0].position.x, Is.EqualTo(3));
+        }
         [Test] public void SaveRoundTripPreservesReferencesIdsAndTransforms()
         {
             var original = Example(); files.Save("roundtrip", original); var loaded = files.Load("roundtrip");

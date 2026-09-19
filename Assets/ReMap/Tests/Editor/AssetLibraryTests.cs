@@ -9,6 +9,20 @@ namespace ReMap.Standalone.Tests
 {
     public sealed class AssetLibraryTests
     {
+        [Test] public void PlatformDirectoryFallsBackToExistingPlatformVariant()
+        {
+            string root = Path.Combine(Path.GetTempPath(), "remap-platform-" + Guid.NewGuid().ToString("N"));
+            try
+            {
+                string expected = Path.Combine(root, "platform_");
+                Directory.CreateDirectory(expected);
+                Assert.That(RsxAssetLibrary.FindPlatformDirectory(root), Is.EqualTo(Path.GetFullPath(expected)));
+            }
+            finally
+            {
+                if (Directory.Exists(root)) Directory.Delete(root, true);
+            }
+        }
         [Test] public void SelectedMapArchivesContainOnlyExistingExactFiles()
         {
             var result = RsxAssetLibrary.SelectMapArchives(

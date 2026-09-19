@@ -39,7 +39,6 @@ namespace ReMap.Standalone
             toolSelection = Label(L.T("#SELECT_OBJECT_GROUP"), "tool-selection"); toolsPanel.Add(toolSelection);
 
             toolResult = Label(L.T("#ONE_OPERATION_ONE_UNDO_STEP"), "tool-result"); toolsPanel.Add(toolResult);
-            BuildSnapSettings();
             BuildSelectionByTypeTool();
             BuildModelReplacementTool();
             BuildParameterTransferTool();

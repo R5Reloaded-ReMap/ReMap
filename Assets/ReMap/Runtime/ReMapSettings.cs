@@ -56,14 +56,12 @@ namespace ReMap.Standalone
             scroll.Add(Label(L.T("#GAME_INSTALLATIONS"), "section-title"));
             var r5rPaths = new Foldout { text = "R5Reloaded", value = currentTarget != GameTargets.R5Flowstate }; r5rPaths.AddToClassList("game-paths-foldout"); scroll.Add(r5rPaths);
             var r5rGame = AddFolderPicker(r5rPaths, L.T("#R5RELOADED_FOLDER"), assetLibrary.Settings.r5ReloadedGameDirectory, () => "");
-            var r5rPlatform = AddFolderPicker(r5rPaths, L.T("#R5RELOADED_PLATFORM_FOLDER"), assetLibrary.Settings.r5ReloadedPlatformDirectory, () => r5rGame.value);
             var r5fPaths = new Foldout { text = "R5Flowstate", value = currentTarget == GameTargets.R5Flowstate }; r5fPaths.AddToClassList("game-paths-foldout"); scroll.Add(r5fPaths);
             var r5fGame = AddFolderPicker(r5fPaths, L.T("#R5FLOWSTATE_FOLDER"), assetLibrary.Settings.r5FlowstateGameDirectory, () => "");
-            var r5fPlatform = AddFolderPicker(r5fPaths, L.T("#R5FLOWSTATE_PLATFORM_FOLDER"), assetLibrary.Settings.r5FlowstatePlatformDirectory, () => r5fGame.value);
             scroll.Add(Label(L.T("#REMAP_DETECTS_PAKS_WIN64_AVAILABLE"), "note"));
             Action applyGameSources = () => {
                 string selectedTarget = snapshot?.gameTarget ?? assetLibrary.TargetGame;
-                assetLibrary.ConfigureProfiles(selectedTarget, r5rGame.value, r5rPlatform.value, r5fGame.value, r5fPlatform.value);
+                assetLibrary.ConfigureProfiles(selectedTarget, r5rGame.value, "", r5fGame.value, "");
                 CancelPlacement(); previewEntry = null; lastPreviewRequest = null;
                 world.models.ForgetPrepared();
                 foreach (var id in snapshot.objects.Where(o => o.assetId.StartsWith("apex:", StringComparison.Ordinal)).Select(o => o.assetId).Distinct()) world.Reload(id);
@@ -91,16 +89,19 @@ namespace ReMap.Standalone
             r5fPaths.Add(Label(L.T("#FIRST_TIME_SETUP_HELP"), "note"));
             r5fPaths.Add(Button(L.T("#SET_UP_REMAP_FIRST_TIME"), () => setupGame(GameTargets.R5Flowstate)));
             scroll.Add(Button(L.T("#SAVE_PATHS"), applyGameSources));
-            scroll.Add(Label(L.T("#GAME_CONNECTION"), "section-title"));
-            string savedAddress = string.IsNullOrWhiteSpace(assetLibrary.Settings.rconAddress) ? "[::ffff:127.0.0.1]:37015" : assetLibrary.Settings.rconAddress;
-            var rconAddress = new TextField(L.T("#SERVER_ADDRESS")) { value = savedAddress }; rconAddress.AddToClassList("settings-field"); scroll.Add(rconAddress);
-            var rconKey = new TextField(L.T("#RCON_AES_KEY")) { value = assetLibrary.Settings.rconKey ?? "" }; rconKey.AddToClassList("settings-field"); scroll.Add(rconKey);
-            var rconPassword = new TextField(L.T("#RCON_PASSWORD")) { value = assetLibrary.Settings.rconPassword ?? "", isPasswordField = true }; rconPassword.AddToClassList("settings-field"); scroll.Add(rconPassword);
-            scroll.Add(Label(L.T("#R5FLOWSTATE_USE_OPEN_LAUNCHER_CONSOLE"), "note"));
-            scroll.Add(Button(L.T("#SAVE_GAME_CONNECTION"), () => {
-                assetLibrary.Settings.rconAddress = rconAddress.value.Trim(); assetLibrary.Settings.rconKey = rconKey.value.Trim(); assetLibrary.Settings.rconPassword = rconPassword.value;
-                assetLibrary.SaveSettings(); SetStatus(L.T("#GAME_CONNECTION_SAVED"));
-            }));
+            if (LiveMapEnabled)
+            {
+                scroll.Add(Label(L.T("#GAME_CONNECTION"), "section-title"));
+                string savedAddress = string.IsNullOrWhiteSpace(assetLibrary.Settings.rconAddress) ? "[::ffff:127.0.0.1]:37015" : assetLibrary.Settings.rconAddress;
+                var rconAddress = new TextField(L.T("#SERVER_ADDRESS")) { value = savedAddress }; rconAddress.AddToClassList("settings-field"); scroll.Add(rconAddress);
+                var rconKey = new TextField(L.T("#RCON_AES_KEY")) { value = assetLibrary.Settings.rconKey ?? "" }; rconKey.AddToClassList("settings-field"); scroll.Add(rconKey);
+                var rconPassword = new TextField(L.T("#RCON_PASSWORD")) { value = assetLibrary.Settings.rconPassword ?? "", isPasswordField = true }; rconPassword.AddToClassList("settings-field"); scroll.Add(rconPassword);
+                scroll.Add(Label(L.T("#R5FLOWSTATE_USE_OPEN_LAUNCHER_CONSOLE"), "note"));
+                scroll.Add(Button(L.T("#SAVE_GAME_CONNECTION"), () => {
+                    assetLibrary.Settings.rconAddress = rconAddress.value.Trim(); assetLibrary.Settings.rconKey = rconKey.value.Trim(); assetLibrary.Settings.rconPassword = rconPassword.value;
+                    assetLibrary.SaveSettings(); SetStatus(L.T("#GAME_CONNECTION_SAVED"));
+                }));
+            }
             scroll.Add(Label(L.T("#ASSET_CACHE"), "section-title"));
             scroll.Add(Label(L.T("#COMPATIBLE_MODELS_TEXTURES_SHARED_BETWEEN"), "note"));
             var cachePath = new TextField(L.T("#ASSET_EXPORT_FOLDER")) { value = assetLibrary.AssetExportDirectory, isDelayed = true }; cachePath.AddToClassList("settings-field"); scroll.Add(cachePath);

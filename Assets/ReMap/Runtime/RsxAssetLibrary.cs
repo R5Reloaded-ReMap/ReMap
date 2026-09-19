@@ -302,6 +302,8 @@ namespace ReMap.Standalone
                 string candidate = Path.Combine(game, name);
                 if (Directory.Exists(Path.Combine(candidate, "scripts"))) return Path.GetFullPath(candidate);
             }
+            foreach (string name in new[] { "platform", "platform_" })
+                if (Directory.Exists(Path.Combine(game, name))) return Path.GetFullPath(Path.Combine(game, name));
             return Path.GetFullPath(Path.Combine(game, "platform"));
         }
 

@@ -83,7 +83,7 @@ See [Editing tools](Docs/EDITOR-TOOLS.md). Player check: `-remapEditorSmoke`.
 
 ## Apex assets and loaded archives
 
-Open **Settings** for global preferences, the two independent R5Reloaded/R5Flowstate installation paths, live connection, preview quality, cache location, and map-reference display. Each game's paths are grouped in a collapsible section. ReMap detects `paks/Win64`, `paks/Win64_server`, available map RPAKs, and model entries automatically for the selected game.
+Open **Settings** for global preferences, the independent R5Reloaded/R5Flowstate game roots, preview quality, cache location, and map-reference display. Each game has one root-folder selector; ReMap detects `platform`/`platform_`, `paks/Win64`, `paks/Win64_server`, available map RPAKs, and model entries automatically.
 
 Open **Loaded archives** or **Tools > Indexing…** for the current project's dedicated Indexing page. It displays the project's locked target game, the edited map, and additional RPAK sources. Closing the page does not start background work; **Apply, index and close** explicitly rebuilds the model catalog.
 
@@ -117,7 +117,7 @@ The full cache path appears in Settings with an **Open cache folder** button.
 
 Model extraction and thumbnail rendering start in a dedicated full-screen progress view with the active and remaining models, throughput, estimated time, and recent extraction/render timings. The view can be minimized while preparation continues in the background and reopened from the library footer. Missing scene models are prepared first, followed by models visible in the game or custom-object library, then the remaining catalogue. A batch-capable RSX backend exports up to eight models from the current archive in parallel. While Unity renders those thumbnails on its main thread, RSX prefetches the next bounded batch so neither stage has to remain idle. Existing thumbnails remain cached on disk.
 
-Saved projects are listed only for the active target game, with separate recovery state for R5Reloaded and R5Flowstate. A project's game target is locked after creation, so it cannot be launched against the other installation. **File > Port current map to the other game…** selects the opposite game, verifies the target RPAKs, and creates a converted copy only when every Apex model exists under the same GUID and internal model path. If conversion is blocked, a dedicated report lists every unavailable or incompatible model and no copy is created. Live rebuilding is disabled while a scene references map RPAKs absent from the active installation.
+Saved projects are listed only for the active target game, with separate recovery state for R5Reloaded and R5Flowstate. A project's game target is locked after creation, so it cannot be launched against the other installation. **File > Port current map to the other game…** selects the opposite game, verifies the target RPAKs, and creates a converted copy only when every Apex model exists under the same GUID and internal model path. If conversion is blocked, a dedicated report lists every unavailable or incompatible model and no copy is created.
 
 Preview textures are limited to **512 px** on their longest side. Existing cached previews are migrated without re-extracting their models. Content hashes avoid duplicate PNG copies, and runtime reference counting avoids duplicate GPU textures.
 
