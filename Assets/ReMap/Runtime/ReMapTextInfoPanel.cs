@@ -11,7 +11,7 @@ namespace ReMap.Standalone
             new MapObject {
                 assetId = "custom:text-info-panel", displayName = L.T("#TEXT_INFO_PANEL"),
                 customType = "text-info-panel", parentId = parent ?? "", position = WorldView.ToData(position),
-                isGroup = true, textInfoPanelShowPin = true, textInfoPanelScale = 1f
+                isGroup = true, textInfoPanelShowPin = false, textInfoPanelScale = 1f
             };
 
         private void InsertTextInfoPanel(Vector3 position, string parent = "")

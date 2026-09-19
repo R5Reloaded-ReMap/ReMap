@@ -149,7 +149,7 @@ namespace ReMap.Standalone.Core
         public bool soundShowPolyline = true;
         public string textInfoPanelTitle = "";
         public string textInfoPanelDescription = "";
-        public bool textInfoPanelShowPin = true;
+        public bool textInfoPanelShowPin;
         public float textInfoPanelScale = 1f;
         public float windowHintHalfHeight = 64f;
         public float windowHintHalfWidth = 72f;
