@@ -3419,6 +3419,34 @@
       "text": "Player spawn point created. Rotate it to choose the facing direction."
     },
     {
+      "key": "#OVERRIDE_PLAYER_SPAWN",
+      "text": "Set a custom player spawn"
+    },
+    {
+      "key": "#OVERRIDE_PLAYER_SPAWN_HELP",
+      "text": "Creates a movable mdl/dev/mp_spawn.rmdl marker at the scene origin. Its position and rotation are exported as an info_spawnpoint_human."
+    },
+    {
+      "key": "#WORLD_PLAYER_SPAWN_MARKER",
+      "text": "World player spawn"
+    },
+    {
+      "key": "#WORLD_PLAYER_SPAWN_MARKER_HELP",
+      "text": "This marker is managed by the World Spawn option. Move and rotate it to choose the player spawn."
+    },
+    {
+      "key": "#SELECT_PLAYER_SPAWN_MARKER",
+      "text": "Select player spawn marker"
+    },
+    {
+      "key": "#WORLD_PLAYER_SPAWN_ENABLED",
+      "text": "Custom player spawn enabled. Move and rotate its marker in the scene."
+    },
+    {
+      "key": "#WORLD_PLAYER_SPAWN_DISABLED",
+      "text": "Custom player spawn removed."
+    },
+    {
       "key": "#SPAWN_POINT_PREVIEW_ERROR",
       "text": "Player spawn point preview: "
     },

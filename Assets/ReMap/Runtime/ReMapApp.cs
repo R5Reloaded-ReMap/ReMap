@@ -979,6 +979,13 @@ namespace ReMap.Standalone
             positionInput.RegisterCallback<PointerUpEvent>(_=>root.schedule.Execute(()=>Run(CommitInspectorEdit)),TrickleDown.TrickleDown);
             positionInput.RegisterCallback<FocusOutEvent>(_=>root.schedule.Execute(()=>Run(CommitInspectorEdit)));
             inspector.Add(Label(L.T("#OFFSET_APPLIED_GAME_EDITOR_KEEPS"),"note"));
+            MapObject worldSpawnPoint = WorldSpawnPoint();
+            bool worldSpawnEnabled = worldSpawnPoint != null && MapHierarchy.IsEnabled(snapshot, worldSpawnPoint.id);
+            var overridePlayerSpawn = new Toggle(L.T("#OVERRIDE_PLAYER_SPAWN")) { value = worldSpawnEnabled };
+            overridePlayerSpawn.RegisterValueChangedCallback(change => SetWorldSpawnPoint(change.newValue));
+            inspector.Add(overridePlayerSpawn);
+            inspector.Add(Label(L.T("#OVERRIDE_PLAYER_SPAWN_HELP"), "note"));
+            if (worldSpawnPoint != null) inspector.Add(Button(L.T("#SELECT_PLAYER_SPAWN_MARKER"), SelectWorldSpawnPoint));
             var showMainBsp = new Toggle(L.T("#SHOW_MAIN_BSP")) { value = assetLibrary.Settings.showMainBsp };
             showMainBsp.RegisterValueChangedCallback(change => SetMapReferenceOptions(showBsp: change.newValue));
             inspector.Add(showMainBsp);

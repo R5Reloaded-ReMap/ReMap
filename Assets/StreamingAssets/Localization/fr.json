@@ -3419,6 +3419,34 @@
       "text": "Point de spawn joueur créé. Faites-le pivoter pour choisir la direction du regard."
     },
     {
+      "key": "#OVERRIDE_PLAYER_SPAWN",
+      "text": "Définir un spawn joueur personnalisé"
+    },
+    {
+      "key": "#OVERRIDE_PLAYER_SPAWN_HELP",
+      "text": "Crée un marqueur mdl/dev/mp_spawn.rmdl déplaçable à l’origine de la scène. Sa position et sa rotation sont exportées comme info_spawnpoint_human."
+    },
+    {
+      "key": "#WORLD_PLAYER_SPAWN_MARKER",
+      "text": "Spawn joueur du World"
+    },
+    {
+      "key": "#WORLD_PLAYER_SPAWN_MARKER_HELP",
+      "text": "Ce marqueur est géré par l’option World Spawn. Déplacez-le et faites-le pivoter pour choisir le spawn du joueur."
+    },
+    {
+      "key": "#SELECT_PLAYER_SPAWN_MARKER",
+      "text": "Sélectionner le marqueur de spawn"
+    },
+    {
+      "key": "#WORLD_PLAYER_SPAWN_ENABLED",
+      "text": "Spawn joueur personnalisé activé. Déplacez et faites pivoter son marqueur dans la scène."
+    },
+    {
+      "key": "#WORLD_PLAYER_SPAWN_DISABLED",
+      "text": "Spawn joueur personnalisé supprimé."
+    },
+    {
       "key": "#SPAWN_POINT_PREVIEW_ERROR",
       "text": "Aperçu du point de spawn joueur : "
     },

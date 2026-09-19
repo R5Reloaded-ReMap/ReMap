@@ -11,7 +11,18 @@ namespace ReMap.Standalone
     public sealed partial class ReMapApp
     {
         internal const string SpawnPointModelPath = "mdl/dev/mp_spawn.rmdl";
+        internal const string WorldSpawnPointRole = "world-spawn";
         private bool preparingSpawnPointModel;
+
+        internal static bool IsWorldSpawnPoint(MapObject item)
+        {
+            return item?.customType == "spawn-point" && item.customRole == WorldSpawnPointRole;
+        }
+
+        private MapObject WorldSpawnPoint()
+        {
+            return snapshot?.objects.FirstOrDefault(IsWorldSpawnPoint);
+        }
 
         private GameAssetRecord SpawnPointModelRecord() => assetLibrary?.Records.FirstOrDefault(candidate =>
             GameAssetIndex.SameModelPath(candidate.modelPath, SpawnPointModelPath) && candidate.Supports(Targets));
@@ -39,9 +50,62 @@ namespace ReMap.Standalone
             SetStatus(L.T("#SPAWN_POINT_CREATED"));
         }
 
+        private void SetWorldSpawnPoint(bool enabled)
+        {
+            CommitInspectorEdit();
+            MapObject existing = WorldSpawnPoint();
+            if (enabled)
+            {
+                if (existing == null)
+                {
+                    existing = CreateSpawnPoint(Vector3.zero);
+                    existing.customRole = WorldSpawnPointRole;
+                    existing.displayName = L.T("#WORLD_PLAYER_SPAWN_MARKER");
+                    MapObject created = existing;
+                    session.Edit(document => document.objects.Add(created));
+                }
+                else
+                {
+                    string id = existing.id;
+                    session.Edit(document => {
+                        MapObject marker = document.objects.Find(item => item.id == id);
+                        marker.disabled = false;
+                    });
+                }
+                selectedId = existing.id;
+                RevealHierarchy(existing.id);
+                Refresh();
+                FocusHierarchy(existing.id);
+                _ = PrepareSpawnPointModel();
+                SetStatus(L.T("#WORLD_PLAYER_SPAWN_ENABLED"));
+                return;
+            }
+
+            if (existing != null)
+            {
+                session.Edit(document => document.objects.RemoveAll(IsWorldSpawnPoint));
+                selectedId = null;
+                sceneRootSelected = true;
+                Refresh();
+            }
+            SetStatus(L.T("#WORLD_PLAYER_SPAWN_DISABLED"));
+        }
+
+        private void SelectWorldSpawnPoint()
+        {
+            MapObject spawnPoint = WorldSpawnPoint();
+            if (spawnPoint == null) return;
+            selectedId = spawnPoint.id;
+            RevealHierarchy(spawnPoint.id);
+            RefreshInspector();
+            RefreshObjects();
+            FocusHierarchy(spawnPoint.id);
+        }
+
         private void BuildSpawnPointInspector(MapObject item, VisualElement section)
         {
-            section.Add(Label(L.T("#SPAWN_POINT"), "inspector-subsection-title"));
+            section.Add(Label(L.T(IsWorldSpawnPoint(item) ? "#WORLD_PLAYER_SPAWN_MARKER" : "#SPAWN_POINT"), "inspector-subsection-title"));
+            if (IsWorldSpawnPoint(item)) section.Add(Label(L.T("#WORLD_PLAYER_SPAWN_MARKER_HELP"), "note"));
             var team = CompactInspectorField(new IntegerField(L.T("#SPAWN_POINT_TEAM")) {
                 value = item.spawnPointTeam, isDelayed = true
             });

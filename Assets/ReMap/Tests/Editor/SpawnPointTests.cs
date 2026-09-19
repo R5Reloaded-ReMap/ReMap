@@ -40,6 +40,29 @@ namespace ReMap.Standalone.Tests
             StringAssert.DoesNotContain("MapEditor_", script);
         }
 
+        [Test]
+        public void WorldSpawnMarkerUsesTheExistingSpawnPointEntity()
+        {
+            var marker = new MapObject {
+                assetId = "custom:spawn-point", displayName = "World player spawn",
+                customType = "spawn-point", customRole = "world-spawn",
+                gameModelPath = "mdl/dev/mp_spawn.rmdl"
+            };
+            var isWorldSpawnPoint = typeof(ReMapApp).GetMethod("IsWorldSpawnPoint", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Static);
+            Assert.That(isWorldSpawnPoint, Is.Not.Null);
+            Assert.That(isWorldSpawnPoint.Invoke(null, new object[] { marker }), Is.True);
+            Assert.That(isWorldSpawnPoint.Invoke(null, new object[] { new MapObject { customType = "spawn-point" } }), Is.False);
+
+            var document = new MapDocument { name = "spawn", editingMap = "mp_rr_desertlands_hu" };
+            document.objects.Add(marker);
+            string code = ReMapGameScript.Generate(document, document.objects);
+            ReMapEntFragments entities = ReMapEntExporter.Generate(document, document.objects);
+
+            StringAssert.Contains("ReMap_CreateSpawnPoint( <0, 0, 0>, <0, 0, 0>, 0 )", code);
+            StringAssert.Contains("\"classname\" \"info_spawnpoint_human\"", entities.Spawn);
+            StringAssert.Contains("\"model\" \"mdl/dev/mp_spawn.rmdl\"", entities.Spawn);
+        }
+
         [TestCase(-1)]
         [TestCase(65)]
         public void RejectsInvalidTeam(int team)
