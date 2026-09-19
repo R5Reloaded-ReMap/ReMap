@@ -581,6 +581,8 @@ namespace ReMap.Standalone
         private VisualElement liveInspectorNumericField;
         private int liveInspectorNumericPointerId = -1;
         private bool liveInspectorNumericPreviousDelayed;
+        private bool liveInspectorNumericPreviousCursorVisible;
+        private bool liveInspectorNumericCursorHidden;
         private Action<bool> setLiveInspectorNumericDelayed;
 
         private T CompactInspectorField<T>(T field) where T : VisualElement
@@ -603,6 +605,8 @@ namespace ReMap.Standalone
                 EndLiveInspectorNumber(liveInspectorNumericField, false);
                 liveInspectorNumericField = field; liveInspectorNumericPointerId = e.pointerId;
                 liveInspectorNumericPreviousDelayed = getDelayed(); setLiveInspectorNumericDelayed = setDelayed;
+                liveInspectorNumericPreviousCursorVisible = UnityEngine.Cursor.visible;
+                liveInspectorNumericCursorHidden = true; UnityEngine.Cursor.visible = false;
                 setDelayed(false); session.BeginContinuousEdit();
             }, TrickleDown.TrickleDown);
             field.RegisterCallback<PointerUpEvent>(e => {
@@ -610,6 +614,10 @@ namespace ReMap.Standalone
                     root.schedule.Execute(() => EndLiveInspectorNumber(field, true));
             }, TrickleDown.TrickleDown);
             field.RegisterCallback<PointerCancelEvent>(_ => EndLiveInspectorNumber(field, true));
+            field.RegisterCallback<PointerCaptureOutEvent>(e => {
+                if (field == liveInspectorNumericField && e.pointerId == liveInspectorNumericPointerId)
+                    root.schedule.Execute(() => EndLiveInspectorNumber(field, true));
+            });
             field.RegisterCallback<DetachFromPanelEvent>(_ => EndLiveInspectorNumber(field, false));
         }
 
@@ -617,6 +625,9 @@ namespace ReMap.Standalone
         {
             if (field == null || field != liveInspectorNumericField) return;
             setLiveInspectorNumericDelayed?.Invoke(liveInspectorNumericPreviousDelayed);
+            if (liveInspectorNumericCursorHidden)
+                UnityEngine.Cursor.visible = liveInspectorNumericPreviousCursorVisible;
+            liveInspectorNumericCursorHidden = false;
             session.EndContinuousEdit();
             liveInspectorNumericField = null; liveInspectorNumericPointerId = -1;
             setLiveInspectorNumericDelayed = null;
