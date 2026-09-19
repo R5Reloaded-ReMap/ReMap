@@ -6,52 +6,78 @@ namespace ReMap.Standalone
     public sealed partial class WorldView
     {
         internal const string DoorOpeningArrowName = "__remap_door_opening_direction";
+        internal const string DoorOppositeOpeningArrowName = "__remap_door_opening_direction_opposite";
 
-        internal static bool DoorShowsOpeningDirection(MapObject door) =>
-            door != null && door.customType == "door" &&
-            (door.doorType == "single" || door.doorType == "double");
+        internal static bool DoorShowsOpeningDirection(MapObject door) => door != null && door.customType == "door" && (door.doorType == "single" || door.doorType == "double");
 
-        internal static Vector3 DoorOpeningDirection(Quaternion worldRotation) =>
-            worldRotation * Vector3.forward;
+        internal static Vector3 DoorOpeningDirection(Quaternion worldRotation) => worldRotation * Vector3.forward;
+
+        internal static Vector3[] DoorOpeningArc(Vector3 hinge, Vector3 closedDirection, Vector3 openDirection, Vector3 up, float radius, int segments = 12)
+        {
+            closedDirection.Normalize();
+            openDirection.Normalize();
+            up.Normalize();
+            var points = new Vector3[segments + 4];
+            for (int index = 0; index <= segments; index++) points[index] = hinge + Vector3.Slerp(closedDirection, openDirection, index / (float)segments).normalized * radius;
+            Vector3 tip = points[segments];
+            Vector3 tangent = (tip - points[segments - 1]).normalized;
+            Vector3 side = Vector3.Cross(up, tangent).normalized;
+            float head = radius * .22f;
+            points[segments + 1] = tip - tangent * head + side * head * .55f;
+            points[segments + 2] = tip;
+            points[segments + 3] = tip - tangent * head - side * head * .55f;
+            return points;
+        }
 
         private void EnsureDoorOpeningArrow(GameObject instance, MapObject door)
         {
-            var child = instance.transform.Find(DoorOpeningArrowName);
-            LineRenderer arrow;
+            LineRenderer primary = EnsureDoorOpeningGuide(instance, DoorOpeningArrowName);
+            LineRenderer opposite = EnsureDoorOpeningGuide(instance, DoorOppositeOpeningArrowName);
+            bool visible = DoorShowsOpeningDirection(door);
+            primary.enabled = visible;
+            opposite.enabled = visible && door.doorType == "double";
+            if (!visible) return;
+
+            Vector3 forward = instance.transform.forward.normalized;
+            Vector3 right = instance.transform.right.normalized;
+            Vector3 up = instance.transform.up.normalized;
+            float elevation = DoorArrowElevation(instance, up);
+            float radius = 86f * ApexCoordinates.MetersPerUnit;
+            float hingeOffset = 60f * ApexCoordinates.MetersPerUnit;
+            Vector3 anchor = instance.transform.position + up * elevation;
+            if (door.doorType == "double")
+            {
+                UpdateDoorOpeningGuide(primary, anchor + right * hingeOffset, -right, forward, up, radius);
+                UpdateDoorOpeningGuide(opposite, anchor - right * hingeOffset, right, forward, up, radius);
+            }
+            else UpdateDoorOpeningGuide(primary, anchor, right, forward, up, radius);
+        }
+
+        private LineRenderer EnsureDoorOpeningGuide(GameObject instance, string name)
+        {
+            var child = instance.transform.Find(name);
+            LineRenderer guide;
             if (child == null)
             {
-                arrow = new GameObject(DoorOpeningArrowName,
-                    typeof(LineRenderer)).GetComponent<LineRenderer>();
-                arrow.transform.SetParent(instance.transform, false);
-                arrow.useWorldSpace = true;
-                arrow.positionCount = 5;
-                arrow.numCapVertices = 4;
-                arrow.widthMultiplier = .045f;
-                arrow.sharedMaterial = lineMaterial;
+                guide = new GameObject(name, typeof(LineRenderer)).GetComponent<LineRenderer>();
+                guide.transform.SetParent(instance.transform, false);
+                guide.useWorldSpace = true;
+                guide.numCapVertices = 4;
+                guide.widthMultiplier = .045f;
+                guide.sharedMaterial = lineMaterial;
+                var tint = new MaterialPropertyBlock();
+                tint.SetColor("_BaseColor", new Color(1f, .55f, .08f));
+                guide.SetPropertyBlock(tint);
             }
-            else arrow = child.GetComponent<LineRenderer>();
+            else guide = child.GetComponent<LineRenderer>();
+            return guide;
+        }
 
-            arrow.enabled = DoorShowsOpeningDirection(door);
-            if (!arrow.enabled) return;
-
-            Vector3 direction = DoorOpeningDirection(instance.transform.rotation).normalized;
-            Vector3 up = instance.transform.up.normalized;
-            Vector3 side = Vector3.Cross(up, direction);
-            if (side.sqrMagnitude < .0001f) side = instance.transform.right;
-            side.Normalize();
-
-            float elevation = DoorArrowElevation(instance, up);
-            float behind = 42f * ApexCoordinates.MetersPerUnit;
-            float ahead = 66f * ApexCoordinates.MetersPerUnit;
-            float head = 18f * ApexCoordinates.MetersPerUnit;
-            Vector3 anchor = instance.transform.position + up * elevation;
-            Vector3 start = anchor - direction * behind;
-            Vector3 tip = anchor + direction * ahead;
-            arrow.SetPosition(0, start);
-            arrow.SetPosition(1, tip);
-            arrow.SetPosition(2, tip - direction * head + side * head * .55f);
-            arrow.SetPosition(3, tip);
-            arrow.SetPosition(4, tip - direction * head - side * head * .55f);
+        private static void UpdateDoorOpeningGuide(LineRenderer guide, Vector3 hinge, Vector3 closedDirection, Vector3 openDirection, Vector3 up, float radius)
+        {
+            Vector3[] points = DoorOpeningArc(hinge, closedDirection, openDirection, up, radius);
+            guide.positionCount = points.Length;
+            guide.SetPositions(points);
         }
 
         private static float DoorArrowElevation(GameObject instance, Vector3 up)
@@ -64,12 +90,8 @@ namespace ReMap.Standalone
                 Bounds bounds = renderer.bounds;
                 for (int corner = 0; corner < 8; corner++)
                 {
-                    Vector3 point = bounds.center + Vector3.Scale(bounds.extents,
-                        new Vector3((corner & 1) == 0 ? -1f : 1f,
-                            (corner & 2) == 0 ? -1f : 1f,
-                            (corner & 4) == 0 ? -1f : 1f));
-                    elevation = Mathf.Max(elevation, Vector3.Dot(point - origin, up) +
-                        8f * ApexCoordinates.MetersPerUnit);
+                    Vector3 point = bounds.center + Vector3.Scale(bounds.extents, new Vector3((corner & 1) == 0 ? -1f : 1f, (corner & 2) == 0 ? -1f : 1f, (corner & 4) == 0 ? -1f : 1f));
+                    elevation = Mathf.Max(elevation, Vector3.Dot(point - origin, up) + 8f * ApexCoordinates.MetersPerUnit);
                 }
             }
             return elevation;

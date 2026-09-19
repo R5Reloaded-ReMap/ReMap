@@ -33,15 +33,24 @@ namespace ReMap.Standalone.Tests
                     BindingFlags.Instance | BindingFlags.NonPublic);
                 var instances = (Dictionary<string, GameObject>)field.GetValue(world);
                 GameObject instance = instances[door.id];
-                var arrow = instance.transform.Find("__remap_door_opening_direction")
-                    .GetComponent<LineRenderer>();
+                var arrow = instance.transform.Find("__remap_door_opening_direction").GetComponent<LineRenderer>();
+                var opposite = instance.transform.Find("__remap_door_opening_direction_opposite").GetComponent<LineRenderer>();
 
                 Assert.That(arrow.enabled, Is.EqualTo(visible));
+                Assert.That(opposite.enabled, Is.EqualTo(type == "double"));
                 if (!visible) return;
-                Vector3 direction = (arrow.GetPosition(1) - arrow.GetPosition(0)).normalized;
-                Assert.That(Vector3.Dot(direction, instance.transform.forward),
-                    Is.GreaterThan(.999f));
-                Assert.That(arrow.positionCount, Is.EqualTo(5));
+                Assert.That(arrow.positionCount, Is.GreaterThan(12));
+                Vector3 primaryHinge = type == "double" ? instance.transform.position + instance.transform.right * 60f * ApexCoordinates.MetersPerUnit : instance.transform.position;
+                Vector3 primaryStart = Vector3.ProjectOnPlane(arrow.GetPosition(0) - primaryHinge, instance.transform.up);
+                Vector3 primaryEnd = Vector3.ProjectOnPlane(arrow.GetPosition(12) - primaryHinge, instance.transform.up);
+                Assert.That(Mathf.Abs(Vector3.Dot(primaryStart.normalized, instance.transform.right)), Is.GreaterThan(.999f));
+                Assert.That(Vector3.Dot(primaryEnd.normalized, instance.transform.forward), Is.GreaterThan(.999f));
+                if (type == "double")
+                {
+                    Vector3 oppositeHinge = instance.transform.position - instance.transform.right * 60f * ApexCoordinates.MetersPerUnit;
+                    Vector3 oppositeStart = Vector3.ProjectOnPlane(opposite.GetPosition(0) - oppositeHinge, instance.transform.up);
+                    Assert.That(Vector3.Dot(primaryStart.normalized, oppositeStart.normalized), Is.LessThan(-.999f));
+                }
             }
             finally
             {
