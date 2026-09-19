@@ -41,23 +41,6 @@ namespace ReMap.Standalone.Core
             "_mu1", "_mu2", "_mu3", "_mu4", "_hu", "_night", "_tt", "_64k_x_64k"
         };
 
-        // Some levels mount another map RPak as part of their native LevelSet. Those assets
-        // are available in game without ReMap adding anything to PakList, so they must also
-        // participate in indexing and catalogue compatibility.
-        private static readonly Dictionary<string, string[]> ImplicitLoadedMaps =
-            new Dictionary<string, string[]>(StringComparer.OrdinalIgnoreCase) {
-                { "mp_rr_desertlands_64k_x_64k", new[] { "mp_rr_canyonlands_64k_x_64k" } }
-            };
-
-        public static IEnumerable<string> LoadedMapIds(string mapId)
-        {
-            string value = (mapId ?? "").Trim();
-            if (value.Length == 0) yield break;
-            yield return value;
-            if (!ImplicitLoadedMaps.TryGetValue(value, out string[] dependencies)) yield break;
-            foreach (string dependency in dependencies) yield return dependency;
-        }
-
         public static string BaseMapId(string mapId)
         {
             string value = mapId ?? "";
@@ -76,13 +59,10 @@ namespace ReMap.Standalone.Core
             foreach (string target in (targets ?? Array.Empty<string>()).Where(map =>
                 !string.IsNullOrWhiteSpace(map)).Distinct(StringComparer.OrdinalIgnoreCase))
             {
-                foreach (string loadedMap in LoadedMapIds(target))
-                {
-                    string baseMap = BaseMapId(loadedMap);
-                    if (!string.Equals(baseMap, loadedMap, StringComparison.OrdinalIgnoreCase) &&
-                        known.Contains(baseMap) && added.Add(baseMap)) result.Add(baseMap);
-                    if (known.Contains(loadedMap) && added.Add(loadedMap)) result.Add(loadedMap);
-                }
+                string baseMap = BaseMapId(target);
+                if (!string.Equals(baseMap, target, StringComparison.OrdinalIgnoreCase) &&
+                    known.Contains(baseMap) && added.Add(baseMap)) result.Add(baseMap);
+                if (known.Contains(target) && added.Add(target)) result.Add(target);
             }
             return result.ToArray();
         }
@@ -92,8 +72,8 @@ namespace ReMap.Standalone.Core
             if (common) return true;
             var known = new HashSet<string>(available ?? Array.Empty<string>(), StringComparer.OrdinalIgnoreCase);
             // Selected maps describe RPaks loaded together by the played level.
-            return (targets ?? Array.Empty<string>()).SelectMany(LoadedMapIds).Any(target =>
-                known.Contains(target) || known.Contains(BaseMapId(target)));
+            return (targets ?? Array.Empty<string>()).Any(target => known.Contains(target) ||
+                known.Contains(BaseMapId(target)));
         }
     }
     public static class MapPortCompatibility

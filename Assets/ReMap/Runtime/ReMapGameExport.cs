@@ -278,19 +278,18 @@ namespace ReMap.Standalone
         internal static string[] AdditionalRpaks(string editingMap,
             IEnumerable<string> selectedRpaks)
         {
-            var nativeArchives = new HashSet<string>(StringComparer.OrdinalIgnoreCase) {
-                editingMap + ".rpak", editingMap + "_client_perm.rpak",
-                editingMap + "_client_temp.rpak"
-            };
-            foreach (string dependency in AssetCompatibility.LoadedMapIds(editingMap).Skip(1))
-                nativeArchives.Add(dependency + ".rpak");
+            string prefix = editingMap + ".rpak";
+            string clientPerm = editingMap + "_client_perm.rpak";
+            string clientTemp = editingMap + "_client_temp.rpak";
             var result = new List<string>();
             foreach (string source in selectedRpaks ?? Array.Empty<string>())
             {
                 string rpak = (source ?? "").Trim();
                 if (!Regex.IsMatch(rpak, @"^[A-Za-z0-9_()\-]+\.rpak$", RegexOptions.CultureInvariant))
                     throw new ArgumentException(L.F("#INVALID_RPAK_FILE_NAME_ARG0", rpak));
-                if (nativeArchives.Contains(rpak)) continue;
+                if (string.Equals(rpak, prefix, StringComparison.OrdinalIgnoreCase) ||
+                    string.Equals(rpak, clientPerm, StringComparison.OrdinalIgnoreCase) ||
+                    string.Equals(rpak, clientTemp, StringComparison.OrdinalIgnoreCase)) continue;
                 if (!result.Contains(rpak, StringComparer.OrdinalIgnoreCase)) result.Add(rpak);
             }
             return result.ToArray();

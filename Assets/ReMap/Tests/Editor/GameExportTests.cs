@@ -42,17 +42,16 @@ namespace ReMap.Standalone.Tests
             StringAssert.StartsWith("pak_requestload mp_extra.rpak\npak_requestload mp_extra_client_perm.rpak\n", live);
         }
 
-        [Test] public void Desertlands64kDoesNotReAddItsNativeCanyonlandsArchive()
+        [Test] public void Desertlands64kKeepsCanyonlandsAsAnAdditionalArchive()
         {
             const string map = "mp_rr_desertlands_64k_x_64k";
-            var rpaks = new[] { map + ".rpak", "mp_rr_canyonlands_64k_x_64k.rpak",
-                "mp_extra.rpak" };
+            const string canyonlands = "mp_rr_canyonlands_64k_x_64k.rpak";
             string live = ReMapGameScript.GenerateLiveCommands(
-                new MapDocument { editingMap = map }, System.Array.Empty<MapObject>(), rpaks)
-                .Replace("\r\n", "\n");
-            StringAssert.StartsWith("pak_requestload mp_extra.rpak\n", live);
+                new MapDocument { editingMap = map }, System.Array.Empty<MapObject>(),
+                new[] { map + ".rpak", canyonlands, "mp_extra.rpak" }).Replace("\r\n", "\n");
+            StringAssert.StartsWith("pak_requestload " + canyonlands +
+                "\npak_requestload mp_extra.rpak\n", live);
             StringAssert.DoesNotContain("pak_requestload " + map + ".rpak", live);
-            StringAssert.DoesNotContain("pak_requestload mp_rr_canyonlands_64k_x_64k.rpak", live);
         }
 
         [Test] public void UnsafeRpakNamesAreRejected()
