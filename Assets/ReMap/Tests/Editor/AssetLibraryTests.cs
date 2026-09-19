@@ -340,6 +340,19 @@ namespace ReMap.Standalone.Tests
                 GameTargets.SupportsCustomType(target, item.customType)), Is.True);
             Assert.That(document.objects, Contains.Item(prop));
         }
+
+        [Test] public void Desertlands64kIncludesItsNativeCanyonlandsArchive()
+        {
+            const string desertlands = "mp_rr_desertlands_64k_x_64k";
+            const string canyonlands = "mp_rr_canyonlands_64k_x_64k";
+            Assert.That(AssetCompatibility.ExpandTargets(new[] { desertlands },
+                new[] { desertlands, canyonlands }), Is.EqualTo(new[] { desertlands, canyonlands }));
+            Assert.That(AssetCompatibility.Supports(false, new[] { canyonlands },
+                new[] { desertlands }), Is.True);
+            Assert.That(RsxAssetLibrary.SelectMapArchives(new[] { desertlands }, new[] {
+                desertlands + ".rpak", canyonlands + ".rpak"
+            }), Is.EqualTo(new[] { desertlands + ".rpak", canyonlands + ".rpak" }));
+        }
         [Test] public void CastAcceptsBoundedEmptyNode()
         {
             using (var stream = new MemoryStream())
