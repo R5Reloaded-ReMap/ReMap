@@ -106,5 +106,20 @@ namespace ReMap.Standalone.Tests
                 StringAssert.DoesNotContain("MapEditor_", script);
             }
         }
+
+        [Test]
+        public void OpeningGuideIsAClearQuarterTurnArrow()
+        {
+            Vector3 hinge = new Vector3(2f, 3f, 4f);
+            var method = typeof(WorldView).GetMethod("DoorOpeningArc", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Static);
+            Assert.That(method, Is.Not.Null);
+            Vector3[] points = (Vector3[])method.Invoke(null, new object[] { hinge, Vector3.right, Vector3.forward, Vector3.up, 2f, 18 });
+
+            Assert.That(points.Length, Is.EqualTo(22));
+            Assert.That(Vector3.Distance(points[0], hinge + Vector3.right * 2f), Is.LessThan(.0001f));
+            Assert.That(Vector3.Distance(points[18], hinge + Vector3.forward * 2f), Is.LessThan(.0001f));
+            Assert.That(Vector3.Distance(points[18], points[19]), Is.GreaterThan(.5f));
+            Assert.That(Vector3.Distance(points[18], points[21]), Is.GreaterThan(.5f));
+        }
     }
 }

@@ -12,7 +12,7 @@ namespace ReMap.Standalone
 
         internal static Vector3 DoorOpeningDirection(Quaternion worldRotation) => worldRotation * Vector3.forward;
 
-        internal static Vector3[] DoorOpeningArc(Vector3 hinge, Vector3 closedDirection, Vector3 openDirection, Vector3 up, float radius, int segments = 12)
+        internal static Vector3[] DoorOpeningArc(Vector3 hinge, Vector3 closedDirection, Vector3 openDirection, Vector3 up, float radius, int segments = 18)
         {
             closedDirection.Normalize();
             openDirection.Normalize();
@@ -22,10 +22,10 @@ namespace ReMap.Standalone
             Vector3 tip = points[segments];
             Vector3 tangent = (tip - points[segments - 1]).normalized;
             Vector3 side = Vector3.Cross(up, tangent).normalized;
-            float head = radius * .22f;
-            points[segments + 1] = tip - tangent * head + side * head * .55f;
+            float head = radius * .28f;
+            points[segments + 1] = tip - tangent * head + side * head * .65f;
             points[segments + 2] = tip;
-            points[segments + 3] = tip - tangent * head - side * head * .55f;
+            points[segments + 3] = tip - tangent * head - side * head * .65f;
             return points;
         }
 
@@ -42,15 +42,15 @@ namespace ReMap.Standalone
             Vector3 right = instance.transform.right.normalized;
             Vector3 up = instance.transform.up.normalized;
             float elevation = DoorArrowElevation(instance, up);
-            float radius = 86f * ApexCoordinates.MetersPerUnit;
-            float hingeOffset = 60f * ApexCoordinates.MetersPerUnit;
+            float radius = 112f * ApexCoordinates.MetersPerUnit;
+            float hingeOffset = 64f * ApexCoordinates.MetersPerUnit;
             Vector3 anchor = instance.transform.position + up * elevation;
             if (door.doorType == "double")
             {
                 UpdateDoorOpeningGuide(primary, anchor + right * hingeOffset, -right, forward, up, radius);
                 UpdateDoorOpeningGuide(opposite, anchor - right * hingeOffset, right, forward, up, radius);
             }
-            else UpdateDoorOpeningGuide(primary, anchor, right, forward, up, radius);
+            else UpdateDoorOpeningGuide(primary, anchor - right * hingeOffset, right, forward, up, radius);
         }
 
         private LineRenderer EnsureDoorOpeningGuide(GameObject instance, string name)
@@ -63,7 +63,8 @@ namespace ReMap.Standalone
                 guide.transform.SetParent(instance.transform, false);
                 guide.useWorldSpace = true;
                 guide.numCapVertices = 4;
-                guide.widthMultiplier = .045f;
+                guide.numCornerVertices = 4;
+                guide.widthMultiplier = .065f;
                 guide.sharedMaterial = lineMaterial;
                 var tint = new MaterialPropertyBlock();
                 tint.SetColor("_BaseColor", new Color(1f, .55f, .08f));
