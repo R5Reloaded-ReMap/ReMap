@@ -2327,6 +2327,10 @@
       "text": "Enregistré avec ce projet ReMap. Les sections avant s’exécutent avant le précache ou les objets générés ; les sections après s’exécutent ensuite. Les fonctions auxiliaires complètes peuvent être écrites hors des fonctions gérées dans les fichiers .nut de carte installés ; ReMap les conserve. Tab et Maj+Tab règlent l’indentation."
     },
     {
+      "key": "#ADDITIONAL_CODE_SECTION",
+      "text": "Section à modifier"
+    },
+    {
       "key": "#ADDITIONAL_SHARED_BEFORE_CODE",
       "text": "Code partagé avant le précache généré"
     },

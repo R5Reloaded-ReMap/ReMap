@@ -146,7 +146,7 @@ namespace ReMap.Standalone
             TreeClick(codeToolbarButton); await TreeFrames();
             if (codeWindow.parent != root || codeWindow.resolvedStyle.display == DisplayStyle.None || string.IsNullOrWhiteSpace(codePreview.text))
                 throw new Exception("Generated code floating window did not open.");
-            if (codePreviewAdditionalTab == null || additionalCodePane == null ||
+            if (codePreviewAdditionalTab == null || additionalCodePane == null || additionalCodeSectionSelector == null ||
                 additionalSharedBeforeCodeEditor == null || additionalServerBeforeCodeEditor == null || additionalClientBeforeCodeEditor == null ||
                 additionalSharedCodeEditor == null || additionalServerCodeEditor == null || additionalClientCodeEditor == null)
                 throw new Exception("Project additional-code editors are missing.");
@@ -163,8 +163,14 @@ namespace ReMap.Standalone
             if (codePreviewScroll.verticalScroller.worldBound.yMin < codePreviewScroll.worldBound.yMin - 1 || codePreviewScroll.verticalScroller.worldBound.yMax > codePreviewScroll.worldBound.yMax + 1 || codePreviewScroll.worldBound.height - codePreviewScroll.verticalScroller.worldBound.height > 6)
                 throw new Exception("Generated code scroll bar does not fill its text rectangle.");
             TreeClick(codePreviewAdditionalTab); await TreeFrames();
-            if (additionalCodePane.resolvedStyle.display == DisplayStyle.None || additionalServerBeforeCodeEditor.worldBound.width < 250 || additionalServerBeforeCodeEditor.worldBound.height < 90 || additionalServerCodeEditor.worldBound.width < 250 || additionalServerCodeEditor.worldBound.height < 90)
-                throw new Exception("Project additional-code editor is hidden or clipped.");
+            if (additionalCodePane.resolvedStyle.display == DisplayStyle.None || AdditionalCodeEditors().Count(editor => editor.resolvedStyle.display != DisplayStyle.None) != 1)
+                throw new Exception("Project additional-code section selector did not keep exactly one editor visible.");
+            additionalCodeSectionSelector.index = 2; await TreeFrames();
+            if (additionalServerBeforeCodeEditor.worldBound.width < 250 || additionalServerBeforeCodeEditor.worldBound.height < 120 || additionalServerBeforeCodeEditor.worldBound.xMin < additionalCodePane.worldBound.xMin)
+                throw new Exception("Selected project additional-code editor is hidden, clipped, or misaligned.");
+            additionalCodeSectionSelector.index = 3; await TreeFrames();
+            if (additionalServerCodeEditor.worldBound.width < 250 || additionalServerCodeEditor.worldBound.height < 120 || AdditionalCodeEditors().Count(editor => editor.resolvedStyle.display != DisplayStyle.None) != 1)
+                throw new Exception("Project additional-code selector did not switch to the requested editor.");
             SetCodePreviewMode(false); await TreeFrames();
             Vector2 codeSize = codeWindow.worldBound.size, codeResizeStart = codeResize.worldBound.center, codeResizeDelta = new Vector2(55, 35);
             using (var e = PointerDownEvent.GetPooled(new Event { type = EventType.MouseDown, button = 0, mousePosition = codeResizeStart })) codeResize.SendEvent(e);

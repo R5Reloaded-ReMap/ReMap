@@ -2327,6 +2327,10 @@
       "text": "Saved with this ReMap project. Before sections run before generated precache or objects; after sections run afterwards. Complete helper functions may be written outside the managed functions in the installed map .nut files; ReMap preserves them. Tab and Shift+Tab adjust indentation."
     },
     {
+      "key": "#ADDITIONAL_CODE_SECTION",
+      "text": "Section to edit"
+    },
+    {
       "key": "#ADDITIONAL_SHARED_BEFORE_CODE",
       "text": "Shared code before generated precache"
     },

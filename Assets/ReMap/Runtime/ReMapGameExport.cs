@@ -1273,6 +1273,7 @@ namespace ReMap.Standalone
         private Button codePreviewScriptTab, codePreviewEntTab, codePreviewAdditionalTab;
         private bool codePreviewEntMode, codePreviewAdditionalMode, additionalCodeDirty, updatingAdditionalCodeEditors;
         private VisualElement additionalCodePane;
+        private DropdownField additionalCodeSectionSelector;
         private TextField additionalSharedBeforeCodeEditor, additionalServerBeforeCodeEditor, additionalClientBeforeCodeEditor;
         private TextField additionalSharedCodeEditor, additionalServerCodeEditor, additionalClientCodeEditor;
         private VisualElement liveWindow;
@@ -1356,21 +1357,36 @@ namespace ReMap.Standalone
             codePreview.selection.isSelectable = true;
             codePreview.AddToClassList("code-preview-content");
             codePreviewScroll.Add(codePreview); previewPane.Add(codePreviewScroll);
-            additionalCodePane = new ScrollView(ScrollViewMode.Vertical) { name = "additional-code-pane" };
+            additionalCodePane = new VisualElement { name = "additional-code-pane" };
             additionalCodePane.AddToClassList("additional-code-pane");
             additionalCodePane.Add(Label(L.T("#ADDITIONAL_CODE_HELP"), "note"));
-            additionalSharedBeforeCodeEditor = AdditionalCodeEditor(L.T("#ADDITIONAL_SHARED_BEFORE_CODE"));
-            additionalServerBeforeCodeEditor = AdditionalCodeEditor(L.T("#ADDITIONAL_SERVER_BEFORE_CODE"));
-            additionalClientBeforeCodeEditor = AdditionalCodeEditor(L.T("#ADDITIONAL_CLIENT_BEFORE_CODE"));
-            additionalSharedCodeEditor = AdditionalCodeEditor(L.T("#ADDITIONAL_SHARED_PRECACHE"));
-            additionalServerCodeEditor = AdditionalCodeEditor(L.T("#ADDITIONAL_SERVER_CODE"));
-            additionalClientCodeEditor = AdditionalCodeEditor(L.T("#ADDITIONAL_CLIENT_CODE"));
+            var additionalCodeSections = new List<string>
+            {
+                L.T("#ADDITIONAL_SHARED_BEFORE_CODE"), L.T("#ADDITIONAL_SHARED_PRECACHE"),
+                L.T("#ADDITIONAL_SERVER_BEFORE_CODE"), L.T("#ADDITIONAL_SERVER_CODE"),
+                L.T("#ADDITIONAL_CLIENT_BEFORE_CODE"), L.T("#ADDITIONAL_CLIENT_CODE")
+            };
+            additionalCodeSectionSelector = new DropdownField(L.T("#ADDITIONAL_CODE_SECTION"), additionalCodeSections, 0);
+            additionalCodeSectionSelector.AddToClassList("additional-code-selector");
+            additionalCodePane.Add(additionalCodeSectionSelector);
+            additionalSharedBeforeCodeEditor = AdditionalCodeEditor();
+            additionalSharedCodeEditor = AdditionalCodeEditor();
+            additionalServerBeforeCodeEditor = AdditionalCodeEditor();
+            additionalServerCodeEditor = AdditionalCodeEditor();
+            additionalClientBeforeCodeEditor = AdditionalCodeEditor();
+            additionalClientCodeEditor = AdditionalCodeEditor();
             additionalCodePane.Add(additionalSharedBeforeCodeEditor);
             additionalCodePane.Add(additionalSharedCodeEditor);
             additionalCodePane.Add(additionalServerBeforeCodeEditor);
             additionalCodePane.Add(additionalServerCodeEditor);
             additionalCodePane.Add(additionalClientBeforeCodeEditor);
             additionalCodePane.Add(additionalClientCodeEditor);
+            additionalCodeSectionSelector.RegisterValueChangedCallback(_ =>
+            {
+                CommitAdditionalCodeEdits();
+                ShowAdditionalCodeSection(additionalCodeSectionSelector.index);
+            });
+            ShowAdditionalCodeSection(0);
             previewPane.Add(additionalCodePane);
             body.Add(BuildEntExportPanel());
             var resize = new Label("◢") { name = "resize-game-code", tooltip = L.T("#DRAG_RESIZE_DOUBLE_CLICK_DEFAULT") };
@@ -1624,14 +1640,30 @@ namespace ReMap.Standalone
             RefreshAdditionalCodeEditors(true);
         }
 
-        private TextField AdditionalCodeEditor(string label)
+        private TextField AdditionalCodeEditor()
         {
-            var field = new TextField(label) { multiline = true, isDelayed = false };
+            var field = new TextField { multiline = true, isDelayed = false };
             field.AddToClassList("additional-code-editor");
             field.RegisterValueChangedCallback(_ => { if (!updatingAdditionalCodeEditors) additionalCodeDirty = true; });
             field.RegisterCallback<FocusOutEvent>(_ => root.schedule.Execute(() => Run(CommitAdditionalCodeEdits)));
             field.RegisterCallback<KeyDownEvent>(e => InsertCodeIndent(field, e), TrickleDown.TrickleDown);
             return field;
+        }
+
+        private TextField[] AdditionalCodeEditors() => new[]
+        {
+            additionalSharedBeforeCodeEditor, additionalSharedCodeEditor,
+            additionalServerBeforeCodeEditor, additionalServerCodeEditor,
+            additionalClientBeforeCodeEditor, additionalClientCodeEditor
+        };
+
+        private void ShowAdditionalCodeSection(int index)
+        {
+            TextField[] editors = AdditionalCodeEditors();
+            index = Mathf.Clamp(index, 0, editors.Length - 1);
+            for (int i = 0; i < editors.Length; i++)
+                if (editors[i] != null)
+                    editors[i].style.display = i == index ? DisplayStyle.Flex : DisplayStyle.None;
         }
 
         private void InsertCodeIndent(TextField field, KeyDownEvent e)
