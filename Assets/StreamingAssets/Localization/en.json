@@ -2040,7 +2040,47 @@
     },
     {
       "key": "#EXPORT_ENT_BUNDLE",
-      "text": "Export and install map _script.ent"
+      "text": "Export and install loose map"
+    },
+    {
+      "key": "#ENT_EXPORT_TITLE",
+      "text": "Export map entities"
+    },
+    {
+      "key": "#ENT_EXPORT_MODE_HELP",
+      "text": "Development replaces the selected Apex map ENT files. Publication creates a new distributable map."
+    },
+    {
+      "key": "#ENT_EXPORT_MODE",
+      "text": "Mode"
+    },
+    {
+      "key": "#ENT_EXPORT_DEVELOPMENT",
+      "text": "Develop on the base map"
+    },
+    {
+      "key": "#ENT_EXPORT_PUBLICATION",
+      "text": "Publish a new map"
+    },
+    {
+      "key": "#ENT_EXPORT_PRESERVE_BASE",
+      "text": "Preserve the base map entities"
+    },
+    {
+      "key": "#ENT_EXPORT_PRESERVE_BASE_HELP",
+      "text": "Disable this option to export only entities created in ReMap."
+    },
+    {
+      "key": "#ENT_EXPORT_DEVELOPMENT_TARGET_ARG0",
+      "text": "Development map: {0} · fs_vpk_prioritizeDisk 1 will be configured for the client and server."
+    },
+    {
+      "key": "#ENT_EXPORT_PUBLICATION_TARGET_ARG0",
+      "text": "Published name: {0}"
+    },
+    {
+      "key": "#EXPORT_AND_INSTALL",
+      "text": "Export and install"
     },
     {
       "key": "#SELECT_BASE_ENT_LUMP",
@@ -2057,6 +2097,14 @@
     {
       "key": "#ENT_SCRIPT_SOUND_INSTALLED_ARG0_ARG1",
       "text": "Map _script.ent installed: {0} · _snd.ent installed: {1}"
+    },
+    {
+      "key": "#LOOSE_MAP_INSTALLED_ARG0_ARG1",
+      "text": "Loose map {0} installed · settings: {1}"
+    },
+    {
+      "key": "#LOOSE_MAP_DEVELOPMENT_INSTALLED_ARG0",
+      "text": "Development ENT files installed for {0} · disk priority enabled for client and server (restart already running processes)"
     },
     {
       "key": "#ENT_SOURCE_MISSING_ARG0",

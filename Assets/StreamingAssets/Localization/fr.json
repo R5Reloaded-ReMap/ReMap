@@ -2040,7 +2040,47 @@
     },
     {
       "key": "#EXPORT_ENT_BUNDLE",
-      "text": "Exporter et installer le _script.ent de la carte"
+      "text": "Exporter et installer la carte loose"
+    },
+    {
+      "key": "#ENT_EXPORT_TITLE",
+      "text": "Exporter les entités de la carte"
+    },
+    {
+      "key": "#ENT_EXPORT_MODE_HELP",
+      "text": "Le développement remplace les ENT de la carte Apex sélectionnée. La publication crée une nouvelle carte distribuable."
+    },
+    {
+      "key": "#ENT_EXPORT_MODE",
+      "text": "Mode"
+    },
+    {
+      "key": "#ENT_EXPORT_DEVELOPMENT",
+      "text": "Développement sur la carte de base"
+    },
+    {
+      "key": "#ENT_EXPORT_PUBLICATION",
+      "text": "Publication d’une nouvelle carte"
+    },
+    {
+      "key": "#ENT_EXPORT_PRESERVE_BASE",
+      "text": "Conserver les entités de la carte de base"
+    },
+    {
+      "key": "#ENT_EXPORT_PRESERVE_BASE_HELP",
+      "text": "Désactivez cette option pour exporter uniquement les entités créées dans ReMap."
+    },
+    {
+      "key": "#ENT_EXPORT_DEVELOPMENT_TARGET_ARG0",
+      "text": "Carte de développement : {0} · fs_vpk_prioritizeDisk 1 sera configuré pour le client et le serveur."
+    },
+    {
+      "key": "#ENT_EXPORT_PUBLICATION_TARGET_ARG0",
+      "text": "Nom publié : {0}"
+    },
+    {
+      "key": "#EXPORT_AND_INSTALL",
+      "text": "Exporter et installer"
     },
     {
       "key": "#SELECT_BASE_ENT_LUMP",
@@ -2057,6 +2097,14 @@
     {
       "key": "#ENT_SCRIPT_SOUND_INSTALLED_ARG0_ARG1",
       "text": "_script.ent de la carte installé : {0} · _snd.ent installé : {1}"
+    },
+    {
+      "key": "#LOOSE_MAP_INSTALLED_ARG0_ARG1",
+      "text": "Carte loose {0} installée · paramètres : {1}"
+    },
+    {
+      "key": "#LOOSE_MAP_DEVELOPMENT_INSTALLED_ARG0",
+      "text": "ENT de développement installés pour {0} · priorité disque activée pour le client et le serveur (redémarrez les processus déjà lancés)"
     },
     {
       "key": "#ENT_SOURCE_MISSING_ARG0",

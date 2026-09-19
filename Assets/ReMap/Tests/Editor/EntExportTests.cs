@@ -14,6 +14,31 @@ namespace ReMap.Standalone.Tests
             originOffset = new Float3(1, 2, 3)
         };
 
+        [TestCase("Ma Carte Française", "mp_remap_ma_carte_francaise")]
+        [TestCase("MP Moon-Test", "mp_remap_moon_test")]
+        [TestCase("mp_custom_scene", "mp_remap_custom_scene")]
+        [TestCase("mp_remap_custom_scene", "mp_remap_custom_scene")]
+        public void PublishedMapNameUsesTheSceneNameAsAnApexMapCode(string sceneName, string expected)
+        {
+            Assert.That(ReMapEntExporter.PublishedMapName(sceneName), Is.EqualTo(expected));
+        }
+
+        [Test]
+        public void LevelSettingsLoadBaseStreamDbAndEveryRequiredMapRpak()
+        {
+            string settings = ReMapEntExporter.BuildLevelSettings(Document(), new[]
+            {
+                "mp_rr_divided_moon.rpak",
+                "mp_rr_divided_moon_client_perm.rpak",
+                "mp_rr_olympus.rpak"
+            });
+
+            StringAssert.Contains("\"StreamDB\" \"mp_rr_divided_moon\"", settings);
+            Assert.That(settings.Split(new[] { "\"mp_rr_divided_moon.rpak\"" }, StringSplitOptions.None).Length - 1, Is.EqualTo(1));
+            StringAssert.Contains("\"mp_rr_divided_moon_client_perm.rpak\" \"1\"", settings);
+            StringAssert.Contains("\"mp_rr_olympus.rpak\" \"2\"", settings);
+        }
+
         [Test]
         public void ExportsFaithfulObjectsIntoSeparateLumpFragments()
         {
@@ -53,6 +78,18 @@ namespace ReMap.Standalone.Tests
             StringAssert.StartsWith("ENTITIES02 num_models=28\r\n", merged);
             StringAssert.Contains("\"classname\" \"worldspawn\"\r\n}\r\n{\r\n\"classname\" \"prop_dynamic\"", merged);
             Assert.That(merged[merged.Length - 1], Is.EqualTo('\0'));
+        }
+
+        [Test]
+        public void ReplacingBaseEntitiesKeepsOnlyHeaderAndGeneratedEntities()
+        {
+            string original = "ENTITIES02 num_models=28\n{\n\"classname\" \"info_player_start\"\n}\n\0";
+            string replaced = ReMapEntExporter.ReplaceEntities(original, "{\n\"classname\" \"prop_dynamic\"\n}\n", "test.ent");
+
+            StringAssert.StartsWith("ENTITIES02 num_models=28\n", replaced);
+            StringAssert.DoesNotContain("info_player_start", replaced);
+            StringAssert.Contains("prop_dynamic", replaced);
+            Assert.That(replaced[replaced.Length - 1], Is.EqualTo('\0'));
         }
 
         [Test]
@@ -175,19 +212,125 @@ namespace ReMap.Standalone.Tests
                         new UTF8Encoding(false));
                 var prop = new MapObject { gameModelPath = "mdl/props/export_test.rmdl" };
                 string output = ReMapEntExporter.WriteMergedBundle(
-                    Path.Combine(root, map + "_script.ent"), Document(), new[] { prop });
+                    Path.Combine(root, map + "_script.ent"), Document(), new[] { prop }, null, true, true, out _);
+                const string published = "mp_remap_ent_test";
 
                 foreach (string kind in new[] { "env", "fx", "script", "snd", "spawn" })
-                    Assert.That(File.Exists(Path.Combine(output, map + "_" + kind + ".ent")), Is.True, kind);
-                string script = File.ReadAllText(Path.Combine(output, map + "_script.ent"));
+                    Assert.That(File.Exists(Path.Combine(output, published + "_" + kind + ".ent")), Is.True, kind);
+                Assert.That(File.Exists(Path.Combine(output, published + ".kv")), Is.True);
+                string script = File.ReadAllText(Path.Combine(output, published + "_script.ent"));
                 StringAssert.Contains("mdl/props/export_test.rmdl", script);
                 Assert.That(script[script.Length - 1], Is.EqualTo('\0'));
                 Assert.That(File.Exists(Path.Combine(output, "ReMap-ENT-report.txt")), Is.True);
                 string report = File.ReadAllText(Path.Combine(output, "ReMap-ENT-report.txt"));
+                StringAssert.Contains("ReMap loose map export: " + published, report);
+                StringAssert.Contains("Base Apex map: " + map, report);
                 StringAssert.Contains("ReVPK from R5Reloaded/r5sdk", report);
                 StringAssert.Contains("Kawe Mazidjatari (Mauler125)", report);
                 Assert.Throws<InvalidDataException>(() => ReMapEntExporter.WriteMergedBundle(
-                    Path.Combine(output, map + "_script.ent"), Document(), new[] { prop }));
+                    Path.Combine(output, published + "_script.ent"), Document(), new[] { prop }));
+            }
+            finally
+            {
+                if (Directory.Exists(root)) Directory.Delete(root, true);
+            }
+        }
+
+
+        [Test]
+        public void DevelopmentBundleUsesBaseMapNameAndCanExcludeBaseEntities()
+        {
+            string root = Path.Combine(Path.GetTempPath(), "ReMapEnt-development-" + Guid.NewGuid().ToString("N"));
+            Directory.CreateDirectory(root);
+            try
+            {
+                const string map = "mp_rr_divided_moon";
+                const string original = "ENTITIES02 num_models=28\n{\n\"classname\" \"info_player_start\"\n}\n\0";
+                foreach (string kind in new[] { "env", "fx", "script", "snd", "spawn" })
+                    File.WriteAllText(Path.Combine(root, map + "_" + kind + ".ent"), original, new UTF8Encoding(false));
+                var prop = new MapObject { gameModelPath = "mdl/props/export_test.rmdl" };
+
+                string output = ReMapEntExporter.WriteMergedBundle(Path.Combine(root, map + "_script.ent"), Document(), new[] { prop }, null, false, false, out _);
+
+                Assert.That(File.Exists(Path.Combine(output, map + ".kv")), Is.False);
+                string script = File.ReadAllText(Path.Combine(output, map + "_script.ent"));
+                StringAssert.DoesNotContain("info_player_start", script);
+                StringAssert.Contains("mdl/props/export_test.rmdl", script);
+            }
+            finally
+            {
+                if (Directory.Exists(root)) Directory.Delete(root, true);
+            }
+        }
+
+        [TestCase(GameTargets.R5Reloaded, false)]
+        [TestCase(GameTargets.R5Flowstate, true)]
+        public void InstallsCompleteLooseMapAndLevelSettings(string target, bool flowstate)
+        {
+            string root = Path.Combine(Path.GetTempPath(), "remap-loose-map-install-" + Guid.NewGuid().ToString("N"));
+            try
+            {
+                const string published = "mp_remap_ent_test";
+                const string generated = "ENTITIES02 num_models=28\n{\n\"classname\" \"prop_dynamic\"\n}\n\0";
+                string game = Path.Combine(root, "game");
+                string platform = Path.Combine(game, flowstate ? "platform_" : "platform");
+                string entityPlatform = flowstate ? Path.Combine(game, "platform") : platform;
+                string bundle = Path.Combine(root, "bundle");
+                Directory.CreateDirectory(game);
+                Directory.CreateDirectory(platform);
+                Directory.CreateDirectory(entityPlatform);
+                Directory.CreateDirectory(bundle);
+                foreach (string kind in new[] { "env", "fx", "script", "snd", "spawn" })
+                    File.WriteAllText(Path.Combine(bundle, published + "_" + kind + ".ent"), generated, new UTF8Encoding(false));
+                File.WriteAllText(Path.Combine(bundle, published + ".kv"), "\"LevelSet\"\n{\n}\n", new UTF8Encoding(false));
+                MapDocument document = Document();
+                document.gameTarget = target;
+
+                ReMapLooseMapInstall installed = ReMapEntExporter.InstallLooseMap(bundle, document, game, platform, true);
+
+                Assert.That(installed.MapName, Is.EqualTo(published));
+                Assert.That(installed.EntityLumpPaths.Count, Is.EqualTo(5));
+                foreach (string kind in new[] { "env", "fx", "script", "snd", "spawn" })
+                    Assert.That(File.Exists(Path.Combine(entityPlatform, "maps", published + "_" + kind + ".ent")), Is.True, kind);
+                Assert.That(installed.LevelSettingsPath, Is.EqualTo(Path.Combine(platform, "scripts", "levels", "settings", published + ".kv")));
+                Assert.That(File.Exists(installed.LevelSettingsPath), Is.True);
+            }
+            finally
+            {
+                if (Directory.Exists(root)) Directory.Delete(root, true);
+            }
+        }
+
+
+        [TestCase(GameTargets.R5Reloaded, false)]
+        [TestCase(GameTargets.R5Flowstate, true)]
+        public void DevelopmentInstallUsesBaseNameAndEnablesDiskPriorityForClientAndServer(string target, bool flowstate)
+        {
+            string root = Path.Combine(Path.GetTempPath(), "remap-development-install-" + Guid.NewGuid().ToString("N"));
+            try
+            {
+                const string map = "mp_rr_divided_moon";
+                const string generated = "ENTITIES02 num_models=28\n{\n\"classname\" \"prop_dynamic\"\n}\n\0";
+                string game = Path.Combine(root, "game");
+                string platform = Path.Combine(game, flowstate ? "platform_" : "platform");
+                string entityPlatform = Path.Combine(game, "platform");
+                string bundle = Path.Combine(root, "bundle");
+                Directory.CreateDirectory(Path.Combine(platform, "cfg", "system"));
+                Directory.CreateDirectory(Path.Combine(entityPlatform, "cfg", "system"));
+                Directory.CreateDirectory(bundle);
+                foreach (string kind in new[] { "env", "fx", "script", "snd", "spawn" })
+                    File.WriteAllText(Path.Combine(bundle, map + "_" + kind + ".ent"), generated, new UTF8Encoding(false));
+                MapDocument document = Document();
+                document.gameTarget = target;
+
+                ReMapLooseMapInstall installed = ReMapEntExporter.InstallLooseMap(bundle, document, game, platform);
+
+                Assert.That(installed.MapName, Is.EqualTo(map));
+                Assert.That(installed.LevelSettingsPath, Is.Empty);
+                Assert.That(installed.DiskPriorityConfigPaths, Is.Not.Empty);
+                foreach (string path in installed.DiskPriorityConfigPaths)
+                    StringAssert.Contains("fs_vpk_prioritizeDisk", File.ReadAllText(path));
+                Assert.That(File.Exists(Path.Combine(entityPlatform, "maps", map + "_script.ent")), Is.True);
             }
             finally
             {

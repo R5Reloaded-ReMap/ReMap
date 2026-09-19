@@ -22,12 +22,22 @@ namespace ReMap.Standalone
         public int EntityCount => ScriptEntityCount + SoundEntityCount + SpawnEntityCount;
     }
 
-    // .nut remains ReMap's primary output. This exporter only serializes objects with
-    // a faithful native entity-lump representation and merges them into copies of the
-    // original map lumps so num_models and Respawn's existing entities stay intact.
+    public sealed class ReMapLooseMapInstall
+    {
+        public string MapName { get; internal set; } = "";
+        public string LevelSettingsPath { get; internal set; } = "";
+        public IReadOnlyList<string> EntityLumpPaths { get; internal set; } = Array.Empty<string>();
+        public IReadOnlyList<string> DiskPriorityConfigPaths { get; internal set; } = Array.Empty<string>();
+    }
+
+    // Native level publication serializes objects with a faithful entity-lump representation
+    // and merges them into copies of the original map lumps so num_models and Respawn's
+    // existing entities stay intact. Unsupported objects remain available through .nut.
     public static class ReMapEntExporter
     {
         private static readonly string[] LumpKinds = { "env", "fx", "script", "snd", "spawn" };
+        private const string DiskPriorityBegin = "// ReMap loose ENT disk priority - begin";
+        private const string DiskPriorityEnd = "// ReMap loose ENT disk priority - end";
         private static readonly Regex Header = new Regex(@"\AENTITIES02 num_models=\d+(?:\r?\n|\z)",
             RegexOptions.CultureInvariant);
 
@@ -166,36 +176,194 @@ namespace ReMap.Standalone
         public static string WriteMergedBundle(string selectedSourceEnt, MapDocument document,
             IEnumerable<MapObject> worldObjects, out ReMapEntFragments fragments)
         {
+            return WriteMergedBundle(selectedSourceEnt, document, worldObjects, null, out fragments);
+        }
+
+        public static string WriteMergedBundle(string selectedSourceEnt, MapDocument document,
+            IEnumerable<MapObject> worldObjects, IEnumerable<string> levelRpaks, out ReMapEntFragments fragments)
+        {
+            return WriteMergedBundle(selectedSourceEnt, document, worldObjects, levelRpaks, false, true, out fragments);
+        }
+
+        public static string WriteMergedBundle(string selectedSourceEnt, MapDocument document,
+            IEnumerable<MapObject> worldObjects, IEnumerable<string> levelRpaks, bool publish,
+            bool preserveBaseEntities, out ReMapEntFragments fragments)
+        {
             if (string.IsNullOrWhiteSpace(selectedSourceEnt)) throw new ArgumentNullException(nameof(selectedSourceEnt));
             string sourceDirectory = Path.GetDirectoryName(Path.GetFullPath(selectedSourceEnt));
             if (File.Exists(Path.Combine(sourceDirectory, "ReMap-ENT-report.txt")))
                 throw new InvalidDataException(L.T("#ENT_SOURCE_MUST_BE_ORIGINAL"));
-            string map = ValidateMapName(document?.editingMap);
+            string sourceMap = ValidateMapName(document?.editingMap);
             foreach (string kind in LumpKinds)
             {
-                string source = Path.Combine(sourceDirectory, map + "_" + kind + ".ent");
+                string source = Path.Combine(sourceDirectory, sourceMap + "_" + kind + ".ent");
                 if (!File.Exists(source)) throw new FileNotFoundException(
                     L.F("#ENT_SOURCE_MISSING_ARG0", Path.GetFileName(source)), source);
                 ValidateBase(File.ReadAllText(source), source);
             }
 
             fragments = Generate(document, worldObjects);
+            string outputMap = publish ? PublishedMapName(document?.name) : sourceMap;
             string project = SafeDirectoryName(document.name);
-            string outputDirectory = Path.Combine(sourceDirectory, map + "_remap_ent_" + project);
+            string outputDirectory = Path.Combine(sourceDirectory, outputMap + "_remap_ent_" + project);
             Directory.CreateDirectory(outputDirectory);
             foreach (string kind in LumpKinds)
             {
-                string source = Path.Combine(sourceDirectory, map + "_" + kind + ".ent");
-                string destination = Path.Combine(outputDirectory, Path.GetFileName(source));
+                string source = Path.Combine(sourceDirectory, sourceMap + "_" + kind + ".ent");
+                string destination = Path.Combine(outputDirectory, outputMap + "_" + kind + ".ent");
                 string fragment = kind == "script" ? fragments.Script : kind == "snd" ? fragments.Sound :
                     kind == "spawn" ? fragments.Spawn : "";
-                if (fragment.Length == 0) File.Copy(source, destination, true);
-                else File.WriteAllText(destination, Merge(File.ReadAllText(source), fragment, source),
-                    new UTF8Encoding(false));
+                string original = File.ReadAllText(source);
+                string content = preserveBaseEntities ? Merge(original, fragment, source) : ReplaceEntities(original, fragment, source);
+                File.WriteAllText(destination, content, new UTF8Encoding(false));
             }
+            if (publish)
+                File.WriteAllText(Path.Combine(outputDirectory, outputMap + ".kv"),
+                    BuildLevelSettings(document, levelRpaks), new UTF8Encoding(false));
             File.WriteAllText(Path.Combine(outputDirectory, "ReMap-ENT-report.txt"),
-                BuildReport(map, fragments), new UTF8Encoding(false));
+                BuildReport(sourceMap, outputMap, publish, preserveBaseEntities, fragments), new UTF8Encoding(false));
             return outputDirectory;
+        }
+
+        public static string PublishedMapName(string sceneName)
+        {
+            string normalized = (sceneName ?? "").Trim().Normalize(NormalizationForm.FormD);
+            var result = new StringBuilder();
+            bool separator = false;
+            foreach (char character in normalized)
+            {
+                UnicodeCategory category = CharUnicodeInfo.GetUnicodeCategory(character);
+                if (category == UnicodeCategory.NonSpacingMark) continue;
+                bool asciiLetter = character >= 'A' && character <= 'Z' || character >= 'a' && character <= 'z';
+                bool digit = character >= '0' && character <= '9';
+                if (asciiLetter || digit)
+                {
+                    if (separator && result.Length > 0 && result[result.Length - 1] != '_') result.Append('_');
+                    result.Append(char.ToLowerInvariant(character));
+                    separator = false;
+                }
+                else separator = result.Length > 0;
+            }
+            string stem = result.ToString().Trim('_');
+            if (stem.StartsWith("mp_remap_", StringComparison.Ordinal)) stem = stem.Substring(9);
+            else if (stem.StartsWith("mp_", StringComparison.Ordinal)) stem = stem.Substring(3);
+            stem = stem.Trim('_');
+            if (stem.Length == 0) throw new ArgumentException(L.T("#INVALID_MAP_NAME_1_128"));
+            string code = "mp_remap_" + stem;
+            if (code.Length > 128) code = code.Substring(0, 128).TrimEnd('_');
+            return ValidateMapName(code);
+        }
+
+        public static string BuildLevelSettings(MapDocument document, IEnumerable<string> levelRpaks)
+        {
+            if (document == null) throw new ArgumentNullException(nameof(document));
+            string sourceMap = ValidateMapName(document.editingMap);
+            var archives = new List<string> { sourceMap + ".rpak" };
+            foreach (string value in levelRpaks ?? Array.Empty<string>())
+            {
+                string archive = (value ?? "").Trim();
+                if (!Regex.IsMatch(archive, @"^[A-Za-z0-9_()\-]+\.rpak$", RegexOptions.CultureInvariant))
+                    throw new ArgumentException(L.F("#INVALID_RPAK_FILE_NAME_ARG0", archive));
+                if (!archives.Contains(archive, StringComparer.OrdinalIgnoreCase)) archives.Add(archive);
+            }
+            var result = new StringBuilder();
+            result.AppendLine("\"LevelSet\"");
+            result.AppendLine("{");
+            result.Append("    \"StreamDB\" \"").Append(sourceMap).AppendLine("\"");
+            result.AppendLine("    \"PakList\"");
+            result.AppendLine("    {");
+            foreach (string archive in archives)
+            {
+                string mode = archive.EndsWith("_client_perm.rpak", StringComparison.OrdinalIgnoreCase) || archive.EndsWith("_client_temp.rpak", StringComparison.OrdinalIgnoreCase) ? "1" : "2";
+                result.Append("        \"").Append(archive).Append("\" \"").Append(mode).AppendLine("\"");
+            }
+            result.AppendLine("    }");
+            result.AppendLine("}");
+            return result.ToString();
+        }
+
+        public static ReMapLooseMapInstall InstallLooseMap(string bundleDirectory, MapDocument document, string gameDirectory, string platformDirectory)
+        {
+            return InstallLooseMap(bundleDirectory, document, gameDirectory, platformDirectory, false);
+        }
+
+        public static ReMapLooseMapInstall InstallLooseMap(string bundleDirectory, MapDocument document, string gameDirectory, string platformDirectory, bool publish)
+        {
+            if (document == null) throw new ArgumentNullException(nameof(document));
+            string map = publish ? PublishedMapName(document.name) : ValidateMapName(document.editingMap);
+            IReadOnlyList<string> configs = publish ? Array.Empty<string>() : EnsureDiskPriority(gameDirectory, platformDirectory);
+            var lumps = new List<string>();
+            foreach (string kind in LumpKinds)
+                lumps.Add(InstallLump(bundleDirectory, map, kind, document.gameTarget, gameDirectory, platformDirectory));
+            string destination = "";
+            if (publish)
+            {
+                string source = Path.Combine(Path.GetFullPath(bundleDirectory ?? throw new ArgumentNullException(nameof(bundleDirectory))), map + ".kv");
+                if (!File.Exists(source)) throw new FileNotFoundException(L.F("#ENT_SOURCE_MISSING_ARG0", Path.GetFileName(source)), source);
+                string root = Path.GetFullPath(platformDirectory ?? throw new ArgumentNullException(nameof(platformDirectory)));
+                if (!Directory.Exists(root)) throw new DirectoryNotFoundException(root);
+                string settings = Path.Combine(root, "scripts", "levels", "settings");
+                Directory.CreateDirectory(settings);
+                destination = Path.Combine(settings, map + ".kv");
+                BackupAndCopy(source, destination);
+            }
+            return new ReMapLooseMapInstall
+            {
+                MapName = map,
+                LevelSettingsPath = destination,
+                EntityLumpPaths = lumps,
+                DiskPriorityConfigPaths = configs
+            };
+        }
+
+        public static IReadOnlyList<string> EnsureDiskPriority(string gameDirectory, string platformDirectory)
+        {
+            var roots = new[]
+            {
+                platformDirectory,
+                string.IsNullOrWhiteSpace(gameDirectory) ? "" : Path.Combine(gameDirectory, "platform"),
+                string.IsNullOrWhiteSpace(gameDirectory) ? "" : Path.Combine(gameDirectory, "platform_")
+            }
+            .Where(value => !string.IsNullOrWhiteSpace(value))
+            .Select(Path.GetFullPath)
+            .Where(Directory.Exists)
+            .Distinct(StringComparer.OrdinalIgnoreCase)
+            .ToArray();
+            if (roots.Length == 0) throw new DirectoryNotFoundException(platformDirectory ?? gameDirectory ?? "");
+
+            var configured = new List<string>();
+            foreach (string root in roots)
+            {
+                string system = Path.Combine(root, "cfg", "system");
+                if (!Directory.Exists(system)) continue;
+                string autoexec = Path.Combine(system, "autoexec.cfg");
+                SetManagedConfig(autoexec, "fs_vpk_prioritizeDisk \"1\"");
+                configured.Add(autoexec);
+
+                var startupFiles = Directory.EnumerateFiles(system, "startup*.cfg", SearchOption.TopDirectoryOnly).ToList();
+                foreach (string required in new[] { "startup_launcher.cfg", "startup_default.cfg", "startup_dedi_default.cfg" })
+                {
+                    string path = Path.Combine(system, required);
+                    if (!startupFiles.Contains(path, StringComparer.OrdinalIgnoreCase)) startupFiles.Add(path);
+                }
+                foreach (string startup in startupFiles)
+                {
+                    SetManagedConfig(startup, "+fs_vpk_prioritizeDisk 1");
+                    configured.Add(startup);
+                }
+            }
+            if (configured.Count == 0) throw new DirectoryNotFoundException(L.T("#CONFIGURE_PLATFORM_FOLDER_SETTINGS_FIRST"));
+            return configured.Distinct(StringComparer.OrdinalIgnoreCase).ToArray();
+        }
+
+        private static void SetManagedConfig(string path, string command)
+        {
+            string source = File.Exists(path) ? File.ReadAllText(path) : "";
+            string newline = source.Contains("\r\n") ? "\r\n" : "\n";
+            string block = DiskPriorityBegin + newline + command + newline + DiskPriorityEnd;
+            var expression = new Regex(Regex.Escape(DiskPriorityBegin) + @"[\s\S]*?" + Regex.Escape(DiskPriorityEnd), RegexOptions.CultureInvariant);
+            string content = expression.IsMatch(source) ? expression.Replace(source, block, 1) : source.TrimEnd('\r', '\n') + (source.Length > 0 ? newline + newline : "") + block + newline;
+            if (content != source) File.WriteAllText(path, content, new UTF8Encoding(false));
         }
 
         public static string InstallScriptLump(string bundleDirectory, string map, string gameTarget, string gameDirectory, string platformDirectory)
@@ -221,9 +389,14 @@ namespace ReMap.Standalone
             string maps = Path.Combine(Path.GetFullPath(root), "maps");
             Directory.CreateDirectory(maps);
             string destination = Path.Combine(maps, map + "_" + kind + ".ent");
+            BackupAndCopy(source, destination);
+            return destination;
+        }
+
+        private static void BackupAndCopy(string source, string destination)
+        {
             if (File.Exists(destination) && !File.Exists(destination + ".remap.bak")) File.Copy(destination, destination + ".remap.bak");
             File.Copy(source, destination, true);
-            return destination;
         }
 
         public static string Merge(string baseEnt, string fragment, string sourceName = "base .ent")
@@ -237,15 +410,29 @@ namespace ReMap.Standalone
             return body + newline + addition + newline + "\0";
         }
 
-        private static string BuildReport(string map, ReMapEntFragments fragments)
+        public static string ReplaceEntities(string baseEnt, string fragment, string sourceName = "base .ent")
+        {
+            ValidateBase(baseEnt, sourceName);
+            string newline = baseEnt.Contains("\r\n") ? "\r\n" : "\n";
+            string header = Header.Match(baseEnt).Value.TrimEnd('\r', '\n');
+            string addition = (fragment ?? "").Replace("\r\n", "\n").Trim();
+            if (addition.Length == 0) return header + newline + "\0";
+            return header + newline + addition.Replace("\n", newline) + newline + "\0";
+        }
+
+        private static string BuildReport(string sourceMap, string outputMap, bool publish,
+            bool preserveBaseEntities, ReMapEntFragments fragments)
         {
             var result = new StringBuilder();
-            result.AppendLine("ReMap secondary .ent export for " + map);
-            result.AppendLine("The .nut export remains the primary and complete ReMap output.");
+            result.AppendLine("ReMap loose map export: " + outputMap);
+            result.AppendLine("Mode: " + (publish ? "publication" : "base-map development"));
+            result.AppendLine("Base Apex map: " + sourceMap);
+            result.AppendLine("Base entities: " + (preserveBaseEntities ? "preserved" : "excluded"));
+            result.AppendLine("Objects without a faithful native entity representation remain available through the separate .nut export.");
             result.AppendLine("Generated entities: " + fragments.EntityCount.ToString(CultureInfo.InvariantCulture) +
                 " (script=" + fragments.ScriptEntityCount + ", snd=" + fragments.SoundEntityCount +
                 ", spawn=" + fragments.SpawnEntityCount + ").");
-            result.AppendLine("These files are merged copies of the five original base-map lumps extracted from the selected game VPK; use them only in an ENT/BSP repack workflow.");
+            result.AppendLine("The five entity lumps and level settings KV can be loaded directly from the game's loose platform folders; no VPK repack is required.");
             result.AppendLine("Extraction tool: ReVPK from R5Reloaded/r5sdk, primarily authored by Kawe Mazidjatari (Mauler125).");
             result.AppendLine("ReVPK source and license: https://github.com/R5Reloaded/r5sdk");
             if (fragments.NutOnlyObjects.Count > 0)
