@@ -1236,7 +1236,7 @@
     },
     {
       "key": "#STARTING_APEX_POSITION_U",
-      "text": "Starting position (u)"
+      "text": "Starting origin (u)"
     },
     {
       "key": "#SCENE_STARTING_POSITION_CONTAIN_FINITE",

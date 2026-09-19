@@ -23,7 +23,7 @@ namespace ReMap.Standalone
         }
         private async Task CheckDockLayout()
         {
-            await TreeFrames(12); ResetLayout(); await TreeFrames(); Select(snapshot.objects[0].id); await TreeFrames();
+            await TreeFrames(12); ResetLayout(); await TreeFrames(); string layoutFixtureId = snapshot.objects[0].id; Select(layoutFixtureId); await TreeFrames();
             if(inspectorPanel.worldBound.width<370)throw new Exception("Properties panel is too narrow for transform vectors and game-property selectors.");
             void CheckVerticalScrollbar(ScrollView view, string name)
             {
@@ -87,6 +87,10 @@ namespace ReMap.Standalone
                 Mathf.Abs(manualName.worldBound.width - manualValue.worldBound.width) > 3)
                 throw new Exception("Manual game fields are not arranged as balanced field = value controls.");
             session.Undo(); Refresh(); await TreeFrames();
+            SelectSceneRoot(); await TreeFrames();
+            if (!positionInput.ClassListContains("scene-origin-field") || positionInput.Query<FloatField>().ToList().Count != 3 || positionInput.FieldsRow.worldBound.height < 20 || positionInput.Query<FloatField>().ToList().Any(field => field.worldBound.width < 60))
+                throw new Exception("World Spawn starting origin does not expose readable X/Y/Z fields.");
+            Select(layoutFixtureId); await TreeFrames();
             if(slot.worldBound.width<175)throw new Exception("Project selector is still too narrow.");
             if (catalogMode.choices.Count != 3 || catalogMode.choices.Any(choice => choice.IndexOf("Demo", StringComparison.OrdinalIgnoreCase) >= 0)) throw new Exception("Demo Shapes is still available in the catalog.");
             ShowNewMapDialog(true); await TreeFrames();
@@ -132,7 +136,8 @@ namespace ReMap.Standalone
             var codeExportPanel = codeWindow.Q(className: "code-export-panel");
             if (codeExportPanel == null || entExportUseNative == null || entExportMode == null || entExportRestartMap == null)
                 throw new Exception("Generated code window does not contain its map build options.");
-            if (codeExportPanel.worldBound.width < 250 || codeExportPanel.worldBound.xMin < codePreviewScroll.worldBound.xMax - 1 || codeExportPanel.worldBound.xMax > codeWindow.worldBound.xMax + 1)
+            var exportModeInput = entExportMode.Q(className: "unity-base-popup-field__input");
+            if (codeExportPanel.worldBound.width < 310 || exportModeInput == null || exportModeInput.worldBound.width < 180 || codeExportPanel.worldBound.xMin < codePreviewScroll.worldBound.xMax - 1 || codeExportPanel.worldBound.xMax > codeWindow.worldBound.xMax + 1)
                 throw new Exception("Map build options are not laid out to the right of the generated code preview.");
             var codeResize = codeWindow.Q("resize-game-code");
             if (codeResize == null) throw new Exception("Generated code resize handle is missing.");

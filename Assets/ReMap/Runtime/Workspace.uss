@@ -291,7 +291,7 @@ Button.tool-activation.paused:hover { background-color: rgb(68,71,77); }
 .directional-axis.axis-x { background-color: rgb(147,67,70); }
 .directional-axis.axis-y { background-color: rgb(65,123,72); }
 .directional-axis.axis-z { background-color: rgb(65,102,151); }
-.code-window { left: 120px; top: 72px; width: 720px; height: 520px; min-width: 620px; min-height: 260px; overflow: hidden; }
+.code-window { left: 120px; top: 72px; width: 800px; height: 520px; min-width: 680px; min-height: 260px; overflow: hidden; }
 .code-preview-body { flex-grow: 1; flex-basis: 0; min-height: 0; flex-direction: row; }
 .code-preview-pane { flex-grow: 1; flex-basis: 0; min-width: 0; min-height: 0; }
 .code-preview-tabs { height: 25px; min-height: 25px; flex-shrink: 0; flex-direction: row; padding-left: 5px; background-color: rgb(37,38,42); border-bottom-width: 1px; border-bottom-color: rgb(20,21,24); }
@@ -306,9 +306,11 @@ Button.tool-activation.paused:hover { background-color: rgb(68,71,77); }
 .code-preview .unity-scroller--vertical .unity-base-slider__dragger-border { width: 6px; min-width: 6px; max-width: 6px; }
 .code-preview .unity-scroller--horizontal .unity-base-slider__dragger,
 .code-preview .unity-scroller--horizontal .unity-base-slider__dragger-border { height: 6px; min-height: 6px; max-height: 6px; }
-.code-export-panel { width: 270px; min-width: 270px; max-width: 270px; min-height: 0; border-left-width: 1px; border-left-color: rgb(20,21,24); background-color: rgb(37,38,42); }
+.code-export-panel { width: 320px; min-width: 320px; max-width: 320px; min-height: 0; border-left-width: 1px; border-left-color: rgb(20,21,24); background-color: rgb(37,38,42); }
 .code-export-title { flex-shrink: 0; padding: 8px 9px 6px 9px; color: rgb(225,229,236); -unity-font-style: bold; border-bottom-width: 1px; border-bottom-color: rgb(20,21,24); }
 .code-export-options { flex-grow: 1; flex-basis: 0; min-height: 0; padding: 6px 8px; }
+.code-export-mode > .unity-base-field__label { width: 58px; min-width: 58px; }
+.code-export-mode > .unity-base-popup-field__input { min-width: 190px; flex-grow: 1; }
 .code-export-options .note { white-space: normal; margin: 3px 2px 7px 2px; }
 .code-export-options .map-source-warning { white-space: normal; margin: 6px 2px; }
 .code-export-actions { flex-shrink: 0; padding: 6px 8px 8px 8px; border-top-width: 1px; border-top-color: rgb(20,21,24); }
@@ -432,6 +434,9 @@ Button.thumbnail-dashboard-minimize { flex-shrink: 0; height: 29px; margin-left:
 .property-title-label { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; -unity-text-align: middle-left; font-size: 10px; }
 .property-fields-row { min-width: 0; flex-grow: 3; flex-basis: 0; margin-top: 0; }
 .property-fields-row > FloatField { height: 22px; min-height: 22px; }
+.inspector .scene-origin-field { min-height: 50px; }
+.scene-origin-field > .property-title-row { flex-grow: 0; flex-basis: auto; margin-right: 0; }
+.scene-origin-field > .property-fields-row { min-height: 22px; flex-grow: 0; flex-basis: auto; }
 .uniform-property > .property-title-row { flex-grow: 7; }
 .uniform-property > .property-fields-row { flex-grow: 3; }
 .uniform-scale-value > .unity-base-field__label { display: none; width: 0; min-width: 0; margin: 0; padding: 0; }

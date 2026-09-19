@@ -412,6 +412,7 @@ namespace ReMap.Standalone
                 L.T("#ENT_EXPORT_DEVELOPMENT"),
                 L.T("#ENT_EXPORT_PUBLICATION")
             }, 0);
+            entExportMode.AddToClassList("code-export-mode");
             entExportMode.RegisterValueChangedCallback(_ => RefreshEntExportTarget());
             entExportNativeOptions.Add(entExportMode);
             entExportPreserveBase = new Toggle(L.T("#ENT_EXPORT_PRESERVE_BASE")) { value = true };

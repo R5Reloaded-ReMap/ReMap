@@ -1145,7 +1145,7 @@ namespace ReMap.Standalone
         private Label liveConnectionStatus;
         private Button liveSendButton, liveRebuildButton, liveRestartButton;
         private bool liveSending;
-        private float codePreviewWidth = 720, codePreviewHeight = 520;
+        private float codePreviewWidth = 800, codePreviewHeight = 520;
         private sealed class ScriptPropertyPreset
         {
             internal readonly string Label, Scope, Name, Value;
@@ -1352,7 +1352,7 @@ namespace ReMap.Standalone
             if (show)
             {
                 float maxWidth = Mathf.Max(1, root.resolvedStyle.width - 16), maxHeight = Mathf.Max(1, root.resolvedStyle.height - 16);
-                float width = Mathf.Clamp(codePreviewWidth, Mathf.Min(620, maxWidth), maxWidth);
+                float width = Mathf.Clamp(codePreviewWidth, Mathf.Min(680, maxWidth), maxWidth);
                 float height = Mathf.Clamp(codePreviewHeight, Mathf.Min(260, maxHeight), maxHeight);
                 codeWindow.style.width = width; codeWindow.style.height = height;
                 ClampCodePreviewWindow(width, height);
@@ -1369,7 +1369,7 @@ namespace ReMap.Standalone
             if (height < 0) height = codeWindow.resolvedStyle.height;
             if (!float.IsFinite(rootWidth) || !float.IsFinite(rootHeight) || !float.IsFinite(width) || !float.IsFinite(height)) return;
             float maxWidth = Mathf.Max(1, rootWidth - 16), maxHeight = Mathf.Max(1, rootHeight - 16);
-            width = Mathf.Clamp(width, Mathf.Min(620, maxWidth), maxWidth);
+            width = Mathf.Clamp(width, Mathf.Min(680, maxWidth), maxWidth);
             height = Mathf.Clamp(height, Mathf.Min(260, maxHeight), maxHeight);
             codeWindow.style.width = width; codeWindow.style.height = height;
             float left = codeWindow.resolvedStyle.left, top = codeWindow.resolvedStyle.top;
@@ -1410,7 +1410,7 @@ namespace ReMap.Standalone
             float rootWidth = root.resolvedStyle.width, rootHeight = root.resolvedStyle.height;
             float left = Mathf.Max(8, codeWindow.resolvedStyle.left), top = Mathf.Max(8, codeWindow.resolvedStyle.top);
             float maxWidth = Mathf.Max(1, rootWidth - left - 8), maxHeight = Mathf.Max(1, rootHeight - top - 8);
-            width = Mathf.Clamp(width, Mathf.Min(620, maxWidth), maxWidth);
+            width = Mathf.Clamp(width, Mathf.Min(680, maxWidth), maxWidth);
             height = Mathf.Clamp(height, Mathf.Min(260, maxHeight), maxHeight);
             codePreviewWidth = width; codePreviewHeight = height;
             codeWindow.style.width = width; codeWindow.style.height = height;

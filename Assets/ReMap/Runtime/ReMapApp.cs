@@ -981,7 +981,7 @@ namespace ReMap.Standalone
             inspectorEditingId=SceneRootInspectorId; inspectorOriginals=null; inspectorDirty=false;
             inspector.Add(Label(L.T("#WORLD_SPAWN"), "tool-selection"));
             positionInput=new VectorInput(L.T("#STARTING_APEX_POSITION_U"),WorldView.ToVector(snapshot.originOffset),1);
-            positionInput.AddToClassList("property-field"); inspector.Add(positionInput);
+            positionInput.AddToClassList("property-field"); positionInput.AddToClassList("scene-origin-field"); inspector.Add(positionInput);
             positionInput.Changed+=PreviewInspectorEdit;
             positionInput.RegisterCallback<PointerUpEvent>(_=>root.schedule.Execute(()=>Run(CommitInspectorEdit)),TrickleDown.TrickleDown);
             positionInput.RegisterCallback<FocusOutEvent>(_=>root.schedule.Execute(()=>Run(CommitInspectorEdit)));
