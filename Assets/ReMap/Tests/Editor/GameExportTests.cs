@@ -9,10 +9,10 @@ namespace ReMap.Standalone.Tests
     public sealed class GameExportTests
     {
         [Test]
-        public void LiveMapIsDisabledWhileItsCommandGeneratorRemainsAvailable()
+        public void LiveMapIsEnabledAndItsCommandGeneratorRemainsAvailable()
         {
             var flag = typeof(ReMapApp).GetField("LiveMapEnabled", BindingFlags.Static | BindingFlags.NonPublic);
-            Assert.That((bool)flag.GetValue(null), Is.False);
+            Assert.That((bool)flag.GetValue(null), Is.True);
             var document = new MapDocument { editingMap = "mp_rr_desertlands_hu" };
             StringAssert.Contains("script Sh_ReMap_Clear()", ReMapGameScript.GenerateLiveCommands(document, System.Array.Empty<MapObject>()));
         }

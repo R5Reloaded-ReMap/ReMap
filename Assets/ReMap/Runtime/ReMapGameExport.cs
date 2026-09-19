@@ -1309,7 +1309,7 @@ namespace ReMap.Standalone
 
     public sealed partial class ReMapApp
     {
-        private static readonly bool LiveMapEnabled = false;
+        private static readonly bool LiveMapEnabled = true;
         private VisualElement codeWindow;
         private ScrollView codePreviewScroll;
         private Label codePreview;
