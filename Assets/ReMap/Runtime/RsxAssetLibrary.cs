@@ -903,7 +903,7 @@ namespace ReMap.Standalone
             Directory.CreateDirectory(root);
             string logPath = Path.Combine(root, geometryOnly ? "rsx-geometry.log" : "rsx-worker.log");
             var args = new[] { "-nogui", "--loadwhitelist", geometryOnly ? "mdl_,Ptch" : "mdl_,matl,txtr,shdr,shds,Ptch", "--parsethreads", "1", "--exportthreads", "1" }
-                .Concat(File.Exists(Settings.rsxExecutable + ".remap-session-v1") ? new[] { "-embedded" } : Array.Empty<string>()).Concat(operation);
+                .Concat(ContinuousPreviewsSupported ? new[] { "-embedded" } : Array.Empty<string>()).Concat(operation);
             string workerRoot = Path.Combine(CacheDirectory, "Worker"); Directory.CreateDirectory(workerRoot);
             using (var log = new StreamWriter(logPath, false))
             using (var process = new Process())

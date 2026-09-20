@@ -14,19 +14,35 @@ namespace ReMap.Standalone
         public int PreviewArchiveLoads => previewSession?.ArchiveLoads??0;
         public int PreviewProcessId => previewSession?.ProcessId??0;
         public string PreferredPreviewArchive => previewSession?.LastArchive;
+        public static int ReadSessionProtocolVersion(string executable)
+        {
+            if(string.IsNullOrWhiteSpace(executable)||!File.Exists(executable))return 0;
+            string manifest=executable+".remap-session";
+            if(File.Exists(manifest))
+            {
+                try{return int.TryParse(File.ReadAllText(manifest).Trim(),out int version)&&version>0?version:0;}
+                catch(IOException){return 0;}
+                catch(UnauthorizedAccessException){return 0;}
+            }
+            // Compatibility with RSX builds produced before the single version manifest.
+            for(int version=4;version>=1;version--)
+                if(File.Exists(executable+".remap-session-v"+version))return version;
+            return 0;
+        }
+        private int SessionProtocolVersion=>ReadSessionProtocolVersion(Settings.rsxExecutable);
         private string SessionExecutable
         {
             get
             {
                 string configured=Settings.rsxExecutable;
                 if(string.IsNullOrEmpty(configured))return null;
-                return File.Exists(configured)&&File.Exists(configured+".remap-session-v1")?configured:null;
+                return File.Exists(configured)&&SessionProtocolVersion>=1?configured:null;
             }
         }
         public bool ContinuousPreviewsSupported => SessionExecutable!=null;
-        public bool BatchPreviewsSupported => ContinuousPreviewsSupported&&File.Exists(SessionExecutable+".remap-session-v2");
-        public bool GeometryPreviewsSupported => ContinuousPreviewsSupported&&File.Exists(SessionExecutable+".remap-session-v3");
-        public bool BulkExportsSupported => ContinuousPreviewsSupported&&File.Exists(SessionExecutable+".remap-session-v4");
+        public bool BatchPreviewsSupported => ContinuousPreviewsSupported&&SessionProtocolVersion>=2;
+        public bool GeometryPreviewsSupported => ContinuousPreviewsSupported&&SessionProtocolVersion>=3;
+        public bool BulkExportsSupported => ContinuousPreviewsSupported&&SessionProtocolVersion>=4;
         public bool BulkTextureRepairsSupported => BulkExportsSupported;
         private void SetTargetExtractionActivity(AssetExtractionOperation operation,string archive,int modelCount) =>
             SetExtractionActivity(AssetExtractionSource.TargetGame,operation,archive,modelCount);

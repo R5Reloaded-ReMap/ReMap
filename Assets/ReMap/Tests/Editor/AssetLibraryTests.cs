@@ -9,6 +9,24 @@ namespace ReMap.Standalone.Tests
 {
     public sealed class AssetLibraryTests
     {
+        [Test] public void RsxSessionManifestUsesOneCumulativeProtocolVersion()
+        {
+            string root=Path.Combine(Path.GetTempPath(),"remap-rsx-protocol-"+Guid.NewGuid().ToString("N"));
+            string executable=Path.Combine(root,"rsx.exe");
+            try
+            {
+                Directory.CreateDirectory(root);File.WriteAllBytes(executable,Array.Empty<byte>());
+                File.WriteAllText(executable+".remap-session","4");
+                Assert.That(RsxAssetLibrary.ReadSessionProtocolVersion(executable),Is.EqualTo(4));
+                File.WriteAllText(executable+".remap-session-v3","legacy");
+                File.WriteAllText(executable+".remap-session","invalid");
+                Assert.That(RsxAssetLibrary.ReadSessionProtocolVersion(executable),Is.Zero,
+                    "A malformed current manifest must not be hidden by stale legacy markers.");
+                File.Delete(executable+".remap-session");
+                Assert.That(RsxAssetLibrary.ReadSessionProtocolVersion(executable),Is.EqualTo(3));
+            }
+            finally{if(Directory.Exists(root))Directory.Delete(root,true);}
+        }
         [Test] public void PlatformDirectoryFallsBackToExistingPlatformVariant()
         {
             string root = Path.Combine(Path.GetTempPath(), "remap-platform-" + Guid.NewGuid().ToString("N"));

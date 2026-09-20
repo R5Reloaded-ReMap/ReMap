@@ -147,22 +147,15 @@ namespace ReMap.Standalone.Editor
                 : Path.GetFullPath(configuredRsxRoot);
             string rsxLicense = Path.Combine(projectRoot, "ThirdParty", "RSX", "LICENSE");
             string executable = Path.Combine(rsxRoot, "bin", "Release", "rsx.exe");
-            string sessionMarker = executable + ".remap-session-v1";
-            string batchMarker = executable + ".remap-session-v2";
-            string geometryMarker = executable + ".remap-session-v3";
+            string sessionManifest = executable + ".remap-session";
             if (!File.Exists(executable))
                 throw new FileNotFoundException("Build official RSX in Release/x64 before building ReMap.", executable);
-            if (!File.Exists(sessionMarker))
-                throw new FileNotFoundException("Build the ReMap RSX session fork in Release/x64 before building ReMap.", sessionMarker);
-            if (!File.Exists(batchMarker))
-                throw new FileNotFoundException("Build the ReMap RSX batch session fork in Release/x64 before building ReMap.", batchMarker);
-            if (!File.Exists(geometryMarker))
-                throw new FileNotFoundException("Build the ReMap RSX geometry fallback fork in Release/x64 before building ReMap.", geometryMarker);
+            if (RsxAssetLibrary.ReadSessionProtocolVersion(executable) < 4 || !File.Exists(sessionManifest))
+                throw new InvalidDataException("Build the ReMap RSX protocol v4 fork in Release/x64 before building ReMap: " + sessionManifest);
             Directory.CreateDirectory(outputDirectory);
             CopyIfChanged(executable, Path.Combine(outputDirectory, "rsx.exe"));
-            CopyIfChanged(sessionMarker, Path.Combine(outputDirectory, "rsx.exe.remap-session-v1"));
-            CopyIfChanged(batchMarker, Path.Combine(outputDirectory, "rsx.exe.remap-session-v2"));
-            CopyIfChanged(geometryMarker, Path.Combine(outputDirectory, "rsx.exe.remap-session-v3"));
+            CopyIfChanged(sessionManifest, Path.Combine(outputDirectory, "rsx.exe.remap-session"));
+            foreach(string legacy in Directory.GetFiles(outputDirectory,"rsx.exe.remap-session-v*",SearchOption.TopDirectoryOnly))File.Delete(legacy);
             if (!File.Exists(rsxLicense))
                 throw new FileNotFoundException("The bundled RSX license is missing from ThirdParty/RSX.", rsxLicense);
             File.Copy(rsxLicense, Path.Combine(outputDirectory, "RSX-LICENSE.txt"), true);
