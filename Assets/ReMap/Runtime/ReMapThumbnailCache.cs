@@ -50,7 +50,8 @@ namespace ReMap.Standalone
                 var pending=visibleAssets.Where(r=>r.Supports(targetSet)&&assetLibrary.ShouldAutomaticallyPrepareThumbnail(r)&&
                     !readyThumbnails.Contains(r.Id)&&!failedThumbnails.Contains(r.Id)).ToArray();
                 if(pending.Length>0&&!pending.Any(r=>extractingThumbnails.Contains(r.Id)))InterruptBackgroundFor();
-                if(!Environment.GetCommandLineArgs().Any(a=>a.StartsWith("-remap")))_=PrepareThumbnails();
+                if(pending.Length>0&&!Environment.GetCommandLineArgs().Any(a=>a.StartsWith("-remap")))
+                    _=PrepareThumbnails();
             }).StartingIn(350);
         }
         private VisualElement loadingOverlay;
@@ -593,9 +594,16 @@ namespace ReMap.Standalone
         }
         private async Task PrepareThumbnails()
         {
-            if(thumbnailLoopRunning||assetLibrary.CacheRoot==null)return;
+            if(thumbnailLoopRunning||assetLibrary.CacheRoot==null||thumbnailPaused)return;
+            ReadThumbnailState();
+            var initialTargets=new HashSet<string>(Targets,StringComparer.OrdinalIgnoreCase);
+            var initialEligible=AutomaticThumbnailRecords(initialTargets);
+            UpdateThumbnailProgress(initialEligible);UpdateThumbnailControls();
+            // Refreshing or scrolling the catalog can request preparation speculatively. A no-op
+            // request must not cancel and restart the idle timer of an already loaded RSX session.
+            if(thumbnailDone+thumbnailFailed>=thumbnailTotal)return;
             CancelManualPreviewSessionRelease();
-            thumbnailLoopRunning=true;string generation=assetLibrary.CacheRoot;ReadThumbnailState();
+            thumbnailLoopRunning=true;string generation=assetLibrary.CacheRoot;
             ThumbnailExtraction prefetched=null;
             try {
                 while(this!=null&&!backgroundStopped&&generation==assetLibrary.CacheRoot) {
