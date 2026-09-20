@@ -139,3 +139,6 @@ Desktop.ini
 
 # Local release staging
 /Release/
+
+# RSX crash folder
+/latest_crash
