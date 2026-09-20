@@ -5235,6 +5235,10 @@
       "text": "Réparation des textures depuis Apex Legends"
     },
     {
+      "key": "#THUMBNAIL_STAGE_CHECKING_TEXTURES",
+      "text": "Vérification des textures extraites"
+    },
+    {
       "key": "#THUMBNAIL_STAGE_GENERATING",
       "text": "Génération des miniatures"
     },

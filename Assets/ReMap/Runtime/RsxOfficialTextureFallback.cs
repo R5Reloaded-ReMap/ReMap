@@ -12,6 +12,13 @@ using UnityEngine;
 
 namespace ReMap.Standalone
 {
+    internal sealed class OfficialTextureRepairRequest
+    {
+        public GameAssetRecord Entry;
+        public string LegacyCast;
+        public SharedTextureCache.AlbedoInspection Inspection;
+    }
+
     public sealed partial class RsxAssetLibrary
     {
         [Serializable]
@@ -378,95 +385,145 @@ namespace ReMap.Standalone
             }
         }
 
-        private static void DeleteOfficialWorker(string root, string workerRoot)
+        private sealed class PreparedOfficialRepair
         {
+            public OfficialTextureRepairRequest request;
+            public OfficialArchivePlan plan;
+            public string marker;
+            public string fingerprint;
+        }
+
+        internal async Task<HashSet<string>> TryRepairOfficialTexturesBatchAsync(
+            IEnumerable<OfficialTextureRepairRequest> requests, string[] targets,
+            CancellationToken cancellation = default, bool forceRefresh = false)
+        {
+            var repaired = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+            var candidates = (requests ?? Enumerable.Empty<OfficialTextureRepairRequest>())
+                .Where(request => request?.Entry != null && request.Inspection?.NeedsFallback == true &&
+                    !string.IsNullOrWhiteSpace(request.LegacyCast) && !officialPreviewMisses.Contains(request.Entry.Id))
+                .ToArray();
+            if (candidates.Length == 0 || !OfficialTextureFallbackAvailable || SessionExecutable == null) return repaired;
+            if (candidates.Length > 8 && !BulkTextureRepairsSupported)
+                throw new ArgumentException(L.T("#BATCH_1_8_MODELS_REQUIRED"));
+
+            string officialPaks = FindPakDirectory(Settings.officialApexGameDirectory);
+            if (officialPaks == null) return repaired;
+            var pending = new List<PreparedOfficialRepair>();
+            foreach (var request in candidates)
+            {
+                string origin = OriginArchive(request.Entry, targets);
+                OfficialArchivePlan plan = ResolveOfficialArchivePlan(officialPaks, origin);
+                if (plan == null) continue;
+                string modelRoot = ModelDirectory(request.Entry);
+                string marker = Path.Combine(modelRoot, "official-texture-fallback.json");
+                string fingerprint = OfficialTextureFingerprint(plan.archives, request.Inspection.materialHashes);
+                try
+                {
+                    if (!forceRefresh && File.Exists(marker))
+                    {
+                        var previous = JsonUtility.FromJson<OfficialTextureAttempt>(File.ReadAllText(marker));
+                        if (previous != null && previous.fingerprint == fingerprint)
+                        {
+                            if (previous.replaced > 0) repaired.Add(request.Entry.Id);
+                            continue;
+                        }
+                    }
+                }
+                catch (IOException) { }
+                pending.Add(new PreparedOfficialRepair
+                    { request = request, plan = plan, marker = marker, fingerprint = fingerprint });
+            }
+            if (pending.Count == 0) return repaired;
+            if (pending.Select(item => item.plan.primaryArchive).Distinct(StringComparer.OrdinalIgnoreCase).Count() != 1 ||
+                pending.Select(item => item.request.Entry.Name).Distinct(StringComparer.OrdinalIgnoreCase).Count() != pending.Count)
+                throw new ArgumentException(L.T("#BATCH_SHARE_ARCHIVE_HAVE_DISTINCT"));
+
+            using var linked = CancellationTokenSource.CreateLinkedTokenSource(shutdown.Token, cancellation);
+            await worker.WaitAsync(linked.Token);
+            string output = null, sessionRoot = null;
             try
             {
-                string safeParent = Path.GetFullPath(workerRoot) + Path.DirectorySeparatorChar;
-                if (Directory.Exists(root) && Path.GetFullPath(root).StartsWith(safeParent,
-                    StringComparison.OrdinalIgnoreCase)) Directory.Delete(root, true);
+                previewArchivePlan = null;
+                OfficialArchivePlan plan = pending[0].plan;
+                string origin = OriginArchive(pending[0].request.Entry, targets);
+                string[] guids = pending.Select(item => item.request.Entry.guid).ToArray();
+                var export = await Task.Run(() =>
+                {
+                    SetExtractionActivity(AssetExtractionSource.OfficialApex,
+                        AssetExtractionOperation.LoadingArchives, plan.primaryArchive, pending.Count);
+                    EnsurePreviewSession(false, true);
+                    previewSession.Load(plan.archives, origin);
+                    SetExtractionActivity(AssetExtractionSource.OfficialApex,
+                        AssetExtractionOperation.ExportingModels, plan.primaryArchive, pending.Count);
+                    string exportedRoot = guids.Length == 1 ? previewSession.Export(guids[0]) :
+                        guids.Length > 8 ? previewSession.ExportBulk(guids) : previewSession.ExportBatch(guids);
+                    string[] paths = Directory.Exists(exportedRoot)
+                        ? Directory.GetFiles(exportedRoot, "*_LOD0.cast", SearchOption.AllDirectories)
+                        : Array.Empty<string>();
+                    return (Output: exportedRoot, Root: previewSession.Root, Paths: paths);
+                }, linked.Token);
+                output = export.Output; sessionRoot = export.Root; string[] exported = export.Paths;
+                SetExtractionActivity(AssetExtractionSource.OfficialApex,
+                    AssetExtractionOperation.RepairingTextures, plan.primaryArchive, pending.Count);
+                foreach (var item in pending)
+                {
+                    string[] matches = exported.Where(path => string.Equals(Path.GetFileName(path),
+                        item.request.Entry.Name + "_LOD0.cast", StringComparison.OrdinalIgnoreCase)).ToArray();
+                    if (matches.Length == 0 && pending.Count == 1 && exported.Length == 1) matches = exported;
+                    int replaced = 0;
+                    if (matches.Length == 1)
+                    {
+                        CastReader.Read(matches[0]);
+                        replaced = SharedTextureCache.ReplaceAlbedosFromOfficial(
+                            ModelDirectory(item.request.Entry), item.request.LegacyCast, matches[0],
+                            sessionRoot, item.request.Inspection.materialHashes);
+                    }
+                    Directory.CreateDirectory(ModelDirectory(item.request.Entry));
+                    File.WriteAllText(item.marker, JsonUtility.ToJson(new OfficialTextureAttempt
+                        { fingerprint = item.fingerprint, requested = item.request.Inspection.materialHashes.Count,
+                            replaced = replaced }, true));
+                    if (replaced <= 0) continue;
+                    repaired.Add(item.request.Entry.Id);
+                    Debug.Log("REMAP_OFFICIAL_TEXTURE_FALLBACK: " + item.request.Entry.modelPath +
+                        " (" + replaced + ")");
+                }
             }
-            catch (IOException) { }
-            catch (UnauthorizedAccessException) { }
+            catch (Exception exception) when (exception is IOException || exception is TimeoutException ||
+                exception is OperationCanceledException || exception is InvalidDataException)
+            {
+                Debug.LogWarning("REMAP_OFFICIAL_TEXTURE_BATCH_FAILED: " + exception.Message);
+                if (exception is TimeoutException || previewSession == null || !previewSession.Alive) ResetPreviewSession();
+                if (exception is OperationCanceledException) throw;
+            }
+            finally
+            {
+                previewArchivePlan = null;
+                if (!string.IsNullOrWhiteSpace(output))
+                {
+                    try
+                    {
+                        string root = Path.GetFullPath(sessionRoot ?? "") + Path.DirectorySeparatorChar;
+                        string candidate = Path.GetFullPath(output);
+                        if (candidate.StartsWith(root, StringComparison.OrdinalIgnoreCase) && Directory.Exists(candidate))
+                            Directory.Delete(candidate, true);
+                    }
+                    catch (IOException) { }
+                    catch (UnauthorizedAccessException) { }
+                }
+                worker.Release();
+            }
+            return repaired;
         }
 
         public async Task<bool> TryRepairOfficialTexturesAsync(GameAssetRecord entry, string legacyCast,
             SharedTextureCache.AlbedoInspection inspection, string[] targets, CancellationToken cancellation = default,
             bool forceRefresh = false)
         {
-            if (entry == null || inspection == null || !inspection.NeedsFallback ||
-                !OfficialTextureFallbackAvailable || SessionExecutable == null ||
-                officialPreviewMisses.Contains(entry.Id)) return false;
-
-            string officialPaks = FindPakDirectory(Settings.officialApexGameDirectory);
-            if (officialPaks == null) return false;
-            string origin = OriginArchive(entry, targets);
-            OfficialArchivePlan plan = ResolveOfficialArchivePlan(officialPaks, origin);
-            if (plan == null) return false;
-
-            string modelRoot = ModelDirectory(entry);
-            string marker = Path.Combine(modelRoot, "official-texture-fallback.json");
-            string fingerprint = OfficialTextureFingerprint(plan.archives, inspection.materialHashes);
-            try
-            {
-                if (!forceRefresh && File.Exists(marker))
-                {
-                    var previous = JsonUtility.FromJson<OfficialTextureAttempt>(File.ReadAllText(marker));
-                    if (previous != null && previous.fingerprint == fingerprint) return previous.replaced > 0;
-                }
-            }
-            catch (IOException) { }
-
-            using var linked = CancellationTokenSource.CreateLinkedTokenSource(shutdown.Token, cancellation);
-            await worker.WaitAsync(linked.Token);
-            string workerRoot = Path.Combine(CacheDirectory, "Worker");
-            string root = Path.Combine(workerRoot, "official-" + Guid.NewGuid().ToString("N").Substring(0, 10));
-            try
-            {
-                ResetPreviewSession();
-                previewArchivePlan = null;
-                string officialCast = await Task.Run(() =>
-                {
-                    using var session = new RsxPreviewSession(SessionExecutable, root, workerRoot, linked.Token,
-                        false, true);
-                    SetExtractionActivity(AssetExtractionSource.OfficialApex,
-                        AssetExtractionOperation.LoadingArchives, plan.primaryArchive, 1);
-                    session.Load(plan.archives, origin);
-                    SetExtractionActivity(AssetExtractionSource.OfficialApex,
-                        AssetExtractionOperation.ExportingModels, plan.primaryArchive, 1);
-                    string output = session.Export(entry.guid);
-                    string[] lods = Directory.GetFiles(output, "*_LOD0.cast", SearchOption.AllDirectories);
-                    string[] named = lods.Where(path => string.Equals(Path.GetFileName(path),
-                        entry.Name + "_LOD0.cast", StringComparison.OrdinalIgnoreCase)).ToArray();
-                    string[] matches = named.Length > 0 ? named : lods;
-                    if (matches.Length != 1) throw new IOException(L.T("#RSX_DID_PRODUCE_SINGLE_CAST"));
-                    CastReader.Read(matches[0]);
-                    return matches[0];
-                }, linked.Token);
-
-                SetExtractionActivity(AssetExtractionSource.OfficialApex,
-                    AssetExtractionOperation.RepairingTextures, plan.primaryArchive, 1);
-                int replaced = SharedTextureCache.ReplaceAlbedosFromOfficial(modelRoot, legacyCast,
-                    officialCast, root, inspection.materialHashes);
-                Directory.CreateDirectory(modelRoot);
-                File.WriteAllText(marker, JsonUtility.ToJson(new OfficialTextureAttempt
-                    { fingerprint = fingerprint, requested = inspection.materialHashes.Count, replaced = replaced }, true));
-                if (replaced > 0)
-                    Debug.Log("REMAP_OFFICIAL_TEXTURE_FALLBACK: " + entry.modelPath + " (" + replaced + ")");
-                return replaced > 0;
-            }
-            catch (Exception exception) when (exception is IOException || exception is TimeoutException ||
-                exception is OperationCanceledException || exception is InvalidDataException)
-            {
-                Debug.LogWarning("REMAP_OFFICIAL_TEXTURE_FALLBACK_FAILED: " + entry.modelPath + ": " + exception.Message);
-                return false;
-            }
-            finally
-            {
-                previewArchivePlan = null;
-                DeleteOfficialWorker(root, workerRoot);
-                worker.Release();
-            }
+            var request = new OfficialTextureRepairRequest
+                { Entry = entry, LegacyCast = legacyCast, Inspection = inspection };
+            var repaired = await TryRepairOfficialTexturesBatchAsync(new[] { request }, targets,
+                cancellation, forceRefresh);
+            return entry != null && repaired.Contains(entry.Id);
         }
 
         private string OfficialTextureFingerprint(IEnumerable<string> archives, IEnumerable<ulong> materials)

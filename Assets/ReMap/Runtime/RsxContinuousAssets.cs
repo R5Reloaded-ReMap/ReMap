@@ -26,6 +26,7 @@ namespace ReMap.Standalone
         public bool ContinuousPreviewsSupported => SessionExecutable!=null;
         public bool BatchPreviewsSupported => ContinuousPreviewsSupported&&File.Exists(SessionExecutable+".remap-session-v2");
         public bool GeometryPreviewsSupported => ContinuousPreviewsSupported&&File.Exists(SessionExecutable+".remap-session-v3");
+        public bool BulkTextureRepairsSupported => ContinuousPreviewsSupported&&File.Exists(SessionExecutable+".remap-session-v4");
         private void SetTargetExtractionActivity(AssetExtractionOperation operation,string archive,int modelCount) =>
             SetExtractionActivity(AssetExtractionSource.TargetGame,operation,archive,modelCount);
         private void EnsurePreviewSession(bool geometryOnly=false,bool loadAllAssetTypes=false)

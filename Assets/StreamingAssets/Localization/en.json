@@ -5235,6 +5235,10 @@
       "text": "Repairing textures from Apex Legends"
     },
     {
+      "key": "#THUMBNAIL_STAGE_CHECKING_TEXTURES",
+      "text": "Checking extracted textures"
+    },
+    {
       "key": "#THUMBNAIL_STAGE_GENERATING",
       "text": "Generating thumbnails"
     },

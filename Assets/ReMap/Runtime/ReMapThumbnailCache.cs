@@ -62,7 +62,7 @@ namespace ReMap.Standalone
         private VisualElement thumbnailDashboardCategoryChoices;
         private Button thumbnailPauseButton, thumbnailDashboardPauseButton;
         private int thumbnailDone, thumbnailFailed, thumbnailTotal, thumbnailAvailable;
-        private bool thumbnailDashboardShownForRun, thumbnailRendering;
+        private bool thumbnailDashboardShownForRun, thumbnailRendering, thumbnailCheckingTextures;
         private float thumbnailPerformanceStamp, thumbnailActiveSeconds, thumbnailLastExtractionSeconds,
             thumbnailLastGenerationSeconds;
         private int thumbnailRunStartDone;
@@ -182,6 +182,15 @@ namespace ReMap.Standalone
         }
         private readonly HashSet<string> readyThumbnails=new HashSet<string>(), failedThumbnails=new HashSet<string>(), extractingThumbnails=new HashSet<string>();
         private readonly HashSet<string> availableThumbnails=new HashSet<string>();
+        private sealed class StagedThumbnail
+        {
+            public GameAssetRecord record;
+            public string cast;
+            public SharedTextureCache.AlbedoInspection inspection;
+            public bool repairAttempted;
+        }
+        private readonly Dictionary<string,StagedThumbnail> stagedThumbnails=
+            new Dictionary<string,StagedThumbnail>(StringComparer.OrdinalIgnoreCase);
         private readonly List<GameAssetRecord> visibleAssets=new List<GameAssetRecord>();
         private string thumbnailStateRoot;
         private int thumbnailStateCount=-1;
@@ -191,7 +200,7 @@ namespace ReMap.Standalone
             thumbnailDashboardShownForRun=false;thumbnailPerformanceStamp=0;
             thumbnailActiveSeconds=0;thumbnailLastExtractionSeconds=0;thumbnailLastGenerationSeconds=0;thumbnailRunStartDone=0;
             if(thumbnailDashboard!=null){thumbnailDashboard.style.display=DisplayStyle.None;if(world?.Camera!=null)world.Camera.enabled=true;}
-            thumbnailStateRoot=assetLibrary.CacheRoot;thumbnailStateCount=assetLibrary.Records.Count;readyThumbnails.Clear();availableThumbnails.Clear();failedThumbnails.Clear();thumbnailAlbedo.Clear();
+            thumbnailStateRoot=assetLibrary.CacheRoot;thumbnailStateCount=assetLibrary.Records.Count;readyThumbnails.Clear();availableThumbnails.Clear();failedThumbnails.Clear();stagedThumbnails.Clear();thumbnailAlbedo.Clear();
             if(thumbnailStateRoot==null)return;
             foreach(var record in assetLibrary.Records) {
                 string thumbnail=Path.Combine(assetLibrary.ModelDirectory(record),"thumbnail.png");
@@ -235,6 +244,7 @@ namespace ReMap.Standalone
             AssetExtractionActivity activity=assetLibrary.ExtractionActivity;
             bool extracting=extractingThumbnails.Count>0;
             string stage=thumbnailPaused?"#THUMBNAIL_STAGE_PAUSED":remaining==0?"#THUMBNAIL_STAGE_COMPLETE":
+                thumbnailCheckingTextures?"#THUMBNAIL_STAGE_CHECKING_TEXTURES":
                 activity.Operation==AssetExtractionOperation.RepairingTextures&&extracting?"#THUMBNAIL_STAGE_REPAIRING_TEXTURES":
                 thumbnailRendering&&extracting?"#THUMBNAIL_STAGE_GENERATING_AND_EXTRACTING":
                 thumbnailRendering?"#THUMBNAIL_STAGE_GENERATING":
@@ -380,6 +390,7 @@ namespace ReMap.Standalone
         }
         private GameAssetRecord[] NextThumbnailBatch(GameAssetRecord[] eligible,HashSet<string> targetSet,string[] targets,int batchSize) {
             var unavailable=new HashSet<string>(readyThumbnails,StringComparer.OrdinalIgnoreCase);unavailable.UnionWith(extractingThumbnails);
+            unavailable.UnionWith(stagedThumbnails.Keys);
             bool officialPhase=eligible.Any(record=>!unavailable.Contains(record.Id)&&!failedThumbnails.Contains(record.Id)&&assetLibrary.ShouldTryOfficialPreview(record));
             var selectable=officialPhase?eligible.Where(assetLibrary.ShouldTryOfficialPreview).ToArray():eligible;
             var scene=SceneThumbnailPriorities(selectable);var custom=CustomThumbnailPriorities(selectable);
@@ -409,6 +420,117 @@ namespace ReMap.Standalone
                 extraction.progress.Pause();
                 if(ReferenceEquals(thumbnailExport,extraction.cancellation))thumbnailExport=null;
                 extraction.cancellation.Dispose();
+            }
+        }
+        private List<StagedThumbnail[]> StagedRepairBatches(IEnumerable<StagedThumbnail> source,string[] targets) {
+            var result=new List<StagedThumbnail[]>();
+            foreach(var group in source.Where(work=>work.inspection?.NeedsFallback==true&&!work.repairAttempted)
+                .GroupBy(work=>assetLibrary.OriginArchive(work.record,targets),StringComparer.OrdinalIgnoreCase)) {
+                if(assetLibrary.BulkTextureRepairsSupported) {
+                    // File names identify exports inside one RSX job. Put duplicate names in a
+                    // separate bulk request, but otherwise send the whole corrupt set at once.
+                    var bulk=new List<List<StagedThumbnail>>();
+                    foreach(var work in group) {
+                        int index=0;
+                        while(index<bulk.Count&&bulk[index].Any(item=>string.Equals(
+                            item.record.Name,work.record.Name,StringComparison.OrdinalIgnoreCase)))index++;
+                        if(index==bulk.Count)bulk.Add(new List<StagedThumbnail>());
+                        bulk[index].Add(work);
+                    }
+                    result.AddRange(bulk.Select(batch=>batch.ToArray()));
+                    continue;
+                }
+                var batch=new List<StagedThumbnail>();
+                foreach(var work in group) {
+                    if(batch.Count>=8||batch.Any(item=>string.Equals(item.record.Name,work.record.Name,StringComparison.OrdinalIgnoreCase))) {
+                        result.Add(batch.ToArray());batch.Clear();
+                    }
+                    batch.Add(work);
+                }
+                if(batch.Count>0)result.Add(batch.ToArray());
+            }
+            return result;
+        }
+        private void RenderStagedThumbnail(StagedThumbnail work,HashSet<string> reloadScene) {
+            GameObject model=null;Texture2D thumbnail=null;
+            try {
+                world.models.Prepare(work.record.Id,work.cast);model=world.models.Create(work.record.Id,false);
+                RememberPlacementEntry(work.record,model);thumbnail=ModelThumbnail.Render(model);
+                if(snapshot.objects.Any(item=>!item.isGroup&&(string.Equals(item.assetId,work.record.Id,StringComparison.OrdinalIgnoreCase)||
+                    GameAssetIndex.SameModelPath(item.gameModelPath,work.record.modelPath))))reloadScene.Add(work.record.Id);
+                File.WriteAllBytes(Path.Combine(assetLibrary.ModelDirectory(work.record),"thumbnail.png"),thumbnail.EncodeToPNG());
+                availableThumbnails.Add(work.record.Id);
+                SaveThumbnailInfo(work.record,world.models.MissingAlbedo(work.record.Id));
+                readyThumbnails.Add(work.record.Id);failedThumbnails.Remove(work.record.Id);previewFailures.Remove(work.record.Id);
+            }
+            finally {
+                if(model!=null)world.models.Release(work.record.Id,model);if(thumbnail!=null)Destroy(thumbnail);
+            }
+        }
+        private async Task FinishStagedThumbnails(GameAssetRecord[] eligible,string[] targets,string generation) {
+            var eligibleIds=new HashSet<string>(eligible.Select(record=>record.Id),StringComparer.OrdinalIgnoreCase);
+            foreach(string id in stagedThumbnails.Keys.Where(id=>!eligibleIds.Contains(id)).ToArray())stagedThumbnails.Remove(id);
+            if(stagedThumbnails.Count==0)return;
+            SetAssetBusy(true);
+            var reloadScene=new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+            try {
+                // Export every model first. Only then inspect the complete texture set, so the
+                // primary export pipeline is never interrupted by per-model repair sessions.
+                thumbnailCheckingTextures=true;UpdateThumbnailDashboard(eligible);
+                int checkedTextures=0;
+                foreach(var work in stagedThumbnails.Values.Where(work=>work.inspection==null).ToArray()) {
+                    if(this==null||backgroundStopped||generation!=assetLibrary.CacheRoot||ThumbnailExternalWorkBlocked())return;
+                    try {work.inspection=SharedTextureCache.InspectAlbedos(work.cast);}
+                    catch(Exception ex){ThumbnailFailure(work.record,ex);stagedThumbnails.Remove(work.record.Id);}
+                    checkedTextures++;
+                    if(checkedTextures%8==0)UpdateThumbnailDashboard(eligible);
+                    await Task.Yield();
+                }
+                thumbnailCheckingTextures=false;UpdateThumbnailDashboard(eligible);
+                // Repairs reuse one official RSX session;
+                // the embedded protocol exports at most eight models per command but LOAD is paid only
+                // once while consecutive batches use the same Apex map archive family.
+                foreach(var batch in StagedRepairBatches(stagedThumbnails.Values,targets)) {
+                    if(this==null||backgroundStopped||generation!=assetLibrary.CacheRoot||ThumbnailExternalWorkBlocked())return;
+                    foreach(var work in batch)extractingThumbnails.Add(work.record.Id);
+                    UpdateThumbnailProgress(eligible,L.F("#EXTRACTING_ARG0_MODELS",batch.Length));
+                    float repairStarted=Time.realtimeSinceStartup;
+                    var repairTask=assetLibrary.TryRepairOfficialTexturesBatchAsync(batch.Select(work=>
+                        new OfficialTextureRepairRequest{Entry=work.record,LegacyCast=work.cast,Inspection=work.inspection}),targets);
+                    var repairProgress=thumbnailProgress.schedule.Execute(()=> {
+                        if(!repairTask.IsCompleted)UpdateThumbnailProgress(eligible,
+                            L.F("#ARG0_S_READING_ARG1_MODELS",(int)(Time.realtimeSinceStartup-repairStarted),batch.Length));
+                    }).Every(1000);
+                    try {
+                        await repairTask;
+                    }
+                    catch(Exception ex)when(ex is IOException||ex is TimeoutException||ex is InvalidDataException) {
+                        Debug.LogWarning("REMAP_THUMBNAIL_REPAIR_BATCH: "+ex.Message);
+                    }
+                    finally {
+                        repairProgress.Pause();
+                        foreach(var work in batch) {work.repairAttempted=true;extractingThumbnails.Remove(work.record.Id);}
+                        if(this!=null&&!backgroundStopped)UpdateThumbnailProgress(eligible);
+                    }
+                }
+                thumbnailRendering=true;
+                foreach(var work in stagedThumbnails.Values.ToArray()) {
+                    if(this==null||backgroundStopped||generation!=assetLibrary.CacheRoot||ThumbnailExternalWorkBlocked())return;
+                    float generationStarted=Time.realtimeSinceStartup;
+                    try {
+                        RenderStagedThumbnail(work,reloadScene);
+                    }
+                    catch(Exception ex){ThumbnailFailure(work.record,ex);}
+                    finally {
+                        thumbnailLastGenerationSeconds=Mathf.Max(0,Time.realtimeSinceStartup-generationStarted);
+                        stagedThumbnails.Remove(work.record.Id);UpdateThumbnailProgress(eligible);UpdateThumbnailControls();
+                    }
+                    await Task.Yield();
+                }
+                if(reloadScene.Count>0){foreach(string id in reloadScene)world.Reload(id);Refresh();}
+            }
+            finally {
+                thumbnailCheckingTextures=false;thumbnailRendering=false;SetAssetBusy(false);RefreshCatalog();UpdateThumbnailDashboard(eligible);
             }
         }
         private async Task PrepareThumbnails()
@@ -446,43 +568,37 @@ namespace ReMap.Standalone
                     var current=prefetched;prefetched=null;
                     if(current==null) {
                         var nextBatch=NextThumbnailBatch(eligible,targetSet,targets,batchSize);
-                        if(nextBatch.Length==0)break;
+                        if(nextBatch.Length==0) {
+                            if(stagedThumbnails.Count>0) {await FinishStagedThumbnails(eligible,targets,generation);continue;}
+                            break;
+                        }
                         current=StartThumbnailExtraction(nextBatch,targets,eligible);
                     }
                     var batch=current.batch;SetAssetBusy(true);
                     try {
                         AssetBatchResult result=await FinishThumbnailExtraction(current);
                         if(this==null||backgroundStopped||generation!=assetLibrary.CacheRoot)return;
-                        // Keep RSX busy with one bounded look-ahead batch while Unity renders this batch.
+                        // Keep RSX busy with one bounded look-ahead batch while this batch is
+                        // normalized. Texture inspection deliberately waits until every model has
+                        // been exported, avoiding any target-game/Apex session switching here.
                         if(!ThumbnailExternalWorkBlocked()) {
                             var nextBatch=NextThumbnailBatch(eligible,targetSet,targets,batchSize);
                             if(nextBatch.Length>0)prefetched=StartThumbnailExtraction(nextBatch,targets,eligible);
                         }
-                        var reloadScene=new HashSet<string>(StringComparer.OrdinalIgnoreCase);thumbnailRendering=true;
                         foreach(var next in batch) {
                             await Task.Yield();
                             if(thumbnailPaused)break;
                             float generationStarted=Time.realtimeSinceStartup;
-                            GameObject model=null;Texture2D thumbnail=null;
                             try {
                                 if(result.Deferred.Contains(next.Id))continue;
                                 if(!result.Paths.TryGetValue(next.Id,out var cast))throw new IOException(result.Errors.TryGetValue(next.Id,out var error)?error:L.T("#EXPORT_MISSING"));
                                 await SharedTextureCache.Normalize(assetLibrary.ModelDirectory(next),SharedTextureCache.PreviewMaximumSize);
-                                var albedos=SharedTextureCache.InspectAlbedos(cast);
-                                if(albedos.NeedsFallback)await assetLibrary.TryRepairOfficialTexturesAsync(next,cast,albedos,targets);
                                 if(this==null||backgroundStopped||generation!=assetLibrary.CacheRoot)return;
-                                if(thumbnailPaused)continue;
-                                world.models.Prepare(next.Id,cast);model=world.models.Create(next.Id,false);RememberPlacementEntry(next,model);thumbnail=ModelThumbnail.Render(model);
-                                if(snapshot.objects.Any(item=>!item.isGroup&&(string.Equals(item.assetId,next.Id,StringComparison.OrdinalIgnoreCase)||GameAssetIndex.SameModelPath(item.gameModelPath,next.modelPath))))reloadScene.Add(next.Id);
-                                File.WriteAllBytes(Path.Combine(assetLibrary.ModelDirectory(next),"thumbnail.png"),thumbnail.EncodeToPNG());
-                                availableThumbnails.Add(next.Id);
-                                SaveThumbnailInfo(next,world.models.MissingAlbedo(next.Id));
-                                readyThumbnails.Add(next.Id);failedThumbnails.Remove(next.Id);previewFailures.Remove(next.Id);
+                                stagedThumbnails[next.Id]=new StagedThumbnail{record=next,cast=cast};
                             }catch(Exception ex){if(this==null||backgroundStopped||generation!=assetLibrary.CacheRoot)return;ThumbnailFailure(next,ex);}
-                            finally {thumbnailLastGenerationSeconds=Mathf.Max(0,Time.realtimeSinceStartup-generationStarted);if(this!=null&&!backgroundStopped){if(model!=null)world.models.Release(next.Id,model);if(thumbnail!=null)Destroy(thumbnail);extractingThumbnails.Remove(next.Id);UpdateThumbnailProgress(eligible);UpdateThumbnailControls();}}
+                            finally {thumbnailLastGenerationSeconds=Mathf.Max(0,Time.realtimeSinceStartup-generationStarted);if(this!=null&&!backgroundStopped){extractingThumbnails.Remove(next.Id);UpdateThumbnailProgress(eligible);UpdateThumbnailControls();}}
                         }
-                        thumbnailRendering=false;UpdateThumbnailDashboard(eligible);
-                        if(reloadScene.Count>0){foreach(string id in reloadScene)world.Reload(id);Refresh();}
+                        UpdateThumbnailDashboard(eligible);
                     }catch(OperationCanceledException) { Debug.Log("REMAP_THUMBNAIL_PREEMPTED"); /* Requeued without failure. */ }
                     catch(Exception ex){if(this!=null&&!backgroundStopped)foreach(var entry in batch)if(!readyThumbnails.Contains(entry.Id))ThumbnailFailure(entry,ex);}
                     finally {

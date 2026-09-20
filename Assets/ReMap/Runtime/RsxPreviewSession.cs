@@ -63,20 +63,20 @@ namespace ReMap.Standalone
             if(text==null)return;
             lock(logGate) {if(logged>=8*1024*1024)return;try{log.WriteLine(text);logged+=text.Length;}catch(ObjectDisposedException){}}
         }
-        private string[] ReadReply()
+        private string[] ReadReply(int timeoutMilliseconds=180000)
         {
             var timer=Stopwatch.StartNew();
             while(true)
             {
                 shutdown.ThrowIfCancellationRequested();
-                int remaining=Math.Max(1,180000-(int)timer.ElapsedMilliseconds);
+                int remaining=Math.Max(1,timeoutMilliseconds-(int)timer.ElapsedMilliseconds);
                 var read=process.StandardOutput.ReadLineAsync();
                 if(!read.Wait(remaining,shutdown))throw new TimeoutException(L.T("#RSX_SESSION_EXCEEDED_THREE_MINUTES"));
                 string line=read.GetAwaiter().GetResult();
                 if(line==null)throw new IOException(L.T("#RSX_PREVIEW_SESSION_EXITED_LOG")+Path.Combine(Root,"session.log"));
                 WriteLog(line);
                 if(line.StartsWith("REMAP_SESSION\t",StringComparison.Ordinal))return line.Split('\t');
-                if(timer.ElapsedMilliseconds>=180000)throw new TimeoutException(L.T("#RSX_SESSION_TIMED_OUT_LOG")+Path.Combine(Root,"session.log"));
+                if(timer.ElapsedMilliseconds>=timeoutMilliseconds)throw new TimeoutException(L.T("#RSX_SESSION_TIMED_OUT_LOG")+Path.Combine(Root,"session.log"));
             }
         }
         private void Send(string line){shutdown.ThrowIfCancellationRequested();process.StandardInput.WriteLine(line);process.StandardInput.Flush();}
@@ -105,6 +105,17 @@ namespace ReMap.Standalone
             if(guids==null||guids.Length<2||guids.Length>8)throw new ArgumentException(L.T("#BATCH_1_8_MODELS_REQUIRED"));
             string job=Guid.NewGuid().ToString("N").Substring(0,8);
             Send((geometryOnly?"EXPORTBATCHGEOMETRY":"EXPORTBATCH")+"\t"+job+"\t"+string.Join("\t",guids));var reply=ReadReply();
+            if(reply.Length!=3||reply[1]!="BATCHDONE"||reply[2]!=job)
+                throw new IOException(L.T("#RSX_MODEL_EXPORT_FAILED")+string.Join(" ",reply));
+            return Path.Combine(Root,job);
+        }
+        internal string ExportBulk(string[] guids)
+        {
+            if(guids==null||guids.Length<2||guids.Length>65536)throw new ArgumentException(L.T("#BATCH_1_8_MODELS_REQUIRED"));
+            string job=Guid.NewGuid().ToString("N").Substring(0,8);
+            Send("EXPORTBATCH\t"+job+"\t"+string.Join("\t",guids));
+            int timeout=Math.Min(2*60*60*1000,180000+guids.Length*5000);
+            var reply=ReadReply(timeout);
             if(reply.Length!=3||reply[1]!="BATCHDONE"||reply[2]!=job)
                 throw new IOException(L.T("#RSX_MODEL_EXPORT_FAILED")+string.Join(" ",reply));
             return Path.Combine(Root,job);
