@@ -177,7 +177,8 @@ namespace ReMap.Standalone
 
         public void AddMprtReference(MapReferenceModel reference)
         {
-            if (reference?.Placement == null || string.IsNullOrEmpty(reference.AssetId) || mprtReferenceRoot == null) return;
+            if (reference?.Placement == null || string.IsNullOrEmpty(reference.AssetId) ||
+                mprtReferenceRoot == null || !models.IsPrepared(reference.AssetId)) return;
             var instance = CreateMprtInstance(reference);
             mapReferenceModels.Add(new KeyValuePair<string, GameObject>(reference.AssetId, instance));
         }
@@ -217,7 +218,8 @@ namespace ReMap.Standalone
 
         private void AddMprtStreamEntry(MapReferenceModel reference)
         {
-            if (reference?.Placement == null || string.IsNullOrEmpty(reference.AssetId)) return;
+            if (reference?.Placement == null || string.IsNullOrEmpty(reference.AssetId) ||
+                !models.IsPrepared(reference.AssetId)) return;
             Vector3 position = ToVector(ApexCoordinates.ToUnity(reference.Placement.Position));
             int index = mprtStreamEntries.Count;
             var entry = new MprtStreamEntry { Reference = reference, Position = position,
@@ -290,6 +292,7 @@ namespace ReMap.Standalone
             MprtStreamEntry entry = mprtStreamEntries[index];
             if (entry.RejectedBySize) return;
             GameObject instance = AcquireMprtInstance(entry.Reference);
+            if (instance == null) { entry.RejectedBySize = true; return; }
             var mesh = instance.GetComponent<MeshFilter>()?.sharedMesh;
             float modelSize = mesh == null ? 0 : Mathf.Max(mesh.bounds.size.x, mesh.bounds.size.y, mesh.bounds.size.z);
             mprtModelSizes[entry.Reference.AssetId] = modelSize;
@@ -320,6 +323,7 @@ namespace ReMap.Standalone
 
         private GameObject AcquireMprtInstance(MapReferenceModel reference)
         {
+            if (!models.IsPrepared(reference.AssetId)) return null;
             GameObject instance = null;
             if (mprtPool.TryGetValue(reference.AssetId, out var pool) && pool.Count > 0)
             { instance = pool.Pop(); mprtPoolCount--; instance.SetActive(true); }

@@ -477,6 +477,30 @@ namespace ReMap.Standalone.Tests
             yield return null;
         }
 
+        [Test]
+        public void MprtNeverCreatesFallbackBlocksForModelsNoLongerPrepared()
+        {
+            WorldView world = CreateWorld();
+            try
+            {
+                const string id = "apex:missing-mprt";
+                world.models.Prepare(id, "missing.cast");
+                world.ConfigureMprtReference(new[] { new MapReferenceModel {
+                    AssetId = id,
+                    Placement = new MprtPlacement { ModelPath = "mdl/props/missing.rmdl", Scale = 1 }
+                } }, new MprtReferenceOptions { Distance = 750, MaxActive = 100, MinimumSize = 0 }, new Float3());
+                Assert.That(world.MprtReferenceAvailableCount, Is.EqualTo(1));
+
+                world.models.ForgetPrepared(id);
+                world.TickMprtReference(1);
+
+                Assert.That(world.MprtReferenceActiveCount, Is.Zero);
+                Assert.That(world.models.LoadedModelCount, Is.Zero,
+                    "An unavailable MPRT model must not fall back to the magenta demo cube.");
+            }
+            finally { DisposeWorld(world); }
+        }
+
         private static WorldView CreateWorld() => new WorldView(
             Shader.Find("Universal Render Pipeline/Lit"),
             Shader.Find("ReMap/WorkspaceGrid"),
