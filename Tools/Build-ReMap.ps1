@@ -426,7 +426,7 @@ if ($unityExitCode -ne 0) {
 
 foreach ($artifact in @(
     "ReMap.exe",
-    "ReMapLiveBridge.exe",
+    "ReMapBridge.exe",
     "rsx.exe",
     "rsx.exe.remap-session-v1",
     "rsx.exe.remap-session-v2",

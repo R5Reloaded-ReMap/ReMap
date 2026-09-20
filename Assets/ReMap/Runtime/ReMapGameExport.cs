@@ -1230,8 +1230,8 @@ namespace ReMap.Standalone
             string target = GameTargets.Normalize(gameTarget);
             if (key.Length == 0 && password.Length == 0)
             {
-                if (target == GameTargets.R5Flowstate) return ReMapLiveBridge.Send(commands);
-                if (target == GameTargets.R5Reloaded) return ReMapLiveBridge.SendReloaded(commands);
+                if (target == GameTargets.R5Flowstate) return ReMapBridge.Send(commands);
+                if (target == GameTargets.R5Reloaded) return ReMapBridge.SendReloaded(commands);
             }
             if (key.Length == 0 || password.Length == 0)
                 throw new InvalidOperationException(L.T("#CONFIGURE_RCON_AES_KEY_PASSWORD"));
@@ -1533,7 +1533,7 @@ namespace ReMap.Standalone
             if (GameTargets.Normalize(gameTarget) == GameTargets.R5Flowstate && string.IsNullOrWhiteSpace(key) && string.IsNullOrEmpty(password))
             {
                 await System.Threading.Tasks.Task.Delay(250);
-                count += await System.Threading.Tasks.Task.Run(() => ReMapLiveBridge.SendClient(new[] { "connect localhost" }));
+                count += await System.Threading.Tasks.Task.Run(() => ReMapBridge.SendClient(new[] { "connect localhost" }));
             }
             return count;
         }

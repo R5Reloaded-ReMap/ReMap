@@ -18,14 +18,14 @@ namespace ReMap.Standalone.Tests
         }
 
         [Test]
-        public void LocalLiveBridgeCanWriteCommandsToR5ReloadedConsole()
+        public void LocalBridgeCanWriteCommandsToR5ReloadedConsole()
         {
             string root = System.IO.Path.GetFullPath(
                 System.IO.Path.Combine(Application.dataPath, ".."));
             string helper = System.IO.File.ReadAllText(
-                System.IO.Path.Combine(root, "Tools", "LiveBridge", "Program.cs"));
+                System.IO.Path.Combine(root, "Tools", "Bridge", "Program.cs"));
             string runtime = System.IO.File.ReadAllText(
-                System.IO.Path.Combine(root, "Assets", "ReMap", "Runtime", "ReMapLiveBridge.cs"));
+                System.IO.Path.Combine(root, "Assets", "ReMap", "Runtime", "ReMapBridge.cs"));
             StringAssert.Contains("Process.GetProcessesByName(\"r5apex\")", helper);
             StringAssert.Contains("AttachConsole", helper);
             StringAssert.Contains("WriteConsoleInput", helper);

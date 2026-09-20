@@ -822,13 +822,13 @@ namespace ReMap.Standalone
     {
         public static string Save(string suggestedName)
         {
-            string path = ReMapLiveBridge.SelectFile(true, L.T("#EXPORT_CURRENT_PROJECT"), suggestedName, MapFiles.PortableExtension.TrimStart('.'));
+            string path = ReMapBridge.SelectFile(true, L.T("#EXPORT_CURRENT_PROJECT"), suggestedName, MapFiles.PortableExtension.TrimStart('.'));
             return string.IsNullOrEmpty(path) ? null : MapFiles.EnsurePortableExtension(path);
         }
 
         public static string Open()
         {
-            return ReMapLiveBridge.SelectFile(false, L.T("#IMPORT_SHARED_PROJECT"), "", MapFiles.PortableExtension.TrimStart('.'));
+            return ReMapBridge.SelectFile(false, L.T("#IMPORT_SHARED_PROJECT"), "", MapFiles.PortableExtension.TrimStart('.'));
         }
     }
 }

@@ -8,9 +8,9 @@ using ReMap.Standalone.Core;
 
 namespace ReMap.Standalone
 {
-    internal static class ReMapLiveBridge
+    internal static class ReMapBridge
     {
-        internal const string HelperFileName = "ReMapLiveBridge.exe";
+        internal const string HelperFileName = "ReMapBridge.exe";
 
         internal static int Send(IEnumerable<string> sourceCommands)
         {
@@ -74,7 +74,7 @@ namespace ReMap.Standalone
         internal static string SelectFile(bool save, string title, string suggestedName, string extension)
         {
             string helper = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, HelperFileName);
-            if (!File.Exists(helper)) throw new FileNotFoundException("ReMap file dialog helper is missing. Rebuild ReMap.", helper);
+            if (!File.Exists(helper)) throw new FileNotFoundException(L.T("#REMAP_BRIDGE_MISSING_REBUILD"), helper);
             using (var process = new Process())
             {
                 process.StartInfo = new ProcessStartInfo
@@ -87,7 +87,7 @@ namespace ReMap.Standalone
                     RedirectStandardOutput = true,
                     RedirectStandardError = true
                 };
-                if (!process.Start()) throw new InvalidOperationException("Could not start the ReMap file dialog helper.");
+                if (!process.Start()) throw new InvalidOperationException(L.T("#COULD_NOT_START_REMAP_BRIDGE"));
                 process.StandardInput.WriteLine(save ? "save" : "open");
                 process.StandardInput.WriteLine(Encode(title));
                 process.StandardInput.WriteLine(Encode(suggestedName));
@@ -97,7 +97,7 @@ namespace ReMap.Standalone
                 string error = process.StandardError.ReadToEnd().Trim();
                 process.WaitForExit();
                 if (process.ExitCode == 2) return null;
-                if (process.ExitCode != 0) throw new InvalidOperationException(error.Length == 0 ? "The ReMap file dialog failed." : error);
+                if (process.ExitCode != 0) throw new InvalidOperationException(error.Length == 0 ? L.T("#REMAP_FILE_DIALOG_FAILED") : error);
                 return selected;
             }
         }

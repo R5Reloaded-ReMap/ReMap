@@ -17,6 +17,9 @@ namespace ReMap.Standalone.Editor
         [MenuItem("ReMap/Prepare and open workspace")]
         public static void Prepare()
         {
+            // D3D12 SplitJobs intermittently crashes inside the app-local D3D12Core.dll on Windows.
+            // Keep D3D12 available, but use Unity's regular rendering thread instead of Graphics Jobs.
+            PlayerSettings.graphicsJobs = false;
             if (File.Exists(ScenePath))
             {
                 if (!Application.isBatchMode && !EditorSceneManager.SaveCurrentModifiedScenesIfUserWantsTo()) return;
@@ -106,7 +109,7 @@ namespace ReMap.Standalone.Editor
                 if (report.summary.result != BuildResult.Succeeded)
                     throw new Exception("Windows build failed: " + report.summary.result);
                 string outputDirectory = Path.GetDirectoryName(Path.GetFullPath(report.summary.outputPath));
-                BuildLiveBridge(outputDirectory);
+                BuildBridge(outputDirectory);
                 BundleGameScripts(outputDirectory);
                 BundleOfficialRsx(outputDirectory);
                 BundleRevpk(outputDirectory);
@@ -214,17 +217,20 @@ namespace ReMap.Standalone.Editor
             File.Copy(source, destination, true);
         }
 
-        private static void BuildLiveBridge(string outputDirectory)
+        private static void BuildBridge(string outputDirectory)
         {
             string windows = Environment.GetFolderPath(Environment.SpecialFolder.Windows);
             string framework = Path.Combine(windows, "Microsoft.NET", "Framework64", "v4.0.30319");
             string compiler = Path.Combine(framework, "csc.exe");
             string wpf = Path.Combine(framework, "WPF");
-            string source = Path.GetFullPath(Path.Combine(Application.dataPath, "..", "Tools", "LiveBridge", "Program.cs"));
-            string output = Path.Combine(outputDirectory, "ReMapLiveBridge.exe");
-            string legacyOutput = Path.Combine(outputDirectory, "ReMapLauncherConsole.exe");
-            if (File.Exists(legacyOutput)) File.Delete(legacyOutput);
-            if (!File.Exists(compiler) || !File.Exists(source)) throw new FileNotFoundException("ReMap live bridge compiler or source is missing.");
+            string source = Path.GetFullPath(Path.Combine(Application.dataPath, "..", "Tools", "Bridge", "Program.cs"));
+            string output = Path.Combine(outputDirectory, "ReMapBridge.exe");
+            foreach (string legacyName in new[] { "ReMapLiveBridge.exe", "ReMapLauncherConsole.exe" })
+            {
+                string legacyOutput = Path.Combine(outputDirectory, legacyName);
+                if (File.Exists(legacyOutput)) File.Delete(legacyOutput);
+            }
+            if (!File.Exists(compiler) || !File.Exists(source)) throw new FileNotFoundException("ReMap bridge compiler or source is missing.");
             Directory.CreateDirectory(outputDirectory);
             string arguments = "/nologo /target:exe /platform:anycpu /optimize+ /out:" + Quote(output) +
                 " /reference:" + Quote(Path.Combine(wpf, "UIAutomationClient.dll")) +
@@ -241,7 +247,7 @@ namespace ReMap.Standalone.Editor
                 process.Start();
                 string outputText = process.StandardOutput.ReadToEnd() + process.StandardError.ReadToEnd();
                 process.WaitForExit();
-                if (process.ExitCode != 0) throw new Exception("ReMap live bridge build failed:\n" + outputText);
+                if (process.ExitCode != 0) throw new Exception("ReMap bridge build failed:\n" + outputText);
             }
         }
 

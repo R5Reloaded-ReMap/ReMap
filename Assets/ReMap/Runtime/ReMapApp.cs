@@ -192,7 +192,7 @@ namespace ReMap.Standalone
             if (Environment.GetCommandLineArgs().Contains("-remapHierarchySmoke")) StartCoroutine(HierarchySmoke());
             if (Environment.GetCommandLineArgs().Contains("-remapLayoutSmoke")) StartCoroutine(LayoutSmoke());
             if (Environment.GetCommandLineArgs().Contains("-remapToolsSmoke")) StartCoroutine(ConstructionSmoke());
-            if (Environment.GetCommandLineArgs().Contains("-remapLiveBridgeSmoke")) StartCoroutine(LiveBridgeSmoke());
+            if (Environment.GetCommandLineArgs().Contains("-remapBridgeSmoke")) StartCoroutine(BridgeSmoke());
             if (Environment.GetCommandLineArgs().Contains("-remapCollisionSmoke")) StartCoroutine(CollisionSmoke());
             if (Environment.GetCommandLineArgs().Contains("-remapPerfSmoke")) StartCoroutine(PerformanceSmoke());
             if (Environment.GetCommandLineArgs().Contains("-remapMapReferenceSmoke")) StartCoroutine(MapReferenceComparisonSmoke());
