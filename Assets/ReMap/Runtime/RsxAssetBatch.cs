@@ -10,6 +10,9 @@ namespace ReMap.Standalone
     public sealed class AssetBatchResult {
         public readonly Dictionary<string,string> Paths=new Dictionary<string,string>();
         public readonly Dictionary<string,string> Errors=new Dictionary<string,string>();
+        // Deferred means the official phase tested this GUID but did not contain it. The thumbnail
+        // queue will revisit it in the later legacy phase without displaying a false failure.
+        public readonly HashSet<string> Deferred=new HashSet<string>(StringComparer.OrdinalIgnoreCase);
     }
     public sealed partial class RsxAssetLibrary
     {

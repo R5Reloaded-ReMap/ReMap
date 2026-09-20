@@ -306,8 +306,10 @@ namespace ReMap.Standalone
         }
         private GameAssetRecord[] NextThumbnailBatch(GameAssetRecord[] eligible,HashSet<string> targetSet,string[] targets,int batchSize) {
             var unavailable=new HashSet<string>(readyThumbnails,StringComparer.OrdinalIgnoreCase);unavailable.UnionWith(extractingThumbnails);
-            var scene=SceneThumbnailPriorities(eligible);var custom=CustomThumbnailPriorities(eligible);
-            var batch=ThumbnailQueue.Next(eligible,scene,visibleAssets,custom,unavailable,failedThumbnails,search.value,targets,batchSize,assetLibrary.PreferredPreviewArchive);
+            bool officialPhase=eligible.Any(record=>!unavailable.Contains(record.Id)&&!failedThumbnails.Contains(record.Id)&&assetLibrary.ShouldTryOfficialPreview(record));
+            var selectable=officialPhase?eligible.Where(assetLibrary.ShouldTryOfficialPreview).ToArray():eligible;
+            var scene=SceneThumbnailPriorities(selectable);var custom=CustomThumbnailPriorities(selectable);
+            var batch=ThumbnailQueue.Next(selectable,scene,visibleAssets,custom,unavailable,failedThumbnails,search.value,targets,batchSize,assetLibrary.PreferredPreviewArchive);
             // Render already exported visible models before waiting for any further archive decompression.
             bool scenePending=scene.Any(r=>!unavailable.Contains(r.Id)&&!failedThumbnails.Contains(r.Id));
             var cached=scenePending?Array.Empty<GameAssetRecord>():visibleAssets.Where(r=>r.Supports(targetSet)&&!unavailable.Contains(r.Id)&&!failedThumbnails.Contains(r.Id)&&assetLibrary.CachedModel(r)!=null).Take(batchSize).ToArray();
@@ -377,8 +379,11 @@ namespace ReMap.Standalone
                             float generationStarted=Time.realtimeSinceStartup;
                             GameObject model=null;Texture2D thumbnail=null;
                             try {
+                                if(result.Deferred.Contains(next.Id))continue;
                                 if(!result.Paths.TryGetValue(next.Id,out var cast))throw new IOException(result.Errors.TryGetValue(next.Id,out var error)?error:L.T("#EXPORT_MISSING"));
                                 await SharedTextureCache.Normalize(assetLibrary.ModelDirectory(next),SharedTextureCache.PreviewMaximumSize);
+                                var albedos=SharedTextureCache.InspectAlbedos(cast);
+                                if(albedos.NeedsFallback)await assetLibrary.TryRepairOfficialTexturesAsync(next,cast,albedos,targets);
                                 if(this==null||backgroundStopped||generation!=assetLibrary.CacheRoot)return;
                                 if(thumbnailPaused)continue;
                                 world.models.Prepare(next.Id,cast);model=world.models.Create(next.Id,false);RememberPlacementEntry(next,model);thumbnail=ModelThumbnail.Render(model);

@@ -22,6 +22,8 @@ namespace ReMap.Standalone
         public string targetGame = GameTargets.R5Reloaded;
         public string r5ReloadedGameDirectory = "", r5ReloadedPlatformDirectory = "";
         public string r5FlowstateGameDirectory = "", r5FlowstatePlatformDirectory = "";
+        public string officialApexGameDirectory = "";
+        public bool officialTextureFallback = true;
         // Map references are editor-only overlays and are deliberately kept out of map documents.
         public bool showMainBsp;
         [NonSerialized] public bool showMprtModels;
@@ -310,6 +312,7 @@ namespace ReMap.Standalone
                 Settings.r5ReloadedPlatformDirectory = FindPlatformDirectory(Settings.r5ReloadedGameDirectory);
             if (string.IsNullOrWhiteSpace(Settings.r5FlowstatePlatformDirectory))
                 Settings.r5FlowstatePlatformDirectory = FindPlatformDirectory(Settings.r5FlowstateGameDirectory);
+            DetectOfficialApex(roots);
             ResolveOfficialRsx(roots);
         }
 
@@ -533,6 +536,13 @@ namespace ReMap.Standalone
             foreach (string file in Directory.EnumerateFiles(PakDirectory).Where(p => p.EndsWith(".rpak", StringComparison.OrdinalIgnoreCase) || p.EndsWith(".starpak", StringComparison.OrdinalIgnoreCase)).OrderBy(p => p, StringComparer.Ordinal))
             { var info = new FileInfo(file); signature.Append('|').Append(info.Name).Append(':').Append(info.Length).Append(':').Append(info.LastWriteTimeUtc.Ticks); }
             var tool = new FileInfo(Settings.rsxExecutable); signature.Append('|').Append(tool.Length).Append(':').Append(tool.LastWriteTimeUtc.Ticks);
+            if (OfficialTextureFallbackAvailable)
+            {
+                string officialPaks = FindPakDirectory(Settings.officialApexGameDirectory);
+                var officialCommon = new FileInfo(Path.Combine(officialPaks, "common.rpak"));
+                signature.Append("|official:").Append(Path.GetFullPath(Settings.officialApexGameDirectory))
+                    .Append(':').Append(officialCommon.Length).Append(':').Append(officialCommon.LastWriteTimeUtc.Ticks);
+            }
             using (var hash = SHA256.Create()) return BitConverter.ToString(hash.ComputeHash(Encoding.UTF8.GetBytes(signature.ToString()))).Replace("-", "").Substring(0, 24).ToLowerInvariant();
         }
         public async Task IndexAsync(string[] targets, IProgress<string> progress,

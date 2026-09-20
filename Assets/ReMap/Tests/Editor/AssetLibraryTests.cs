@@ -332,6 +332,23 @@ namespace ReMap.Standalone.Tests
             }
             finally { if (Directory.Exists(root)) Directory.Delete(root, true); }
         }
+        [Test] public void OfficialApexRequiresProtectedLauncherAndDx12ExecutableTogether()
+        {
+            string root = Path.Combine(Path.GetTempPath(), "ReMapOfficialApexSignature-" + Guid.NewGuid().ToString("N"));
+            try
+            {
+                CreateInstallation(root, "common.rpak", false);
+                File.WriteAllText(Path.Combine(root, "r5apex_dx12.exe"), "test");
+                Assert.That(RsxAssetLibrary.IsOfficialApexInstallation(root), Is.False);
+
+                File.WriteAllText(Path.Combine(root, "start_protected_game.exe"), "test");
+                Assert.That(RsxAssetLibrary.IsOfficialApexInstallation(root), Is.True);
+
+                File.WriteAllText(Path.Combine(root, "r5apex_ds.exe"), "test");
+                Assert.That(RsxAssetLibrary.IsOfficialApexInstallation(root), Is.False);
+            }
+            finally { if (Directory.Exists(root)) Directory.Delete(root, true); }
+        }
         private static void CreateInstallation(string game, string signatureRpak, bool dedicatedServer)
         {
             string paks = Path.Combine(game, "paks", "Win64");

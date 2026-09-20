@@ -64,6 +64,11 @@ namespace ReMap.Standalone
         private AssetBatchResult ExtractContinuousBatch(GameAssetRecord[] entries,string[] targets,AssetBatchResult result)
         {
             shutdown.Token.ThrowIfCancellationRequested();
+            // The catalog and exported map identity stay tied to the modded source, but current
+            // Apex archives are preferred for editor previews when the exact GUID still exists.
+            bool officialAttempted=TryExtractOfficialPreviews(entries,targets,result);
+            entries=entries.Where(entry=>!result.Paths.ContainsKey(entry.Id)).ToArray();
+            if(entries.Length==0||officialAttempted)return result;
             string archive=OriginArchive(entries[0],targets);
             string[] archives=PreviewArchivePlan(targets,archive);
             try

@@ -60,10 +60,15 @@ namespace ReMap.Standalone
             var r5rGame = AddFolderPicker(r5rPaths, L.T("#R5RELOADED_FOLDER"), assetLibrary.Settings.r5ReloadedGameDirectory, () => "");
             var r5fPaths = new Foldout { text = "R5Flowstate", value = currentTarget == GameTargets.R5Flowstate }; r5fPaths.AddToClassList("game-paths-foldout"); scroll.Add(r5fPaths);
             var r5fGame = AddFolderPicker(r5fPaths, L.T("#R5FLOWSTATE_FOLDER"), assetLibrary.Settings.r5FlowstateGameDirectory, () => "");
+            var officialPaths = new Foldout { text = "Apex Legends", value = false }; officialPaths.AddToClassList("game-paths-foldout"); scroll.Add(officialPaths);
+            var officialApex = AddFolderPicker(officialPaths, L.T("#OFFICIAL_APEX_FOLDER"), assetLibrary.Settings.officialApexGameDirectory, () => "");
+            var officialFallback = new Toggle(L.T("#OFFICIAL_TEXTURE_FALLBACK")) { value = assetLibrary.Settings.officialTextureFallback, tooltip = L.T("#OFFICIAL_TEXTURE_FALLBACK_HELP") };
+            officialPaths.Add(officialFallback); officialPaths.Add(Label(L.T("#OFFICIAL_TEXTURE_FALLBACK_HELP"), "note"));
             scroll.Add(Label(L.T("#REMAP_DETECTS_PAKS_WIN64_AVAILABLE"), "note"));
             Action applyGameSources = () => {
                 string selectedTarget = snapshot?.gameTarget ?? assetLibrary.TargetGame;
                 assetLibrary.ConfigureProfiles(selectedTarget, r5rGame.value, "", r5fGame.value, "");
+                assetLibrary.ConfigureOfficialTextureFallback(officialApex.value, officialFallback.value);
                 CancelPlacement(); previewEntry = null; lastPreviewRequest = null;
                 world.models.ForgetPrepared();
                 foreach (var id in snapshot.objects.Where(o => o.assetId.StartsWith("apex:", StringComparison.Ordinal)).Select(o => o.assetId).Distinct()) world.Reload(id);

@@ -20,8 +20,15 @@ namespace ReMap.Standalone
             public int maximumSize;
             public List<Entry> entries = new List<Entry>();
         }
+        public sealed class AlbedoInspection
+        {
+            public readonly HashSet<ulong> materialHashes = new HashSet<ulong>();
+            public int missing, suspicious;
+            public bool NeedsFallback => materialHashes.Count > 0;
+        }
         private sealed class Resident { public Texture2D texture; public int references; }
         private static readonly Dictionary<string, Resident> resident = new Dictionary<string, Resident>(StringComparer.OrdinalIgnoreCase);
+        private static readonly Dictionary<string, bool> suspiciousPngs = new Dictionary<string, bool>(StringComparer.OrdinalIgnoreCase);
         public static int ResidentCount => resident.Count;
         public static string RootFor(string modelRoot)
         {
@@ -211,6 +218,95 @@ namespace ReMap.Standalone
             }
             return null;
         }
+        public static AlbedoInspection InspectAlbedos(string castPath)
+        {
+            var result=new AlbedoInspection();
+            foreach(var material in CastReader.Read(castPath).SelectMany(root=>root.Descendants(CastReader.Material)).GroupBy(node=>node.Hash).Select(group=>group.First()))
+            {
+                string path=ResolveAlbedo(castPath,material);
+                if(path==null)
+                {
+                    result.missing++;
+                    if(material.Hash!=0)result.materialHashes.Add(material.Hash);
+                    continue;
+                }
+                if(!suspiciousPngs.TryGetValue(path,out bool suspicious))
+                    suspiciousPngs[path]=suspicious=LooksLikeRandomCorruption(path);
+                if(suspicious)
+                {
+                    result.suspicious++;
+                    if(material.Hash!=0)result.materialHashes.Add(material.Hash);
+                }
+            }
+            return result;
+        }
+        private static bool LooksLikeRandomCorruption(string path)
+        {
+            byte[] bytes=File.ReadAllBytes(path);ValidatePng(bytes);Texture2D texture=null;
+            try
+            {
+                texture=new Texture2D(2,2,TextureFormat.RGBA32,false);
+                if(!ImageConversion.LoadImage(texture,bytes,false))return false;
+                return LooksLikeRandomCorruption(texture.GetPixels32(),texture.width,texture.height,bytes.Length);
+            }
+            finally{DestroyTexture(texture);}
+        }
+        public static bool LooksLikeRandomCorruption(Color32[] pixels,int width,int height,int encodedLength)
+        {
+            if(pixels==null||width<32||height<32||pixels.Length<width*height)return false;
+            int stride=Math.Max(1,Math.Max(width,height)/256),count=0,high=0;
+            double sx=0,sy=0,sxx=0,syy=0,sxy=0,difference=0;
+            for(int y=0;y<height;y+=stride)for(int x=0;x+stride<width;x+=stride)
+            {
+                Color32 a=pixels[y*width+x],b=pixels[y*width+x+stride];
+                double la=(a.r*54+a.g*183+a.b*19)/256.0,lb=(b.r*54+b.g*183+b.b*19)/256.0;
+                double d=(Math.Abs(a.r-b.r)+Math.Abs(a.g-b.g)+Math.Abs(a.b-b.b))/(3.0*255.0);
+                sx+=la;sy+=lb;sxx+=la*la;syy+=lb*lb;sxy+=la*lb;difference+=d;if(d>.35)high++;count++;
+            }
+            if(count<128)return false;
+            double covariance=count*sxy-sx*sy,varianceX=count*sxx-sx*sx,varianceY=count*syy-sy*sy;
+            double correlation=varianceX>0&&varianceY>0?covariance/Math.Sqrt(varianceX*varianceY):1;
+            double encodedRatio=encodedLength/(double)(width*height*4);
+            return correlation<.08&&difference/count>.27&&high/(double)count>.20&&encodedRatio>.45;
+        }
+        public static int ReplaceAlbedosFromOfficial(string modelRoot,string legacyCast,string officialCast,string officialRoot,IEnumerable<ulong> requested)
+        {
+            var wanted=new HashSet<ulong>(requested??Array.Empty<ulong>());if(wanted.Count==0)return 0;
+            modelRoot=Path.GetFullPath(modelRoot);officialRoot=Path.GetFullPath(officialRoot);
+            string manifestPath=Path.Combine(modelRoot,"textures.manifest.json"),shared=RootFor(modelRoot);Directory.CreateDirectory(shared);
+            var manifest=File.Exists(manifestPath)?JsonUtility.FromJson<Manifest>(File.ReadAllText(manifestPath)):new Manifest();
+            manifest=manifest??new Manifest();manifest.entries=manifest.entries??new List<Entry>();
+            var legacy=CastReader.Read(legacyCast).SelectMany(root=>root.Descendants(CastReader.Material)).Where(node=>wanted.Contains(node.Hash)).GroupBy(node=>node.Hash).ToDictionary(group=>group.Key,group=>group.First());
+            var official=CastReader.Read(officialCast).SelectMany(root=>root.Descendants(CastReader.Material)).Where(node=>wanted.Contains(node.Hash)).GroupBy(node=>node.Hash).ToDictionary(group=>group.Key,group=>group.First());
+            int replaced=0;
+            foreach(var pair in legacy)
+            {
+                if(pair.Key==0||!official.TryGetValue(pair.Key,out var officialMaterial))continue;
+                string officialPng=null;
+                foreach(string relative in CastAlbedo.Candidates(officialMaterial,CastAlbedo.ModelName(officialCast)))
+                {
+                    string candidate=Path.GetFullPath(Path.Combine(Path.GetDirectoryName(officialCast),relative.Replace('/',Path.DirectorySeparatorChar)));
+                    if(candidate.StartsWith(officialRoot+Path.DirectorySeparatorChar,StringComparison.OrdinalIgnoreCase)&&File.Exists(candidate)){officialPng=candidate;break;}
+                }
+                if(officialPng==null)continue;
+                string source=null;
+                foreach(string relative in CastAlbedo.Candidates(pair.Value,CastAlbedo.ModelName(legacyCast)))
+                {
+                    string candidate=Path.GetFullPath(Path.Combine(Path.GetDirectoryName(legacyCast),relative.Replace('/',Path.DirectorySeparatorChar)));
+                    if(!candidate.StartsWith(modelRoot+Path.DirectorySeparatorChar,StringComparison.OrdinalIgnoreCase))continue;
+                    string key=Path.GetRelativePath(modelRoot,candidate).Replace('\\','/');
+                    if(source==null)source=key;
+                    if(manifest.entries.Any(entry=>entry!=null&&string.Equals(entry.source,key,StringComparison.OrdinalIgnoreCase))){source=key;break;}
+                }
+                if(source==null)continue;
+                string hash=Store(shared,NormalizePng(File.ReadAllBytes(officialPng),PreviewMaximumSize));
+                manifest.entries.RemoveAll(entry=>entry!=null&&string.Equals(entry.source,source,StringComparison.OrdinalIgnoreCase));
+                manifest.entries.Add(new Entry{source=source,hash=hash});replaced++;
+            }
+            if(replaced>0){manifest.maximumSize=PreviewMaximumSize;SaveManifest(manifestPath,manifest);}
+            return replaced;
+        }
+
         public static Texture2D Acquire(string path)
         {
             if (!resident.TryGetValue(path, out var item))

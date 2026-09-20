@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.IO;
@@ -151,6 +151,18 @@ namespace ReMap.Standalone.Tests
                 try{model.Dispose();}
                 finally{LogAssert.ignoreFailingMessages=ignored;}
             }
+        }
+        [Test] public void RandomDecoderNoiseTriggersOfficialFallbackSignal()
+        {
+            const int width=128,height=128;var pixels=new Color32[width*height];var random=new System.Random(9137);
+            for(int i=0;i<pixels.Length;i++)pixels[i]=new Color32((byte)random.Next(256),(byte)random.Next(256),(byte)random.Next(256),255);
+            Assert.That(SharedTextureCache.LooksLikeRandomCorruption(pixels,width,height,width*height*3),Is.True);
+        }
+        [Test] public void SmoothColorTextureDoesNotTriggerOfficialFallbackSignal()
+        {
+            const int width=128,height=128;var pixels=new Color32[width*height];
+            for(int y=0;y<height;y++)for(int x=0;x<width;x++)pixels[y*width+x]=new Color32((byte)(x*255/(width-1)),(byte)(y*255/(height-1)),96,255);
+            Assert.That(SharedTextureCache.LooksLikeRandomCorruption(pixels,width,height,width*height),Is.False);
         }
     }
 }
