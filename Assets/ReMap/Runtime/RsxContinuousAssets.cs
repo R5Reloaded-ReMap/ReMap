@@ -44,6 +44,7 @@ namespace ReMap.Standalone
             previewSession?.Dispose();
             previewSession=null;
         }
+        internal void CancelActivePreviewOperation() => previewSession?.Abort();
         private string[] PreviewArchivePlan(string[] targets,string requiredArchive)
         {
             if(previewArchivePlan!=null)
@@ -58,20 +59,21 @@ namespace ReMap.Standalone
             previewArchivePlan=Common.Concat(selectedMaps.Where(pendingOrigins.Contains)).Concat(new[]{requiredArchive}).Distinct(StringComparer.OrdinalIgnoreCase).Select(name=>Path.Combine(PakDirectory,name)).Where(File.Exists).ToArray();
             return previewArchivePlan;
         }
-        // Called with the existing library semaphore held. Do not cancel a loaded session for a page change.
-        // Finish the current model, commit its cache, then honor cancellation before the next request.
-        private string ExtractContinuous(GameAssetRecord entry,string[] targets)
+        // Called with the existing library semaphore held. Automatic work normally reuses the loaded
+        // session; an explicit foreground request may abort it so it never waits behind a bulk export.
+        private string ExtractContinuous(GameAssetRecord entry,string[] targets,CancellationToken cancellation)
         {
-            var result=ExtractContinuousBatch(new[]{entry},targets,new AssetBatchResult());
+            var result=ExtractContinuousBatch(new[]{entry},targets,new AssetBatchResult(),cancellation);
             if(result.Paths.TryGetValue(entry.Id,out string path))return path;
             throw new IOException(result.Errors.TryGetValue(entry.Id,out string error)?error:L.T("#EXPORT_MISSING"));
         }
-        private AssetBatchResult ExtractContinuousBatch(GameAssetRecord[] entries,string[] targets,AssetBatchResult result)
+        private AssetBatchResult ExtractContinuousBatch(GameAssetRecord[] entries,string[] targets,AssetBatchResult result,CancellationToken cancellation)
         {
-            shutdown.Token.ThrowIfCancellationRequested();
+            shutdown.Token.ThrowIfCancellationRequested();cancellation.ThrowIfCancellationRequested();
             // The catalog and exported map identity stay tied to the modded source, but current
             // Apex archives are preferred for editor previews when the exact GUID still exists.
-            bool officialAttempted=TryExtractOfficialPreviews(entries,targets,result);
+            bool officialAttempted=TryExtractOfficialPreviews(entries,targets,result,cancellation);
+            cancellation.ThrowIfCancellationRequested();
             entries=entries.Where(entry=>!result.Paths.ContainsKey(entry.Id)).ToArray();
             if(entries.Length==0||officialAttempted)return result;
             result.TargetAttempts.UnionWith(entries.Select(entry=>entry.Id));
@@ -89,34 +91,38 @@ namespace ReMap.Standalone
                     {
                         CommitContinuousExports(entries,previewSession.ExportMany(entries.Select(e=>e.guid).ToArray()),archive,result);
                         var missing=entries.Where(entry=>!result.Paths.ContainsKey(entry.Id)).ToArray();
-                        if(missing.Length>0)RetryContinuousIndividually(missing,archives,archive,result,false,false);
+                        if(missing.Length>0)RetryContinuousIndividually(missing,archives,archive,result,false,false,cancellation);
                     }
                     catch(Exception ex)when(ex is IOException||ex is TimeoutException)
                     {
+                        cancellation.ThrowIfCancellationRequested();
                         // Isolate the model that terminates RSX so the rest of the batch keeps its materials.
                         // Splitting the failed batch avoids restarting once per model in the common case.
                         ResetPreviewSession();
-                        RetryContinuousTexturedPartitions(entries,archives,archive,result);
+                        RetryContinuousTexturedPartitions(entries,archives,archive,result,cancellation);
                     }
                 }
                 else foreach(var entry in entries)
                 {
                     try {CommitContinuousExports(new[]{entry},previewSession.Export(entry.guid),archive,result);}
                     catch(Exception ex)when(GeometryPreviewsSupported&&(ex is IOException||ex is TimeoutException))
-                    {RetryContinuousGeometry(new[]{entry},archives,archive,result);continue;}
-                    if(GeometryPreviewsSupported&&!result.Paths.ContainsKey(entry.Id))RetryContinuousGeometry(new[]{entry},archives,archive,result);
+                    {cancellation.ThrowIfCancellationRequested();RetryContinuousGeometry(new[]{entry},archives,archive,result,cancellation);continue;}
+                    if(GeometryPreviewsSupported&&!result.Paths.ContainsKey(entry.Id))RetryContinuousGeometry(new[]{entry},archives,archive,result,cancellation);
                 }
                 return result;
             }
+            catch(Exception ex)when((ex is IOException||ex is TimeoutException)&&cancellation.IsCancellationRequested)
+            {ResetPreviewSession();cancellation.ThrowIfCancellationRequested();throw;}
             catch(TimeoutException){ResetPreviewSession();throw;}
         }
-        private void RetryContinuousTexturedPartitions(GameAssetRecord[] entries,string[] archives,string archive,AssetBatchResult result)
+        private void RetryContinuousTexturedPartitions(GameAssetRecord[] entries,string[] archives,string archive,AssetBatchResult result,CancellationToken cancellation)
         {
+            cancellation.ThrowIfCancellationRequested();
             entries=entries.Where(entry=>!result.Paths.ContainsKey(entry.Id)).ToArray();
             if(entries.Length==0)return;
             if(entries.Length==1)
             {
-                RetryContinuousIndividually(entries,archives,archive,result,false,false);
+                RetryContinuousIndividually(entries,archives,archive,result,false,false,cancellation);
                 return;
             }
             try
@@ -126,22 +132,24 @@ namespace ReMap.Standalone
                 SetTargetExtractionActivity(AssetExtractionOperation.ExportingModels,archive,entries.Length);
                 CommitContinuousExports(entries,previewSession.ExportMany(entries.Select(entry=>entry.guid).ToArray()),archive,result);
                 var missing=entries.Where(entry=>!result.Paths.ContainsKey(entry.Id)).ToArray();
-                if(missing.Length>0)RetryContinuousTexturedSplit(missing,archives,archive,result);
+                if(missing.Length>0)RetryContinuousTexturedSplit(missing,archives,archive,result,cancellation);
             }
             catch(Exception ex)when(ex is IOException||ex is TimeoutException)
             {
+                cancellation.ThrowIfCancellationRequested();
                 ResetPreviewSession();
-                RetryContinuousTexturedSplit(entries,archives,archive,result);
+                RetryContinuousTexturedSplit(entries,archives,archive,result,cancellation);
             }
         }
-        private void RetryContinuousTexturedSplit(GameAssetRecord[] entries,string[] archives,string archive,AssetBatchResult result)
+        private void RetryContinuousTexturedSplit(GameAssetRecord[] entries,string[] archives,string archive,AssetBatchResult result,CancellationToken cancellation)
         {
             int middle=(entries.Length+1)/2;
-            RetryContinuousTexturedPartitions(entries.Take(middle).ToArray(),archives,archive,result);
-            RetryContinuousTexturedPartitions(entries.Skip(middle).ToArray(),archives,archive,result);
+            RetryContinuousTexturedPartitions(entries.Take(middle).ToArray(),archives,archive,result,cancellation);
+            RetryContinuousTexturedPartitions(entries.Skip(middle).ToArray(),archives,archive,result,cancellation);
         }
-        private void RetryContinuousGeometry(GameAssetRecord[] entries,string[] archives,string archive,AssetBatchResult result)
+        private void RetryContinuousGeometry(GameAssetRecord[] entries,string[] archives,string archive,AssetBatchResult result,CancellationToken cancellation)
         {
+            cancellation.ThrowIfCancellationRequested();
             ResetPreviewSession();
             try
             {
@@ -152,24 +160,25 @@ namespace ReMap.Standalone
                 {
                     try {CommitContinuousExports(entries,previewSession.ExportMany(entries.Select(e=>e.guid).ToArray(),true),archive,result,true);}
                     catch(Exception ex)when(ex is IOException||ex is TimeoutException)
-                    {RetryContinuousIndividually(entries,archives,archive,result,true,true);return;}
+                    {cancellation.ThrowIfCancellationRequested();RetryContinuousIndividually(entries,archives,archive,result,true,true,cancellation);return;}
                     var missing=entries.Where(entry=>!result.Paths.ContainsKey(entry.Id)).ToArray();
-                    if(missing.Length>0)RetryContinuousIndividually(missing,archives,archive,result,false,true);
+                    if(missing.Length>0)RetryContinuousIndividually(missing,archives,archive,result,false,true,cancellation);
                 }
                 else CommitContinuousExports(entries,previewSession.Export(entries[0].guid,true),archive,result,true);
             }
             catch(Exception ex)when(ex is IOException||ex is TimeoutException)
             {
+                cancellation.ThrowIfCancellationRequested();
                 foreach(var entry in entries)if(!result.Paths.ContainsKey(entry.Id))result.Errors[entry.Id]=ex.Message;
                 ResetPreviewSession();
             }
         }
-        private void RetryContinuousIndividually(GameAssetRecord[] entries,string[] archives,string archive,AssetBatchResult result,bool resetFirst,bool geometryOnly)
+        private void RetryContinuousIndividually(GameAssetRecord[] entries,string[] archives,string archive,AssetBatchResult result,bool resetFirst,bool geometryOnly,CancellationToken cancellation)
         {
             if(resetFirst)ResetPreviewSession();
             foreach(var entry in entries)
             {
-                shutdown.Token.ThrowIfCancellationRequested();
+                shutdown.Token.ThrowIfCancellationRequested();cancellation.ThrowIfCancellationRequested();
                 if(result.Paths.ContainsKey(entry.Id))continue;
                 try
                 {
@@ -178,12 +187,13 @@ namespace ReMap.Standalone
                     previewSession.Load(archives,archive);
                     SetTargetExtractionActivity(AssetExtractionOperation.ExportingModels,archive,1);
                     CommitContinuousExports(new[]{entry},previewSession.Export(entry.guid,geometryOnly),archive,result,geometryOnly);
-                    if(!geometryOnly&&GeometryPreviewsSupported&&!result.Paths.ContainsKey(entry.Id))RetryContinuousGeometry(new[]{entry},archives,archive,result);
+                    if(!geometryOnly&&GeometryPreviewsSupported&&!result.Paths.ContainsKey(entry.Id))RetryContinuousGeometry(new[]{entry},archives,archive,result,cancellation);
                 }
                 catch(Exception ex)when(ex is IOException||ex is TimeoutException)
                 {
+                    cancellation.ThrowIfCancellationRequested();
                     ResetPreviewSession();
-                    if(!geometryOnly&&GeometryPreviewsSupported)RetryContinuousGeometry(new[]{entry},archives,archive,result);
+                    if(!geometryOnly&&GeometryPreviewsSupported)RetryContinuousGeometry(new[]{entry},archives,archive,result,cancellation);
                     else result.Errors[entry.Id]=ex.Message;
                 }
             }

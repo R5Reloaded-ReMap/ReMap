@@ -299,8 +299,10 @@ namespace ReMap.Standalone
             return failedOfficialArchivePlans.Contains(primary) ? null : plan;
         }
 
-        private bool TryExtractOfficialPreviews(GameAssetRecord[] entries, string[] targets, AssetBatchResult result)
+        private bool TryExtractOfficialPreviews(GameAssetRecord[] entries, string[] targets, AssetBatchResult result,
+            CancellationToken cancellation)
         {
+            cancellation.ThrowIfCancellationRequested();
             if (entries == null || entries.Length == 0 || !OfficialTextureFallbackAvailable ||
                 SessionExecutable == null || entries.Any(entry => !ShouldTryOfficialPreview(entry))) return false;
             string officialPaks = FindPakDirectory(Settings.officialApexGameDirectory);
@@ -335,6 +337,10 @@ namespace ReMap.Standalone
             }
             catch (Exception exception) when (exception is IOException || exception is TimeoutException)
             {
+                if (cancellation.IsCancellationRequested)
+                {
+                    ResetPreviewSession(); cancellation.ThrowIfCancellationRequested();
+                }
                 Debug.LogWarning("REMAP_OFFICIAL_PREVIEW_FALLBACK: " + exception.Message);
                 foreach (var entry in entries) officialPreviewMisses.Add(entry.Id);
                 if (exception is TimeoutException || previewSession == null || !previewSession.Alive)
@@ -343,6 +349,7 @@ namespace ReMap.Standalone
                     ResetPreviewSession();
                 }
             }
+            cancellation.ThrowIfCancellationRequested();
             foreach (var entry in entries)
                 if (!result.Paths.ContainsKey(entry.Id)) result.Deferred.Add(entry.Id);
             return true;

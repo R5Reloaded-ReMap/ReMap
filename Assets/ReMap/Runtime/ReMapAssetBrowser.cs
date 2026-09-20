@@ -257,6 +257,8 @@ namespace ReMap.Standalone
         }
         private async Task PreviewGameAsset(GameAssetRecord record,bool forceRefresh=false)
         {
+            bool needsExtraction=forceRefresh||assetLibrary.CachedModel(record)==null;
+            if(needsExtraction)InterruptBackgroundFor(record,true);
             if (assetBusy||indexRequested) { queuedPreview = record; InterruptBackgroundFor(record); previewText.text=L.T("#PRIORITY_LOADING")+record.Name; return; }
             lastPreviewRequest = record; string previewGeneration=assetLibrary.CacheRoot;
             CommitInspectorEdit(); SetAssetBusy(true); SetStatus(L.F("#EXTRACTING_ARG0_EDITING_REMAINS_AVAILABLE", record.Name)); previewEntry = null; placeAssetButton.SetEnabled(false); CancelPlacement();

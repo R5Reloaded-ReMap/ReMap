@@ -27,7 +27,8 @@ namespace ReMap.Standalone {
         private async Task<CatalogEntry> PrepareDropEntryCore(GameAssetRecord record) {
             if(!record.Supports(Targets))throw new InvalidOperationException(L.T("#MODEL_MISSING_LOADED_ARCHIVES"));
             var ready=ReadyPlacementEntry(record);if(ready!=null)return ready;
-            string generation=assetLibrary.CacheRoot;pendingAssetDrops++;InterruptBackgroundFor(record);
+            string generation=assetLibrary.CacheRoot;pendingAssetDrops++;
+            InterruptBackgroundFor(record,assetLibrary.CachedModel(record)==null);
             bool ownsBusy=false;
             try {
                 // A cached model can be prepared while an unrelated RSX batch is still running.

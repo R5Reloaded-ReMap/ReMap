@@ -42,7 +42,7 @@ namespace ReMap.Standalone
                     string origin=OriginArchive(pending[0],targets);
                     if(pending.Any(e=>OriginArchive(e,targets)!=origin)||pending.Select(e=>e.Name).Distinct(StringComparer.OrdinalIgnoreCase).Count()!=pending.Length)throw new ArgumentException(L.T("#BATCH_SHARE_ARCHIVE_HAVE_DISTINCT"));
                     linked.Token.ThrowIfCancellationRequested();
-                    return await Task.Run(()=>ExtractContinuousBatch(pending,targets,result),shutdown.Token);
+                    return await Task.Run(()=>ExtractContinuousBatch(pending,targets,result,linked.Token),linked.Token);
                 }
                 string archive=OriginArchive(pending[0],targets);
                 if(pending.Any(e=>OriginArchive(e,targets)!=archive)||pending.Select(e=>e.Name).Distinct(StringComparer.OrdinalIgnoreCase).Count()!=pending.Length)throw new ArgumentException(L.T("#BATCH_SHARE_ARCHIVE_HAVE_DISTINCT"));

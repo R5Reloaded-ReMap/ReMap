@@ -16,8 +16,13 @@ namespace ReMap.Standalone
         private int thumbnailIdleRevision;
         private string visibleThumbnailPage;
         private int visibleThumbnailRevision;
-        private void InterruptBackgroundFor(GameAssetRecord requested=null) {
-            if(thumbnailExport!=null&&(requested==null||!extractingThumbnails.Contains(requested.Id)))thumbnailExport.Cancel();
+        private void InterruptBackgroundFor(GameAssetRecord requested=null,bool force=false) {
+            if(thumbnailExport==null||(!force&&requested!=null&&extractingThumbnails.Contains(requested.Id)))return;
+            thumbnailExport.Cancel();
+            // Explicit foreground requests must not sit behind a 64-model automatic export.
+            // Killing only the embedded background session makes its cancellation observable;
+            // the foreground request immediately starts a fresh/reusable session afterward.
+            assetLibrary?.CancelActivePreviewOperation();
         }
         private GameAssetRecord[] AutomaticThumbnailRecords(ISet<string> targets) {
             // Category exclusions only trim speculative background work. Models already used by
@@ -492,7 +497,6 @@ namespace ReMap.Standalone
             var eligibleIds=new HashSet<string>(eligible.Select(record=>record.Id),StringComparer.OrdinalIgnoreCase);
             foreach(string id in stagedThumbnails.Keys.Where(id=>!eligibleIds.Contains(id)).ToArray())stagedThumbnails.Remove(id);
             if(stagedThumbnails.Count==0)return;
-            SetAssetBusy(true);
             var reloadScene=new HashSet<string>(StringComparer.OrdinalIgnoreCase);
             try {
                 // Export every model first. Only then inspect the complete texture set, so the
@@ -519,24 +523,38 @@ namespace ReMap.Standalone
                     activeThumbnailRepairs=batch.Length;
                     UpdateThumbnailProgress(eligible,L.F("#EXTRACTING_ARG0_MODELS",batch.Length));
                     float repairStarted=Time.realtimeSinceStartup;
+                    var repairCancellation=new CancellationTokenSource();
+                    thumbnailExport=repairCancellation;
                     var repairTask=assetLibrary.TryRepairOfficialTexturesBatchAsync(batch.Select(work=>
-                        new OfficialTextureRepairRequest{Entry=work.record,LegacyCast=work.cast,Inspection=work.inspection}),targets);
+                        new OfficialTextureRepairRequest{Entry=work.record,LegacyCast=work.cast,Inspection=work.inspection}),
+                        targets,repairCancellation.Token);
                     var repairProgress=thumbnailProgress.schedule.Execute(()=> {
                         if(!repairTask.IsCompleted)UpdateThumbnailProgress(eligible,
                             L.F("#ARG0_S_READING_ARG1_MODELS",(int)(Time.realtimeSinceStartup-repairStarted),batch.Length));
                     }).Every(1000);
+                    bool repairWasCancelled=false;
                     try {
                         await repairTask;
+                    }
+                    catch(OperationCanceledException)when(repairCancellation.IsCancellationRequested) {
+                        repairWasCancelled=true;
                     }
                     catch(Exception ex)when(ex is IOException||ex is TimeoutException||ex is InvalidDataException) {
                         Debug.LogWarning("REMAP_THUMBNAIL_REPAIR_BATCH: "+ex.Message);
                     }
                     finally {
+                        repairWasCancelled|=repairCancellation.IsCancellationRequested;
                         repairProgress.Pause();
-                        foreach(var work in batch) {work.repairAttempted=true;thumbnailRepairsCompleted.Add(work.record.Id);extractingThumbnails.Remove(work.record.Id);}
+                        if(ReferenceEquals(thumbnailExport,repairCancellation))thumbnailExport=null;
+                        repairCancellation.Dispose();
+                        foreach(var work in batch) {
+                            if(!repairWasCancelled){work.repairAttempted=true;thumbnailRepairsCompleted.Add(work.record.Id);}
+                            extractingThumbnails.Remove(work.record.Id);
+                        }
                         activeThumbnailRepairs=0;
                         if(this!=null&&!backgroundStopped)UpdateThumbnailProgress(eligible);
                     }
+                    if(repairWasCancelled)return;
                 }
                 thumbnailRendering=true;
                 var renderQueue=stagedThumbnails.Values.ToArray();
@@ -562,7 +580,7 @@ namespace ReMap.Standalone
                 if(reloadScene.Count>0){foreach(string id in reloadScene)world.Reload(id);Refresh();}
             }
             finally {
-                thumbnailCheckingTextures=false;thumbnailRendering=false;activeThumbnailRepairs=0;SetAssetBusy(false);RefreshCatalog();UpdateThumbnailDashboard(eligible);
+                thumbnailCheckingTextures=false;thumbnailRendering=false;activeThumbnailRepairs=0;RefreshCatalog();UpdateThumbnailDashboard(eligible);
             }
         }
         private async Task PrepareThumbnails()
@@ -607,7 +625,7 @@ namespace ReMap.Standalone
                         }
                         current=StartThumbnailExtraction(nextBatch,targets,eligible);
                     }
-                    var batch=current.batch;SetAssetBusy(true);
+                    var batch=current.batch;
                     try {
                         AssetBatchResult result=await FinishThumbnailExtraction(current);
                         if(this==null||backgroundStopped||generation!=assetLibrary.CacheRoot)return;
@@ -640,7 +658,7 @@ namespace ReMap.Standalone
                     }catch(OperationCanceledException) { Debug.Log("REMAP_THUMBNAIL_PREEMPTED"); /* Requeued without failure. */ }
                     catch(Exception ex){if(this!=null&&!backgroundStopped)foreach(var entry in batch)if(!readyThumbnails.Contains(entry.Id))ThumbnailFailure(entry,ex);}
                     finally {
-                        if(this!=null&&!backgroundStopped){foreach(var entry in batch)extractingThumbnails.Remove(entry.Id);SetAssetBusy(false);RefreshCatalog();if(!indexRequested&&queuedPreview!=null){var next=queuedPreview;queuedPreview=null;_=PreviewGameAsset(next);}}
+                        if(this!=null&&!backgroundStopped){foreach(var entry in batch)extractingThumbnails.Remove(entry.Id);RefreshCatalog();}
                     }
                     if(continuous)await Task.Yield();else await Task.Delay(150);
                 }

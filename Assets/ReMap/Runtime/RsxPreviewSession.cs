@@ -126,6 +126,12 @@ namespace ReMap.Standalone
             if(guids.Length==1)return Export(guids[0],geometryOnly);
             return guids.Length<=8?ExportBatch(guids,geometryOnly):ExportBulk(guids,geometryOnly);
         }
+        internal void Abort()
+        {
+            try { if(!process.HasExited)process.Kill(); }
+            catch(InvalidOperationException){}
+            catch(System.ComponentModel.Win32Exception){}
+        }
         public void Dispose()
         {
             try

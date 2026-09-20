@@ -852,12 +852,13 @@ namespace ReMap.Standalone
         {
             if (!entry.Supports(targets)) throw new InvalidOperationException(L.T("#MODEL_SELECTED_ARCHIVES"));
             if (CacheRoot == null) throw new InvalidOperationException(L.T("#INDEX_ARCHIVES_EXTRACTION"));
+            if (!forceRefresh) { var cached = CachedModel(entry); if (cached != null) return cached; }
             using var linked = CancellationTokenSource.CreateLinkedTokenSource(shutdown.Token, cancellation);
             await worker.WaitAsync(linked.Token);
             try
             {
                 if (!forceRefresh) { var cached = CachedModel(entry); if (cached != null) return cached; }
-                if(ContinuousPreviewsSupported)return await Task.Run(()=>ExtractContinuous(entry,targets),shutdown.Token);
+                if(ContinuousPreviewsSupported)return await Task.Run(()=>ExtractContinuous(entry,targets,linked.Token),linked.Token);
                 var origin = entry.origins.First(o => o.mapId == "" || targets.Contains(o.mapId));
                 string folder = ModelDirectory(entry);
                 return await Task.Run(() => {
