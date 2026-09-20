@@ -38,7 +38,7 @@ For the optimized build with developer-only tools:
 .\Tools\Build-ReMap.ps1 -BuildRsx Never -DeveloperTools
 ```
 
-Distribute the complete `Builds/Windows` directory, including `ReMap_Data`, `ReMapLiveBridge.exe`, RSX, and legal notices.
+Distribute the complete `Builds/Windows` directory, including `ReMap_Data`, `ReMapLiveBridge.exe`, RSX, ReVPK, and their legal notices.
 
 ## Game workflow
 

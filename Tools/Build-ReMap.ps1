@@ -2,6 +2,7 @@
 param(
     [string]$UnityPath,
     [string]$RsxRoot,
+    [string]$RevpkPath,
     [string]$MSBuildPath,
     [string]$Version,
 
@@ -131,6 +132,41 @@ function Find-MSBuild {
     throw "MSBuild was not found. Install Visual Studio with Desktop development with C++, or pass -MSBuildPath."
 }
 
+function Find-ReVpkBundle {
+    param(
+        [string]$RequestedPath,
+        [string]$ProjectRoot
+    )
+
+    $localBundle = Join-Path $ProjectRoot "Tools\.local\ReVPK"
+    foreach ($candidate in @($RequestedPath, $env:REMAP_REVPK_PATH, $localBundle)) {
+        $executable = Resolve-ExecutablePath -Candidate $candidate -ExecutableName "revpk.exe"
+        if ($null -eq $executable) { continue }
+
+        $executableDirectory = Split-Path -Parent $executable
+        $roots = [Collections.Generic.List[string]]::new()
+        $roots.Add($executableDirectory)
+        if ([IO.Path]::GetFileName($executableDirectory).Equals("bin", [StringComparison]::OrdinalIgnoreCase)) {
+            $roots.Add((Split-Path -Parent $executableDirectory))
+        }
+        foreach ($root in $roots) {
+            $license = Join-Path $root "license\LICENSE"
+            $notices = Join-Path $root "license\thirdpartylegalnotices.txt"
+            if ((Test-Path -LiteralPath $license -PathType Leaf) -and
+                (Test-Path -LiteralPath $notices -PathType Leaf)) {
+                return [pscustomobject]@{
+                    Executable = $executable
+                    License = [IO.Path]::GetFullPath($license)
+                    Notices = [IO.Path]::GetFullPath($notices)
+                }
+            }
+        }
+        throw "ReVPK was found at $executable, but its license/LICENSE and license/thirdpartylegalnotices.txt files are missing."
+    }
+
+    throw "ReVPK was not found. Install the local Tools\.local\ReVPK bundle, set REMAP_REVPK_PATH, or pass -RevpkPath."
+}
+
 function Assert-File {
     param(
         [string]$Path,
@@ -228,6 +264,7 @@ $rsxBatchMarker = "$rsxExecutable.remap-session-v2"
 $rsxGeometryMarker = "$rsxExecutable.remap-session-v3"
 $rsxLicense = Join-Path $resolvedRsxRoot "LICENSE"
 $rsxNotices = Join-Path $resolvedRsxRoot "thirdpartylegalnotices.txt"
+$revpkBundle = Find-ReVpkBundle -RequestedPath $RevpkPath -ProjectRoot $projectRoot
 $needsRsxBuild = -not (Test-Path -LiteralPath $rsxExecutable -PathType Leaf) -or
     -not (Test-Path -LiteralPath $rsxSessionMarker -PathType Leaf) -or
     -not (Test-Path -LiteralPath $rsxBatchMarker -PathType Leaf) -or
@@ -246,6 +283,7 @@ Write-Host "App version   : $Version"
 Write-Host "Build type    : $(if ($Development) { 'Unity development/debug' } elseif ($DeveloperTools) { 'optimized + developer tools' } else { 'optimized release' })"
 Write-Host "Unity         : $resolvedUnity"
 Write-Host "RSX source   : $resolvedRsxRoot"
+Write-Host "ReVPK        : $($revpkBundle.Executable)"
 if ($null -ne $resolvedMSBuild) {
     Write-Host "MSBuild      : $resolvedMSBuild"
 }
@@ -293,12 +331,18 @@ New-Item -ItemType Directory -Path $logDirectory -Force | Out-Null
 $unityLog = Join-Path $logDirectory $(if ($Development) { "unity-development-build.log" } else { "unity-build.log" })
 
 $previousRsxRoot = $env:REMAP_RSX_ROOT
+$previousRevpkPath = $env:REMAP_REVPK_PATH
+$previousRevpkLicense = $env:REMAP_REVPK_LICENSE
+$previousRevpkNotices = $env:REMAP_REVPK_NOTICES
 $previousBuildVersion = $env:REMAP_BUILD_VERSION
 $previousDevelopmentBuild = $env:REMAP_DEVELOPMENT_BUILD
 $previousDeveloperTools = $env:REMAP_DEVELOPER_TOOLS
 $previousBuildOutput = $env:REMAP_BUILD_OUTPUT
 try {
     $env:REMAP_RSX_ROOT = $resolvedRsxRoot
+    $env:REMAP_REVPK_PATH = $revpkBundle.Executable
+    $env:REMAP_REVPK_LICENSE = $revpkBundle.License
+    $env:REMAP_REVPK_NOTICES = $revpkBundle.Notices
     $env:REMAP_BUILD_VERSION = $Version
     $env:REMAP_DEVELOPMENT_BUILD = if ($Development) { "1" } else { "0" }
     $env:REMAP_DEVELOPER_TOOLS = if ($DeveloperTools) { "1" } else { "0" }
@@ -329,6 +373,24 @@ finally {
     }
     else {
         $env:REMAP_RSX_ROOT = $previousRsxRoot
+    }
+    if ($null -eq $previousRevpkPath) {
+        Remove-Item Env:REMAP_REVPK_PATH -ErrorAction SilentlyContinue
+    }
+    else {
+        $env:REMAP_REVPK_PATH = $previousRevpkPath
+    }
+    if ($null -eq $previousRevpkLicense) {
+        Remove-Item Env:REMAP_REVPK_LICENSE -ErrorAction SilentlyContinue
+    }
+    else {
+        $env:REMAP_REVPK_LICENSE = $previousRevpkLicense
+    }
+    if ($null -eq $previousRevpkNotices) {
+        Remove-Item Env:REMAP_REVPK_NOTICES -ErrorAction SilentlyContinue
+    }
+    else {
+        $env:REMAP_REVPK_NOTICES = $previousRevpkNotices
     }
     if ($null -eq $previousBuildVersion) {
         Remove-Item Env:REMAP_BUILD_VERSION -ErrorAction SilentlyContinue
@@ -370,7 +432,10 @@ foreach ($artifact in @(
     "rsx.exe.remap-session-v2",
     "rsx.exe.remap-session-v3",
     "RSX-LICENSE.txt",
-    "RSX-THIRD-PARTY-NOTICES.txt"
+    "RSX-THIRD-PARTY-NOTICES.txt",
+    "revpk.exe",
+    "REVPK-LICENSE.txt",
+    "REVPK-THIRD-PARTY-NOTICES.txt"
 )) {
     Assert-File -Path (Join-Path $windowsBuildRoot $artifact) -Description "Build artifact $artifact"
 }

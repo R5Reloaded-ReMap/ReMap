@@ -26,7 +26,7 @@ Beta and release-candidate tags identify testable prereleases, not every private
 
 Every distributable ZIP contains:
 
-- the complete Windows application, including the matching `rsx.exe`;
+- the complete Windows application, including the matching `rsx.exe` and a root-level `revpk.exe`;
 - the exact tracked ReMap source snapshot used for the build;
 - the exact tracked RSX source snapshot used for the build;
 - `RELEASE-MANIFEST.json` with versions, repositories, commits, optional tags, build channel, and binary SHA-256 hashes;

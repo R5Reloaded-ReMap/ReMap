@@ -109,7 +109,7 @@ namespace ReMap.Standalone
         {
             string applicationRoot = Path.GetFullPath(Path.Combine(UnityEngine.Application.dataPath, ".."));
             foreach (string game in new[] {
-                library.GameDirectory, library.Settings.r5ReloadedGameDirectory, library.Settings.r5FlowstateGameDirectory, applicationRoot })
+                applicationRoot, library.GameDirectory, library.Settings.r5ReloadedGameDirectory, library.Settings.r5FlowstateGameDirectory })
             {
                 if (string.IsNullOrWhiteSpace(game)) continue;
                 foreach (string relative in new[] { "revpk.exe", Path.Combine("bin", "revpk.exe") })

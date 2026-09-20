@@ -109,6 +109,7 @@ namespace ReMap.Standalone.Editor
                 BuildLiveBridge(outputDirectory);
                 BundleGameScripts(outputDirectory);
                 BundleOfficialRsx(outputDirectory);
+                BundleRevpk(outputDirectory);
                 Debug.Log("REMAP_BUILD_OK: " + report.summary.outputPath);
             }
             finally
@@ -166,6 +167,28 @@ namespace ReMap.Standalone.Editor
                 throw new FileNotFoundException("The bundled RSX license is missing from ThirdParty/RSX.", rsxLicense);
             File.Copy(rsxLicense, Path.Combine(outputDirectory, "RSX-LICENSE.txt"), true);
             CopyRequired(Path.Combine(rsxRoot, "thirdpartylegalnotices.txt"), Path.Combine(outputDirectory, "RSX-THIRD-PARTY-NOTICES.txt"));
+        }
+
+        private static void BundleRevpk(string outputDirectory)
+        {
+            string projectRoot = Path.GetFullPath(Path.Combine(Application.dataPath, ".."));
+            string localBundle = Path.Combine(projectRoot, "Tools", ".local", "ReVPK");
+            string executable = Environment.GetEnvironmentVariable("REMAP_REVPK_PATH");
+            string license = Environment.GetEnvironmentVariable("REMAP_REVPK_LICENSE");
+            string notices = Environment.GetEnvironmentVariable("REMAP_REVPK_NOTICES");
+            if (string.IsNullOrWhiteSpace(executable)) executable = Path.Combine(localBundle, "revpk.exe");
+            if (string.IsNullOrWhiteSpace(license)) license = Path.Combine(localBundle, "license", "LICENSE");
+            if (string.IsNullOrWhiteSpace(notices)) notices = Path.Combine(localBundle, "license", "thirdpartylegalnotices.txt");
+            if (string.IsNullOrWhiteSpace(executable) || !File.Exists(executable))
+                throw new FileNotFoundException("The ReVPK executable configured by the build script is missing.", executable);
+            if (string.IsNullOrWhiteSpace(license) || !File.Exists(license))
+                throw new FileNotFoundException("The ReVPK license configured by the build script is missing.", license);
+            if (string.IsNullOrWhiteSpace(notices) || !File.Exists(notices))
+                throw new FileNotFoundException("The ReVPK third-party notices configured by the build script are missing.", notices);
+            Directory.CreateDirectory(outputDirectory);
+            CopyIfChanged(executable, Path.Combine(outputDirectory, "revpk.exe"));
+            CopyRequired(license, Path.Combine(outputDirectory, "REVPK-LICENSE.txt"));
+            CopyRequired(notices, Path.Combine(outputDirectory, "REVPK-THIRD-PARTY-NOTICES.txt"));
         }
 
         private static void CopyIfChanged(string source, string destination)
