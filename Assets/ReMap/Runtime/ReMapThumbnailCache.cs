@@ -55,9 +55,9 @@ namespace ReMap.Standalone
         private ProgressBar thumbnailDashboardProgress;
         private Label thumbnailDashboardState, thumbnailDashboardSource, thumbnailDashboardDetail, thumbnailDashboardCompleted,
             thumbnailDashboardRemaining, thumbnailDashboardFailed, thumbnailDashboardSpeed, thumbnailDashboardEta,
-            thumbnailDashboardActive, thumbnailDashboardQueuedTitle, thumbnailDashboardQueuedLeft,
-            thumbnailDashboardQueuedRight, thumbnailDashboardPerformance;
-        private VisualElement thumbnailDashboardQueuedBody;
+            thumbnailDashboardActive, thumbnailDashboardQueuedTitle, thumbnailDashboardPerformance;
+        private VisualElement thumbnailDashboardQueuedBody, thumbnailDashboardQueuedLeft,
+            thumbnailDashboardQueuedRight;
         private Foldout thumbnailDashboardCategoryFilter;
         private VisualElement thumbnailDashboardCategoryChoices;
         private Button thumbnailPauseButton, thumbnailDashboardPauseButton;
@@ -132,13 +132,13 @@ namespace ReMap.Standalone
             var panel=new VisualElement();panel.AddToClassList("thumbnail-dashboard-queue");panel.Add(Label(title,"thumbnail-dashboard-queue-title"));
             content=Label("","thumbnail-dashboard-queue-content");panel.Add(content);return panel;
         }
-        private VisualElement ThumbnailQueueColumns(string title,out Label titleLabel,out Label left,out Label right,
+        private VisualElement ThumbnailQueueColumns(string title,out Label titleLabel,out VisualElement left,out VisualElement right,
             out VisualElement columns) {
             var panel=new VisualElement();panel.AddToClassList("thumbnail-dashboard-queue");
             titleLabel=Label(title,"thumbnail-dashboard-queue-title");panel.Add(titleLabel);
             columns=new VisualElement();columns.AddToClassList("thumbnail-dashboard-queue-columns");panel.Add(columns);
-            left=Label("","thumbnail-dashboard-queue-column");columns.Add(left);
-            right=Label("","thumbnail-dashboard-queue-column");right.AddToClassList("thumbnail-dashboard-queue-column-right");columns.Add(right);
+            left=new VisualElement();left.AddToClassList("thumbnail-dashboard-queue-column");columns.Add(left);
+            right=new VisualElement();right.AddToClassList("thumbnail-dashboard-queue-column");right.AddToClassList("thumbnail-dashboard-queue-column-right");columns.Add(right);
             return panel;
         }
         private Button ImmediateThumbnailPauseButton() {
@@ -268,12 +268,22 @@ namespace ReMap.Standalone
             // theoretical row limit first left a large visual hole in the right column.
             int queuedSplit=Mathf.CeilToInt(queued.Length/2f);
             thumbnailDashboardQueuedTitle.text=L.F("#THUMBNAIL_NEXT_MODELS_ARG0_ARG1",visibleCount,remaining);
-            thumbnailDashboardQueuedLeft.text=queued.Length==0?L.T("#THUMBNAIL_QUEUE_EMPTY"):string.Join("\n",queued.Take(queuedSplit).Select(r=>"• "+r.Name));
-            thumbnailDashboardQueuedRight.text=queued.Length<=queuedSplit?"":string.Join("\n",queued.Skip(queuedSplit).Select(r=>"• "+r.Name));
-            thumbnailDashboardQueuedLeft.tooltip=string.Join("\n",queued.Take(queuedSplit).Select(r=>r.Name));
-            thumbnailDashboardQueuedRight.tooltip=string.Join("\n",queued.Skip(queuedSplit).Select(r=>r.Name));
+            PopulateThumbnailQueueColumn(thumbnailDashboardQueuedLeft,queued.Take(queuedSplit),queued.Length==0);
+            PopulateThumbnailQueueColumn(thumbnailDashboardQueuedRight,queued.Skip(queuedSplit),false);
             thumbnailDashboardPerformance.text=L.F("#THUMBNAIL_PERFORMANCE_ARG0_ARG1",thumbnailLastExtractionSeconds.ToString("0.0"),thumbnailLastGenerationSeconds.ToString("0.0"));
             UpdateThumbnailPauseButtons();
+        }
+        private void PopulateThumbnailQueueColumn(VisualElement column,IEnumerable<GameAssetRecord> records,bool empty) {
+            if(column==null)return;
+            column.Clear();
+            if(empty) {
+                var placeholder=Label(L.T("#THUMBNAIL_QUEUE_EMPTY"),"thumbnail-dashboard-queue-row");
+                column.Add(placeholder);return;
+            }
+            foreach(var record in records) {
+                var row=Label("• "+record.Name,"thumbnail-dashboard-queue-row");
+                row.tooltip=record.modelPath;column.Add(row);
+            }
         }
         private static string FormatThumbnailDuration(float seconds) {
             if(!float.IsFinite(seconds)||seconds<0)return "—";

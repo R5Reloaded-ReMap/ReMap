@@ -432,8 +432,9 @@ Button.thumbnail-dashboard-minimize { flex-shrink: 0; height: 29px; margin-left:
 .thumbnail-dashboard-queue-title { height: 22px; flex-shrink: 0; color: rgb(174,195,218); -unity-font-style: bold; font-size: 11px; }
 .thumbnail-dashboard-queue-content { flex-grow: 1; color: rgb(194,202,213); font-size: 11px; line-height: 16px; white-space: normal; overflow: hidden; }
 .thumbnail-dashboard-queue-columns { min-height: 0; flex-grow: 1; flex-direction: row; overflow: hidden; }
-.thumbnail-dashboard-queue-column { min-width: 0; flex-grow: 1; flex-basis: 0; color: rgb(194,202,213); font-size: 10px; line-height: 16px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.thumbnail-dashboard-queue-column { min-width: 0; flex-grow: 1; flex-basis: 0; overflow: hidden; }
 .thumbnail-dashboard-queue-column-right { margin-left: 12px; }
+.thumbnail-dashboard-queue-row { height: 16px; min-height: 16px; flex-shrink: 0; color: rgb(194,202,213); font-size: 10px; line-height: 16px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .thumbnail-dashboard-performance { height: 24px; flex-shrink: 0; margin-top: 10px; color: rgb(137,154,173); -unity-text-align: middle-center; }
 .thumbnail-dashboard-actions { height: 42px; flex-shrink: 0; flex-direction: row; justify-content: center; align-items: center; }
 .thumbnail-dashboard-actions Button { min-width: 190px; height: 34px; margin: 2px 5px; }
