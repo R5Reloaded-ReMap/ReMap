@@ -64,7 +64,10 @@ namespace ReMap.Standalone
                     ? WorldView.ToVector(points[points.Length - 2].position)
                     : last - Vector3.right * 5f;
                 Vector3 position = last + (last - previous);
-                document.objects.Add(CreateCurvedZiplinePoint(ziplineId, points.Length, position));
+                var point = CreateCurvedZiplinePoint(ziplineId, points.Length, position);
+                CopyControlPointMount(points[points.Length - 1], point);
+                document.objects.Add(point);
+                SyncCurvedZiplineSupport(document, point);
             });
             Refresh();
         }
@@ -80,11 +83,16 @@ namespace ReMap.Standalone
                 if (selectedIndex < 0) return;
                 int insertionIndex = selectedIndex + 1;
                 Vector3 position = InsertedControlPointPosition(points, selectedIndex);
+                string beforeSiblingId = insertionIndex < points.Length ? points[insertionIndex].id : null;
                 for (int index = insertionIndex; index < points.Length; index++)
                     SetCurvedZiplinePointIndex(points[index], index + 1);
                 var point = CreateCurvedZiplinePoint(selected.parentId, insertionIndex, position);
-                document.objects.Add(point); createdId = point.id;
+                CopyControlPointMount(selected, point);
+                document.objects.Add(point);
+                MapHierarchy.Reorder(document, point.id, selected.parentId, beforeSiblingId);
                 NormalizeCurvedZiplinePoints(document, selected.parentId);
+                SyncCurvedZiplineSupport(document, point);
+                createdId = point.id;
             });
             if (createdId == null) return;
             selectedId = createdId; RevealHierarchy(createdId); Refresh();
@@ -100,6 +108,13 @@ namespace ReMap.Standalone
             if (selectedIndex > 0)
                 return selected + selected - WorldView.ToVector(points[selectedIndex - 1].position);
             return selected + Vector3.right * 5f;
+        }
+
+        internal static void CopyControlPointMount(MapObject source, MapObject destination)
+        {
+            if (source == null || destination == null) return;
+            destination.customProfile = source.customProfile;
+            destination.ziplineArmHeight = source.ziplineArmHeight;
         }
 
         private void RemoveCurvedZiplinePoint(string ziplineId)

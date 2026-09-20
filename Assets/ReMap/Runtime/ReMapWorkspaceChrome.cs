@@ -117,13 +117,13 @@ namespace ReMap.Standalone
             redoButton = MenuAction(menu, L.T("#REDO") + "    Ctrl+Y", () => ApplyHistory(true), session.CanRedo);
             MenuSeparator(menu);
             MenuAction(menu,L.T("#COPY_E21F93")+"    Ctrl+C",()=>CopySelectionToClipboard(),selectedIds.Count>0);
-            MenuAction(menu,L.T("#CUT")+"    Ctrl+X",CutSelectionToClipboard,selectedIds.Count>0);
+            MenuAction(menu,L.T("#CUT")+"    Ctrl+X",CutSelectionToClipboard,CanDeleteSelection());
             MenuAction(menu,L.T("#PASTE")+"    Ctrl+V",PasteSelectionFromClipboard,ReadSelectionClipboard()!=null);
             MenuSeparator(menu);
             MenuAction(menu, L.T("#SELECT") + "    Ctrl+A", SelectAllObjects, snapshot?.objects.Count > 0);
             MenuAction(menu, L.T("#PLACE_DUPLICATE") + "    Ctrl+D", BeginSelectionDuplicatePlacement, selectedIds.Count > 0);
             MenuAction(menu, L.T("#GROUP_SELECTION") + "    Ctrl+G", GroupSelection, selectedIds.Count > 0);
-            MenuAction(menu, L.T("#DELETE") + "    Del", Delete, selectedIds.Count > 0);
+            MenuAction(menu, L.T("#DELETE") + "    Del", Delete, CanDeleteSelection());
             MenuSeparator(menu);
             MenuAction(menu, L.T("#SETTINGS_7A0408"), () => ShowSettings(true));
         }

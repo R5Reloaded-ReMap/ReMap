@@ -143,6 +143,7 @@ namespace ReMap.Standalone
         }
         private void CutSelectionToClipboard()
         {
+            if(!CanDeleteSelection()){SetStatus(L.T("#CUSTOM_COMPONENT_DELETE_WITH_PARENT"));return;}
             int count=SelectionRoots().Count;if(!CopySelectionToClipboard(false))return;Delete();SetStatus(L.F("#CUT_ARG0_ITEM_S",count));
         }
         private SelectionClipboardData ReadSelectionClipboard()
@@ -319,7 +320,7 @@ namespace ReMap.Standalone
             rotationInput=new VectorInput(L.T("#APEX_ANGLES"),Vector3.zero,2,()=>rotateSnap); scaleInput=new VectorInput(L.T("#SCALE_FACTOR_7490FA"),Vector3.one,3);
             foreach(var field in new[]{positionInput,rotationInput,scaleInput}) { inspector.Add(field); field.Changed+=PreviewInspectorEdit; field.RegisterCallback<PointerUpEvent>(_=>root.schedule.Execute(()=>Run(CommitInspectorEdit)),TrickleDown.TrickleDown); field.RegisterCallback<FocusOutEvent>(_=>root.schedule.Execute(()=>Run(CommitInspectorEdit))); }
             var actions=new VisualElement();actions.AddToClassList("inspector-actions");inspector.Add(actions);
-            actions.Add(Button(L.T("#GROUP_CTRL_G_EAE33B"),GroupSelection));actions.Add(Button("⧉  "+L.T("#DUPLICATE"),Duplicate));actions.Add(Button("⌫  "+L.T("#DELETE"),Delete));
+            actions.Add(Button(L.T("#GROUP_CTRL_G_EAE33B"),GroupSelection));actions.Add(Button("⧉  "+L.T("#DUPLICATE"),Duplicate));var delete=Button("⌫  "+L.T("#DELETE"),Delete);delete.SetEnabled(CanDeleteSelection());actions.Add(delete);
             var row=new VisualElement();row.style.flexDirection=FlexDirection.Row;inspector.Add(row);row.Add(Button(L.T("#ENABLE"),()=>SetSelectionEnabled(true)));row.Add(Button(L.T("#DISABLE"),()=>SetSelectionEnabled(false)));
         }
         private void ValidateMultipleInspector() {

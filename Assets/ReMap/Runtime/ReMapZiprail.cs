@@ -76,8 +76,10 @@ namespace ReMap.Standalone
                 Vector3 previous = points.Length > 1
                     ? WorldView.ToVector(points[points.Length - 2].position)
                     : last - Vector3.right * 5f;
-                document.objects.Add(CreateZiprailPoint(ziprailId, points.Length,
-                    last + (last - previous)));
+                var point = CreateZiprailPoint(ziprailId, points.Length,
+                    last + (last - previous));
+                CopyControlPointMount(points[points.Length - 1], point);
+                document.objects.Add(point);
                 SyncAllZiprailComponents(document, ziprailId);
             });
             Refresh();
@@ -94,12 +96,16 @@ namespace ReMap.Standalone
                 if (selectedIndex < 0) return;
                 int insertionIndex = selectedIndex + 1;
                 Vector3 position = InsertedControlPointPosition(points, selectedIndex);
+                string beforeSiblingId = insertionIndex < points.Length ? points[insertionIndex].id : null;
                 for (int index = insertionIndex; index < points.Length; index++)
                     SetZiprailPointIndex(points[index], index + 1);
                 var point = CreateZiprailPoint(selected.parentId, insertionIndex, position);
-                document.objects.Add(point); createdId = point.id;
+                CopyControlPointMount(selected, point);
+                document.objects.Add(point);
+                MapHierarchy.Reorder(document, point.id, selected.parentId, beforeSiblingId);
                 NormalizeZiprailPoints(document, selected.parentId);
                 SyncAllZiprailComponents(document, selected.parentId);
+                createdId = point.id;
             });
             if (createdId == null) return;
             selectedId = createdId; RevealHierarchy(createdId); Refresh();

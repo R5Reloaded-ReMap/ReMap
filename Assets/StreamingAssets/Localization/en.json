@@ -2311,6 +2311,10 @@
       "text": "Delete selection"
     },
     {
+      "key": "#CUSTOM_COMPONENT_DELETE_WITH_PARENT",
+      "text": "This component is part of its custom object and can only be removed with the parent object."
+    },
+    {
       "key": "#GENERATED_GAME_CODE",
       "text": "Generated game code"
     },

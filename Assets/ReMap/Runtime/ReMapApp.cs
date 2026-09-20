@@ -1067,6 +1067,7 @@ namespace ReMap.Standalone
             var actions = new VisualElement(); actions.AddToClassList("inspector-actions"); inspector.Add(actions);
             var duplicate = Button("⧉  " + L.T("#DUPLICATE"), Duplicate); duplicate.tooltip = L.T("#DUPLICATE_SELECTION"); actions.Add(duplicate);
             var delete = Button("⌫  " + L.T("#DELETE"), Delete); delete.tooltip = L.T("#DELETE_SELECTION"); actions.Add(delete);
+            delete.SetEnabled(CanDeleteSelection());
 
         }
 
@@ -1200,6 +1201,12 @@ namespace ReMap.Standalone
 
             CommitInspectorEdit(); if (selectedId == null) return;
 
+            if (!CanDeleteSelection())
+            {
+                SetStatus(L.T("#CUSTOM_COMPONENT_DELETE_WITH_PARENT"));
+                return;
+            }
+
             var ids = MapSelection.Branches(snapshot, SelectionRoots());
             foreach (var zipline in snapshot.objects.Where(item => item.customType == "curved-zipline" && !ids.Contains(item.id)))
             {
@@ -1224,6 +1231,17 @@ namespace ReMap.Standalone
             });
             selectedId = null; Refresh();
 
+        }
+
+        internal static bool IsIntegralCustomComponent(MapObject item) =>
+            item != null && !string.IsNullOrEmpty(item.customType) &&
+            item.customType.EndsWith("-component", StringComparison.Ordinal);
+
+        private bool CanDeleteSelection()
+        {
+            var roots = SelectionRoots();
+            return roots.Count > 0 && roots.All(id =>
+                !IsIntegralCustomComponent(snapshot.objects.Find(item => item.id == id)));
         }
 
         private void NewMap()

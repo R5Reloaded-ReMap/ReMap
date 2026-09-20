@@ -64,6 +64,47 @@ namespace ReMap.Standalone.Tests
             Assert.That(position, Is.EqualTo(last + last - previous));
         }
 
+        [Test] public void InsertedPointCopiesTheSelectedMountStyle()
+        {
+            var source = new MapObject { customProfile = "wall", ziplineArmHeight = 384f };
+            var destination = new MapObject { customProfile = "none", ziplineArmHeight = 40f };
+            var copy = typeof(ReMapApp).GetMethod("CopyControlPointMount",
+                BindingFlags.Static | BindingFlags.NonPublic | BindingFlags.Public);
+            copy.Invoke(null, new object[] { source, destination });
+            Assert.That(destination.customProfile, Is.EqualTo("wall"));
+            Assert.That(destination.ziplineArmHeight, Is.EqualTo(384f));
+        }
+
+        [TestCase("animated-camera-component", true)]
+        [TestCase("curved-zipline-component", true)]
+        [TestCase("door-component", true)]
+        [TestCase("jump-tower-component", true)]
+        [TestCase("speed-boost-component", true)]
+        [TestCase("zipline-component", true)]
+        [TestCase("ziprail-component", true)]
+        [TestCase("animated-camera", false)]
+        [TestCase("jump-tower", false)]
+        [TestCase("ziprail-point", false)]
+        [TestCase("curved-zipline-point", false)]
+        [TestCase("", false)]
+        public void OnlyIntegralCustomComponentsAreDeletionProtected(string customType, bool expected)
+        {
+            var check = typeof(ReMapApp).GetMethod("IsIntegralCustomComponent",
+                BindingFlags.Static | BindingFlags.NonPublic | BindingFlags.Public);
+            Assert.That((bool)check.Invoke(null, new object[] { new MapObject { customType = customType } }),
+                Is.EqualTo(expected));
+        }
+
+        [Test] public void RegularPropRemainsDeletableWhenNested()
+        {
+            var check = typeof(ReMapApp).GetMethod("IsIntegralCustomComponent",
+                BindingFlags.Static | BindingFlags.NonPublic | BindingFlags.Public);
+            var prop = new MapObject {
+                assetId = "apex:fixture", customType = "", parentId = "another-prop"
+            };
+            Assert.That((bool)check.Invoke(null, new object[] { prop }), Is.False);
+        }
+
         [TestCase("CreateDefaultCurvedZiplineObjects", "curved-zipline-point", "curved-zipline")]
         [TestCase("CreateDefaultZiprailObjects", "ziprail-point", "ziprail")]
         public void HierarchyReorderRenumbersControlPoints(string factory, string pointType,

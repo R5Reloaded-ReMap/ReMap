@@ -363,7 +363,7 @@ namespace ReMap.Standalone
                 Action(item.disabled ? L.T("#ENABLE") : L.T("#DISABLE"), () => SetSelectionEnabled(item.disabled));
                 Action(L.T("#DUPLICATE"), () => { selectedId = id; Duplicate(); RevealHierarchy(selectedId); RefreshObjects(); FocusHierarchy(selectedId); });
                 Action(L.T("#CONSTRUCTION_TOOLS"), () => ShowConstructionTools(true));
-                Action(L.T("#DELETE"), () => { selectedId = id; Delete(); });
+                if (CanDeleteSelection()) Action(L.T("#DELETE"), () => { selectedId = id; Delete(); });
             }
             hierarchyMenu.style.left = Mathf.Clamp(point.x, 0, Math.Max(0, root.worldBound.width - 240));
             hierarchyMenu.style.top = Mathf.Clamp(point.y, 0, Math.Max(0, root.worldBound.height - (item?.isGroup == true ? 380 : 250)));

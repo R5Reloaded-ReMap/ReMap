@@ -2311,6 +2311,10 @@
       "text": "Supprimer la sélection"
     },
     {
+      "key": "#CUSTOM_COMPONENT_DELETE_WITH_PARENT",
+      "text": "Ce composant fait partie de son objet personnalisé et ne peut être supprimé qu’avec l’objet parent."
+    },
+    {
       "key": "#GENERATED_GAME_CODE",
       "text": "Code jeu généré"
     },
