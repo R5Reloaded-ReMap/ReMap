@@ -211,6 +211,7 @@ namespace ReMap.Standalone
         public int CollisionModelCount => loaded.Values.Count(r => r.CollisionReady);
         public bool IsPrepared(string id) => prepared.ContainsKey(id);
         public void ForgetPrepared() { prepared.Clear(); }
+        public void ForgetPrepared(string id) { if (!string.IsNullOrEmpty(id)) prepared.Remove(id); }
         public WorkspaceModelProvider(Shader shader) { this.shader = shader; demo = new DemoModelProvider(shader); }
         public void Prepare(string id, string path) { prepared[id] = path; }
         public GameObject Create(string id) => Create(id, true);

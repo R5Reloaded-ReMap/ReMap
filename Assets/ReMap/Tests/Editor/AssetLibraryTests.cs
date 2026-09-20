@@ -239,6 +239,38 @@ namespace ReMap.Standalone.Tests
             Assert.That(RsxAssetLibrary.CacheEntryMatchesGeneration(
                 new[] { "model.cast", "common.rpak" }, active), Is.True);
         }
+        [Test] public void DeletingSelectedCachedModelsKeepsOtherModelsAndReferencedTextures()
+        {
+            string cache = Path.Combine(Path.GetTempPath(), "ReMapCacheCleanup-" + Guid.NewGuid().ToString("N"));
+            string removedHash = new string('a', 64), retainedHash = new string('b', 64);
+            try
+            {
+                string removed = Path.Combine(cache, "Models", "aaa");
+                string retained = Path.Combine(cache, "Models", "bbb");
+                string textures = Path.Combine(cache, "Textures");
+                Directory.CreateDirectory(removed); Directory.CreateDirectory(retained); Directory.CreateDirectory(textures);
+                File.WriteAllText(Path.Combine(removed, "complete.txt"), "removed.cast");
+                File.WriteAllText(Path.Combine(retained, "complete.txt"), "retained.cast");
+                File.WriteAllText(Path.Combine(removed, "textures.manifest.json"),
+                    "{\"maximumSize\":512,\"entries\":[{\"source\":\"removed.png\",\"hash\":\"" + removedHash + "\"}]}");
+                File.WriteAllText(Path.Combine(retained, "textures.manifest.json"),
+                    "{\"maximumSize\":512,\"entries\":[{\"source\":\"retained.png\",\"hash\":\"" + retainedHash + "\"}]}");
+                File.WriteAllText(Path.Combine(textures, removedHash + ".png"), "unused");
+                File.WriteAllText(Path.Combine(textures, retainedHash + ".png"), "used");
+
+                var result = RsxAssetLibrary.DeleteCachedModelDirectories(cache,
+                    new[] { new GameAssetRecord { guid = "aaa", modelPath = "mdl/fx/spark.rmdl" } });
+
+                Assert.That(result.removedModels, Is.EqualTo(1));
+                Assert.That(result.removedTextures, Is.EqualTo(1));
+                Assert.That(result.failedModels, Is.Zero);
+                Assert.That(Directory.Exists(removed), Is.False);
+                Assert.That(Directory.Exists(retained), Is.True);
+                Assert.That(File.Exists(Path.Combine(textures, removedHash + ".png")), Is.False);
+                Assert.That(File.Exists(Path.Combine(textures, retainedHash + ".png")), Is.True);
+            }
+            finally { if (Directory.Exists(cache)) Directory.Delete(cache, true); }
+        }
         [Test] public void TargetsAndAvailabilitySurviveCopyHistoryAndJson()
         {
             var session = new MapSession();

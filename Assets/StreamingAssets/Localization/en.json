@@ -1928,7 +1928,7 @@
     },
     {
       "key": "#THUMBNAIL_CATEGORY_FILTER_HELP",
-      "text": "Checked mdl/<folder> categories are skipped during automatic thumbnail preparation to save disk space. Their models remain searchable and can still be extracted on demand. Existing cache files are preserved."
+      "text": "Checked mdl/<folder> categories are prepared automatically. Unchecked models remain searchable and can still be extracted on demand. Existing cache files are preserved until you choose to delete them."
     },
     {
       "key": "#THUMBNAIL_CATEGORY_FILTER_SUMMARY_ARG0_ARG1",
@@ -1941,6 +1941,42 @@
     {
       "key": "#EXPORT_ALL_CATEGORIES",
       "text": "Prepare every category"
+    },
+    {
+      "key": "#DELETE_UNCHECKED_CACHED_MODELS",
+      "text": "Delete cached models from unchecked categories"
+    },
+    {
+      "key": "#DELETE_UNCHECKED_CACHED_MODELS_HELP",
+      "text": "Only cached models from unchecked categories are removed. Models used by the open map are kept. Shared textures are deleted only when no retained model uses them. Removed models remain searchable and will be extracted again on demand."
+    },
+    {
+      "key": "#NO_UNCHECKED_CACHED_MODELS",
+      "text": "There are no cached models to delete from the unchecked categories."
+    },
+    {
+      "key": "#DELETE_UNCHECKED_CACHED_MODELS_CONFIRM_ARG0_ARG1",
+      "text": "Delete {0} cached models from {1} unchecked categories?"
+    },
+    {
+      "key": "#DELETE_ARG0_CACHED_MODELS",
+      "text": "Delete {0} models"
+    },
+    {
+      "key": "#DELETING_UNCHECKED_CACHED_MODELS",
+      "text": "Deleting cached models from unchecked categories..."
+    },
+    {
+      "key": "#UNCHECKED_CACHE_DELETED_ARG0_ARG1",
+      "text": "Deleted {0} cached models and {1} unused shared textures."
+    },
+    {
+      "key": "#UNCHECKED_CACHE_DELETED_WITH_FAILURES_ARG0_ARG1_ARG2",
+      "text": "Deleted {0} cached models and {1} unused shared textures. {2} model folders could not be removed."
+    },
+    {
+      "key": "#CACHE_CLEANUP_CANCELLED",
+      "text": "Cache cleanup cancelled."
     },
     {
       "key": "#INDEX_FIRST_TO_LIST_MODEL_CATEGORIES",

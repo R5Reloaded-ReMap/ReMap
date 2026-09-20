@@ -63,6 +63,11 @@ namespace ReMap.Standalone
         { Source = source; Operation = operation; Archive = archive ?? ""; ModelCount = modelCount; }
     }
 
+    public sealed class CachedModelCleanupResult
+    {
+        public int removedModels, removedTextures, failedModels;
+    }
+
     // The worker owns RSX calls. Unity only receives metadata or one exported model at a time.
     public sealed partial class RsxAssetLibrary : IDisposable
     {
@@ -131,6 +136,50 @@ namespace ReMap.Standalone
             Settings.thumbnailCategoryFilterVersion = 2;
             skippedThumbnailCategories = null;
             SaveSettings();
+        }
+        public async Task<CachedModelCleanupResult> DeleteCachedModelsAsync(IEnumerable<GameAssetRecord> records,
+            CancellationToken cancellation = default)
+        {
+            var selected = (records ?? Enumerable.Empty<GameAssetRecord>()).Where(record => record != null)
+                .GroupBy(record => record.guid, StringComparer.OrdinalIgnoreCase).Select(group => group.First()).ToArray();
+            if (CacheRoot == null || selected.Length == 0) return new CachedModelCleanupResult();
+            using var linked = CancellationTokenSource.CreateLinkedTokenSource(shutdown.Token, cancellation);
+            await worker.WaitAsync(linked.Token);
+            try
+            {
+                string cacheRoot = CacheRoot;
+                return await Task.Run(() => DeleteCachedModelDirectories(cacheRoot, selected, linked.Token), linked.Token);
+            }
+            finally { worker.Release(); }
+        }
+        public static CachedModelCleanupResult DeleteCachedModelDirectories(string cacheRoot,
+            IEnumerable<GameAssetRecord> records, CancellationToken cancellation = default)
+        {
+            var result = new CachedModelCleanupResult();
+            if (string.IsNullOrWhiteSpace(cacheRoot)) return result;
+            string root = Path.GetFullPath(cacheRoot);
+            string models = Path.GetFullPath(Path.Combine(root, "Models"));
+            string boundary = models.TrimEnd(Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar) +
+                Path.DirectorySeparatorChar;
+            foreach (var record in (records ?? Enumerable.Empty<GameAssetRecord>()).Where(record => record != null)
+                .GroupBy(record => record.guid, StringComparer.OrdinalIgnoreCase).Select(group => group.First()))
+            {
+                cancellation.ThrowIfCancellationRequested();
+                string guid = (record.guid ?? "").Trim();
+                if (guid.Length == 0 || guid.Any(character => !Uri.IsHexDigit(character)))
+                { result.failedModels++; continue; }
+                string folder;
+                try { folder = Path.GetFullPath(Path.Combine(models, guid)); }
+                catch (Exception exception) when (exception is ArgumentException || exception is NotSupportedException ||
+                    exception is PathTooLongException) { result.failedModels++; continue; }
+                if (!folder.StartsWith(boundary, StringComparison.OrdinalIgnoreCase) || !Directory.Exists(folder)) continue;
+                try { Directory.Delete(folder, true); result.removedModels++; }
+                catch (IOException) { result.failedModels++; }
+                catch (UnauthorizedAccessException) { result.failedModels++; }
+            }
+            cancellation.ThrowIfCancellationRequested();
+            result.removedTextures = SharedTextureCache.CollectGarbage(root);
+            return result;
         }
         private void SetExtractionActivity(AssetExtractionSource source, AssetExtractionOperation operation,
             string archive, int modelCount)

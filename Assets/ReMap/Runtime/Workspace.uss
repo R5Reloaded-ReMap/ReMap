@@ -549,6 +549,10 @@ Button.script-property-remove-button:hover { background-color: rgb(91,65,66); }
 .thumbnail-category-choices Toggle { width: 33.333%; min-width: 185px; height: 25px; flex-shrink: 0; margin: 0; padding-right: 9px; }
 .thumbnail-category-choices .unity-toggle__input { flex-direction: row-reverse; justify-content: flex-end; }
 .thumbnail-category-choices .unity-base-field__label { min-width: 0; flex-grow: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.thumbnail-category-actions { flex-shrink: 0; margin-top: 4px; }
+.thumbnail-category-actions .inspector-actions { margin-top: 0; }
+.thumbnail-category-actions Button.thumbnail-category-cleanup { width: 100%; margin: 3px 2px 1px 2px; color: rgb(232,190,177); border-color: rgb(112,67,61); background-color: rgb(68,47,45); }
+.thumbnail-category-actions Button.thumbnail-category-cleanup:hover { background-color: rgb(86,55,51); border-color: rgb(151,82,72); }
 .map-choice-column { width: 50%; min-width: 0; padding: 1px 9px 1px 3px; }
 .map-choice-column-right { padding-left: 12px; padding-right: 3px; border-left-width: 1px; border-left-color: rgb(70,74,82); }
 .map-choice-column Toggle { width: 100%; min-width: 0; flex-direction: row; align-items: center; padding: 0; }

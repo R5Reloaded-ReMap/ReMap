@@ -1928,7 +1928,7 @@
     },
     {
       "key": "#THUMBNAIL_CATEGORY_FILTER_HELP",
-      "text": "Les catégories mdl/<dossier> cochées sont ignorées pendant la préparation automatique des miniatures afin d’économiser de l’espace disque. Leurs modèles restent recherchables et peuvent toujours être extraits à la demande. Les fichiers déjà en cache sont conservés."
+      "text": "Les catégories mdl/<dossier> cochées sont préparées automatiquement. Les modèles décochés restent recherchables et peuvent toujours être extraits à la demande. Les fichiers déjà en cache sont conservés jusqu’à leur suppression manuelle."
     },
     {
       "key": "#THUMBNAIL_CATEGORY_FILTER_SUMMARY_ARG0_ARG1",
@@ -1941,6 +1941,42 @@
     {
       "key": "#EXPORT_ALL_CATEGORIES",
       "text": "Préparer toutes les catégories"
+    },
+    {
+      "key": "#DELETE_UNCHECKED_CACHED_MODELS",
+      "text": "Supprimer du cache les modèles décochés"
+    },
+    {
+      "key": "#DELETE_UNCHECKED_CACHED_MODELS_HELP",
+      "text": "Seuls les modèles en cache des catégories décochées seront supprimés. Les modèles utilisés par la carte ouverte sont conservés. Une texture partagée n’est effacée que si aucun modèle conservé ne l’utilise. Les modèles supprimés restent recherchables et seront réextraits à la demande."
+    },
+    {
+      "key": "#NO_UNCHECKED_CACHED_MODELS",
+      "text": "Aucun modèle en cache ne peut être supprimé dans les catégories décochées."
+    },
+    {
+      "key": "#DELETE_UNCHECKED_CACHED_MODELS_CONFIRM_ARG0_ARG1",
+      "text": "Supprimer {0} modèles en cache appartenant à {1} catégories décochées ?"
+    },
+    {
+      "key": "#DELETE_ARG0_CACHED_MODELS",
+      "text": "Supprimer {0} modèles"
+    },
+    {
+      "key": "#DELETING_UNCHECKED_CACHED_MODELS",
+      "text": "Suppression des modèles en cache des catégories décochées..."
+    },
+    {
+      "key": "#UNCHECKED_CACHE_DELETED_ARG0_ARG1",
+      "text": "{0} modèles en cache et {1} textures partagées inutilisées ont été supprimés."
+    },
+    {
+      "key": "#UNCHECKED_CACHE_DELETED_WITH_FAILURES_ARG0_ARG1_ARG2",
+      "text": "{0} modèles en cache et {1} textures partagées inutilisées ont été supprimés. {2} dossiers de modèles n’ont pas pu être effacés."
+    },
+    {
+      "key": "#CACHE_CLEANUP_CANCELLED",
+      "text": "Nettoyage du cache annulé."
     },
     {
       "key": "#INDEX_FIRST_TO_LIST_MODEL_CATEGORIES",

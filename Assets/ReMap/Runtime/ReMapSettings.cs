@@ -6,6 +6,8 @@ using System.IO;
 using System.Linq;
 using System.Runtime.InteropServices;
 using System.Text;
+using System.Threading;
+using System.Threading.Tasks;
 using UnityEngine;
 using UnityEngine.UIElements;
 
@@ -20,6 +22,9 @@ namespace ReMap.Standalone
         private TextField settingsAssetFolder;
         private Label missingMapNotice;
         private VisualElement thumbnailCategoryChoices;
+        private VisualElement thumbnailCacheCleanupOverlay;
+        private Label thumbnailCacheCleanupSummary;
+        private Button thumbnailCacheCleanupConfirm;
         private sealed class ThumbnailCategoryOption
         {
             public string Name, DisplayName;
@@ -125,16 +130,7 @@ namespace ReMap.Standalone
             var thumbnailCategories = new Foldout { text = L.T("#THUMBNAIL_CATEGORY_FILTER"), value = false };
             thumbnailCategories.AddToClassList("game-paths-foldout"); scroll.Add(thumbnailCategories);
             thumbnailCategories.Add(Label(L.T("#THUMBNAIL_CATEGORY_FILTER_HELP"), "note"));
-            var categoryActions = new VisualElement(); categoryActions.AddToClassList("inspector-actions");
-            categoryActions.Add(Button(L.T("#USE_RECOMMENDED_FILTERS"), () => {
-                ApplySkippedThumbnailCategories(RsxAssetLibrary.DefaultSkippedThumbnailCategories);
-                RefreshThumbnailCategoryChoices();
-            }));
-            categoryActions.Add(Button(L.T("#EXPORT_ALL_CATEGORIES"), () => {
-                ApplySkippedThumbnailCategories(Array.Empty<string>());
-                RefreshThumbnailCategoryChoices();
-            }));
-            thumbnailCategories.Add(categoryActions);
+            thumbnailCategories.Add(ThumbnailCategoryActions());
             thumbnailCategoryChoices = new VisualElement(); thumbnailCategoryChoices.AddToClassList("thumbnail-category-choices");
             thumbnailCategories.Add(thumbnailCategoryChoices); RefreshThumbnailCategoryChoices();
             if (LiveMapEnabled)
@@ -167,6 +163,7 @@ namespace ReMap.Standalone
             var grip = ResizeHandle("settings", false); grip.AddToClassList("settings-resize-grip"); panel.Add(grip);
             ShowSettings(false);
             BuildIndexingPage();
+            BuildThumbnailCacheCleanupDialog();
         }
 
         private TextField AddFolderPicker(VisualElement parent, string label, string value, Func<string> fallback)
@@ -189,6 +186,23 @@ namespace ReMap.Standalone
             UpdateThumbnailProgress(AutomaticThumbnailRecords(targets));
             UpdateThumbnailControls(); RefreshCatalog();
             if (!thumbnailPaused && !backgroundStopped) _ = PrepareThumbnails();
+        }
+
+        private VisualElement ThumbnailCategoryActions()
+        {
+            var wrapper = new VisualElement(); wrapper.AddToClassList("thumbnail-category-actions");
+            var choices = new VisualElement(); choices.AddToClassList("inspector-actions"); wrapper.Add(choices);
+            choices.Add(Button(L.T("#USE_RECOMMENDED_FILTERS"), () => {
+                ApplySkippedThumbnailCategories(RsxAssetLibrary.DefaultSkippedThumbnailCategories);
+                RefreshThumbnailCategoryChoices();
+            }));
+            choices.Add(Button(L.T("#EXPORT_ALL_CATEGORIES"), () => {
+                ApplySkippedThumbnailCategories(Array.Empty<string>());
+                RefreshThumbnailCategoryChoices();
+            }));
+            var cleanup = Button(L.T("#DELETE_UNCHECKED_CACHED_MODELS"), () => ShowThumbnailCacheCleanupDialog(true));
+            cleanup.AddToClassList("thumbnail-category-cleanup"); wrapper.Add(cleanup);
+            return wrapper;
         }
 
         private void RefreshThumbnailCategoryChoices()
@@ -225,12 +239,12 @@ namespace ReMap.Standalone
             foreach (var category in categories)
             {
                 var toggle = new Toggle(L.F("#THUMBNAIL_CATEGORY_ARG0_ARG1", category.DisplayName, category.Count)) {
-                    value = skipped.Contains(category.Name), tooltip = "mdl/" + category.Name + "/"
+                    value = !skipped.Contains(category.Name), tooltip = "mdl/" + category.Name + "/"
                 };
                 toggle.RegisterValueChangedCallback(change => {
                     var selected = new HashSet<string>(assetLibrary.Settings.skippedThumbnailCategories ??
                         Array.Empty<string>(), StringComparer.OrdinalIgnoreCase);
-                    if (change.newValue) selected.Add(category.Name); else selected.Remove(category.Name);
+                    if (change.newValue) selected.Remove(category.Name); else selected.Add(category.Name);
                     ApplySkippedThumbnailCategories(selected);
                     root.schedule.Execute(RefreshThumbnailCategoryChoices);
                 });
@@ -247,6 +261,111 @@ namespace ReMap.Standalone
                     string.Equals(part, "r2", StringComparison.OrdinalIgnoreCase) ? "R2" :
                     string.Equals(part, "r5", StringComparison.OrdinalIgnoreCase) ? "R5" :
                     char.ToUpperInvariant(part[0]) + part.Substring(1)));
+        }
+
+        private GameAssetRecord[] UncheckedCachedModelCandidates()
+        {
+            if (assetLibrary?.CacheRoot == null) return Array.Empty<GameAssetRecord>();
+            var skipped = new HashSet<string>(assetLibrary.Settings.skippedThumbnailCategories ??
+                Array.Empty<string>(), StringComparer.OrdinalIgnoreCase);
+            var protectedIds = new HashSet<string>((snapshot?.objects ?? new List<MapObject>())
+                .Where(item => !item.isGroup && !string.IsNullOrWhiteSpace(item.assetId))
+                .Select(item => item.assetId), StringComparer.OrdinalIgnoreCase);
+            var protectedPaths = new HashSet<string>((snapshot?.objects ?? new List<MapObject>())
+                .Where(item => !item.isGroup && !string.IsNullOrWhiteSpace(item.gameModelPath))
+                .Select(item => GameAssetIndex.NormalizeModelPath(item.gameModelPath)), StringComparer.OrdinalIgnoreCase);
+            return assetLibrary.Records.Where(record => skipped.Contains(record.Category) &&
+                !protectedIds.Contains(record.Id) &&
+                !protectedPaths.Contains(GameAssetIndex.NormalizeModelPath(record.modelPath)) &&
+                Directory.Exists(assetLibrary.ModelDirectory(record)))
+                .GroupBy(record => record.guid, StringComparer.OrdinalIgnoreCase).Select(group => group.First()).ToArray();
+        }
+
+        private void BuildThumbnailCacheCleanupDialog()
+        {
+            thumbnailCacheCleanupOverlay = new VisualElement();
+            thumbnailCacheCleanupOverlay.AddToClassList("modal-overlay"); root.Add(thumbnailCacheCleanupOverlay);
+            var panel = new VisualElement(); panel.AddToClassList("assembly-save-panel"); thumbnailCacheCleanupOverlay.Add(panel);
+            var heading = DockTitle(L.T("#DELETE_UNCHECKED_CACHED_MODELS")); panel.Add(heading);
+            heading.Add(Button("×", () => ShowThumbnailCacheCleanupDialog(false), "dock-close"));
+            var content = new VisualElement(); content.AddToClassList("assembly-save-content"); panel.Add(content);
+            thumbnailCacheCleanupSummary = Label("", "map-source-warning"); content.Add(thumbnailCacheCleanupSummary);
+            content.Add(Label(L.T("#DELETE_UNCHECKED_CACHED_MODELS_HELP"), "note"));
+            var actions = new VisualElement(); actions.AddToClassList("dialog-actions"); panel.Add(actions);
+            actions.Add(Button(L.T("#CANCEL"), () => ShowThumbnailCacheCleanupDialog(false)));
+            thumbnailCacheCleanupConfirm = Button(L.T("#DELETE"), () => _ = DeleteUncheckedCachedModels(), "primary");
+            actions.Add(thumbnailCacheCleanupConfirm);
+            thumbnailCacheCleanupOverlay.style.display = DisplayStyle.None;
+            root.RegisterCallback<KeyDownEvent>(evt => {
+                if (evt.keyCode == KeyCode.Escape && ThumbnailCacheCleanupOpen)
+                { ShowThumbnailCacheCleanupDialog(false); evt.StopPropagation(); }
+            }, TrickleDown.TrickleDown);
+        }
+
+        private bool ThumbnailCacheCleanupOpen => thumbnailCacheCleanupOverlay != null &&
+            thumbnailCacheCleanupOverlay.style.display.value != DisplayStyle.None;
+
+        private void ShowThumbnailCacheCleanupDialog(bool show)
+        {
+            if (thumbnailCacheCleanupOverlay == null) return;
+            if (!show) { thumbnailCacheCleanupOverlay.style.display = DisplayStyle.None; return; }
+            var candidates = UncheckedCachedModelCandidates();
+            int cached = candidates.Length;
+            int categories = candidates.Select(record => record.Category).Distinct(StringComparer.OrdinalIgnoreCase).Count();
+            thumbnailCacheCleanupSummary.text = cached == 0 ? L.T("#NO_UNCHECKED_CACHED_MODELS") :
+                L.F("#DELETE_UNCHECKED_CACHED_MODELS_CONFIRM_ARG0_ARG1", cached, categories);
+            thumbnailCacheCleanupConfirm.text = cached == 0 ? L.T("#DELETE") :
+                L.F("#DELETE_ARG0_CACHED_MODELS", cached);
+            thumbnailCacheCleanupConfirm.SetEnabled(cached > 0);
+            thumbnailCacheCleanupOverlay.style.display = DisplayStyle.Flex;
+            thumbnailCacheCleanupOverlay.BringToFront();
+        }
+
+        private async Task DeleteUncheckedCachedModels()
+        {
+            var candidates = UncheckedCachedModelCandidates();
+            ShowThumbnailCacheCleanupDialog(false);
+            if (candidates.Length == 0) return;
+            bool wasPaused = thumbnailPaused;
+            thumbnailPaused = true; UpdateThumbnailPauseButtons();
+            using var cancellation = new CancellationTokenSource();
+            Loading(true, L.T("#DELETING_UNCHECKED_CACHED_MODELS"), cancel: cancellation.Cancel);
+            try
+            {
+                InterruptBackgroundFor();
+                while ((assetBusy || extractingThumbnails.Count > 0) && !cancellation.IsCancellationRequested)
+                    await Task.Delay(50, cancellation.Token);
+                Loading(true, L.T("#DELETING_UNCHECKED_CACHED_MODELS"));
+                var result = await assetLibrary.DeleteCachedModelsAsync(candidates, cancellation.Token);
+                var removedIds = new HashSet<string>(candidates.Where(record =>
+                    !Directory.Exists(assetLibrary.ModelDirectory(record))).Select(record => record.Id),
+                    StringComparer.OrdinalIgnoreCase);
+                foreach (string id in removedIds) { world.models.ForgetPrepared(id); preparedPlacementEntries.Remove(id); }
+                if (placing?.GameAsset != null && removedIds.Contains(placing.GameAsset.Id)) CancelPlacement();
+                if ((previewEntry != null && removedIds.Contains(previewEntry.Id)) ||
+                    (lastPreviewRequest != null && removedIds.Contains(lastPreviewRequest.Id)))
+                {
+                    previewEntry = null; lastPreviewRequest = null; placeAssetButton.SetEnabled(false);
+                    retryPreviewButton.SetEnabled(false); previewText.text = L.T("#CLICK_MODEL_LOAD_PREVIEW");
+                    previewText.tooltip = "";
+                    if (currentThumbnail != null) Destroy(currentThumbnail);
+                    currentThumbnail = null; assetPreview.image = null;
+                }
+                thumbnailStateCount = -1; ReadThumbnailState();
+                var targets = new HashSet<string>(Targets, StringComparer.OrdinalIgnoreCase);
+                UpdateThumbnailProgress(AutomaticThumbnailRecords(targets)); UpdateThumbnailControls(); RefreshCatalog();
+                SetStatus(result.failedModels == 0
+                    ? L.F("#UNCHECKED_CACHE_DELETED_ARG0_ARG1", result.removedModels, result.removedTextures)
+                    : L.F("#UNCHECKED_CACHE_DELETED_WITH_FAILURES_ARG0_ARG1_ARG2", result.removedModels,
+                        result.removedTextures, result.failedModels));
+            }
+            catch (OperationCanceledException) { SetStatus(L.T("#CACHE_CLEANUP_CANCELLED")); }
+            catch (Exception exception) { UnityEngine.Debug.LogException(exception); SetStatus(exception.Message); }
+            finally
+            {
+                Loading(false); thumbnailPaused = wasPaused; UpdateThumbnailPauseButtons();
+                if (!thumbnailPaused && !backgroundStopped) _ = PrepareThumbnails();
+            }
         }
 
         private void BuildIndexingPage()

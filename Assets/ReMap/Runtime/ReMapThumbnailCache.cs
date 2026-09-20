@@ -107,7 +107,8 @@ namespace ReMap.Standalone
             var categoryScroll=new ScrollView(ScrollViewMode.Vertical);categoryScroll.AddToClassList("thumbnail-dashboard-category-scroll");
             thumbnailDashboardCategoryFilter.Add(categoryScroll);
             thumbnailDashboardCategoryChoices=new VisualElement();thumbnailDashboardCategoryChoices.AddToClassList("thumbnail-category-choices");
-            categoryScroll.Add(thumbnailDashboardCategoryChoices);RefreshThumbnailCategoryChoices();
+            categoryScroll.Add(thumbnailDashboardCategoryChoices);
+            thumbnailDashboardCategoryFilter.Add(ThumbnailCategoryActions());RefreshThumbnailCategoryChoices();
             var queues=new VisualElement();queues.AddToClassList("thumbnail-dashboard-queues");dashboard.Add(queues);
             queues.Add(ThumbnailQueuePanel(L.T("#THUMBNAIL_CURRENT_MODELS"),out thumbnailDashboardActive));
             queues.Add(ThumbnailQueueColumns(L.T("#THUMBNAIL_NEXT_MODELS"),out thumbnailDashboardQueuedTitle,
