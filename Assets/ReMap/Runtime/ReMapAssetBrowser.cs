@@ -34,7 +34,7 @@ namespace ReMap.Standalone
         private readonly Dictionary<string, string> previewFailures = new Dictionary<string, string>();
         private void BuildAssetLibrary(VisualElement library)
         {
-            assetLibrary = new RsxAssetLibrary(RsxAssetLibrary.FindLocalRoot());
+            assetLibrary = new RsxAssetLibrary(RsxAssetLibrary.FindLocalRoot(), RsxAssetLibrary.FindSettingsRoot());
             var controls = new VisualElement(); controls.AddToClassList("library-controls"); library.Add(controls);
             var bar = controls; bar.style.flexDirection = FlexDirection.Row;
             bar.Add(Button(L.T("#LOADED_ARCHIVES"), () => ShowIndexing(true)));

@@ -35,6 +35,7 @@ namespace ReMap.Standalone
         public string rsxExecutable = "", rsxBackend = "official";
         public string rconAddress = "[::ffff:127.0.0.1]:37015", rconKey = "", rconPassword = "";
         public string assetExportDirectory = "";
+        public bool assetExportDirectoryConfirmed;
         // Retained so older local JSON settings remain readable. Preview textures now always use 512 px.
         public int textureLimit = SharedTextureCache.PreviewMaximumSize;
         public string[] lastTargetMaps = Array.Empty<string>();
@@ -49,6 +50,8 @@ namespace ReMap.Standalone
         private static readonly object InstallationDetectionLock = new object();
         private static Dictionary<string, string> cachedDriveInstallations;
         public readonly string LocalRoot;
+        public readonly string SettingsRoot;
+        private readonly string settingsPath;
         public AssetSourceSettings Settings { get; private set; }
         public bool FirstLaunch { get; private set; }
         public List<MapSource> Maps { get; private set; } = new List<MapSource>();
@@ -85,16 +88,27 @@ namespace ReMap.Standalone
             ? new[] { "common_early.rpak", "common.rpak", "common_mp.rpak", "common_roots.rpak", "common_flowstate.rpak" }
             : new[] { "common_early.rpak", "common.rpak", "common_mp.rpak", "common_roots.rpak", "common_sdk.rpak" });
         public bool Configured => ConfiguredFor(TargetGame);
-        public RsxAssetLibrary(string root)
+        public RsxAssetLibrary(string root, string settingsRoot = null)
         {
-            LocalRoot = root;
-            string settingsPath = Path.Combine(root, "asset-source.local.json");
-            FirstLaunch = !File.Exists(settingsPath);
-            Settings = File.Exists(settingsPath) ? JsonUtility.FromJson<AssetSourceSettings>(File.ReadAllText(settingsPath)) : new AssetSourceSettings();
+            LocalRoot = Path.GetFullPath(root ?? throw new ArgumentNullException(nameof(root)));
+            SettingsRoot = Path.GetFullPath(string.IsNullOrWhiteSpace(settingsRoot) ? LocalRoot : settingsRoot);
+            settingsPath = Path.Combine(SettingsRoot, "asset-source.local.json");
+            string legacySettingsPath = Path.Combine(LocalRoot, "asset-source.local.json");
+            bool migrateLegacySettings = !File.Exists(settingsPath) &&
+                !string.Equals(settingsPath, legacySettingsPath, StringComparison.OrdinalIgnoreCase) &&
+                File.Exists(legacySettingsPath);
+            string sourceSettingsPath = File.Exists(settingsPath) ? settingsPath :
+                migrateLegacySettings ? legacySettingsPath : null;
+            Settings = sourceSettingsPath != null
+                ? JsonUtility.FromJson<AssetSourceSettings>(File.ReadAllText(sourceSettingsPath))
+                : new AssetSourceSettings();
             Settings = Settings ?? new AssetSourceSettings();
             MigrateSettings();
+            bool requiresWelcome = sourceSettingsPath == null || !Settings.assetExportDirectoryConfirmed;
             AutoDetectInstallations();
             SelectTarget(Settings.targetGame, false);
+            if (migrateLegacySettings) SaveSettings();
+            FirstLaunch = requiresWelcome;
         }
         public static string FindLocalRoot()
         {
@@ -103,6 +117,11 @@ namespace ReMap.Standalone
             for (int i = 0; directory != null && i < 4; i++, directory = directory.Parent)
                 if (File.Exists(Path.Combine(directory.FullName, "asset-source.local.json"))) return directory.FullName;
             return fallback;
+        }
+        public static string FindSettingsRoot()
+        {
+            string persistent = Application.persistentDataPath;
+            return string.IsNullOrWhiteSpace(persistent) ? FindLocalRoot() : Path.GetFullPath(persistent);
         }
         public void ConfigureProfiles(string targetGame, string r5ReloadedGame, string r5ReloadedPlatform,
             string r5FlowstateGame, string r5FlowstatePlatform)
@@ -136,11 +155,42 @@ namespace ReMap.Standalone
             Directory.CreateDirectory(resolved);
             string defaultDirectory = ResolveAssetExportDirectory(LocalRoot, "");
             Settings.assetExportDirectory = string.Equals(resolved, defaultDirectory, StringComparison.OrdinalIgnoreCase) ? "" : resolved;
+            Settings.assetExportDirectoryConfirmed = true;
             if (!string.Equals(previous, resolved, StringComparison.OrdinalIgnoreCase))
             {
                 previewSession?.Dispose(); previewSession = null; previewArchivePlan=null; Records.Clear(); CacheRoot = null;
             }
             SaveSettings();
+            FirstLaunch = false;
+        }
+        public string ImportLegacySettings(string legacyLocation)
+        {
+            if (worker.CurrentCount == 0) throw new InvalidOperationException(L.T("#WAIT_RSX_OPERATION_FINISH"));
+            string location = CleanPath(legacyLocation);
+            string source = Directory.Exists(location) ? Path.Combine(location, "asset-source.local.json") : location;
+            if (string.IsNullOrWhiteSpace(source) || !File.Exists(source))
+                throw new FileNotFoundException(L.F("#BETA1_SETTINGS_FILE_NOT_FOUND_ARG0", source), source);
+            source = Path.GetFullPath(source);
+            string legacyRoot = Path.GetDirectoryName(source);
+            AssetSourceSettings imported;
+            try { imported = JsonUtility.FromJson<AssetSourceSettings>(File.ReadAllText(source)); }
+            catch (Exception exception) when (exception is ArgumentException || exception is IOException)
+            { throw new InvalidDataException(L.T("#BETA1_SETTINGS_INVALID"), exception); }
+            if (imported == null) throw new InvalidDataException(L.T("#BETA1_SETTINGS_INVALID"));
+
+            // beta.1 stored an empty cache path for <old app folder>/AssetCache. Make it absolute
+            // before saving in the persistent beta.2 settings so a side-by-side package keeps using it.
+            imported.assetExportDirectory = ResolveAssetExportDirectory(legacyRoot, imported.assetExportDirectory);
+            imported.assetExportDirectoryConfirmed = true;
+            previewSession?.Dispose(); previewSession = null; previewArchivePlan = null;
+            Records.Clear(); Maps.Clear(); CacheRoot = null;
+            Settings = imported;
+            MigrateSettings();
+            AutoDetectInstallations();
+            SelectTarget(Settings.targetGame, false);
+            SaveSettings();
+            FirstLaunch = false;
+            return AssetExportDirectory;
         }
         public static string ResolveAssetExportDirectory(string localRoot, string directory)
         {
@@ -164,8 +214,18 @@ namespace ReMap.Standalone
         public void SaveSettings()
         {
             SyncActiveProfile();
-            File.WriteAllText(Path.Combine(LocalRoot, "asset-source.local.json"), JsonUtility.ToJson(Settings, true));
-            FirstLaunch = false;
+            Directory.CreateDirectory(SettingsRoot);
+            string temporary = settingsPath + "." + Guid.NewGuid().ToString("N") + ".tmp";
+            try
+            {
+                File.WriteAllText(temporary, JsonUtility.ToJson(Settings, true), new UTF8Encoding(false));
+                if (File.Exists(settingsPath)) File.Replace(temporary, settingsPath, null);
+                else File.Move(temporary, settingsPath);
+            }
+            finally
+            {
+                if (File.Exists(temporary)) File.Delete(temporary);
+            }
         }
 
         private void MigrateSettings()
@@ -174,6 +234,8 @@ namespace ReMap.Standalone
             Settings.textureLimit = SharedTextureCache.PreviewMaximumSize;
             Settings.rsxBackend = "official";
             Settings.flowstateCast = false;
+            if (!Settings.assetExportDirectoryConfirmed && !string.IsNullOrWhiteSpace(Settings.assetExportDirectory))
+                Settings.assetExportDirectoryConfirmed = true;
             if (!string.IsNullOrWhiteSpace(Settings.gameDirectory))
             {
                 string inferred = LooksLikeFlowstate(Settings.gameDirectory) ? GameTargets.R5Flowstate : Settings.targetGame;
