@@ -101,7 +101,6 @@ namespace ReMap.Standalone
             rsxSessionIdleStatus=Label("","library-state");
             rsxSessionIdleStatus.AddToClassList("rsx-session-status");
             rsxSessionIdleStatus.style.display=DisplayStyle.None;
-            libraryFooter.Add(rsxSessionIdleStatus);
 
             thumbnailDashboard=new VisualElement();thumbnailDashboard.AddToClassList("thumbnail-dashboard");root.Add(thumbnailDashboard);
             var dashboard=new VisualElement();dashboard.AddToClassList("thumbnail-dashboard-panel");thumbnailDashboard.Add(dashboard);
@@ -737,13 +736,11 @@ namespace ReMap.Standalone
             rsxSessionIdleStatus.text=show?L.F("#RSX_SESSION_CLOSES_IN_ARG0",remainingSeconds.Value):"";
             rsxSessionIdleStatus.tooltip=show?L.T("#RSX_SESSION_IDLE_HELP"):"";
             rsxSessionIdleStatus.style.display=show?DisplayStyle.Flex:DisplayStyle.None;
-            UpdateLibraryFooterVisibility();
         }
         private void UpdateLibraryFooterVisibility() {
             if(libraryFooter==null)return;
             bool thumbnailVisible=thumbnailStatusRow?.style.display.value==DisplayStyle.Flex;
-            bool sessionVisible=rsxSessionIdleStatus?.style.display.value==DisplayStyle.Flex;
-            libraryFooter.style.display=thumbnailVisible||sessionVisible?DisplayStyle.Flex:DisplayStyle.None;
+            libraryFooter.style.display=thumbnailVisible?DisplayStyle.Flex:DisplayStyle.None;
         }
         private void UpdateThumbnailControls() {
             if(thumbnailStatusRow==null)return;

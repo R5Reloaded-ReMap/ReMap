@@ -5461,6 +5461,18 @@
     {
       "key": "#RSX_SESSION_IDLE_HELP",
       "text": "Les RPAK chargés restent disponibles pour un autre import manuel. Le compte à rebours redémarre après chaque import."
+    },
+    {
+      "key": "#LOADING_CACHED_ARG0",
+      "text": "Chargement du modèle en cache : {0}"
+    },
+    {
+      "key": "#LOADING_CACHED_PREVIEW",
+      "text": "Chargement de l’aperçu depuis le cache local…"
+    },
+    {
+      "key": "#PREVIEW_QUEUED_ARG0",
+      "text": "Aperçu en attente : {0}"
     }
   ]
 }

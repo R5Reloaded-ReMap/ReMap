@@ -31,6 +31,8 @@ namespace ReMap.Standalone
         private CatalogEntry previewEntry;
         private Button retryPreviewButton;
         private GameAssetRecord lastPreviewRequest, queuedPreview;
+        private bool queuedPreviewForceRefresh;
+        private int previewRequestVersion;
         private readonly Dictionary<string, string> previewFailures = new Dictionary<string, string>();
         private void BuildAssetLibrary(VisualElement library)
         {
@@ -127,7 +129,7 @@ namespace ReMap.Standalone
             }
             catch (OperationCanceledException) when (cancellation.IsCancellationRequested) { throw; }
             catch (Exception ex) { if (this != null) { pageState.text = L.T("#INDEX_INCOMPLETE_UNAVAILABLE"); SetStatus(ex.Message); Debug.LogWarning(ex); } }
-            finally { if (this != null) { Loading(false); SetAssetBusy(false); if (!cancellation.IsCancellationRequested && !Environment.GetCommandLineArgs().Any(a => a.StartsWith("-remap"))) _ = PrepareThumbnails(); if (queuedPreview != null) { var next = queuedPreview; queuedPreview = null; _ = PreviewGameAsset(next); } } }
+            finally { if (this != null) { Loading(false); SetAssetBusy(false); if (!cancellation.IsCancellationRequested && !Environment.GetCommandLineArgs().Any(a => a.StartsWith("-remap"))) _ = PrepareThumbnails(); RunQueuedPreview(); } }
         }
         private void SetAssetBusy(bool value)
         {
@@ -257,42 +259,70 @@ namespace ReMap.Standalone
         }
         private async Task PreviewGameAsset(GameAssetRecord record,bool forceRefresh=false)
         {
+            if(assetBusy&&!forceRefresh&&queuedPreview==null&&lastPreviewRequest?.Id==record.Id)return;
             CancelManualPreviewSessionRelease();
-            bool needsExtraction=forceRefresh||assetLibrary.CachedModel(record)==null;
+            string cachedPath=forceRefresh?null:assetLibrary.CachedModel(record);
+            bool needsExtraction=forceRefresh||cachedPath==null;
             if(needsExtraction)InterruptBackgroundFor(record,true);
-            if (assetBusy||indexRequested) { queuedPreview = record; InterruptBackgroundFor(record); previewText.text=L.T("#PRIORITY_LOADING")+record.Name; return; }
+            int requestVersion=++previewRequestVersion;
+            if (assetBusy||indexRequested) {
+                queuedPreview=record;queuedPreviewForceRefresh=forceRefresh;lastPreviewRequest=record;
+                InterruptBackgroundFor(record);ShowPreviewLoading(record,cachedPath!=null);
+                previewText.text=ModelDetails(record)+"\n\n"+L.F("#PREVIEW_QUEUED_ARG0",record.Name);RefreshCatalog();return;
+            }
             lastPreviewRequest = record; string previewGeneration=assetLibrary.CacheRoot;
-            CommitInspectorEdit(); SetAssetBusy(true); SetStatus(L.F("#EXTRACTING_ARG0_EDITING_REMAINS_AVAILABLE", record.Name)); previewEntry = null; placeAssetButton.SetEnabled(false); CancelPlacement();
-            if (currentThumbnail != null) Destroy(currentThumbnail); currentThumbnail = null; assetPreview.image = null;
-            previewText.text = ModelDetails(record) + "\n\n" + L.T("#LOADING_PREVIEW");
+            CommitInspectorEdit(); SetAssetBusy(true); SetStatus(needsExtraction?L.F("#EXTRACTING_ARG0_EDITING_REMAINS_AVAILABLE",record.Name):L.F("#LOADING_CACHED_ARG0",record.Name)); previewEntry = null; placeAssetButton.SetEnabled(false); CancelPlacement();
+            ShowPreviewLoading(record,!needsExtraction);
             GameObject model = null;
             try
             {
-                string path = await assetLibrary.ExtractAsync(record, Targets, forceRefresh: forceRefresh);
-                if (this == null || previewGeneration!=assetLibrary.CacheRoot) return;
+                string path=cachedPath??await assetLibrary.ExtractAsync(record,Targets,forceRefresh:forceRefresh);
+                if (this == null || requestVersion!=previewRequestVersion || previewGeneration!=assetLibrary.CacheRoot) return;
                 if (!record.Supports(Targets)) throw new InvalidOperationException(L.T("#SELECTED_ARCHIVES_CHANGED_DURING_EXTRACTION"));
-                previewText.text=L.T("#PREPARING_TEXTURES")+record.Name;
-                await SharedTextureCache.Normalize(assetLibrary.ModelDirectory(record), SharedTextureCache.PreviewMaximumSize);
-                if (this == null || previewGeneration!=assetLibrary.CacheRoot) return;
-                var albedos=SharedTextureCache.InspectAlbedos(path);
-                if(albedos.NeedsFallback)
-                    await assetLibrary.TryRepairOfficialTexturesAsync(record,path,albedos,Targets,forceRefresh:forceRefresh);
-                if (this == null || previewGeneration!=assetLibrary.CacheRoot) return;
+                if(needsExtraction) {
+                    previewText.text=L.T("#PREPARING_TEXTURES")+record.Name;
+                    await SharedTextureCache.Normalize(assetLibrary.ModelDirectory(record),SharedTextureCache.PreviewMaximumSize);
+                    if(this==null||requestVersion!=previewRequestVersion||previewGeneration!=assetLibrary.CacheRoot)return;
+                    var albedos=SharedTextureCache.InspectAlbedos(path);
+                    if(albedos.NeedsFallback)
+                        await assetLibrary.TryRepairOfficialTexturesAsync(record,path,albedos,Targets,forceRefresh:forceRefresh);
+                    if(this==null||requestVersion!=previewRequestVersion||previewGeneration!=assetLibrary.CacheRoot)return;
+                }
                 world.models.Prepare(record.Id, path); model = world.models.Create(record.Id, false);
                 var bounds = model.GetComponent<MeshFilter>().sharedMesh.bounds;
-                currentThumbnail = ModelThumbnail.Render(model); assetPreview.image = currentThumbnail;
+                if(requestVersion!=previewRequestVersion)return;
+                var renderedThumbnail=ModelThumbnail.Render(model);
+                if(currentThumbnail!=null)Destroy(currentThumbnail);
+                currentThumbnail=renderedThumbnail;assetPreview.image=currentThumbnail;
                 previewFailures.Remove(record.Id); readyThumbnails.Add(record.Id); failedThumbnails.Remove(record.Id);
                 string errorMarker = Path.Combine(assetLibrary.ModelDirectory(record), "thumbnail.error.txt"); if (File.Exists(errorMarker)) File.Delete(errorMarker);
                 int missing = world.models.MissingAlbedo(record.Id); SaveThumbnailInfo(record,missing);
                 previewEntry = RememberPlacementEntry(record,model);
                 previewText.text = ModelDetails(record, missing, ApexDisplay.Position(bounds.size));
                 previewText.tooltip = record.modelPath+"\n"+world.models.AlbedoDiagnostics(record.Id);
-                File.WriteAllBytes(Path.Combine(assetLibrary.ModelDirectory(record), "thumbnail.png"), currentThumbnail.EncodeToPNG());
-                await WaitForAssetUiIdle(); if(this==null)return; CommitInspectorEdit(); world.Reload(record.Id); Refresh(); RefreshCatalog();
+                if(needsExtraction)File.WriteAllBytes(Path.Combine(assetLibrary.ModelDirectory(record),"thumbnail.png"),currentThumbnail.EncodeToPNG());
+                await WaitForAssetUiIdle(); if(this==null||requestVersion!=previewRequestVersion)return; CommitInspectorEdit(); if(needsExtraction)world.Reload(record.Id); Refresh(); RefreshCatalog();
                 SetStatus(missing > 0 ? L.F("#ARG0_ARG1_MATERIAL_S_UNRESOLVED", record.Name, missing) : L.T("#SELECTED_MODEL") + record.Name);
             }
-            catch (Exception ex) { if (this != null) { previewEntry = null; previewFailures[record.Id] = ex.Message; failedThumbnails.Add(record.Id); previewText.text = record.Name + " : " + ex.Message; previewText.tooltip = ex.ToString(); SetStatus(ex.Message); Debug.LogWarning(ex); } }
-            finally { await WaitForAssetUiIdle(); if (this != null) { Run(CommitInspectorEdit); if (model != null) world.models.Release(record.Id, model); Refresh(); SetAssetBusy(false); ScheduleManualPreviewSessionRelease(previewGeneration); if (queuedPreview != null) { var next = queuedPreview; queuedPreview = null; _ = PreviewGameAsset(next); } } }
+            catch (Exception ex) { if (this != null&&requestVersion==previewRequestVersion) { previewEntry = null; previewFailures[record.Id] = ex.Message; failedThumbnails.Add(record.Id); previewText.text = record.Name + " : " + ex.Message; previewText.tooltip = ex.ToString(); SetStatus(ex.Message); Debug.LogWarning(ex); } }
+            finally { await WaitForAssetUiIdle(); if (this != null) { Run(CommitInspectorEdit); if (model != null) world.models.Release(record.Id, model); Refresh(); SetAssetBusy(false); ScheduleManualPreviewSessionRelease(previewGeneration); RunQueuedPreview(); } }
+        }
+        private void ShowPreviewLoading(GameAssetRecord record,bool cached) {
+            if(currentThumbnail!=null)Destroy(currentThumbnail);currentThumbnail=null;assetPreview.image=null;
+            if(cached) {
+                string thumbnailPath=Path.Combine(assetLibrary.ModelDirectory(record),"thumbnail.png");
+                if(File.Exists(thumbnailPath))try {
+                    var image=new Texture2D(2,2);
+                    if(ImageConversion.LoadImage(image,File.ReadAllBytes(thumbnailPath),true)){currentThumbnail=image;assetPreview.image=image;}
+                    else Destroy(image);
+                }catch(Exception ex){Debug.LogWarning(L.T("#THUMBNAIL_CACHE")+ex.Message);}
+            }
+            previewText.text=ModelDetails(record)+"\n\n"+L.T(cached?"#LOADING_CACHED_PREVIEW":"#LOADING_PREVIEW");
+        }
+        private void RunQueuedPreview() {
+            if(queuedPreview==null||assetBusy||indexRequested)return;
+            var next=queuedPreview;bool force=queuedPreviewForceRefresh;
+            queuedPreview=null;queuedPreviewForceRefresh=false;_=PreviewGameAsset(next,force);
         }
         private async Task WaitForAssetUiIdle() {
             while(this!=null&&(draggingGizmo||libraryDragging||sceneSelectionPending||assemblyDragging||layoutResizing))await Task.Delay(50);

@@ -54,7 +54,9 @@ namespace ReMap.Standalone
             maximizeSceneButton = Button(L.T("#MAXIMIZE"), ToggleSceneMaximized, "dock-tab-action"); sceneTab.Add(maximizeSceneButton);
             sceneTab.RegisterCallback<PointerDownEvent>(e => { if (e.button == 0 && e.clickCount == 2) ToggleSceneMaximized(); });
             var libraryTitle=DockTitle(L.T("#LIBRARY"), () => SetPanelVisible("library", false));
-            if(pageState!=null)libraryTitle.Insert(Math.Max(0,libraryTitle.childCount-1),pageState);
+            int libraryStatusIndex=Math.Max(0,libraryTitle.childCount-1);
+            if(rsxSessionIdleStatus!=null)libraryTitle.Insert(libraryStatusIndex++,rsxSessionIdleStatus);
+            if(pageState!=null)libraryTitle.Insert(libraryStatusIndex,pageState);
             libraryDock.Insert(0,libraryTitle);
             librarySplitter = ResizeHandle("library", false); workspace.Insert(workspace.IndexOf(libraryDock), librarySplitter);
             sideSplitter = ResizeHandle("side", true); body.Insert(body.IndexOf(inspectorPanel), sideSplitter);

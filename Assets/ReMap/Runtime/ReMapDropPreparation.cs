@@ -49,7 +49,7 @@ namespace ReMap.Standalone {
                 if(generation!=assetLibrary.CacheRoot)throw new InvalidOperationException(L.T("#SOURCES_CHANGED_DROP_CANCELED"));
                 world.models.Prepare(record.Id,path);var model=world.models.Create(record.Id,false);
                 try{return RememberPlacementEntry(record,model);}finally{world.models.Release(record.Id,model);}
-            }finally{pendingAssetDrops--;if(this!=null){if(ownsBusy){SetAssetBusy(false);if(!indexRequested&&queuedPreview!=null){var next=queuedPreview;queuedPreview=null;_=PreviewGameAsset(next);}}if(pendingAssetDrops==0)ScheduleManualPreviewSessionRelease(generation);}}
+            }finally{pendingAssetDrops--;if(this!=null){if(ownsBusy){SetAssetBusy(false);RunQueuedPreview();}if(pendingAssetDrops==0)ScheduleManualPreviewSessionRelease(generation);}}
         }
     }
 }

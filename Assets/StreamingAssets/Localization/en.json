@@ -5461,6 +5461,18 @@
     {
       "key": "#RSX_SESSION_IDLE_HELP",
       "text": "The loaded RPAKs remain available for another manual model import. The countdown restarts after each import."
+    },
+    {
+      "key": "#LOADING_CACHED_ARG0",
+      "text": "Loading cached model: {0}"
+    },
+    {
+      "key": "#LOADING_CACHED_PREVIEW",
+      "text": "Loading preview from the local cache…"
+    },
+    {
+      "key": "#PREVIEW_QUEUED_ARG0",
+      "text": "Preview queued: {0}"
     }
   ]
 }
