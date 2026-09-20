@@ -128,30 +128,62 @@ namespace ReMap.Standalone
                 if(usesRsx){CancelManualPreviewSessionRelease();SetAssetBusy(true);}
                 var reloadScene=new HashSet<string>(StringComparer.OrdinalIgnoreCase);
                 string[] extractionTargets=Targets;
+                var repairedCasts=new Dictionary<string,string>(StringComparer.OrdinalIgnoreCase);
+                var failedRepairs=new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+                var targetFallbacks=new List<CacheVerificationRepair>();
+
+                // Keep the archive modes contiguous. First test every invalid GUID against the
+                // official Apex union, then switch once to the R5R/R5F union for official misses.
+                // Interleaving both attempts per model made RSX parse all RPAKs every other model.
+                var reimports=repairs.Where(item=>item.reimport).ToArray();
+                for(int index=0;index<reimports.Length;index++)
+                {
+                    cancellation.Token.ThrowIfCancellationRequested();
+                    var repair=reimports[index];
+                    Loading(true,L.F("#REPAIRING_ASSET_CACHE_ARG0_ARG1_ARG2",index+1,reimports.Length,repair.record.Name),
+                        reimports.Length==0?1:(index+1)/(float)reimports.Length,cancellation.Cancel);
+                    try
+                    {
+                        var result=await assetLibrary.ExtractBatchAsync(new[]{repair.record},extractionTargets,
+                            cancellation.Token,true);
+                        if(result.Paths.TryGetValue(repair.record.Id,out string cast))repairedCasts[repair.record.Id]=cast;
+                        else if(result.Deferred.Contains(repair.record.Id))targetFallbacks.Add(repair);
+                        else throw new IOException(result.Errors.TryGetValue(repair.record.Id,out string error)?error:L.T("#EXPORT_MISSING"));
+                    }
+                    catch(OperationCanceledException){throw;}
+                    catch(Exception exception){failedRepairs.Add(repair.record.Id);ThumbnailFailure(repair.record,exception);}
+                    await Task.Yield();
+                }
+                for(int index=0;index<targetFallbacks.Count;index++)
+                {
+                    cancellation.Token.ThrowIfCancellationRequested();
+                    var repair=targetFallbacks[index];
+                    Loading(true,L.F("#REPAIRING_ASSET_CACHE_ARG0_ARG1_ARG2",index+1,targetFallbacks.Count,repair.record.Name),
+                        targetFallbacks.Count==0?1:(index+1)/(float)targetFallbacks.Count,cancellation.Cancel);
+                    try
+                    {
+                        var result=await assetLibrary.ExtractBatchAsync(new[]{repair.record},extractionTargets,
+                            cancellation.Token,true);
+                        if(!result.Paths.TryGetValue(repair.record.Id,out string cast))
+                            throw new IOException(result.Errors.TryGetValue(repair.record.Id,out string error)?error:L.T("#EXPORT_MISSING"));
+                        repairedCasts[repair.record.Id]=cast;
+                    }
+                    catch(OperationCanceledException){throw;}
+                    catch(Exception exception){failedRepairs.Add(repair.record.Id);ThumbnailFailure(repair.record,exception);}
+                    await Task.Yield();
+                }
+
                 for(int index=0;index<repairs.Count;index++)
                 {
                     cancellation.Token.ThrowIfCancellationRequested();
                     var repair=repairs[index];
+                    if(failedRepairs.Contains(repair.record.Id))continue;
                     Loading(true,L.F("#REPAIRING_ASSET_CACHE_ARG0_ARG1_ARG2",index+1,repairs.Count,repair.record.Name),
                         repairs.Count==0?1:(index+1)/(float)repairs.Count,cancellation.Cancel);
                     try
                     {
-                        string cast=repair.cast;
-                        if(repair.reimport)
-                        {
-                            // Keep repairs deliberately sequential. The embedded session retains the
-                            // complete project RPak union, while a bad GUID cannot poison a large batch.
-                            var result=await assetLibrary.ExtractBatchAsync(new[]{repair.record},extractionTargets,
-                                cancellation.Token,true);
-                            if(result.Deferred.Contains(repair.record.Id)&&!result.Paths.ContainsKey(repair.record.Id))
-                            {
-                                var fallback=await assetLibrary.ExtractBatchAsync(new[]{repair.record},extractionTargets,
-                                    cancellation.Token,true);
-                                MergeBatchResult(result,fallback);
-                            }
-                            if(!result.Paths.TryGetValue(repair.record.Id,out cast))
-                                throw new IOException(result.Errors.TryGetValue(repair.record.Id,out string error)?error:L.T("#EXPORT_MISSING"));
-                        }
+                        string cast=repair.reimport&&repairedCasts.TryGetValue(repair.record.Id,out string imported)
+                            ?imported:repair.cast;
                         if(string.IsNullOrEmpty(cast))cast=assetLibrary.CachedModel(repair.record);
                         if(string.IsNullOrEmpty(cast))throw new IOException(L.T("#EXPORT_MISSING"));
                         await SharedTextureCache.Normalize(assetLibrary.ModelDirectory(repair.record),

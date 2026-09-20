@@ -80,12 +80,17 @@ namespace ReMap.Standalone
             }
         }
         private void Send(string line){shutdown.ThrowIfCancellationRequested();process.StandardInput.WriteLine(line);process.StandardInput.Flush();}
+        internal bool NeedsLoad(string[] archives) =>
+            !string.Equals(string.Join("\t",archives??Array.Empty<string>()),loadedArchives,StringComparison.Ordinal);
         internal void Load(string[] archives,string origin)
         {
             foreach(string path in archives)if(path.IndexOfAny(new[]{'\r','\n','\t'})>=0)throw new ArgumentException(L.T("#INVALID_ARCHIVE_PATH"));
             string key=string.Join("\t",archives);
             if(key!=loadedArchives)
             {
+                UnityEngine.Debug.Log("REMAP_RSX_LOAD: "+
+                    (archives.Length>0?Path.GetDirectoryName(archives[0]):"")+" :: "+
+                    string.Join(", ",archives.Select(Path.GetFileName)));
                 Send("LOAD\t"+key);var reply=ReadReply();
                 if(reply.Length<2||reply[1]!="LOADED")throw new IOException(L.T("#RSX_ARCHIVE_LOAD_FAILED")+string.Join(" ",reply));
                 loadedArchives=key;ArchiveLoads++;

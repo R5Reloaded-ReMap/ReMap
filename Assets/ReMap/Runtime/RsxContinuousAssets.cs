@@ -1,5 +1,4 @@
 using System;
-using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Threading;
@@ -10,9 +9,6 @@ namespace ReMap.Standalone
     public sealed partial class RsxAssetLibrary
     {
         private RsxPreviewSession previewSession;
-        private readonly Dictionary<string,RsxPreviewSession> parkedPreviewSessions=
-            new Dictionary<string,RsxPreviewSession>(StringComparer.OrdinalIgnoreCase);
-        private string previewSessionKey;
         private string[] previewArchivePlan;
         public int PreviewSessionStarts { get; private set; }
         public int PreviewArchiveLoads => previewSession?.ArchiveLoads??0;
@@ -50,37 +46,21 @@ namespace ReMap.Standalone
         public bool BulkTextureRepairsSupported => BulkExportsSupported;
         private void SetTargetExtractionActivity(AssetExtractionOperation operation,string archive,int modelCount) =>
             SetExtractionActivity(AssetExtractionSource.TargetGame,operation,archive,modelCount);
-        private string PreviewSessionKey(string[] archives,bool geometryOnly,bool loadAllAssetTypes) =>
-            SessionExecutable+"|"+(geometryOnly?"geometry":"textured")+"|"+(loadAllAssetTypes?"all":"filtered")+"|"+
-            string.Join("|",(archives??Array.Empty<string>()).Select(Path.GetFullPath));
-        private void EnsurePreviewSession(string[] archives,bool geometryOnly=false,bool loadAllAssetTypes=false)
+        private void EnsurePreviewSession(bool geometryOnly=false,bool loadAllAssetTypes=false)
         {
-            string key=PreviewSessionKey(archives,geometryOnly,loadAllAssetTypes);
-            if(previewSession!=null&&previewSession.Alive&&string.Equals(previewSessionKey,key,StringComparison.OrdinalIgnoreCase))return;
-            if(previewSession!=null)
-            {
-                if(previewSession.Alive&&!string.IsNullOrEmpty(previewSessionKey))
-                {
-                    if(parkedPreviewSessions.TryGetValue(previewSessionKey,out var previous))previous.Dispose();
-                    parkedPreviewSessions[previewSessionKey]=previewSession;
-                }
-                else previewSession.Dispose();
-                previewSession=null;previewSessionKey=null;
-            }
-            foreach(string dead in parkedPreviewSessions.Where(pair=>!pair.Value.Alive).Select(pair=>pair.Key).ToArray())
-            {parkedPreviewSessions[dead].Dispose();parkedPreviewSessions.Remove(dead);}
-            if(parkedPreviewSessions.TryGetValue(key,out previewSession))
-            {parkedPreviewSessions.Remove(key);previewSessionKey=key;return;}
+            // RSX is not safe to keep open more than once: a second embedded process exits while
+            // the first one still owns its global resources. Keep one process and let LOAD replace
+            // the archive union only when the required command-line mode changes or the union does.
+            if(previewSession!=null&&previewSession.Alive&&previewSession.GeometryOnly==geometryOnly&&
+                previewSession.LoadAllAssetTypes==loadAllAssetTypes)return;
+            ResetPreviewSession();
             string workerRoot=Path.Combine(CacheDirectory,"Worker");
             previewSession=new RsxPreviewSession(SessionExecutable,Path.Combine(workerRoot,"s"+Guid.NewGuid().ToString("N").Substring(0,8)),workerRoot,shutdown.Token,geometryOnly,loadAllAssetTypes);
-            previewSessionKey=key;
             PreviewSessionStarts++;
         }
         private void ResetPreviewSession()
         {
-            previewSession?.Dispose();previewSession=null;previewSessionKey=null;
-            foreach(var session in parkedPreviewSessions.Values)session.Dispose();
-            parkedPreviewSessions.Clear();
+            previewSession?.Dispose();previewSession=null;
         }
         internal void CancelActivePreviewOperation() => previewSession?.Abort();
         private string[] PreviewArchivePlan(string[] targets,string requiredArchive)
@@ -124,8 +104,9 @@ namespace ReMap.Standalone
             string[] archives=PreviewArchivePlan(targets,archive);
             try
             {
-                SetTargetExtractionActivity(AssetExtractionOperation.LoadingArchives,archive,entries.Length);
-                EnsurePreviewSession(archives);
+                EnsurePreviewSession();
+                if(previewSession.NeedsLoad(archives))
+                    SetTargetExtractionActivity(AssetExtractionOperation.LoadingArchives,archive,entries.Length);
                 previewSession.Load(archives,archive);
                 SetTargetExtractionActivity(AssetExtractionOperation.ExportingModels,archive,entries.Length);
                 if(BatchPreviewsSupported&&entries.Length>1)
@@ -170,8 +151,10 @@ namespace ReMap.Standalone
             }
             try
             {
-                SetTargetExtractionActivity(AssetExtractionOperation.LoadingArchives,archive,entries.Length);
-                EnsurePreviewSession(archives);previewSession.Load(archives,archive);
+                EnsurePreviewSession();
+                if(previewSession.NeedsLoad(archives))
+                    SetTargetExtractionActivity(AssetExtractionOperation.LoadingArchives,archive,entries.Length);
+                previewSession.Load(archives,archive);
                 SetTargetExtractionActivity(AssetExtractionOperation.ExportingModels,archive,entries.Length);
                 CommitContinuousExports(entries,previewSession.ExportMany(entries.Select(entry=>entry.guid).ToArray()),archive,result);
                 var missing=entries.Where(entry=>!result.Paths.ContainsKey(entry.Id)).ToArray();
@@ -196,8 +179,10 @@ namespace ReMap.Standalone
             ResetPreviewSession();
             try
             {
-                SetTargetExtractionActivity(AssetExtractionOperation.LoadingArchives,archive,entries.Length);
-                EnsurePreviewSession(archives,true);previewSession.Load(archives,archive);
+                EnsurePreviewSession(true);
+                if(previewSession.NeedsLoad(archives))
+                    SetTargetExtractionActivity(AssetExtractionOperation.LoadingArchives,archive,entries.Length);
+                previewSession.Load(archives,archive);
                 SetTargetExtractionActivity(AssetExtractionOperation.ExportingModels,archive,entries.Length);
                 if(entries.Length>1)
                 {
@@ -225,8 +210,9 @@ namespace ReMap.Standalone
                 if(result.Paths.ContainsKey(entry.Id))continue;
                 try
                 {
-                    SetTargetExtractionActivity(AssetExtractionOperation.LoadingArchives,archive,1);
-                    EnsurePreviewSession(archives,geometryOnly);
+                    EnsurePreviewSession(geometryOnly);
+                    if(previewSession.NeedsLoad(archives))
+                        SetTargetExtractionActivity(AssetExtractionOperation.LoadingArchives,archive,1);
                     previewSession.Load(archives,archive);
                     SetTargetExtractionActivity(AssetExtractionOperation.ExportingModels,archive,1);
                     CommitContinuousExports(new[]{entry},previewSession.Export(entry.guid,geometryOnly),archive,result,geometryOnly);

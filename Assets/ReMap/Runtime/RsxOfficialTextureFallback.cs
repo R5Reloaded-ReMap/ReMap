@@ -336,19 +336,23 @@ namespace ReMap.Standalone
             OfficialArchivePlan plan = ResolveOfficialArchivePlan(officialPaks, origin, targets);
             if (plan == null)
             {
-                foreach (var entry in entries) officialPreviewMisses.Add(entry.Id);
-                return false;
+                foreach (var entry in entries)
+                {
+                    officialPreviewMisses.Add(entry.Id);
+                    result.Deferred.Add(entry.Id);
+                }
+                return true;
             }
 
             result.OfficialAttempts.UnionWith(entries.Select(entry => entry.Id));
 
             try
             {
-                // Reuse the same embedded process. LOAD can switch between official and legacy
-                // archive sets without paying for a process restart for every thumbnail batch.
-                SetExtractionActivity(AssetExtractionSource.OfficialApex,
-                    AssetExtractionOperation.LoadingArchives, plan.primaryArchive, entries.Length);
-                EnsurePreviewSession(plan.archives, false, true);
+                // Reuse one official embedded process for the complete project archive union.
+                EnsurePreviewSession(false, true);
+                if(previewSession.NeedsLoad(plan.archives))
+                    SetExtractionActivity(AssetExtractionSource.OfficialApex,
+                        AssetExtractionOperation.LoadingArchives, plan.primaryArchive, entries.Length);
                 previewSession.Load(plan.archives, origin);
                 SetExtractionActivity(AssetExtractionSource.OfficialApex,
                     AssetExtractionOperation.ExportingModels, plan.primaryArchive, entries.Length);
@@ -481,9 +485,10 @@ namespace ReMap.Standalone
                 string[] guids = pending.Select(item => item.request.Entry.guid).ToArray();
                 var export = await Task.Run(() =>
                 {
-                    SetExtractionActivity(AssetExtractionSource.OfficialApex,
-                        AssetExtractionOperation.LoadingArchives, plan.primaryArchive, pending.Count);
-                    EnsurePreviewSession(plan.archives, false, true);
+                    EnsurePreviewSession(false, true);
+                    if(previewSession.NeedsLoad(plan.archives))
+                        SetExtractionActivity(AssetExtractionSource.OfficialApex,
+                            AssetExtractionOperation.LoadingArchives, plan.primaryArchive, pending.Count);
                     previewSession.Load(plan.archives, origin);
                     SetExtractionActivity(AssetExtractionSource.OfficialApex,
                         AssetExtractionOperation.ExportingModels, plan.primaryArchive, pending.Count);
