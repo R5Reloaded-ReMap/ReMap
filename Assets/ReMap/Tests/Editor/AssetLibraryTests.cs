@@ -90,6 +90,22 @@ namespace ReMap.Standalone.Tests
             }));
         }
 
+        [Test] public void OfficialProjectArchivesStayStableAcrossCommonAndSelectedMapModels()
+        {
+            var result = RsxAssetLibrary.SelectOfficialProjectArchives(
+                new[] { "mp_rr_district_mu1_uh", "mp_rr_olympus" },
+                new[] {
+                    "common.rpak", "common(01).rpak", "common_early.rpak", "common_mp.rpak",
+                    "mp_rr_district_mu1_uh.rpak", "mp_rr_district_mu1_uh_client_perm.rpak",
+                    "mp_rr_olympus.rpak", "mp_rr_olympus_client_temp.rpak", "mp_rr_canyonlands.rpak"
+                });
+            Assert.That(result, Is.EqualTo(new[] {
+                "common_early.rpak", "common.rpak", "common_mp.rpak", "common(01).rpak",
+                "mp_rr_district_mu1_uh.rpak", "mp_rr_district_mu1_uh_client_perm.rpak",
+                "mp_rr_olympus.rpak", "mp_rr_olympus_client_temp.rpak"
+            }));
+        }
+
         [Test] public void OfficialMapArchivesUseNewestSameFamilyWhenExactMapIsAbsent()
         {
             var result = RsxAssetLibrary.SelectOfficialMapArchives(

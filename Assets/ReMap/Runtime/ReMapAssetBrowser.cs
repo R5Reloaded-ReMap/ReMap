@@ -61,7 +61,7 @@ namespace ReMap.Standalone
             var textScroll = new ScrollView(); textScroll.AddToClassList("preview-message"); preview.Add(textScroll);
             previewText = Label(L.T("#CLICK_MODEL_LOAD_PREVIEW"), "library-state"); textScroll.Add(previewText);
             var actions = new VisualElement(); actions.style.flexDirection = FlexDirection.Row; preview.Add(actions);
-            placeAssetButton = Button(L.T("#PLACE"), () => { if (CanPlace(previewEntry)) BeginPlacement(previewEntry); }, "primary");
+            placeAssetButton = Button(L.T("#PLACE"), PlaceSelectedLibraryAsset, "primary");
             placeAssetButton.SetEnabled(false); actions.Add(placeAssetButton);
             retryPreviewButton = Button(L.T("#IMPORT_MODEL"), () => { _ = ImportSelectedLibraryAssets(); }); retryPreviewButton.SetEnabled(false); actions.Add(retryPreviewButton);
             pageState = Label("", "library-count");
@@ -286,7 +286,22 @@ namespace ReMap.Standalone
             retryPreviewButton.text=L.T(allImported||allPresent?"#REIMPORT_MODELS":"#IMPORT_MODEL");
             retryPreviewButton.tooltip=selected.Length>1?L.F("#IMPORT_SELECTED_MODELS_ARG0",selected.Length):"";
             retryPreviewButton.SetEnabled(!assetBusy&&!indexRequested&&selected.Length>0);
-            placeAssetButton.SetEnabled(!assetBusy&&CanPlace(previewEntry));
+            placeAssetButton.SetEnabled(CanPlaceSelectedLibraryAsset()||(!assetBusy&&CanPlace(previewEntry)));
+        }
+
+        private GameAssetRecord SelectedLibraryPlacementRecord() => catalogMode?.index==0&&lastPreviewRequest!=null&&
+            selectedLibraryAssetIds.Contains(lastPreviewRequest.Id)?lastPreviewRequest:null;
+        private bool CanPlaceSelectedLibraryAsset()
+        {
+            var record=SelectedLibraryPlacementRecord();
+            return record!=null&&record.Supports(Targets)&&assetLibrary.CachedModel(record)!=null;
+        }
+        private void PlaceSelectedLibraryAsset()
+        {
+            var record=SelectedLibraryPlacementRecord();
+            if(record!=null&&record.Supports(Targets)&&assetLibrary.CachedModel(record)!=null)
+            { _=RequestModelPlacement(record);return; }
+            if(CanPlace(previewEntry))BeginPlacement(previewEntry);
         }
 
         private void SelectLibraryAsset(GameAssetRecord record,bool additive,bool range)
@@ -346,15 +361,13 @@ namespace ReMap.Standalone
         }
         private async Task PreviewGameAsset(GameAssetRecord record,bool forceRefresh=false)
         {
-            if(assetBusy&&!forceRefresh&&queuedPreview==null&&lastPreviewRequest?.Id==record.Id)return;
-            CancelManualPreviewSessionRelease();
             string cachedPath=forceRefresh?null:assetLibrary.CachedModel(record);
             bool needsExtraction=forceRefresh||cachedPath==null;
-            if(needsExtraction)InterruptBackgroundFor(record,true);
+            if(needsExtraction){CancelManualPreviewSessionRelease();InterruptBackgroundFor(record,true);}
             int requestVersion=++previewRequestVersion;
             if (assetBusy||indexRequested) {
                 queuedPreview=record;queuedPreviewForceRefresh=forceRefresh;lastPreviewRequest=record;
-                InterruptBackgroundFor(record);ShowPreviewLoading(record,cachedPath!=null);
+                if(needsExtraction)InterruptBackgroundFor(record);ShowPreviewLoading(record,cachedPath!=null);
                 previewText.text=ModelDetails(record)+"\n\n"+L.F("#PREVIEW_QUEUED_ARG0",record.Name);RefreshCatalog();return;
             }
             lastPreviewRequest = record; string previewGeneration=assetLibrary.CacheRoot;
@@ -392,7 +405,7 @@ namespace ReMap.Standalone
                 SetStatus(missing > 0 ? L.F("#ARG0_ARG1_MATERIAL_S_UNRESOLVED", record.Name, missing) : L.T("#SELECTED_MODEL") + record.Name);
             }
             catch (Exception ex) { if (this != null&&requestVersion==previewRequestVersion) { previewEntry = null; previewFailures[record.Id] = ex.Message; failedThumbnails.Add(record.Id); previewText.text = record.Name + " : " + ex.Message; previewText.tooltip = ex.ToString(); SetStatus(ex.Message); Debug.LogWarning(ex); } }
-            finally { await WaitForAssetUiIdle(); if (this != null) { Run(CommitInspectorEdit); if (model != null) world.models.Release(record.Id, model); Refresh(); SetAssetBusy(false); ScheduleManualPreviewSessionRelease(previewGeneration); RunQueuedPreview(); } }
+            finally { await WaitForAssetUiIdle(); if (this != null) { Run(CommitInspectorEdit); if (model != null) world.models.Release(record.Id, model); Refresh(); SetAssetBusy(false); if(needsExtraction)ScheduleManualPreviewSessionRelease(previewGeneration); RunQueuedPreview(); } }
         }
         private void ShowPreviewLoading(GameAssetRecord record,bool cached) {
             if(currentThumbnail!=null)Destroy(currentThumbnail);currentThumbnail=null;assetPreview.image=null;

@@ -5519,6 +5519,10 @@
       "text": "RSX is loading the common archives and every selected map archive before importing models."
     },
     {
+      "key": "#RSX_EXTRACTING_ASSETS_ARG0",
+      "text": "RSX is extracting {0} assets…"
+    },
+    {
       "key": "#LOADING_CACHED_ARG0",
       "text": "Loading cached model: {0}"
     },

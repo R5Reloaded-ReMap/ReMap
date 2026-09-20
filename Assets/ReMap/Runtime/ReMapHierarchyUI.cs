@@ -435,6 +435,7 @@ namespace ReMap.Standalone
                     if (record != null) {
                         var ready=ReadyPlacementEntry(record);
                         if(ready!=null){CancelPlacement();BeginPlacement(ready);}
+                        else if(assetLibrary.CachedModel(record)!=null)_=RequestModelPlacement(record);
                         else SetStatus(L.T("#IMPORT_MODEL_BEFORE_PLACING"));
                     }
                     else if (entry != null) { CancelPlacement(); BeginPlacement(entry); }

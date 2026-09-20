@@ -27,9 +27,10 @@ namespace ReMap.Standalone {
         private async Task<CatalogEntry> PrepareDropEntryCore(GameAssetRecord record) {
             if(!record.Supports(Targets))throw new InvalidOperationException(L.T("#MODEL_MISSING_LOADED_ARCHIVES"));
             var ready=ReadyPlacementEntry(record);if(ready!=null)return ready;
-            CancelManualPreviewSessionRelease();
+            bool needsExtraction=assetLibrary.CachedModel(record)==null;
+            if(needsExtraction)CancelManualPreviewSessionRelease();
             string generation=assetLibrary.CacheRoot;pendingAssetDrops++;
-            InterruptBackgroundFor(record,assetLibrary.CachedModel(record)==null);
+            InterruptBackgroundFor(record,needsExtraction);
             bool ownsBusy=false;
             try {
                 // A cached model can be prepared while an unrelated RSX batch is still running.
@@ -49,7 +50,7 @@ namespace ReMap.Standalone {
                 if(generation!=assetLibrary.CacheRoot)throw new InvalidOperationException(L.T("#SOURCES_CHANGED_DROP_CANCELED"));
                 world.models.Prepare(record.Id,path);var model=world.models.Create(record.Id,false);
                 try{return RememberPlacementEntry(record,model);}finally{world.models.Release(record.Id,model);}
-            }finally{pendingAssetDrops--;if(this!=null){if(ownsBusy){SetAssetBusy(false);RunQueuedPreview();}if(pendingAssetDrops==0)ScheduleManualPreviewSessionRelease(generation);}}
+            }finally{pendingAssetDrops--;if(this!=null){if(ownsBusy){SetAssetBusy(false);RunQueuedPreview();}if(needsExtraction&&pendingAssetDrops==0)ScheduleManualPreviewSessionRelease(generation);}}
         }
     }
 }

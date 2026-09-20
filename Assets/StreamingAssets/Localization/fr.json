@@ -5519,6 +5519,10 @@
       "text": "RSX charge les archives communes et toutes les archives des cartes sélectionnées avant d’importer les modèles."
     },
     {
+      "key": "#RSX_EXTRACTING_ASSETS_ARG0",
+      "text": "RSX extrait {0} assets…"
+    },
+    {
       "key": "#LOADING_CACHED_ARG0",
       "text": "Chargement du modèle en cache : {0}"
     },

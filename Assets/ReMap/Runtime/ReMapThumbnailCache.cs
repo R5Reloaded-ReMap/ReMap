@@ -712,9 +712,12 @@ namespace ReMap.Standalone
                     if(remaining==0)break;
                     await Task.Delay(Math.Min(1000,remaining*1000),cancellation.Token);
                 }
-                if(this==null||backgroundStopped||(thumbnailLoopRunning&&!thumbnailPaused)||assetBusy||pendingAssetDrops>0||
-                    extractingThumbnails.Count>0||thumbnailExport!=null||
-                    generation!=assetLibrary.CacheRoot)return;
+                // A cached preview or placement may briefly use Unity while RSX remains idle.
+                // Do not reset the deadline; close the session as soon as that local work ends.
+                while(this!=null&&!backgroundStopped&&(assetBusy||pendingAssetDrops>0))
+                    await Task.Delay(50,cancellation.Token);
+                if(this==null||backgroundStopped||(thumbnailLoopRunning&&!thumbnailPaused)||
+                    extractingThumbnails.Count>0||thumbnailExport!=null||generation!=assetLibrary.CacheRoot)return;
                 await assetLibrary.ReleasePreviewSessionAsync(cancellation.Token);
             }
             catch(OperationCanceledException)when(cancellation.IsCancellationRequested){}
@@ -733,10 +736,15 @@ namespace ReMap.Standalone
             if(rsxSessionIdleStatus==null)return;
             bool running=!backgroundStopped&&assetLibrary?.PreviewProcessId!=0;
             bool working=assetBusy||pendingAssetDrops>0||extractingThumbnails.Count>0||thumbnailExport!=null;
-            bool countdown=running&&!working&&rsxSessionIdleRemainingSeconds.HasValue&&rsxSessionIdleRemainingSeconds.Value>0;
-            bool loading=running&&working&&assetLibrary.ExtractionActivity.Operation==AssetExtractionOperation.LoadingArchives;
+            // Real RSX work cancels the idle release. Cached previews do not, so keep displaying
+            // their original countdown even while Unity prepares one of those cached models.
+            bool countdown=running&&rsxSessionIdleRemainingSeconds.HasValue&&rsxSessionIdleRemainingSeconds.Value>0;
+            AssetExtractionActivity activity=assetLibrary?.ExtractionActivity??default;
+            bool loading=running&&working&&activity.Operation==AssetExtractionOperation.LoadingArchives;
+            bool extracting=running&&working&&activity.Operation==AssetExtractionOperation.ExportingModels;
             rsxSessionIdleStatus.text=countdown?L.F("#RSX_SESSION_CLOSES_IN_ARG0",rsxSessionIdleRemainingSeconds.Value):
-                loading?L.T("#RSX_LOADING_RPAKS"):running?L.T("#RSX_SESSION_RUNNING"):"";
+                loading?L.T("#RSX_LOADING_RPAKS"):extracting?L.F("#RSX_EXTRACTING_ASSETS_ARG0",activity.ModelCount):
+                running?L.T("#RSX_SESSION_RUNNING"):"";
             rsxSessionIdleStatus.tooltip=countdown?L.T("#RSX_SESSION_IDLE_HELP"):
                 loading?L.T("#RSX_LOADING_RPAKS_HELP"):running?L.T("#RSX_SESSION_RUNNING_HELP"):"";
             rsxSessionIdleStatus.style.display=running?DisplayStyle.Flex:DisplayStyle.None;

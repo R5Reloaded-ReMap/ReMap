@@ -29,7 +29,11 @@ namespace ReMap.Standalone
             if (dragObjectId == null && dragRecord != null)
             {
                 dragEntry = ReadyPlacementEntry(dragRecord);
-                if (dragEntry == null) {dragPreviewFailed=true;SetStatus(L.T("#IMPORT_MODEL_BEFORE_PLACING"));}
+                if (dragEntry == null)
+                {
+                    if(assetLibrary.CachedModel(dragRecord)!=null)_=PrepareDragPreview(dragRecord,version);
+                    else {dragPreviewFailed=true;SetStatus(L.T("#IMPORT_MODEL_BEFORE_PLACING"));}
+                }
             }
         }
 

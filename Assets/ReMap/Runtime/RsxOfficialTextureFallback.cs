@@ -259,38 +259,63 @@ namespace ReMap.Standalone
                 .Where(available.Contains).ToArray();
         }
 
-        private OfficialArchivePlan ResolveOfficialArchivePlan(string officialPaks, string origin)
+        public static string[] SelectOfficialProjectArchives(IEnumerable<string> targets,
+            IEnumerable<string> availableArchives)
         {
-            string cacheKey = Path.GetFullPath(officialPaks) + "|" + origin;
+            string[] available = (availableArchives ?? Array.Empty<string>()).Select(Path.GetFileName)
+                .Where(name => !string.IsNullOrEmpty(name)).Distinct(StringComparer.OrdinalIgnoreCase).ToArray();
+            string[] common = new[] { "common_early.rpak", "common.rpak", "common_mp.rpak", "common_roots.rpak" }
+                .Concat(available.Where(name => name.StartsWith("common", StringComparison.OrdinalIgnoreCase))
+                    .OrderBy(name => name, StringComparer.OrdinalIgnoreCase))
+                .Where(name => available.Contains(name, StringComparer.OrdinalIgnoreCase))
+                .Distinct(StringComparer.OrdinalIgnoreCase).ToArray();
+            string[] maps = (targets ?? Array.Empty<string>()).Where(target =>
+                    !string.IsNullOrWhiteSpace(target)).Distinct(StringComparer.OrdinalIgnoreCase)
+                .OrderBy(target => target, StringComparer.OrdinalIgnoreCase)
+                .SelectMany(target => SelectOfficialMapArchives(target + ".rpak", available))
+                .Distinct(StringComparer.OrdinalIgnoreCase).ToArray();
+            return common.Concat(maps).Distinct(StringComparer.OrdinalIgnoreCase).ToArray();
+        }
+
+        private OfficialArchivePlan ResolveOfficialArchivePlan(string officialPaks, string origin,
+            IEnumerable<string> targets)
+        {
+            string[] selectedTargets = (targets ?? Array.Empty<string>()).Where(target =>
+                !string.IsNullOrWhiteSpace(target)).Distinct(StringComparer.OrdinalIgnoreCase)
+                .OrderBy(target => target, StringComparer.OrdinalIgnoreCase).ToArray();
+            string cacheKey = Path.GetFullPath(officialPaks) + "|" + origin + "|" +
+                string.Join(";", selectedTargets);
             if (officialArchivePlans.TryGetValue(cacheKey, out OfficialArchivePlan cached))
                 return cached != null && !failedOfficialArchivePlans.Contains(cached.primaryArchive) ? cached : null;
 
             string[] available = Directory.EnumerateFiles(officialPaks, "*.rpak", SearchOption.TopDirectoryOnly)
                 .Select(Path.GetFileName).ToArray();
-            string[] selected;
+            string[] projectArchives = SelectOfficialProjectArchives(selectedTargets, available);
+            string[] required;
             string mapId = MapIdFromArchive(origin);
             if (mapId.StartsWith("mp_rr_", StringComparison.OrdinalIgnoreCase))
             {
-                selected = SelectOfficialMapArchives(origin, available);
-                // The map may not be active in the installed season. Never spend time loading only
-                // common archives in that case: the legacy R5R/R5F source is the immediate fallback.
-                if (selected.Length == 0) return officialArchivePlans[cacheKey] = null;
+                required = SelectOfficialMapArchives(origin, available);
+                // The requested map may not be active in the installed season. Never spend time
+                // loading an unrelated project union in that case: use R5R/R5F immediately.
+                if (required.Length == 0) return officialArchivePlans[cacheKey] = null;
             }
             else
             {
                 string exact = available.FirstOrDefault(name => string.Equals(name, origin,
                     StringComparison.OrdinalIgnoreCase));
                 if (exact == null) return officialArchivePlans[cacheKey] = null;
-                selected = new[] { exact };
+                required = new[] { exact };
             }
 
-            string primary = selected[0];
+            string primary = required[0];
             var plan = new OfficialArchivePlan
             {
                 primaryArchive = primary,
-                // Match RSX's successful manual workflow: load one map family together. Mixing the
-                // current map with every common archive crashes RSX 2.3 during ProcessAssetsPostLoad.
-                archives = selected.Distinct(StringComparer.OrdinalIgnoreCase).Select(name =>
+                // Mirror the project's in-game archive union. The requested model must not change
+                // this list, otherwise common <-> map imports make RSX parse every RPAK again.
+                archives = projectArchives.Concat(required)
+                    .Distinct(StringComparer.OrdinalIgnoreCase).Select(name =>
                     Path.Combine(officialPaks, name)).Where(File.Exists).ToArray()
             };
             officialArchivePlans[cacheKey] = plan;
@@ -308,7 +333,7 @@ namespace ReMap.Standalone
             string officialPaks = FindPakDirectory(Settings.officialApexGameDirectory);
             if (officialPaks == null) return false;
             string origin = OriginArchive(entries[0], targets);
-            OfficialArchivePlan plan = ResolveOfficialArchivePlan(officialPaks, origin);
+            OfficialArchivePlan plan = ResolveOfficialArchivePlan(officialPaks, origin, targets);
             if (plan == null)
             {
                 foreach (var entry in entries) officialPreviewMisses.Add(entry.Id);
@@ -419,7 +444,7 @@ namespace ReMap.Standalone
             foreach (var request in candidates)
             {
                 string origin = OriginArchive(request.Entry, targets);
-                OfficialArchivePlan plan = ResolveOfficialArchivePlan(officialPaks, origin);
+                OfficialArchivePlan plan = ResolveOfficialArchivePlan(officialPaks, origin, targets);
                 if (plan == null) continue;
                 string modelRoot = ModelDirectory(request.Entry);
                 string marker = Path.Combine(modelRoot, "official-texture-fallback.json");
