@@ -207,16 +207,12 @@ namespace ReMap.Standalone
                 {
                     var record=catalogRecords[index]; visibleAssets.Add(record);
                     int row=index/columns,column=index%columns;
-                bool additiveClick=false,rangeClick=false;
-                var card = Button("", () => {
-                    if (!suppressCardClick) SelectGameAsset(record,additiveClick,rangeClick);
-                    additiveClick=rangeClick=false;
-                }, "game-card");
-                card.RegisterCallback<PointerDownEvent>(e => {
-                    if(e.button!=0)return;
-                    additiveClick=e.ctrlKey||e.commandKey;rangeClick=e.shiftKey;
-                },TrickleDown.TrickleDown);
+                var card = Button("", () => { }, "game-card");
                 RegisterDragSource(card, null, record);
+                card.RegisterCallback<PointerDownEvent>(e => {
+                    if(e.button!=0||e.clickCount!=1||suppressCardClick)return;
+                    SelectGameAsset(record,e.ctrlKey||e.commandKey,e.shiftKey);
+                },TrickleDown.TrickleDown);
                 card.style.position=Position.Absolute;card.style.left=2+column*CatalogCardStride;card.style.top=2+row*CatalogRowHeight;card.style.width=CatalogCardWidth;card.style.height=CatalogRowHeight-4;
                 card.style.marginLeft=0;card.style.marginRight=0;card.style.marginTop=0;card.style.marginBottom=0;
                 card.tooltip = L.T("#DOUBLE_CLICK_PLACE_DRAG_SCENE") + "\n" + record.modelPath + "\nGUID : " + record.guid + "\n" + string.Join("\n", record.origins.Select(o => o.archive));
@@ -286,7 +282,8 @@ namespace ReMap.Standalone
             if(lastPreviewRequest==null||!selectedLibraryAssetIds.Contains(lastPreviewRequest.Id))previewEntry=null;
             else previewEntry=ReadyPlacementEntry(lastPreviewRequest);
             bool allImported=selected.Length>0&&selected.All(record=>assetLibrary.CachedModel(record)!=null);
-            retryPreviewButton.text=L.T(allImported?"#REIMPORT_MODELS":"#IMPORT_MODEL");
+            bool allPresent=selected.Length>0&&selected.All(assetLibrary.HasExistingModelExport);
+            retryPreviewButton.text=L.T(allImported||allPresent?"#REIMPORT_MODELS":"#IMPORT_MODEL");
             retryPreviewButton.tooltip=selected.Length>1?L.F("#IMPORT_SELECTED_MODELS_ARG0",selected.Length):"";
             retryPreviewButton.SetEnabled(!assetBusy&&!indexRequested&&selected.Length>0);
             placeAssetButton.SetEnabled(!assetBusy&&CanPlace(previewEntry));
@@ -320,7 +317,7 @@ namespace ReMap.Standalone
                 previewText.text=L.T("#CLICK_MODEL_LOAD_PREVIEW");UpdateLibraryAssetActions();return;
             }
             lastPreviewRequest=active;
-            string cached=assetLibrary.CachedModel(active);
+            string cached=assetLibrary.CachedModel(active)??assetLibrary.TryAdoptExistingModel(active);
             if(cached!=null) { _=PreviewGameAsset(active);return; }
             previewEntry=null;ShowSelectedUnimportedAsset(active);RefreshCatalog();UpdateLibraryAssetActions();
         }
@@ -334,7 +331,8 @@ namespace ReMap.Standalone
                 if(ImageConversion.LoadImage(image,File.ReadAllBytes(thumbnailPath),true)){currentThumbnail=image;assetPreview.image=image;}
                 else Destroy(image);
             }catch(Exception ex){Debug.LogWarning(L.T("#THUMBNAIL_CACHE")+ex.Message);}
-            previewText.text=ModelDetails(record)+"\n\n"+L.T("#MODEL_NOT_IMPORTED_USE_IMPORT");
+            previewText.text=ModelDetails(record)+"\n\n"+L.T(assetLibrary.HasExistingModelExport(record)?
+                "#MODEL_CACHE_NEEDS_REIMPORT":"#MODEL_NOT_IMPORTED_USE_IMPORT");
             previewText.tooltip=record.modelPath;
         }
 

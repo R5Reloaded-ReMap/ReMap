@@ -15,7 +15,6 @@ namespace ReMap.Standalone
         private CancellationTokenSource thumbnailExport;
         private CancellationTokenSource manualPreviewIdleRelease;
         private int? rsxSessionIdleRemainingSeconds;
-        private int thumbnailIdleRevision;
         private const int ManualPreviewSessionIdleMilliseconds=60000;
         private string visibleThumbnailPage;
         private int visibleThumbnailRevision;
@@ -178,6 +177,7 @@ namespace ReMap.Standalone
             // entries in extractingThumbnails; cancelling it here used to leave those entries
             // permanently displayed as "Loading" while the queue itself was empty.
             if(!thumbnailPaused)_=PrepareThumbnails();
+            else if(thumbnailExport==null&&extractingThumbnails.Count==0)ScheduleManualPreviewSessionRelease(assetLibrary.CacheRoot);
         }
         private void UpdateThumbnailPauseButtons() {
             string text=L.T(thumbnailPaused?"#RESUME_THUMBNAILS":"#PAUSE_THUMBNAILS");
@@ -595,7 +595,6 @@ namespace ReMap.Standalone
         {
             if(thumbnailLoopRunning||assetLibrary.CacheRoot==null)return;
             CancelManualPreviewSessionRelease();
-            thumbnailIdleRevision++;
             thumbnailLoopRunning=true;string generation=assetLibrary.CacheRoot;ReadThumbnailState();
             ThumbnailExtraction prefetched=null;
             try {
@@ -618,7 +617,7 @@ namespace ReMap.Standalone
                         {Debug.LogWarning("REMAP_THUMBNAIL_PREFETCH_PAUSE: "+ex.Message);}
                         foreach(var entry in prefetched.batch)extractingThumbnails.Remove(entry.Id);
                         prefetched=null;UpdateThumbnailProgress(eligible);UpdateThumbnailControls();RefreshCatalog();
-                        await assetLibrary.ReleasePreviewSessionAsync();
+                        ScheduleManualPreviewSessionRelease(generation);
                         continue;
                     }
                     if(ThumbnailWorkBlocked()){await Task.Delay(200);continue;}
@@ -667,7 +666,7 @@ namespace ReMap.Standalone
                     }catch(OperationCanceledException) { Debug.Log("REMAP_THUMBNAIL_PREEMPTED"); /* Requeued without failure. */ }
                     catch(Exception ex){if(this!=null&&!backgroundStopped)foreach(var entry in batch)if(!readyThumbnails.Contains(entry.Id))ThumbnailFailure(entry,ex);}
                     finally {
-                        if(this!=null&&!backgroundStopped){foreach(var entry in batch)extractingThumbnails.Remove(entry.Id);RefreshCatalog();}
+                        if(this!=null&&!backgroundStopped){foreach(var entry in batch)extractingThumbnails.Remove(entry.Id);RefreshCatalog();if(thumbnailPaused)ScheduleManualPreviewSessionRelease(generation);}
                     }
                     if(continuous)await Task.Yield();else await Task.Delay(150);
                 }
@@ -679,21 +678,15 @@ namespace ReMap.Standalone
                         try{await FinishThumbnailExtraction(prefetched);}catch(Exception ex){Debug.LogWarning("REMAP_THUMBNAIL_PREFETCH_STOP: "+ex.Message);}
                         foreach(var entry in prefetched.batch)extractingThumbnails.Remove(entry.Id);
                     }
-                    if(backgroundStopped||thumbnailDone+thumbnailFailed>=thumbnailTotal)await assetLibrary.ReleasePreviewSessionAsync();
+                    if(backgroundStopped)await assetLibrary.ReleasePreviewSessionAsync();
                     if(!backgroundStopped&&thumbnailDone+thumbnailFailed>=thumbnailTotal)
                     {
                         int removed=await Task.Run(()=>SharedTextureCache.CollectGarbage(assetLibrary.CacheRoot));
                         if(removed>0)Debug.Log("REMAP_TEXTURE_CACHE_CLEANED: "+removed);
                     }
                 }
-                finally{thumbnailLoopRunning=false;UpdateThumbnailControls();if(!backgroundStopped&&thumbnailDone+thumbnailFailed<thumbnailTotal)_=ReleaseThumbnailSessionAfterIdle(generation);}
+                finally{thumbnailLoopRunning=false;UpdateThumbnailControls();if(!backgroundStopped)ScheduleManualPreviewSessionRelease(generation);}
             }
-        }
-        private async Task ReleaseThumbnailSessionAfterIdle(string generation) {
-            int revision=++thumbnailIdleRevision;
-            await Task.Delay(15000);
-            if(this==null||backgroundStopped||thumbnailLoopRunning||revision!=thumbnailIdleRevision||generation!=assetLibrary.CacheRoot)return;
-            await assetLibrary.ReleasePreviewSessionAsync();
         }
         private void CancelManualPreviewSessionRelease() {
             var pending=manualPreviewIdleRelease;
@@ -720,6 +713,7 @@ namespace ReMap.Standalone
                     await Task.Delay(Math.Min(1000,remaining*1000),cancellation.Token);
                 }
                 if(this==null||backgroundStopped||(thumbnailLoopRunning&&!thumbnailPaused)||assetBusy||pendingAssetDrops>0||
+                    extractingThumbnails.Count>0||thumbnailExport!=null||
                     generation!=assetLibrary.CacheRoot)return;
                 await assetLibrary.ReleasePreviewSessionAsync(cancellation.Token);
             }

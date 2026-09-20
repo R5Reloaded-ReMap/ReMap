@@ -1388,7 +1388,6 @@ namespace ReMap.Standalone
             if (shutdownStarted) return;
             shutdownStarted = true;
             backgroundStopped = true;
-            thumbnailIdleRevision++;
             CancelManualPreviewSessionRelease();
             try { thumbnailExport?.Cancel(); }
             catch (ObjectDisposedException) { }

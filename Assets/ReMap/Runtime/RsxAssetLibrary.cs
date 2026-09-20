@@ -825,6 +825,49 @@ namespace ReMap.Standalone
                 !string.Equals(completion[3].Trim(),activeGeneration,StringComparison.OrdinalIgnoreCase))return false;
             return !string.Equals(mode,"geometry",StringComparison.OrdinalIgnoreCase)||(completion?.Length??0)>=4;
         }
+        private string ExistingModelExport(GameAssetRecord entry,string[] completion=null)
+        {
+            if(CacheRoot==null||entry==null)return null;
+            string folder=ModelDirectory(entry),marker=Path.Combine(folder,"complete.txt");
+            if(!File.Exists(marker))return null;
+            try
+            {
+                completion=completion??File.ReadAllLines(marker);
+                string relative=completion.FirstOrDefault();
+                if(string.IsNullOrWhiteSpace(relative)||!relative.EndsWith(".cast",StringComparison.OrdinalIgnoreCase))return null;
+                string path=Path.GetFullPath(Path.Combine(folder,relative));
+                string boundary=Path.GetFullPath(folder)+Path.DirectorySeparatorChar;
+                return path.StartsWith(boundary,StringComparison.OrdinalIgnoreCase)&&File.Exists(path)?path:null;
+            }
+            catch(Exception ex)when(ex is IOException||ex is UnauthorizedAccessException||ex is ArgumentException||ex is NotSupportedException){return null;}
+        }
+        public bool HasExistingModelExport(GameAssetRecord entry)=>ExistingModelExport(entry)!=null;
+        // Called from the UI thread for an older cache generation. A decodable CAST whose
+        // referenced albedos are complete is still safe to reuse; only the global RPak fingerprint
+        // changed. Promote it instead of claiming that the already exported model is absent.
+        public string TryAdoptExistingModel(GameAssetRecord entry)
+        {
+            string cached=CachedModel(entry);if(cached!=null)return cached;
+            if(CacheRoot==null||entry==null)return null;
+            string folder=ModelDirectory(entry),marker=Path.Combine(folder,"complete.txt");
+            try
+            {
+                string[] completion=File.ReadAllLines(marker);
+                string path=ExistingModelExport(entry,completion);if(path==null)return null;
+                string mode=completion.Length>2?completion[2].Trim():"";
+                if(!string.Equals(mode,"geometry",StringComparison.OrdinalIgnoreCase))
+                {
+                    if(!string.Equals(mode,"textured",StringComparison.OrdinalIgnoreCase)||
+                        !SharedTextureCache.ManifestMatchesMaximum(folder,SharedTextureCache.PreviewMaximumSize)||
+                        LegacyModelNeedsTexturedRetry(folder)||SharedTextureCache.InspectAlbedos(path).NeedsFallback)return null;
+                }
+                CastReader.Read(path);
+                var updated=completion.ToList();while(updated.Count<4)updated.Add("");
+                updated[3]=ActiveCacheGeneration();File.WriteAllLines(marker,updated);
+                return CompactCachedModel(folder,path);
+            }
+            catch(Exception ex)when(ex is IOException||ex is UnauthorizedAccessException||ex is ArgumentException||ex is InvalidDataException){return null;}
+        }
         public string CachedModel(GameAssetRecord entry)
         {
             if (CacheRoot == null) return null;

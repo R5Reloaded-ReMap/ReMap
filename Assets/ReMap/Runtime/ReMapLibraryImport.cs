@@ -55,7 +55,7 @@ namespace ReMap.Standalone
             if(assetBusy||indexRequested||catalogMode==null||catalogMode.index!=0)return;
             var selected=SelectedLibraryRecords();if(selected.Length==0)return;
             string[] targets=Targets;
-            bool forceRefresh=selected.All(record=>assetLibrary.CachedModel(record)!=null);
+            bool forceRefresh=selected.All(record=>assetLibrary.CachedModel(record)!=null||assetLibrary.HasExistingModelExport(record));
             var extract=forceRefresh?selected:selected.Where(record=>assetLibrary.CachedModel(record)==null).ToArray();
             string generation=assetLibrary.CacheRoot;
             CancelManualPreviewSessionRelease();InterruptBackgroundFor(force:true);SetAssetBusy(true);CancelPlacement();

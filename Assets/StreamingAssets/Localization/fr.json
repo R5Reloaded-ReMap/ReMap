@@ -1183,6 +1183,10 @@
       "text": "Ce modèle n’est pas importé. Cliquez sur Importer pour préparer la sélection."
     },
     {
+      "key": "#MODEL_CACHE_NEEDS_REIMPORT",
+      "text": "Ce modèle est présent dans le cache, mais il doit être revalidé ou réimporté pour la version actuelle du jeu/RSX."
+    },
+    {
       "key": "#IMPORT_MODEL_BEFORE_PLACING",
       "text": "Importez ce modèle avant de le placer."
     },
