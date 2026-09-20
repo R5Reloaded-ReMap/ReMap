@@ -26,6 +26,7 @@ namespace ReMap.Standalone
         private readonly int processId;
         private readonly long startedAt;
         private readonly object sync = new object();
+        private readonly object writeSync = new object();
         private readonly AutoResetEvent reconnect = new AutoResetEvent(false);
         private readonly Thread worker;
         private FileStream stream;
@@ -55,8 +56,8 @@ namespace ReMap.Standalone
             {
                 if (disposed || activity == desiredActivity) return;
                 desiredActivity = activity;
-                TrySendActivityLocked();
             }
+            ThreadPool.QueueUserWorkItem(_ => TrySendActivity());
             reconnect.Set();
         }
 
@@ -108,8 +109,8 @@ namespace ReMap.Standalone
                         if (disposed || stream != connection) return;
                         ready = true;
                         sentActivity = null;
-                        TrySendActivityLocked();
                     }
+                    TrySendActivity();
                     ReadLoop(connection);
                 }
                 catch { }
@@ -135,23 +136,35 @@ namespace ReMap.Standalone
                 lock (sync)
                 {
                     if (stream != connection) return;
-                    WriteFrame(connection, PongOpcode, frame.Payload);
                 }
+                lock (writeSync) WriteFrame(connection, PongOpcode, frame.Payload);
             }
         }
 
-        private void TrySendActivityLocked()
+        private void TrySendActivity()
         {
-            if (!ready || stream == null || desiredActivity == null || desiredActivity == sentActivity) return;
-            try
+            lock (writeSync)
             {
-                WriteFrame(stream, FrameOpcode, ActivityCommand(desiredActivity));
-                sentActivity = desiredActivity;
-            }
-            catch
-            {
-                CloseLocked();
-                reconnect.Set();
+                FileStream connection;
+                string activity;
+                lock (sync)
+                {
+                    if (disposed || !ready || stream == null || desiredActivity == null || desiredActivity == sentActivity) return;
+                    connection = stream;
+                    activity = desiredActivity;
+                }
+                try { WriteFrame(connection, FrameOpcode, ActivityCommand(activity)); }
+                catch
+                {
+                    lock (sync) { if (stream == connection) CloseLocked(); }
+                    reconnect.Set();
+                    return;
+                }
+                lock (sync)
+                {
+                    if (!disposed && ready && stream == connection && desiredActivity == activity)
+                        sentActivity = activity;
+                }
             }
         }
 
