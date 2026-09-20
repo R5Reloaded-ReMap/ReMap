@@ -24,8 +24,8 @@ namespace ReMap.Standalone
         public string r5FlowstateGameDirectory = "", r5FlowstatePlatformDirectory = "";
         // Map references are editor-only overlays and are deliberately kept out of map documents.
         public bool showMainBsp;
-        public bool showMprtModels;
-        // MPRT references are streamed around the camera. The master toggle remains off by default.
+        [NonSerialized] public bool showMprtModels;
+        // MPRT references are streamed around the camera. The master toggle is session-only and starts off.
         public int mprtPreset = 1;
         public float mprtDistance = 750f;
         public int mprtMaxActive = 15000;
