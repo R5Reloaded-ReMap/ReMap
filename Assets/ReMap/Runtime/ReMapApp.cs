@@ -157,9 +157,10 @@ namespace ReMap.Standalone
             Refresh(); RefreshProjectSelector(DraftSlot(assetLibrary.TargetGame));
 
             bool regularLaunch = !Environment.GetCommandLineArgs().Any(a => a.StartsWith("-remap"));
+            bool firstLaunch = regularLaunch && assetLibrary.FirstLaunch;
             bool restoredWorkspace = regularLaunch && TryRestoreWorkspace();
             if (regularLaunch) assetLibrary.SelectTarget(snapshot.gameTarget, false);
-            if (regularLaunch && assetLibrary.Configured)
+            if (regularLaunch && assetLibrary.Configured && !firstLaunch)
             {
                 if (snapshot.targetMaps.Count == 0)
                 {
@@ -195,6 +196,7 @@ namespace ReMap.Standalone
             if (Environment.GetCommandLineArgs().Contains("-remapPerfSmoke")) StartCoroutine(PerformanceSmoke());
             if (Environment.GetCommandLineArgs().Contains("-remapMapReferenceSmoke")) StartCoroutine(MapReferenceComparisonSmoke());
             SetStatus(restoredWorkspace ? L.T("#LAST_WORKSPACE_RESTORED") : L.T("#CHOOSE_SHAPE_LIBRARY_CLICK_SCENE"));
+            if (firstLaunch) ShowWelcome(true);
 
         }
 
@@ -331,7 +333,7 @@ namespace ReMap.Standalone
 
             status = Label("", "status"); footer.Add(status); count = Label("", "count"); footer.Add(count);
 
-            BuildSettings(); BuildAbout(); BuildWorkspaceGameDialog(); BuildNewMapDialog(); BuildLoadingUI(); BuildDragUI(); BuildDockLayout(body, workspace); BuildConstructionTools(); BuildCodePreviewWindow();
+            BuildSettings(); BuildWelcome(); BuildAbout(); BuildWorkspaceGameDialog(); BuildNewMapDialog(); BuildLoadingUI(); BuildDragUI(); BuildDockLayout(body, workspace); BuildConstructionTools(); BuildCodePreviewWindow();
 #if UNITY_EDITOR || DEVELOPMENT_BUILD || REMAP_DEVELOPER_TOOLS
             BuildDevGameCompatibilityDialog();
 #endif

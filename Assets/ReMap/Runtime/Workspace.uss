@@ -499,6 +499,16 @@ Button.script-property-remove-button:hover { background-color: rgb(91,65,66); }
 .about-panel { width: 520px; max-width: 92%; max-height: 82%; background-color: rgb(43,44,49); border-width: 1px; border-color: rgb(100,105,116); border-radius: 3px; }
 .about-content { flex-grow: 1; min-height: 0; padding: 14px 18px 8px 18px; }
 .about-content .unity-scroll-view__content-container { align-items: stretch; }
+.welcome-panel { width: 620px; max-width: 92%; background-color: rgb(43,44,49); border-width: 1px; border-color: rgb(100,105,116); border-radius: 3px; }
+.welcome-content { width: 100%; align-self: stretch; flex-shrink: 0; padding: 18px; }
+.welcome-brand { font-size: 30px; -unity-font-style: bold; color: rgb(239,196,58); -unity-text-align: middle-center; }
+.welcome-tagline { margin: 3px 0 14px 0; color: rgb(177,190,205); -unity-text-align: middle-center; }
+.welcome-copy { margin-bottom: 12px; white-space: normal; color: rgb(220,226,234); }
+.welcome-target { width: 100%; align-self: stretch; min-height: 64px; margin: 4px 0; padding: 9px; flex-direction: row; align-items: center; background-color: rgb(37,39,44); border-width: 1px; border-color: rgb(72,76,84); }
+.welcome-target-copy { flex-grow: 1; min-width: 0; margin-right: 10px; }
+.welcome-target-name { -unity-font-style: bold; color: rgb(232,237,244); }
+.welcome-target-path { margin-top: 4px; color: rgb(164,177,191); white-space: normal; }
+.welcome-target Button { width: 150px; flex-shrink: 0; }
 .about-brand { -unity-text-align: middle-center; -unity-font-style: bold; font-size: 28px; color: rgb(102,220,184); margin-top: 4px; }
 .about-version { -unity-text-align: middle-center; color: rgb(173,193,213); margin: 2px 0 2px 0; }
 .about-build-type { -unity-text-align: middle-center; font-size: 10px; color: rgb(222,177,103); margin-bottom: 7px; }

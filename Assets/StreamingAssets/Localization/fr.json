@@ -3720,11 +3720,11 @@
     },
     {
       "key": "#R5RELOADED_FOLDER_CONTAIN_RPAK_ARCHIVES",
-      "text": "Le dossier R5Reloaded ne contient aucune archive RPAK."
+      "text": "Sélectionnez le dossier LIVE de R5Reloaded contenant r5apex_ds.exe et common_sdk.rpak."
     },
     {
       "key": "#R5FLOWSTATE_FOLDER_CONTAIN_RPAK_ARCHIVES",
-      "text": "Le dossier R5Flowstate ne contient aucune archive RPAK."
+      "text": "Sélectionnez le dossier R5Flowstate contenant r5apex_ds.exe et common_flowstate.rpak."
     },
     {
       "key": "#ARG0_PLATFORM_CONTAIN_REQUIRED_ARG1",
@@ -4149,6 +4149,50 @@
     {
       "key": "#SETTINGS_PAGE_INTRO",
       "text": "Préférences globales de ReMap, chemins des jeux, qualité des aperçus et affichage de la référence de carte. Les choix d’archives du projet sont gérés dans la page Indexation séparée."
+    },
+    {
+      "key": "#WELCOME_REMAP",
+      "text": "Bienvenue dans ReMap"
+    },
+    {
+      "key": "#WELCOME_TAGLINE",
+      "text": "Créez des cartes R5 personnalisées dans un éditeur autonome."
+    },
+    {
+      "key": "#WELCOME_INTRO",
+      "text": "Choisissez une installation modifiée détectée pour commencer l’indexation de ses ressources. Si votre installation manque, ouvrez les réglages et sélectionnez son dossier manuellement."
+    },
+    {
+      "key": "#DETECTED_GAME_INSTALLATIONS",
+      "text": "Installations de jeu détectées"
+    },
+    {
+      "key": "#INSTALLATION_DETECTED_ARG0",
+      "text": "Détectée : {0}"
+    },
+    {
+      "key": "#INSTALLATION_NOT_DETECTED",
+      "text": "Non détectée. Sélectionnez le dossier de l’installation dans les réglages."
+    },
+    {
+      "key": "#USE_ARG0",
+      "text": "Utiliser {0}"
+    },
+    {
+      "key": "#OPEN_SETTINGS",
+      "text": "Ouvrir les réglages"
+    },
+    {
+      "key": "#CONTINUE_WITHOUT_GAME_FILES",
+      "text": "Continuer sans fichiers de jeu"
+    },
+    {
+      "key": "#GAME_FILES_CAN_BE_CONFIGURED_LATER",
+      "text": "Les fichiers du jeu ont été ignorés. Vous pourrez les configurer plus tard dans les réglages."
+    },
+    {
+      "key": "#GAME_SELECTED_INDEXING_ASSETS",
+      "text": "Jeu sélectionné. Indexation des ressources disponibles…"
     },
     {
       "key": "#PATHS_SAVED_OPEN_INDEXING",

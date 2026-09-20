@@ -3720,11 +3720,11 @@
     },
     {
       "key": "#R5RELOADED_FOLDER_CONTAIN_RPAK_ARCHIVES",
-      "text": "The R5Reloaded folder does not contain any RPAK archives."
+      "text": "Select the R5Reloaded LIVE folder containing r5apex_ds.exe and common_sdk.rpak."
     },
     {
       "key": "#R5FLOWSTATE_FOLDER_CONTAIN_RPAK_ARCHIVES",
-      "text": "The R5Flowstate folder does not contain any RPAK archives."
+      "text": "Select the R5Flowstate folder containing r5apex_ds.exe and common_flowstate.rpak."
     },
     {
       "key": "#ARG0_PLATFORM_CONTAIN_REQUIRED_ARG1",
@@ -4149,6 +4149,50 @@
     {
       "key": "#SETTINGS_PAGE_INTRO",
       "text": "Global ReMap preferences, game installation paths, preview quality, and map-reference display. Project archive choices are managed on the separate Indexing page."
+    },
+    {
+      "key": "#WELCOME_REMAP",
+      "text": "Welcome to ReMap"
+    },
+    {
+      "key": "#WELCOME_TAGLINE",
+      "text": "Build custom R5 maps in a standalone editor."
+    },
+    {
+      "key": "#WELCOME_INTRO",
+      "text": "Choose a detected modded game installation to start indexing its assets. If your installation is missing, open Settings and select its folder manually."
+    },
+    {
+      "key": "#DETECTED_GAME_INSTALLATIONS",
+      "text": "Detected game installations"
+    },
+    {
+      "key": "#INSTALLATION_DETECTED_ARG0",
+      "text": "Detected: {0}"
+    },
+    {
+      "key": "#INSTALLATION_NOT_DETECTED",
+      "text": "Not detected. Select the installation folder in Settings."
+    },
+    {
+      "key": "#USE_ARG0",
+      "text": "Use {0}"
+    },
+    {
+      "key": "#OPEN_SETTINGS",
+      "text": "Open Settings"
+    },
+    {
+      "key": "#CONTINUE_WITHOUT_GAME_FILES",
+      "text": "Continue without game files"
+    },
+    {
+      "key": "#GAME_FILES_CAN_BE_CONFIGURED_LATER",
+      "text": "Game files were skipped. You can configure them later in Settings."
+    },
+    {
+      "key": "#GAME_SELECTED_INDEXING_ASSETS",
+      "text": "Game selected. Indexing available assets…"
     },
     {
       "key": "#PATHS_SAVED_OPEN_INDEXING",

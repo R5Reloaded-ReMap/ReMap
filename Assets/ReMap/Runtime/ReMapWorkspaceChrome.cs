@@ -815,7 +815,7 @@ namespace ReMap.Standalone
         private bool NewMapDialogOpen => newMapOverlay != null && newMapOverlay.style.display.value != DisplayStyle.None;
         private bool PortCompatibilityReportOpen => portCompatibilityOverlay != null && portCompatibilityOverlay.style.display.value != DisplayStyle.None;
         private bool WorkspaceGameDialogOpen => workspaceGameOverlay != null && workspaceGameOverlay.style.display.value != DisplayStyle.None;
-        private bool BlockingDialogOpen => SettingsOpen || IndexingOpen || AboutOpen || WorkspaceGameDialogOpen || NewMapDialogOpen || PortCompatibilityReportOpen || AssemblySaveOpen || (renameMapOverlay != null && renameMapOverlay.style.display.value != DisplayStyle.None);
+        private bool BlockingDialogOpen => WelcomeOpen || SettingsOpen || IndexingOpen || AboutOpen || WorkspaceGameDialogOpen || NewMapDialogOpen || PortCompatibilityReportOpen || AssemblySaveOpen || (renameMapOverlay != null && renameMapOverlay.style.display.value != DisplayStyle.None);
     }
 
     internal static class WindowsProjectFileDialog

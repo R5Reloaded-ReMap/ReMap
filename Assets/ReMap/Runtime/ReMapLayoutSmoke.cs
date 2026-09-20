@@ -10,6 +10,20 @@ namespace ReMap.Standalone
 {
     public sealed partial class ReMapApp
     {
+        private string WelcomeLayoutError()
+        {
+            var panel = welcomeOverlay?.Q(className: "welcome-panel");
+            var targets = welcomeOverlay?.Query<VisualElement>(className: "welcome-target").ToList();
+            if (!WelcomeOpen || panel == null || targets == null || targets.Count != 2)
+                return "Welcome dialog or its two game targets are missing.";
+            if (panel.worldBound.xMin < root.worldBound.xMin || panel.worldBound.xMax > root.worldBound.xMax ||
+                panel.worldBound.yMin < root.worldBound.yMin || panel.worldBound.yMax > root.worldBound.yMax)
+                return "Welcome dialog is clipped by the application bounds.";
+            if (targets.Any(target => target.worldBound.width < panel.worldBound.width * .8f))
+                return "Welcome game target rows collapsed horizontally.";
+            return null;
+        }
+
         private async Task DragDockHandle(VisualElement handle, Vector2 delta)
         {
             Vector2 start = handle.worldBound.center;
@@ -23,7 +37,12 @@ namespace ReMap.Standalone
         }
         private async Task CheckDockLayout()
         {
-            await TreeFrames(12); ResetLayout(); await TreeFrames(); string layoutFixtureId = snapshot.objects[0].id; Select(layoutFixtureId); await TreeFrames();
+            await TreeFrames(12); ResetLayout(); await TreeFrames();
+            ShowWelcome(true); await TreeFrames();
+            string welcomeError = WelcomeLayoutError();
+            if (welcomeError != null) throw new Exception(welcomeError);
+            ShowWelcome(false); await TreeFrames();
+            string layoutFixtureId = snapshot.objects[0].id; Select(layoutFixtureId); await TreeFrames();
             var snapToggle = root.Q<Toggle>(className: "toolbar-snap-toggle");
             var snapSettings = root.Q<Button>("snap-settings-button");
             var snapInput = snapToggle?.Q(className: "unity-toggle__input");
@@ -240,8 +259,9 @@ namespace ReMap.Standalone
                 throw new Exception("MPRT quality selector is vertically clipped.");
             if (settingsScroll.Query<VisualElement>(className: "folder-picker").ToList().Count != 2)
                 throw new Exception("Settings should expose one root-folder picker per game.");
-            if (settingsScroll.Query<Label>().ToList().Any(label => label.text == L.T("#GAME_CONNECTION")))
-                throw new Exception("Disabled Live Map connection settings are still visible.");
+            bool gameConnectionVisible = settingsScroll.Query<Label>().ToList().Any(label => label.text == L.T("#GAME_CONNECTION"));
+            if (gameConnectionVisible != LiveMapEnabled)
+                throw new Exception("Live Map connection settings do not match this build type.");
             var before = settingsPanel.worldBound;
             await DragDockHandle(settingsPanel.Q("resize-settings"), new Vector2(-60, 35));
             if (Mathf.Abs(settingsPanel.worldBound.width - before.width + 60) > 2) throw new Exception("Settings resize failed.");
@@ -286,7 +306,18 @@ namespace ReMap.Standalone
         {
             var check = CheckDockLayout(); while (!check.IsCompleted) yield return null;
             if (check.IsFaulted) Debug.LogException(check.Exception);
+            ShowWelcome(true); for (int i = 0; i < 3; i++) yield return null;
+            string welcomeError = WelcomeLayoutError();
+            if (welcomeError != null)
+            {
+                Debug.LogError(welcomeError);
+                PlayerPrefs.DeleteKey(LayoutPreference + ".qa"); PlayerPrefs.Save();
+                Application.Quit(1); yield break;
+            }
             yield return new WaitForEndOfFrame(); var image = ScreenCapture.CaptureScreenshotAsTexture();
+            if (image != null) { File.WriteAllBytes(Path.Combine(Application.dataPath, "..", "editor-welcome-preview.png"), image.EncodeToPNG()); Destroy(image); }
+            ShowWelcome(false); for (int i = 0; i < 3; i++) yield return null;
+            yield return new WaitForEndOfFrame(); image = ScreenCapture.CaptureScreenshotAsTexture();
             if (image != null) { File.WriteAllBytes(Path.Combine(Application.dataPath, "..", "editor-layout-preview.png"), image.EncodeToPNG()); Destroy(image); }
             if (!check.IsFaulted)
             {
