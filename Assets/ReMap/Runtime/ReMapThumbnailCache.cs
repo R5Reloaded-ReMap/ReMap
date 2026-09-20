@@ -117,8 +117,10 @@ namespace ReMap.Standalone
             SampleThumbnailPerformance();thumbnailPaused=!thumbnailPaused;UpdateThumbnailPauseButtons();
             var targets=new HashSet<string>(Targets,StringComparer.OrdinalIgnoreCase);
             UpdateThumbnailProgress(assetLibrary.Records.Where(r=>r.Supports(targets)).ToArray());
-            if(thumbnailPaused){InterruptBackgroundFor();_=assetLibrary.ReleasePreviewSessionAsync();}
-            else _=PrepareThumbnails();
+            // Do not cancel an RSX batch which is already in flight. The look-ahead batch owns
+            // entries in extractingThumbnails; cancelling it here used to leave those entries
+            // permanently displayed as "Loading" while the queue itself was empty.
+            if(!thumbnailPaused)_=PrepareThumbnails();
         }
         private void UpdateThumbnailPauseButtons() {
             string text=L.T(thumbnailPaused?"#RESUME_THUMBNAILS":"#PAUSE_THUMBNAILS");
@@ -354,6 +356,18 @@ namespace ReMap.Standalone
                         thumbnailDashboardShownForRun=true;ShowThumbnailDashboard(true);
                     }
                     if(thumbnailDone+thumbnailFailed>=thumbnailTotal&&prefetched==null)break;
+                    if(thumbnailPaused&&prefetched!=null) {
+                        // A pause requested while Unity rendered the preceding batch can race with
+                        // the RSX look-ahead. Let that bounded extraction finish and release every
+                        // reservation; its cached result will be reused when preparation resumes.
+                        try{await FinishThumbnailExtraction(prefetched);}
+                        catch(Exception ex)when(ex is IOException||ex is TimeoutException||ex is OperationCanceledException)
+                        {Debug.LogWarning("REMAP_THUMBNAIL_PREFETCH_PAUSE: "+ex.Message);}
+                        foreach(var entry in prefetched.batch)extractingThumbnails.Remove(entry.Id);
+                        prefetched=null;UpdateThumbnailProgress(eligible);UpdateThumbnailControls();RefreshCatalog();
+                        await assetLibrary.ReleasePreviewSessionAsync();
+                        continue;
+                    }
                     if(ThumbnailWorkBlocked()){await Task.Delay(200);continue;}
                     bool continuous=assetLibrary.ContinuousPreviewsSupported;
                     int batchSize=assetLibrary.BatchPreviewsSupported?8:continuous?1:assetLibrary.UsesForkFeatures?8:1;
