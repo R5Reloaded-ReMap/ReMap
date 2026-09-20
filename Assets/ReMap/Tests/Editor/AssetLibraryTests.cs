@@ -227,9 +227,14 @@ namespace ReMap.Standalone.Tests
                 using (var library = new RsxAssetLibrary(root))
                 {
                     Assert.That(library.AssetExportDirectory, Is.EqualTo(Path.Combine(root, "AssetCache")));
+                    Directory.CreateDirectory(library.AssetExportDirectory);
+                    string existing = Path.Combine(library.AssetExportDirectory, "existing.cache");
+                    File.WriteAllText(existing, "keep");
                     library.ConfigureAssetExportDirectory(export);
                     Assert.That(library.AssetExportDirectory, Is.EqualTo(export));
                     Assert.That(Directory.Exists(export), Is.True);
+                    Assert.That(File.Exists(existing), Is.True);
+                    Assert.That(File.Exists(Path.Combine(export, "existing.cache")), Is.False);
                 }
 
                 using (var restored = new RsxAssetLibrary(root))
@@ -247,6 +252,111 @@ namespace ReMap.Standalone.Tests
                 if (Directory.Exists(root)) Directory.Delete(root, true);
                 if (Directory.Exists(export)) Directory.Delete(export, true);
             }
+        }
+        [Test] public void SettingsUsePersistentRootAndMigrateLegacyFile()
+        {
+            string root = Path.Combine(Path.GetTempPath(), "ReMapSettingsRoot-" + Guid.NewGuid().ToString("N"));
+            string persistent = Path.Combine(root, "Persistent");
+            string export = Path.Combine(root, "ExternalAssetCache");
+            Directory.CreateDirectory(root);
+            try
+            {
+                using (var legacy = new RsxAssetLibrary(root))
+                    legacy.ConfigureAssetExportDirectory(export);
+
+                string legacySettings = Path.Combine(root, "asset-source.local.json");
+                string persistentSettings = Path.Combine(persistent, "asset-source.local.json");
+                Assert.That(File.Exists(legacySettings), Is.True);
+                Assert.That(File.Exists(persistentSettings), Is.False);
+
+                using (var migrated = new RsxAssetLibrary(root, persistent))
+                {
+                    Assert.That(migrated.FirstLaunch, Is.False);
+                    Assert.That(migrated.SettingsRoot, Is.EqualTo(Path.GetFullPath(persistent)));
+                    Assert.That(migrated.AssetExportDirectory, Is.EqualTo(export));
+                    Assert.That(File.Exists(persistentSettings), Is.True);
+                }
+
+                using (var legacy = new RsxAssetLibrary(root))
+                    legacy.ConfigureAssetExportDirectory("");
+
+                using (var restored = new RsxAssetLibrary(root, persistent))
+                    Assert.That(restored.AssetExportDirectory, Is.EqualTo(export));
+            }
+            finally { if (Directory.Exists(root)) Directory.Delete(root, true); }
+        }
+        [Test] public void ImportBeta1SettingsKeepsThePreviousDefaultAssetCache()
+        {
+            string root = Path.Combine(Path.GetTempPath(), "ReMapBeta2-" + Guid.NewGuid().ToString("N"));
+            string legacy = Path.Combine(Path.GetTempPath(), "ReMapBeta1-" + Guid.NewGuid().ToString("N"));
+            string persistent = Path.Combine(root, "Persistent");
+            Directory.CreateDirectory(root); Directory.CreateDirectory(legacy);
+            try
+            {
+                string oldCache = Path.Combine(legacy, "AssetCache"); Directory.CreateDirectory(oldCache);
+                string marker = Path.Combine(oldCache, "existing.cache"); File.WriteAllText(marker, "keep");
+                var beta1 = new AssetSourceSettings { showMainBsp = true, assetExportDirectory = "" };
+                File.WriteAllText(Path.Combine(legacy, "asset-source.local.json"), UnityEngine.JsonUtility.ToJson(beta1, true));
+
+                using (var library = new RsxAssetLibrary(root, persistent))
+                {
+                    Assert.That(library.FirstLaunch, Is.True);
+                    Assert.That(library.ImportLegacySettings(legacy), Is.EqualTo(oldCache));
+                    Assert.That(library.Settings.showMainBsp, Is.True);
+                    Assert.That(library.Settings.assetExportDirectoryConfirmed, Is.True);
+                    Assert.That(library.FirstLaunch, Is.False);
+                    Assert.That(File.Exists(marker), Is.True);
+                    Assert.That(File.Exists(Path.Combine(persistent, "asset-source.local.json")), Is.True);
+                }
+                using (var restored = new RsxAssetLibrary(root, persistent))
+                    Assert.That(restored.AssetExportDirectory, Is.EqualTo(oldCache));
+            }
+            finally
+            {
+                if (Directory.Exists(root)) Directory.Delete(root, true);
+                if (Directory.Exists(legacy)) Directory.Delete(legacy, true);
+            }
+        }
+        [Test] public void ImportBeta1SettingsResolvesRelativeCustomCacheFromPreviousPackage()
+        {
+            string root = Path.Combine(Path.GetTempPath(), "ReMapBeta2Relative-" + Guid.NewGuid().ToString("N"));
+            string legacy = Path.Combine(Path.GetTempPath(), "ReMapBeta1Relative-" + Guid.NewGuid().ToString("N"));
+            Directory.CreateDirectory(root); Directory.CreateDirectory(legacy);
+            try
+            {
+                var beta1 = new AssetSourceSettings { assetExportDirectory = Path.Combine("Caches", "Assets") };
+                File.WriteAllText(Path.Combine(legacy, "asset-source.local.json"), UnityEngine.JsonUtility.ToJson(beta1, true));
+                using (var library = new RsxAssetLibrary(root))
+                    Assert.That(library.ImportLegacySettings(legacy), Is.EqualTo(Path.Combine(legacy, "Caches", "Assets")));
+            }
+            finally
+            {
+                if (Directory.Exists(root)) Directory.Delete(root, true);
+                if (Directory.Exists(legacy)) Directory.Delete(legacy, true);
+            }
+        }
+        [Test] public void MapReferenceVisibilityRestoresBspButStartsWithMprtDisabled()
+        {
+            string root = Path.Combine(Path.GetTempPath(), "ReMapReferenceVisibility-" + Guid.NewGuid().ToString("N"));
+            Directory.CreateDirectory(root);
+            try
+            {
+                using (var library = new RsxAssetLibrary(root))
+                {
+                    library.Settings.showMainBsp = true;
+                    library.Settings.showMprtModels = true;
+                    library.SaveSettings();
+                }
+                string json = File.ReadAllText(Path.Combine(root, "asset-source.local.json"));
+                Assert.That(json, Does.Contain("showMainBsp"));
+                Assert.That(json, Does.Not.Contain("showMprtModels"));
+                using (var restored = new RsxAssetLibrary(root))
+                {
+                    Assert.That(restored.Settings.showMainBsp, Is.True);
+                    Assert.That(restored.Settings.showMprtModels, Is.False);
+                }
+            }
+            finally { if (Directory.Exists(root)) Directory.Delete(root, true); }
         }
         [Test] public void RelativeAssetExportDirectoryIsResolvedFromLocalRoot()
         {
@@ -280,7 +390,7 @@ namespace ReMap.Standalone.Tests
             }
             finally { if (Directory.Exists(root)) Directory.Delete(root, true); }
         }
-        [Test] public void FirstLaunchEndsWhenSettingsAreSaved()
+        [Test] public void FirstLaunchEndsWhenAssetCacheLocationIsConfirmed()
         {
             string root = Path.Combine(Path.GetTempPath(), "ReMapFirstLaunch-" + Guid.NewGuid().ToString("N"));
             Directory.CreateDirectory(root);
@@ -289,8 +399,25 @@ namespace ReMap.Standalone.Tests
                 using (var library = new RsxAssetLibrary(root))
                 {
                     Assert.That(library.FirstLaunch, Is.True);
-                    library.SaveSettings();
+                    library.ConfigureAssetExportDirectory("");
                     Assert.That(library.FirstLaunch, Is.False);
+                }
+                using (var restored = new RsxAssetLibrary(root))
+                    Assert.That(restored.FirstLaunch, Is.False);
+            }
+            finally { if (Directory.Exists(root)) Directory.Delete(root, true); }
+        }
+        [Test] public void ExistingSettingsWithoutConfirmedAssetCacheShowWelcomeOnce()
+        {
+            string root = Path.Combine(Path.GetTempPath(), "ReMapCacheWelcome-" + Guid.NewGuid().ToString("N"));
+            Directory.CreateDirectory(root);
+            try
+            {
+                File.WriteAllText(Path.Combine(root, "asset-source.local.json"), UnityEngine.JsonUtility.ToJson(new AssetSourceSettings(), true));
+                using (var library = new RsxAssetLibrary(root))
+                {
+                    Assert.That(library.FirstLaunch, Is.True);
+                    library.ConfigureAssetExportDirectory("");
                 }
                 using (var restored = new RsxAssetLibrary(root))
                     Assert.That(restored.FirstLaunch, Is.False);
