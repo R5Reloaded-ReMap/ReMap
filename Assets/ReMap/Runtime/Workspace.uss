@@ -394,6 +394,7 @@ Button.toolbar-snap-settings { width: 19px; min-width: 19px; height: 20px; min-h
 .game-card { width: 98px; height: 112px; min-height: 112px; max-height: 112px; margin: 2px; padding: 0; border-width: 0; background-color: rgb(34,37,42); }
 .game-card:hover { background-color: rgb(42,47,53); }
 .game-card.selected { border-width: 2px; border-color: rgb(92,150,207); }
+.game-card.active-preview { border-width: 2px; border-color: rgb(103,221,183); }
 .card-image { position: relative; min-height: 69px; margin: 0; background-color: rgb(34,37,42); }
 .card-name, .card-category { padding-left: 4px; padding-right: 4px; }
 .card-name { height: 14px; margin-top: 2px; overflow: hidden; white-space: nowrap; }

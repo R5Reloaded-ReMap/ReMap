@@ -2007,6 +2007,10 @@
       "text": "{0} models"
     },
     {
+      "key": "#ARG0_MODELS_ARG1_SELECTED",
+      "text": "{0} models · {1} selected"
+    },
+    {
       "key": "#ARG0_ASSEMBLIES",
       "text": "{0} assemblies"
     },

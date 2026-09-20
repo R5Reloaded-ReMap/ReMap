@@ -25,6 +25,8 @@ namespace ReMap.Standalone
         private bool assetBusy;
         private const float CatalogCardWidth = 98, CatalogCardStride = 102, CatalogRowHeight = 112;
         private GameAssetRecord[] catalogRecords = Array.Empty<GameAssetRecord>();
+        private readonly HashSet<string> selectedLibraryAssetIds = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+        private string librarySelectionAnchorId;
         private int renderedCatalogFirst = -1, renderedCatalogLast = -1, renderedCatalogColumns = -1;
         private string catalogQuery;
         private bool catalogRendering;
@@ -140,7 +142,10 @@ namespace ReMap.Standalone
             if (catalogList == null || catalogMode == null) return;
             string[] targets = Targets;
             string query = catalogMode.index + "|" + search.value + "|" + string.Join(";", targets);
-            if (query != catalogQuery) { catalogQuery = query; catalogList.scrollOffset = Vector2.zero; }
+            if (query != catalogQuery) {
+                catalogQuery = query; catalogList.scrollOffset = Vector2.zero;
+                selectedLibraryAssetIds.Clear(); librarySelectionAnchorId = null;
+            }
             ApplyLibraryDetailLayout();
             if(libraryDetailsButton!=null)libraryDetailsButton.text=layout.libraryDetails?L.T("#HIDE_DETAILS"):L.T("#DETAILS");
             ReadThumbnailState();
@@ -151,7 +156,10 @@ namespace ReMap.Standalone
             catalogRecords = assetLibrary.Records.Where(r => r.Supports(targetSet) &&
                 GameAssetIndex.ShowInCatalog(r,term,assetLibrary.ShouldAutomaticallyPrepareThumbnail(r),
                     availableThumbnails.Contains(r.Id))).ToArray();
-            pageState.text = L.F("#ARG0_MODELS", catalogRecords.Length);
+            var visibleIds = new HashSet<string>(catalogRecords.Select(record => record.Id), StringComparer.OrdinalIgnoreCase);
+            selectedLibraryAssetIds.RemoveWhere(id => !visibleIds.Contains(id));
+            if (librarySelectionAnchorId != null && !visibleIds.Contains(librarySelectionAnchorId)) librarySelectionAnchorId = null;
+            UpdateLibraryModelCount();
             renderedCatalogFirst=renderedCatalogLast=renderedCatalogColumns=-1;
             RenderVisibleCatalog(true);
             if (catalogRecords.Length == 0) catalogList.Add(Label(L.T("#INDEX_SOURCES_CHANGE_FILTERS"), "note"));
@@ -198,7 +206,16 @@ namespace ReMap.Standalone
                 {
                     var record=catalogRecords[index]; visibleAssets.Add(record);
                     int row=index/columns,column=index%columns;
-                var card = Button("", () => { if (!suppressCardClick) _ = SelectGameAsset(record); }, "game-card"); RegisterDragSource(card, null, record);
+                bool additiveClick=false,rangeClick=false;
+                var card = Button("", () => {
+                    if (!suppressCardClick) _ = SelectGameAsset(record,additiveClick,rangeClick);
+                    additiveClick=rangeClick=false;
+                }, "game-card");
+                card.RegisterCallback<PointerDownEvent>(e => {
+                    if(e.button!=0)return;
+                    additiveClick=e.ctrlKey||e.commandKey;rangeClick=e.shiftKey;
+                },TrickleDown.TrickleDown);
+                RegisterDragSource(card, null, record);
                 card.style.position=Position.Absolute;card.style.left=2+column*CatalogCardStride;card.style.top=2+row*CatalogRowHeight;card.style.width=CatalogCardWidth;card.style.height=CatalogRowHeight-4;
                 card.style.marginLeft=0;card.style.marginRight=0;card.style.marginTop=0;card.style.marginBottom=0;
                 card.tooltip = L.T("#DOUBLE_CLICK_PLACE_DRAG_SCENE") + "\n" + record.modelPath + "\nGUID : " + record.guid + "\n" + string.Join("\n", record.origins.Select(o => o.archive));
@@ -221,7 +238,8 @@ namespace ReMap.Standalone
                 if(hasImage&&ThumbnailMissingAlbedo(record))image.Add(Label("!", "card-warning"));
                 var name=Label(record.Name,"card-name");EnableNameMarquee(name,record.Name);card.Add(name);
                 card.Add(Label(record.Category, "card-category"));
-                if (lastPreviewRequest?.Id == record.Id) card.AddToClassList("selected");
+                if (selectedLibraryAssetIds.Contains(record.Id)) card.AddToClassList("selected");
+                if (lastPreviewRequest?.Id == record.Id) card.AddToClassList("active-preview");
                 catalogList.Add(card);
                 }
                 PrioritizeVisibleThumbnails();
@@ -244,8 +262,34 @@ namespace ReMap.Standalone
             label.RegisterCallback<PointerLeaveEvent>(_=> {animation?.Pause();animation=null;offset=0;label.text=fullName;});
         }
 
-        private async Task SelectGameAsset(GameAssetRecord record)
+        private void UpdateLibraryModelCount()
         {
+            if(pageState==null)return;
+            pageState.text=selectedLibraryAssetIds.Count>0
+                ? L.F("#ARG0_MODELS_ARG1_SELECTED",catalogRecords.Length,selectedLibraryAssetIds.Count)
+                : L.F("#ARG0_MODELS",catalogRecords.Length);
+        }
+
+        private void SelectLibraryAsset(GameAssetRecord record,bool additive,bool range)
+        {
+            int anchorIndex=librarySelectionAnchorId==null?-1:Array.FindIndex(catalogRecords,item=>item.Id.Equals(librarySelectionAnchorId,StringComparison.OrdinalIgnoreCase));
+            int currentIndex=Array.FindIndex(catalogRecords,item=>item.Id.Equals(record.Id,StringComparison.OrdinalIgnoreCase));
+            if(range&&anchorIndex>=0&&currentIndex>=0) {
+                if(!additive)selectedLibraryAssetIds.Clear();
+                int first=Math.Min(anchorIndex,currentIndex),last=Math.Max(anchorIndex,currentIndex);
+                for(int index=first;index<=last;index++)selectedLibraryAssetIds.Add(catalogRecords[index].Id);
+            } else if(additive) {
+                if(!selectedLibraryAssetIds.Add(record.Id))selectedLibraryAssetIds.Remove(record.Id);
+                librarySelectionAnchorId=record.Id;
+            } else {
+                selectedLibraryAssetIds.Clear();selectedLibraryAssetIds.Add(record.Id);librarySelectionAnchorId=record.Id;
+            }
+            UpdateLibraryModelCount();RenderVisibleCatalog(true);
+        }
+
+        private async Task SelectGameAsset(GameAssetRecord record,bool additive=false,bool range=false)
+        {
+            SelectLibraryAsset(record,additive,range);
             SetLibraryDetails(true); await PreviewGameAsset(record);
         }
 
