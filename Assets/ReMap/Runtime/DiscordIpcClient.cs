@@ -57,7 +57,6 @@ namespace ReMap.Standalone
                 if (disposed || activity == desiredActivity) return;
                 desiredActivity = activity;
             }
-            ThreadPool.QueueUserWorkItem(_ => TrySendActivity());
             reconnect.Set();
         }
 
@@ -122,8 +121,7 @@ namespace ReMap.Standalone
                         ready = true;
                         sentActivity = null;
                     }
-                    TrySendActivity();
-                    ReadLoop(connection);
+                    Pump(connection);
                 }
                 catch { }
                 finally
@@ -138,46 +136,48 @@ namespace ReMap.Standalone
             }
         }
 
-        private void ReadLoop(FileStream connection)
+        private void Pump(FileStream connection)
         {
             while (true)
             {
-                Frame frame = ReadFrame(connection);
-                if (frame.Opcode == CloseOpcode) return;
-                if (frame.Opcode != PingOpcode) continue;
+                string activity = null;
                 lock (sync)
                 {
-                    if (stream != connection) return;
+                    if (disposed || stream != connection) return;
+                    if (ready && desiredActivity != null && desiredActivity != sentActivity)
+                        activity = desiredActivity;
                 }
-                lock (writeSync) WriteFrame(connection, PongOpcode, frame.Payload);
+                if (activity != null)
+                {
+                    lock (writeSync) WriteFrame(connection, FrameOpcode, ActivityCommand(activity));
+                    lock (sync)
+                    {
+                        if (!disposed && ready && stream == connection && desiredActivity == activity)
+                            sentActivity = activity;
+                    }
+                    continue;
+                }
+
+                if (AvailableBytes(connection) >= 8)
+                {
+                    Frame frame = ReadFrame(connection);
+                    if (frame.Opcode == CloseOpcode) return;
+                    if (frame.Opcode == PingOpcode)
+                        lock (writeSync) WriteFrame(connection, PongOpcode, frame.Payload);
+                    continue;
+                }
+
+                reconnect.WaitOne(250);
             }
         }
 
-        private void TrySendActivity()
+        private static uint AvailableBytes(FileStream connection)
         {
-            lock (writeSync)
-            {
-                FileStream connection;
-                string activity;
-                lock (sync)
-                {
-                    if (disposed || !ready || stream == null || desiredActivity == null || desiredActivity == sentActivity) return;
-                    connection = stream;
-                    activity = desiredActivity;
-                }
-                try { WriteFrame(connection, FrameOpcode, ActivityCommand(activity)); }
-                catch
-                {
-                    lock (sync) { if (stream == connection) CloseLocked(); }
-                    reconnect.Set();
-                    return;
-                }
-                lock (sync)
-                {
-                    if (!disposed && ready && stream == connection && desiredActivity == activity)
-                        sentActivity = activity;
-                }
-            }
+            if (!PeekNamedPipe(connection.SafeFileHandle, IntPtr.Zero, 0, IntPtr.Zero,
+                out uint available, IntPtr.Zero))
+                throw new IOException("Could not inspect the Discord IPC pipe. Win32 error " +
+                    Marshal.GetLastWin32Error() + ".");
+            return available;
         }
 
         private string ActivityCommand(string activity) =>
@@ -279,6 +279,16 @@ namespace ReMap.Standalone
             uint creationDisposition,
             uint flagsAndAttributes,
             IntPtr templateFile);
+
+        [DllImport("kernel32.dll", SetLastError = true)]
+        [return: MarshalAs(UnmanagedType.Bool)]
+        private static extern bool PeekNamedPipe(
+            SafeFileHandle namedPipe,
+            IntPtr buffer,
+            uint bufferSize,
+            IntPtr bytesRead,
+            out uint totalBytesAvailable,
+            IntPtr bytesLeftThisMessage);
     }
 }
 #endif
