@@ -124,6 +124,7 @@ namespace ReMap.Standalone
 
         {
 
+            Debug.Log("REMAP_STARTUP_BEGIN");
             Application.targetFrameRate = 60;
 
             world = new WorldView(objectShader, gridShader, lineShader);
@@ -139,8 +140,12 @@ namespace ReMap.Standalone
             if (!Environment.GetCommandLineArgs().AnySmokeFlag()) snap = PlayerPrefs.GetInt(SnapPreference, 1) != 0;
             centrePivot = PlayerPrefs.GetInt(CentrePivotPreferenceKey, 1) != 0;
             autoCollapseOtherFolders = PlayerPrefs.GetInt(AutoCollapseOtherFoldersPreferenceKey, 0) != 0;
-            LoadLayout(); BuildInterface();
+            LoadLayout();
+            Debug.Log("REMAP_STARTUP_BUILD_INTERFACE");
+            BuildInterface();
+            Debug.Log("REMAP_STARTUP_INTERFACE_READY");
             if (!Environment.GetCommandLineArgs().AnySmokeFlag()) InitializeDiscordPresence();
+            Debug.Log("REMAP_STARTUP_DISCORD_READY");
 
             session.Edit(doc => {
 
@@ -154,13 +159,17 @@ namespace ReMap.Standalone
                 doc.objects.Add(new MapObject { assetId = "demo:cylinder", displayName = L.T("#PILLAR"), position = new Float3(-2,1.25f,0), scale = new Float3(.65f,1,.65f) });
 
             });
+            Debug.Log("REMAP_STARTUP_SESSION_READY");
 
             Refresh(); RefreshProjectSelector(DraftSlot(assetLibrary.TargetGame));
+            Debug.Log("REMAP_STARTUP_INITIAL_REFRESH_READY");
 
             bool regularLaunch = !Environment.GetCommandLineArgs().Any(a => a.StartsWith("-remap"));
             bool firstLaunch = regularLaunch && assetLibrary.FirstLaunch;
             bool restoredWorkspace = regularLaunch && TryRestoreWorkspace();
+            Debug.Log("REMAP_STARTUP_WORKSPACE_READY");
             if (regularLaunch) assetLibrary.SelectTarget(snapshot.gameTarget, false);
+            Debug.Log("REMAP_STARTUP_TARGET_READY");
             if (regularLaunch && assetLibrary.Configured && !firstLaunch)
             {
                 if (snapshot.targetMaps.Count == 0)
@@ -168,7 +177,9 @@ namespace ReMap.Standalone
                     session.Edit(d => d.targetMaps = assetLibrary.LastTargetMaps.Where(m => assetLibrary.Maps.Any(x => x.Id == m)).ToList());
                     Refresh();
                 }
+                Debug.Log("REMAP_STARTUP_INDEX_BEGIN");
                 _ = IndexAssets();
+                Debug.Log("REMAP_STARTUP_INDEX_SCHEDULED");
             }
 
             if (Environment.GetCommandLineArgs().Contains("-remapThumbnailPrioritySmoke")) StartCoroutine(ThumbnailPrioritySmoke());
@@ -199,6 +210,7 @@ namespace ReMap.Standalone
             if (Environment.GetCommandLineArgs().Contains("-remapMapReferenceSmoke")) StartCoroutine(MapReferenceComparisonSmoke());
             SetStatus(restoredWorkspace ? L.T("#LAST_WORKSPACE_RESTORED") : L.T("#CHOOSE_SHAPE_LIBRARY_CLICK_SCENE"));
             if (firstLaunch) ShowWelcome(true);
+            Debug.Log("REMAP_STARTUP_READY");
 
         }
 
