@@ -70,9 +70,16 @@ namespace ReMap.Standalone
             var candidates = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
             AddWindowsShortcutCandidates(candidates);
             foreach (string root in nearbyRoots ?? Array.Empty<string>()) AddOfficialCandidates(candidates, root);
+            string found = candidates.FirstOrDefault(IsOfficialApexInstallation);
+            if (!string.IsNullOrEmpty(found))
+            {
+                Settings.officialApexGameDirectory = found;
+                return;
+            }
             foreach (var drive in DriveInfo.GetDrives())
             {
-                if (!drive.IsReady) continue;
+                if (!drive.IsReady || drive.DriveType == DriveType.Network || drive.DriveType == DriveType.CDRom ||
+                    drive.DriveType == DriveType.NoRootDirectory) continue;
                 string root = drive.RootDirectory.FullName;
                 AddOfficialCandidates(candidates, root);
                 AddOfficialCandidates(candidates, Path.Combine(root, "Games"));
@@ -80,8 +87,14 @@ namespace ReMap.Standalone
                 AddSteamLibraries(candidates, Path.Combine(root, "Program Files (x86)", "Steam"));
                 AddSteamLibraries(candidates, Path.Combine(root, "Steam"));
                 AddSteamLibraries(candidates, Path.Combine(root, "Games", "steamapps"));
+                found = candidates.FirstOrDefault(IsOfficialApexInstallation);
+                if (!string.IsNullOrEmpty(found))
+                {
+                    Settings.officialApexGameDirectory = found;
+                    return;
+                }
             }
-            Settings.officialApexGameDirectory = candidates.FirstOrDefault(IsOfficialApexInstallation) ?? "";
+            Settings.officialApexGameDirectory = "";
         }
 
         private static void AddWindowsShortcutCandidates(HashSet<string> candidates)

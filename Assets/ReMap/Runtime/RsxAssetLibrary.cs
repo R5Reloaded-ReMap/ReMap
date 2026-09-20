@@ -107,9 +107,11 @@ namespace ReMap.Standalone
             Settings = Settings ?? new AssetSourceSettings();
             MigrateSettings();
             bool requiresWelcome = sourceSettingsPath == null || !Settings.assetExportDirectoryConfirmed;
+            string officialApexBeforeDetection = Settings.officialApexGameDirectory ?? "";
             AutoDetectInstallations();
             SelectTarget(Settings.targetGame, false);
-            if (migrateLegacySettings) SaveSettings();
+            if (migrateLegacySettings || !string.Equals(officialApexBeforeDetection,
+                Settings.officialApexGameDirectory ?? "", StringComparison.OrdinalIgnoreCase)) SaveSettings();
             FirstLaunch = requiresWelcome;
         }
         public static string FindLocalRoot()
@@ -289,16 +291,21 @@ namespace ReMap.Standalone
                 for (int i = 0; directory != null && i < 5; i++, directory = directory.Parent)
                     if (directory.Parent != null) roots.Add(directory.FullName);
             }
-            Dictionary<string, string> nearby = FindInstallations(roots, 3);
-            if (string.IsNullOrWhiteSpace(Settings.r5ReloadedGameDirectory))
+            bool missingR5Reloaded = string.IsNullOrWhiteSpace(Settings.r5ReloadedGameDirectory);
+            bool missingR5Flowstate = string.IsNullOrWhiteSpace(Settings.r5FlowstateGameDirectory);
+            if (missingR5Reloaded || missingR5Flowstate)
             {
-                nearby.TryGetValue(GameTargets.R5Reloaded, out string found);
-                Settings.r5ReloadedGameDirectory = found ?? "";
-            }
-            if (string.IsNullOrWhiteSpace(Settings.r5FlowstateGameDirectory))
-            {
-                nearby.TryGetValue(GameTargets.R5Flowstate, out string found);
-                Settings.r5FlowstateGameDirectory = found ?? "";
+                Dictionary<string, string> nearby = FindInstallations(roots, 3);
+                if (missingR5Reloaded)
+                {
+                    nearby.TryGetValue(GameTargets.R5Reloaded, out string found);
+                    Settings.r5ReloadedGameDirectory = found ?? "";
+                }
+                if (missingR5Flowstate)
+                {
+                    nearby.TryGetValue(GameTargets.R5Flowstate, out string found);
+                    Settings.r5FlowstateGameDirectory = found ?? "";
+                }
             }
             if (string.IsNullOrWhiteSpace(Settings.r5ReloadedGameDirectory) || string.IsNullOrWhiteSpace(Settings.r5FlowstateGameDirectory))
             {
