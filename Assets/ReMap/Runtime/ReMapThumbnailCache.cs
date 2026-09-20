@@ -58,6 +58,8 @@ namespace ReMap.Standalone
             thumbnailDashboardActive, thumbnailDashboardQueuedTitle, thumbnailDashboardQueuedLeft,
             thumbnailDashboardQueuedRight, thumbnailDashboardPerformance;
         private VisualElement thumbnailDashboardQueuedBody;
+        private Foldout thumbnailDashboardCategoryFilter;
+        private VisualElement thumbnailDashboardCategoryChoices;
         private Button thumbnailPauseButton, thumbnailDashboardPauseButton;
         private int thumbnailDone, thumbnailFailed, thumbnailTotal, thumbnailAvailable;
         private bool thumbnailDashboardShownForRun, thumbnailRendering;
@@ -99,6 +101,13 @@ namespace ReMap.Standalone
             metrics.Add(ThumbnailMetric(L.T("#THUMBNAIL_SPEED"),out thumbnailDashboardSpeed));
             thumbnailDashboardSpeed.AddToClassList("thumbnail-dashboard-speed-value");
             metrics.Add(ThumbnailMetric(L.T("#THUMBNAIL_ESTIMATED_TIME"),out thumbnailDashboardEta));
+            thumbnailDashboardCategoryFilter=new Foldout{value=false};
+            thumbnailDashboardCategoryFilter.AddToClassList("thumbnail-dashboard-category-filter");dashboard.Add(thumbnailDashboardCategoryFilter);
+            thumbnailDashboardCategoryFilter.Add(Label(L.T("#THUMBNAIL_CATEGORY_FILTER_HELP"),"note"));
+            var categoryScroll=new ScrollView(ScrollViewMode.Vertical);categoryScroll.AddToClassList("thumbnail-dashboard-category-scroll");
+            thumbnailDashboardCategoryFilter.Add(categoryScroll);
+            thumbnailDashboardCategoryChoices=new VisualElement();thumbnailDashboardCategoryChoices.AddToClassList("thumbnail-category-choices");
+            categoryScroll.Add(thumbnailDashboardCategoryChoices);RefreshThumbnailCategoryChoices();
             var queues=new VisualElement();queues.AddToClassList("thumbnail-dashboard-queues");dashboard.Add(queues);
             queues.Add(ThumbnailQueuePanel(L.T("#THUMBNAIL_CURRENT_MODELS"),out thumbnailDashboardActive));
             queues.Add(ThumbnailQueueColumns(L.T("#THUMBNAIL_NEXT_MODELS"),out thumbnailDashboardQueuedTitle,

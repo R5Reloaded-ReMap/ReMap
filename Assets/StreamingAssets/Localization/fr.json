@@ -1931,6 +1931,10 @@
       "text": "Les catégories mdl/<dossier> cochées sont ignorées pendant la préparation automatique des miniatures afin d’économiser de l’espace disque. Leurs modèles restent recherchables et peuvent toujours être extraits à la demande. Les fichiers déjà en cache sont conservés."
     },
     {
+      "key": "#THUMBNAIL_CATEGORY_FILTER_SUMMARY_ARG0_ARG1",
+      "text": "Catégories de modèles · {0} dossiers ignorés ({1} modèles)"
+    },
+    {
       "key": "#USE_RECOMMENDED_FILTERS",
       "text": "Exclusions recommandées"
     },

@@ -472,17 +472,25 @@ namespace ReMap.Standalone.Tests
             }
             finally { if (Directory.Exists(root)) Directory.Delete(root, true); }
         }
-        [Test] public void ThumbnailCategoryExclusionsDefaultToTechnicalModelFamiliesAndCanBeCleared()
+        [Test] public void ThumbnailCategoryExclusionsDefaultToFxAndWeaponFamiliesAndCanBeCleared()
         {
             string root = Path.Combine(Path.GetTempPath(), "ReMapThumbnailCategories-" + Guid.NewGuid().ToString("N"));
             Directory.CreateDirectory(root);
             try
             {
                 var weapon = new GameAssetRecord { modelPath = "mdl/weapons/rifle.rmdl" };
+                var weaponR5 = new GameAssetRecord { modelPath = "mdl/weapons_r5/rifle.rmdl" };
+                var fx = new GameAssetRecord { modelPath = "mdl/fx/spark.rmdl" };
+                var human = new GameAssetRecord { modelPath = "mdl/humans/pilot.rmdl" };
+                var techart = new GameAssetRecord { modelPath = "mdl/techart/test.rmdl" };
                 var prop = new GameAssetRecord { modelPath = "mdl/props/crate.rmdl" };
                 using (var library = new RsxAssetLibrary(root))
                 {
                     Assert.That(library.ShouldAutomaticallyPrepareThumbnail(weapon), Is.False);
+                    Assert.That(library.ShouldAutomaticallyPrepareThumbnail(weaponR5), Is.False);
+                    Assert.That(library.ShouldAutomaticallyPrepareThumbnail(fx), Is.False);
+                    Assert.That(library.ShouldAutomaticallyPrepareThumbnail(human), Is.True);
+                    Assert.That(library.ShouldAutomaticallyPrepareThumbnail(techart), Is.True);
                     Assert.That(library.ShouldAutomaticallyPrepareThumbnail(prop), Is.True);
                     library.ConfigureSkippedThumbnailCategories(Array.Empty<string>());
                     Assert.That(library.ShouldAutomaticallyPrepareThumbnail(weapon), Is.True);
@@ -491,6 +499,42 @@ namespace ReMap.Standalone.Tests
                     Assert.That(restored.ShouldAutomaticallyPrepareThumbnail(weapon), Is.True);
             }
             finally { if (Directory.Exists(root)) Directory.Delete(root, true); }
+        }
+        [Test] public void PreviousDefaultThumbnailExclusionsMigrateWithoutOverwritingCustomChoices()
+        {
+            string migratedRoot = Path.Combine(Path.GetTempPath(), "ReMapThumbnailMigration-" + Guid.NewGuid().ToString("N"));
+            string customRoot = Path.Combine(Path.GetTempPath(), "ReMapThumbnailCustom-" + Guid.NewGuid().ToString("N"));
+            Directory.CreateDirectory(migratedRoot);
+            Directory.CreateDirectory(customRoot);
+            try
+            {
+                var previousDefaults = new AssetSourceSettings {
+                    thumbnailCategoryFilterVersion = 1,
+                    skippedThumbnailCategories = new[] { "fx", "humans", "humans_r5", "techart", "weapons", "weapons_r2", "weapons_r5" }
+                };
+                File.WriteAllText(Path.Combine(migratedRoot, "asset-source.local.json"),
+                    UnityEngine.JsonUtility.ToJson(previousDefaults, true));
+                using (var migrated = new RsxAssetLibrary(migratedRoot))
+                {
+                    Assert.That(migrated.Settings.skippedThumbnailCategories,
+                        Is.EquivalentTo(new[] { "fx", "weapons", "weapons_r2", "weapons_r5" }));
+                    Assert.That(migrated.Settings.thumbnailCategoryFilterVersion, Is.EqualTo(2));
+                }
+
+                var custom = new AssetSourceSettings {
+                    thumbnailCategoryFilterVersion = 1,
+                    skippedThumbnailCategories = new[] { "props" }
+                };
+                File.WriteAllText(Path.Combine(customRoot, "asset-source.local.json"),
+                    UnityEngine.JsonUtility.ToJson(custom, true));
+                using (var restored = new RsxAssetLibrary(customRoot))
+                    Assert.That(restored.Settings.skippedThumbnailCategories, Is.EquivalentTo(new[] { "props" }));
+            }
+            finally
+            {
+                if (Directory.Exists(migratedRoot)) Directory.Delete(migratedRoot, true);
+                if (Directory.Exists(customRoot)) Directory.Delete(customRoot, true);
+            }
         }
         [Test] public void FindsNamedModdedInstallationsAndRejectsOfficialApex()
         {

@@ -20,6 +20,11 @@ namespace ReMap.Standalone
         private TextField settingsAssetFolder;
         private Label missingMapNotice;
         private VisualElement thumbnailCategoryChoices;
+        private sealed class ThumbnailCategoryOption
+        {
+            public string Name, DisplayName;
+            public int Count;
+        }
         private readonly List<string> editingMapIds = new List<string>();
 
         private void BuildSettings()
@@ -130,7 +135,7 @@ namespace ReMap.Standalone
                 RefreshThumbnailCategoryChoices();
             }));
             thumbnailCategories.Add(categoryActions);
-            thumbnailCategoryChoices = new VisualElement(); thumbnailCategoryChoices.AddToClassList("map-choices");
+            thumbnailCategoryChoices = new VisualElement(); thumbnailCategoryChoices.AddToClassList("thumbnail-category-choices");
             thumbnailCategories.Add(thumbnailCategoryChoices); RefreshThumbnailCategoryChoices();
             if (LiveMapEnabled)
             {
@@ -188,21 +193,38 @@ namespace ReMap.Standalone
 
         private void RefreshThumbnailCategoryChoices()
         {
-            if (thumbnailCategoryChoices == null || assetLibrary == null) return;
-            thumbnailCategoryChoices.Clear();
+            if (assetLibrary == null) return;
             var skipped = new HashSet<string>(assetLibrary.Settings.skippedThumbnailCategories ??
                 Array.Empty<string>(), StringComparer.OrdinalIgnoreCase);
             var categories = assetLibrary.Records.GroupBy(record => record.Category,
-                StringComparer.OrdinalIgnoreCase).Select(group => new { Name = group.Key, Count = group.Count() })
-                .OrderBy(group => group.Name, StringComparer.OrdinalIgnoreCase).ToArray();
+                StringComparer.OrdinalIgnoreCase).Select(group => new ThumbnailCategoryOption {
+                    Name = group.Key, DisplayName = FriendlyThumbnailCategory(group.Key), Count = group.Count()
+                }).OrderByDescending(group => group.Count).ThenBy(group => group.DisplayName,
+                    StringComparer.OrdinalIgnoreCase).ToArray();
+            PopulateThumbnailCategoryChoices(thumbnailCategoryChoices, categories, skipped);
+            PopulateThumbnailCategoryChoices(thumbnailDashboardCategoryChoices, categories, skipped);
+            if (thumbnailDashboardCategoryFilter != null)
+            {
+                int skippedFolders = categories.Count(category => skipped.Contains(category.Name));
+                int skippedModels = categories.Where(category => skipped.Contains(category.Name)).Sum(category => category.Count);
+                thumbnailDashboardCategoryFilter.text = L.F("#THUMBNAIL_CATEGORY_FILTER_SUMMARY_ARG0_ARG1",
+                    skippedFolders, skippedModels);
+            }
+        }
+
+        private void PopulateThumbnailCategoryChoices(VisualElement container, ThumbnailCategoryOption[] categories,
+            HashSet<string> skipped)
+        {
+            if (container == null) return;
+            container.Clear();
             if (categories.Length == 0)
             {
-                thumbnailCategoryChoices.Add(Label(L.T("#INDEX_FIRST_TO_LIST_MODEL_CATEGORIES"), "note"));
+                container.Add(Label(L.T("#INDEX_FIRST_TO_LIST_MODEL_CATEGORIES"), "note"));
                 return;
             }
             foreach (var category in categories)
             {
-                var toggle = new Toggle(L.F("#THUMBNAIL_CATEGORY_ARG0_ARG1", category.Name, category.Count)) {
+                var toggle = new Toggle(L.F("#THUMBNAIL_CATEGORY_ARG0_ARG1", category.DisplayName, category.Count)) {
                     value = skipped.Contains(category.Name), tooltip = "mdl/" + category.Name + "/"
                 };
                 toggle.RegisterValueChangedCallback(change => {
@@ -210,9 +232,21 @@ namespace ReMap.Standalone
                         Array.Empty<string>(), StringComparer.OrdinalIgnoreCase);
                     if (change.newValue) selected.Add(category.Name); else selected.Remove(category.Name);
                     ApplySkippedThumbnailCategories(selected);
+                    root.schedule.Execute(RefreshThumbnailCategoryChoices);
                 });
-                thumbnailCategoryChoices.Add(toggle);
+                container.Add(toggle);
             }
+        }
+
+        private static string FriendlyThumbnailCategory(string category)
+        {
+            return string.Join(" ", (category ?? "").Split(new[] { '_' }, StringSplitOptions.RemoveEmptyEntries)
+                .Select(part => string.Equals(part, "fx", StringComparison.OrdinalIgnoreCase) ? "FX" :
+                    string.Equals(part, "hud", StringComparison.OrdinalIgnoreCase) ? "HUD" :
+                    string.Equals(part, "imc", StringComparison.OrdinalIgnoreCase) ? "IMC" :
+                    string.Equals(part, "r2", StringComparison.OrdinalIgnoreCase) ? "R2" :
+                    string.Equals(part, "r5", StringComparison.OrdinalIgnoreCase) ? "R5" :
+                    char.ToUpperInvariant(part[0]) + part.Substring(1)));
         }
 
         private void BuildIndexingPage()

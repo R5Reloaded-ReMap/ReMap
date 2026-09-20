@@ -1931,6 +1931,10 @@
       "text": "Checked mdl/<folder> categories are skipped during automatic thumbnail preparation to save disk space. Their models remain searchable and can still be extracted on demand. Existing cache files are preserved."
     },
     {
+      "key": "#THUMBNAIL_CATEGORY_FILTER_SUMMARY_ARG0_ARG1",
+      "text": "Model categories · {0} folders skipped ({1} models)"
+    },
+    {
       "key": "#USE_RECOMMENDED_FILTERS",
       "text": "Use recommended exclusions"
     },

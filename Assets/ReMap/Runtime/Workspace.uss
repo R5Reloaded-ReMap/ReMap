@@ -423,6 +423,10 @@ Button.thumbnail-dashboard-minimize { flex-shrink: 0; height: 29px; margin-left:
 .thumbnail-dashboard-metric-title { color: rgb(139,157,177); font-size: 10px; letter-spacing: .5px; }
 .thumbnail-dashboard-metric-value { margin-top: 4px; color: rgb(228,232,238); font-size: 20px; -unity-font-style: bold; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .thumbnail-dashboard-speed-value { font-size: 16px; }
+.thumbnail-dashboard-category-filter { flex-shrink: 0; margin: -6px 0 10px 0; padding: 4px 7px; background-color: rgb(31,33,37); border-width: 1px; border-color: rgb(57,61,68); border-radius: 3px; }
+.thumbnail-dashboard-category-filter > Toggle { height: 24px; -unity-font-style: bold; color: rgb(174,195,218); }
+.thumbnail-dashboard-category-filter > .unity-foldout__content { padding-left: 0; }
+.thumbnail-dashboard-category-scroll { height: 154px; flex-shrink: 0; margin-top: 3px; }
 .thumbnail-dashboard-queues { flex-direction: row; flex-grow: 1; flex-basis: 0; min-height: 120px; margin: 0 -5px; }
 .thumbnail-dashboard-queue { min-width: 220px; flex-grow: 1; flex-basis: 0; margin: 0 5px; padding: 12px 14px; background-color: rgb(31,33,37); border-width: 1px; border-color: rgb(57,61,68); border-radius: 3px; overflow: hidden; }
 .thumbnail-dashboard-queue-title { height: 22px; flex-shrink: 0; color: rgb(174,195,218); -unity-font-style: bold; font-size: 11px; }
@@ -541,6 +545,10 @@ Button.script-property-remove-button:hover { background-color: rgb(91,65,66); }
 .port-report-item { min-height: 22px; padding: 3px 7px; margin-bottom: 2px; white-space: normal; color: rgb(220,184,165); background-color: rgb(55,41,39); }
 .map-choices { flex-direction: row; flex-wrap: wrap; padding: 5px 7px; background-color: rgb(36,37,42); border-width: 1px; border-color: rgb(61,64,71); }
 .map-choices Toggle { width: 50%; min-width: 210px; margin: 0; padding-right: 8px; }
+.thumbnail-category-choices { flex-direction: row; flex-wrap: wrap; padding: 5px 7px; background-color: rgb(36,37,42); border-width: 1px; border-color: rgb(61,64,71); }
+.thumbnail-category-choices Toggle { width: 33.333%; min-width: 185px; height: 25px; flex-shrink: 0; margin: 0; padding-right: 9px; }
+.thumbnail-category-choices .unity-toggle__input { flex-direction: row-reverse; justify-content: flex-end; }
+.thumbnail-category-choices .unity-base-field__label { min-width: 0; flex-grow: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .map-choice-column { width: 50%; min-width: 0; padding: 1px 9px 1px 3px; }
 .map-choice-column-right { padding-left: 12px; padding-right: 3px; border-left-width: 1px; border-left-color: rgb(70,74,82); }
 .map-choice-column Toggle { width: 100%; min-width: 0; flex-direction: row; align-items: center; padding: 0; }
