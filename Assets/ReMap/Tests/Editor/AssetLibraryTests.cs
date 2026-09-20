@@ -504,7 +504,7 @@ namespace ReMap.Standalone.Tests
             }
             finally { if (Directory.Exists(root)) Directory.Delete(root, true); }
         }
-        [Test] public void ThumbnailCategoryExclusionsDefaultToFxAndWeaponFamiliesAndCanBeCleared()
+        [Test] public void ThumbnailCategoryExclusionsDefaultToFxTechartAndWeaponsAndCanBeCleared()
         {
             string root = Path.Combine(Path.GetTempPath(), "ReMapThumbnailCategories-" + Guid.NewGuid().ToString("N"));
             Directory.CreateDirectory(root);
@@ -524,7 +524,7 @@ namespace ReMap.Standalone.Tests
                     Assert.That(library.ShouldAutomaticallyPrepareThumbnail(weaponR2), Is.True);
                     Assert.That(library.ShouldAutomaticallyPrepareThumbnail(fx), Is.False);
                     Assert.That(library.ShouldAutomaticallyPrepareThumbnail(human), Is.True);
-                    Assert.That(library.ShouldAutomaticallyPrepareThumbnail(techart), Is.True);
+                    Assert.That(library.ShouldAutomaticallyPrepareThumbnail(techart), Is.False);
                     Assert.That(library.ShouldAutomaticallyPrepareThumbnail(prop), Is.True);
                     library.ConfigureSkippedThumbnailCategories(Array.Empty<string>());
                     Assert.That(library.ShouldAutomaticallyPrepareThumbnail(weapon), Is.True);
@@ -538,9 +538,11 @@ namespace ReMap.Standalone.Tests
         {
             string migratedRoot = Path.Combine(Path.GetTempPath(), "ReMapThumbnailMigration-" + Guid.NewGuid().ToString("N"));
             string versionTwoRoot = Path.Combine(Path.GetTempPath(), "ReMapThumbnailMigrationV2-" + Guid.NewGuid().ToString("N"));
+            string versionThreeRoot = Path.Combine(Path.GetTempPath(), "ReMapThumbnailMigrationV3-" + Guid.NewGuid().ToString("N"));
             string customRoot = Path.Combine(Path.GetTempPath(), "ReMapThumbnailCustom-" + Guid.NewGuid().ToString("N"));
             Directory.CreateDirectory(migratedRoot);
             Directory.CreateDirectory(versionTwoRoot);
+            Directory.CreateDirectory(versionThreeRoot);
             Directory.CreateDirectory(customRoot);
             try
             {
@@ -553,8 +555,8 @@ namespace ReMap.Standalone.Tests
                 using (var migrated = new RsxAssetLibrary(migratedRoot))
                 {
                     Assert.That(migrated.Settings.skippedThumbnailCategories,
-                        Is.EquivalentTo(new[] { "fx", "weapons" }));
-                    Assert.That(migrated.Settings.thumbnailCategoryFilterVersion, Is.EqualTo(3));
+                        Is.EquivalentTo(new[] { "fx", "techart", "weapons" }));
+                    Assert.That(migrated.Settings.thumbnailCategoryFilterVersion, Is.EqualTo(4));
                 }
 
                 var versionTwoDefaults = new AssetSourceSettings {
@@ -565,7 +567,17 @@ namespace ReMap.Standalone.Tests
                     UnityEngine.JsonUtility.ToJson(versionTwoDefaults, true));
                 using (var migrated = new RsxAssetLibrary(versionTwoRoot))
                     Assert.That(migrated.Settings.skippedThumbnailCategories,
-                        Is.EquivalentTo(new[] { "fx", "weapons" }));
+                        Is.EquivalentTo(new[] { "fx", "techart", "weapons" }));
+
+                var versionThreeDefaults = new AssetSourceSettings {
+                    thumbnailCategoryFilterVersion = 3,
+                    skippedThumbnailCategories = new[] { "fx", "weapons" }
+                };
+                File.WriteAllText(Path.Combine(versionThreeRoot, "asset-source.local.json"),
+                    UnityEngine.JsonUtility.ToJson(versionThreeDefaults, true));
+                using (var migrated = new RsxAssetLibrary(versionThreeRoot))
+                    Assert.That(migrated.Settings.skippedThumbnailCategories,
+                        Is.EquivalentTo(new[] { "fx", "techart", "weapons" }));
 
                 var custom = new AssetSourceSettings {
                     thumbnailCategoryFilterVersion = 1,
@@ -580,6 +592,7 @@ namespace ReMap.Standalone.Tests
             {
                 if (Directory.Exists(migratedRoot)) Directory.Delete(migratedRoot, true);
                 if (Directory.Exists(versionTwoRoot)) Directory.Delete(versionTwoRoot, true);
+                if (Directory.Exists(versionThreeRoot)) Directory.Delete(versionThreeRoot, true);
                 if (Directory.Exists(customRoot)) Directory.Delete(customRoot, true);
             }
         }

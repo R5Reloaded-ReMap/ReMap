@@ -72,11 +72,13 @@ namespace ReMap.Standalone
     public sealed partial class RsxAssetLibrary : IDisposable
     {
         public static readonly string[] DefaultSkippedThumbnailCategories =
-            { "fx", "weapons" };
+            { "fx", "techart", "weapons" };
         private static readonly string[] VersionOneDefaultSkippedThumbnailCategories =
             { "fx", "humans", "humans_r5", "techart", "weapons", "weapons_r2", "weapons_r5" };
         private static readonly string[] VersionTwoDefaultSkippedThumbnailCategories =
             { "fx", "weapons", "weapons_r2", "weapons_r5" };
+        private static readonly string[] VersionThreeDefaultSkippedThumbnailCategories =
+            { "fx", "weapons" };
         private static readonly object InstallationDetectionLock = new object();
         private static Dictionary<string, string> cachedDriveInstallations;
         public readonly string LocalRoot;
@@ -135,7 +137,7 @@ namespace ReMap.Standalone
                 .Where(category => !string.IsNullOrWhiteSpace(category)).Select(category => category.Trim())
                 .Distinct(StringComparer.OrdinalIgnoreCase).OrderBy(category => category,
                     StringComparer.OrdinalIgnoreCase).ToArray();
-            Settings.thumbnailCategoryFilterVersion = 3;
+            Settings.thumbnailCategoryFilterVersion = 4;
             skippedThumbnailCategories = null;
             SaveSettings();
         }
@@ -353,7 +355,11 @@ namespace ReMap.Standalone
                 new HashSet<string>(Settings.skippedThumbnailCategories ?? Array.Empty<string>(),
                     StringComparer.OrdinalIgnoreCase).SetEquals(VersionTwoDefaultSkippedThumbnailCategories))
                 Settings.skippedThumbnailCategories = DefaultSkippedThumbnailCategories.ToArray();
-            Settings.thumbnailCategoryFilterVersion = 3;
+            else if (Settings.thumbnailCategoryFilterVersion < 4 &&
+                new HashSet<string>(Settings.skippedThumbnailCategories ?? Array.Empty<string>(),
+                    StringComparer.OrdinalIgnoreCase).SetEquals(VersionThreeDefaultSkippedThumbnailCategories))
+                Settings.skippedThumbnailCategories = DefaultSkippedThumbnailCategories.ToArray();
+            Settings.thumbnailCategoryFilterVersion = 4;
             Settings.skippedThumbnailCategories = (Settings.skippedThumbnailCategories ?? Array.Empty<string>())
                 .Where(category => !string.IsNullOrWhiteSpace(category)).Select(category => category.Trim())
                 .Distinct(StringComparer.OrdinalIgnoreCase).OrderBy(category => category,
