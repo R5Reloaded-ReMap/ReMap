@@ -113,6 +113,10 @@ namespace ReMap.Standalone
             queues.Add(ThumbnailQueuePanel(L.T("#THUMBNAIL_CURRENT_MODELS"),out thumbnailDashboardActive));
             queues.Add(ThumbnailQueueColumns(L.T("#THUMBNAIL_NEXT_MODELS"),out thumbnailDashboardQueuedTitle,
                 out thumbnailDashboardQueuedLeft,out thumbnailDashboardQueuedRight,out thumbnailDashboardQueuedBody));
+            thumbnailDashboardCategoryFilter.RegisterValueChangedCallback(change => {
+                queues.style.display=change.newValue?DisplayStyle.None:DisplayStyle.Flex;
+                thumbnailDashboardCategoryFilter.EnableInClassList("expanded",change.newValue);
+            });
             thumbnailDashboardPerformance=Label("","thumbnail-dashboard-performance");dashboard.Add(thumbnailDashboardPerformance);
             var actions=new VisualElement();actions.AddToClassList("thumbnail-dashboard-actions");dashboard.Add(actions);
             thumbnailDashboardPauseButton=ImmediateThumbnailPauseButton();thumbnailDashboardPauseButton.AddToClassList("primary");actions.Add(thumbnailDashboardPauseButton);
@@ -162,7 +166,7 @@ namespace ReMap.Standalone
             if(thumbnailDashboard==null)return;
             thumbnailDashboard.style.display=show?DisplayStyle.Flex:DisplayStyle.None;
             if(world?.Camera!=null)world.Camera.enabled=!show;
-            if(show){world?.CancelNavigation();world?.ClearPreview();thumbnailDashboard.BringToFront();UpdateThumbnailDashboard();}
+            if(show){world?.CancelNavigation();world?.ClearPreview();thumbnailDashboard.BringToFront();RefreshThumbnailCategoryChoices();UpdateThumbnailDashboard();}
         }
         private bool ThumbnailDashboardOpen=>thumbnailDashboard?.style.display.value==DisplayStyle.Flex;
         private void Loading(bool show, string message = null, float? progress = null, Action cancel = null)

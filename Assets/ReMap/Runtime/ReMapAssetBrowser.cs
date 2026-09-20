@@ -121,7 +121,7 @@ namespace ReMap.Standalone
                     if (this != null) { pageState.text = message; Loading(true, message, cancel: cancel); SetStatus(message); }
                 }), cancellation);
                 if (this == null) return;
-                RestoreCachedModels(); ResetCatalog();
+                RestoreCachedModels(); ResetCatalog(); RefreshThumbnailCategoryChoices();
                 string missingMessage = MissingMapSourcesMessage();
                 SetStatus(string.IsNullOrEmpty(missingMessage) ? L.T("#INDEX_READY_PREPARING_CACHED_THUMBNAILS") : missingMessage);
             }
