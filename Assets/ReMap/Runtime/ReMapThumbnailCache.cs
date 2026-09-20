@@ -19,6 +19,20 @@ namespace ReMap.Standalone
         private void InterruptBackgroundFor(GameAssetRecord requested=null) {
             if(thumbnailExport!=null&&(requested==null||!extractingThumbnails.Contains(requested.Id)))thumbnailExport.Cancel();
         }
+        private GameAssetRecord[] AutomaticThumbnailRecords(ISet<string> targets) {
+            // Category exclusions only trim speculative background work. Models already used by
+            // the open map remain required, otherwise reopening a project could leave real props
+            // unavailable merely because their category is normally prepared on demand.
+            IEnumerable<MapObject> objects=snapshot?.objects??Enumerable.Empty<MapObject>();
+            var requiredIds=new HashSet<string>(objects.Where(item=>!item.isGroup&&
+                !string.IsNullOrWhiteSpace(item.assetId)).Select(item=>item.assetId),StringComparer.OrdinalIgnoreCase);
+            var requiredPaths=new HashSet<string>(objects.Where(item=>!item.isGroup&&
+                !string.IsNullOrWhiteSpace(item.gameModelPath)).Select(item=>GameAssetIndex.NormalizeModelPath(item.gameModelPath)),
+                StringComparer.OrdinalIgnoreCase);
+            return assetLibrary.Records.Where(record=>record.Supports(targets)&&
+                (assetLibrary.ShouldAutomaticallyPrepareThumbnail(record)||requiredIds.Contains(record.Id)||
+                 requiredPaths.Contains(GameAssetIndex.NormalizeModelPath(record.modelPath)))).ToArray();
+        }
         private void PrioritizeVisibleThumbnails() {
             string page=string.Join("|",visibleAssets.Select(r=>r.Id));
             if(page==visibleThumbnailPage)return;
@@ -26,7 +40,8 @@ namespace ReMap.Standalone
             root.schedule.Execute(()=> {
                 if(revision!=visibleThumbnailRevision||this==null||backgroundStopped)return;
                 var targetSet=new HashSet<string>(Targets,StringComparer.OrdinalIgnoreCase);
-                var pending=visibleAssets.Where(r=>r.Supports(targetSet)&&!readyThumbnails.Contains(r.Id)&&!failedThumbnails.Contains(r.Id)).ToArray();
+                var pending=visibleAssets.Where(r=>r.Supports(targetSet)&&assetLibrary.ShouldAutomaticallyPrepareThumbnail(r)&&
+                    !readyThumbnails.Contains(r.Id)&&!failedThumbnails.Contains(r.Id)).ToArray();
                 if(pending.Length>0&&!pending.Any(r=>extractingThumbnails.Contains(r.Id)))InterruptBackgroundFor();
                 if(!Environment.GetCommandLineArgs().Any(a=>a.StartsWith("-remap")))_=PrepareThumbnails();
             }).StartingIn(350);
@@ -122,7 +137,7 @@ namespace ReMap.Standalone
         private void ToggleThumbnailPause() {
             SampleThumbnailPerformance();thumbnailPaused=!thumbnailPaused;UpdateThumbnailPauseButtons();
             var targets=new HashSet<string>(Targets,StringComparer.OrdinalIgnoreCase);
-            UpdateThumbnailProgress(assetLibrary.Records.Where(r=>r.Supports(targets)).ToArray());
+            UpdateThumbnailProgress(AutomaticThumbnailRecords(targets));
             // Do not cancel an RSX batch which is already in flight. The look-ahead batch owns
             // entries in extractingThumbnails; cancelling it here used to leave those entries
             // permanently displayed as "Loading" while the queue itself was empty.
@@ -196,7 +211,7 @@ namespace ReMap.Standalone
             if(thumbnailDashboardState==null||assetLibrary==null)return;
             if(eligible==null) {
                 var targets=new HashSet<string>(Targets,StringComparer.OrdinalIgnoreCase);
-                eligible=assetLibrary.Records.Where(r=>r.Supports(targets)).ToArray();
+                eligible=AutomaticThumbnailRecords(targets);
             }
             SampleThumbnailPerformance();
             int remaining=Mathf.Max(0,thumbnailTotal-thumbnailDone-thumbnailFailed);
@@ -288,7 +303,9 @@ namespace ReMap.Standalone
             }
             return missing>0;
         }
-        private string ThumbnailStatus(GameAssetRecord record) => extractingThumbnails.Contains(record.Id)?L.T("#EXTRACTING_B5C67A"):failedThumbnails.Contains(record.Id)||previewFailures.ContainsKey(record.Id)?L.T("#FAILED_RETRY"):L.T("#QUEUED");
+        private string ThumbnailStatus(GameAssetRecord record) => extractingThumbnails.Contains(record.Id)?L.T("#EXTRACTING_B5C67A"):
+            failedThumbnails.Contains(record.Id)||previewFailures.ContainsKey(record.Id)?L.T("#FAILED_RETRY"):
+            !assetLibrary.ShouldAutomaticallyPrepareThumbnail(record)?L.T("#THUMBNAIL_ON_DEMAND"):L.T("#QUEUED");
         private sealed class ThumbnailExtraction {
             public GameAssetRecord[] batch;
             public CancellationTokenSource cancellation;
@@ -378,7 +395,7 @@ namespace ReMap.Standalone
             try {
                 while(this!=null&&!backgroundStopped&&generation==assetLibrary.CacheRoot) {
                     string[] targets=Targets;var targetSet=new HashSet<string>(targets,StringComparer.OrdinalIgnoreCase);
-                    var eligible=assetLibrary.Records.Where(r=>r.Supports(targetSet)).ToArray();
+                    var eligible=AutomaticThumbnailRecords(targetSet);
                     if(thumbnailPerformanceStamp<=0)thumbnailRunStartDone=eligible.Count(r=>readyThumbnails.Contains(r.Id));
                     UpdateThumbnailProgress(eligible);
                     UpdateThumbnailControls();
@@ -476,7 +493,8 @@ namespace ReMap.Standalone
             if(thumbnailStatusRow==null)return;
             bool complete=thumbnailTotal<=0||thumbnailDone+thumbnailFailed>=thumbnailTotal;
             var targetSet=new HashSet<string>(Targets,StringComparer.OrdinalIgnoreCase);
-            bool visiblePending=visibleAssets.Any(r=>r.Supports(targetSet)&&!readyThumbnails.Contains(r.Id)&&!failedThumbnails.Contains(r.Id));
+            bool visiblePending=visibleAssets.Any(r=>r.Supports(targetSet)&&assetLibrary.ShouldAutomaticallyPrepareThumbnail(r)&&
+                !readyThumbnails.Contains(r.Id)&&!failedThumbnails.Contains(r.Id));
             bool show=!complete&&(thumbnailLoopRunning||visiblePending)||thumbnailFailed>0;
             thumbnailStatusRow.style.display=show?DisplayStyle.Flex:DisplayStyle.None;
             if(libraryFooter!=null)libraryFooter.style.display=show?DisplayStyle.Flex:DisplayStyle.None;

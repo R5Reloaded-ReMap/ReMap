@@ -1923,6 +1923,30 @@
       "text": "Open cache folder"
     },
     {
+      "key": "#THUMBNAIL_CATEGORY_FILTER",
+      "text": "Automatic model preparation"
+    },
+    {
+      "key": "#THUMBNAIL_CATEGORY_FILTER_HELP",
+      "text": "Checked mdl/<folder> categories are skipped during automatic thumbnail preparation to save disk space. Their models remain searchable and can still be extracted on demand. Existing cache files are preserved."
+    },
+    {
+      "key": "#USE_RECOMMENDED_FILTERS",
+      "text": "Use recommended exclusions"
+    },
+    {
+      "key": "#EXPORT_ALL_CATEGORIES",
+      "text": "Prepare every category"
+    },
+    {
+      "key": "#INDEX_FIRST_TO_LIST_MODEL_CATEGORIES",
+      "text": "Run indexing first to list model categories."
+    },
+    {
+      "key": "#THUMBNAIL_CATEGORY_ARG0_ARG1",
+      "text": "{0} ({1} models)"
+    },
+    {
       "key": "#INVALID_CACHE_GENERATION",
       "text": "Invalid cache generation."
     },
@@ -5213,6 +5237,10 @@
     {
       "key": "#THUMBNAIL_QUEUE_EMPTY",
       "text": "No model is waiting."
+    },
+    {
+      "key": "#THUMBNAIL_ON_DEMAND",
+      "text": "On demand"
     },
     {
       "key": "#THUMBNAIL_PERFORMANCE_ARG0_ARG1",

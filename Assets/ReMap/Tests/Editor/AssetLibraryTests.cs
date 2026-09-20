@@ -472,6 +472,26 @@ namespace ReMap.Standalone.Tests
             }
             finally { if (Directory.Exists(root)) Directory.Delete(root, true); }
         }
+        [Test] public void ThumbnailCategoryExclusionsDefaultToTechnicalModelFamiliesAndCanBeCleared()
+        {
+            string root = Path.Combine(Path.GetTempPath(), "ReMapThumbnailCategories-" + Guid.NewGuid().ToString("N"));
+            Directory.CreateDirectory(root);
+            try
+            {
+                var weapon = new GameAssetRecord { modelPath = "mdl/weapons/rifle.rmdl" };
+                var prop = new GameAssetRecord { modelPath = "mdl/props/crate.rmdl" };
+                using (var library = new RsxAssetLibrary(root))
+                {
+                    Assert.That(library.ShouldAutomaticallyPrepareThumbnail(weapon), Is.False);
+                    Assert.That(library.ShouldAutomaticallyPrepareThumbnail(prop), Is.True);
+                    library.ConfigureSkippedThumbnailCategories(Array.Empty<string>());
+                    Assert.That(library.ShouldAutomaticallyPrepareThumbnail(weapon), Is.True);
+                }
+                using (var restored = new RsxAssetLibrary(root))
+                    Assert.That(restored.ShouldAutomaticallyPrepareThumbnail(weapon), Is.True);
+            }
+            finally { if (Directory.Exists(root)) Directory.Delete(root, true); }
+        }
         [Test] public void FindsNamedModdedInstallationsAndRejectsOfficialApex()
         {
             string root = Path.Combine(Path.GetTempPath(), "ReMapInstallDetection-" + Guid.NewGuid().ToString("N"));

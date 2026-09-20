@@ -19,6 +19,7 @@ namespace ReMap.Standalone
         private DropdownField editingMapChoice;
         private TextField settingsAssetFolder;
         private Label missingMapNotice;
+        private VisualElement thumbnailCategoryChoices;
         private readonly List<string> editingMapIds = new List<string>();
 
         private void BuildSettings()
@@ -116,6 +117,21 @@ namespace ReMap.Standalone
                 Directory.CreateDirectory(assetLibrary.AssetExportDirectory);
                 Process.Start(new ProcessStartInfo { FileName = assetLibrary.AssetExportDirectory, UseShellExecute = true });
             }));
+            var thumbnailCategories = new Foldout { text = L.T("#THUMBNAIL_CATEGORY_FILTER"), value = false };
+            thumbnailCategories.AddToClassList("game-paths-foldout"); scroll.Add(thumbnailCategories);
+            thumbnailCategories.Add(Label(L.T("#THUMBNAIL_CATEGORY_FILTER_HELP"), "note"));
+            var categoryActions = new VisualElement(); categoryActions.AddToClassList("inspector-actions");
+            categoryActions.Add(Button(L.T("#USE_RECOMMENDED_FILTERS"), () => {
+                ApplySkippedThumbnailCategories(RsxAssetLibrary.DefaultSkippedThumbnailCategories);
+                RefreshThumbnailCategoryChoices();
+            }));
+            categoryActions.Add(Button(L.T("#EXPORT_ALL_CATEGORIES"), () => {
+                ApplySkippedThumbnailCategories(Array.Empty<string>());
+                RefreshThumbnailCategoryChoices();
+            }));
+            thumbnailCategories.Add(categoryActions);
+            thumbnailCategoryChoices = new VisualElement(); thumbnailCategoryChoices.AddToClassList("map-choices");
+            thumbnailCategories.Add(thumbnailCategoryChoices); RefreshThumbnailCategoryChoices();
             if (LiveMapEnabled)
             {
                 scroll.Add(Label(L.T("#GAME_CONNECTION"), "section-title"));
@@ -158,6 +174,45 @@ namespace ReMap.Standalone
                 if (!string.IsNullOrWhiteSpace(selected)) field.value = selected;
             }));
             return field;
+        }
+
+        private void ApplySkippedThumbnailCategories(IEnumerable<string> categories)
+        {
+            assetLibrary.ConfigureSkippedThumbnailCategories(categories);
+            visibleThumbnailPage = null;
+            var targets = new HashSet<string>(Targets, StringComparer.OrdinalIgnoreCase);
+            UpdateThumbnailProgress(AutomaticThumbnailRecords(targets));
+            UpdateThumbnailControls(); RefreshCatalog();
+            if (!thumbnailPaused && !backgroundStopped) _ = PrepareThumbnails();
+        }
+
+        private void RefreshThumbnailCategoryChoices()
+        {
+            if (thumbnailCategoryChoices == null || assetLibrary == null) return;
+            thumbnailCategoryChoices.Clear();
+            var skipped = new HashSet<string>(assetLibrary.Settings.skippedThumbnailCategories ??
+                Array.Empty<string>(), StringComparer.OrdinalIgnoreCase);
+            var categories = assetLibrary.Records.GroupBy(record => record.Category,
+                StringComparer.OrdinalIgnoreCase).Select(group => new { Name = group.Key, Count = group.Count() })
+                .OrderBy(group => group.Name, StringComparer.OrdinalIgnoreCase).ToArray();
+            if (categories.Length == 0)
+            {
+                thumbnailCategoryChoices.Add(Label(L.T("#INDEX_FIRST_TO_LIST_MODEL_CATEGORIES"), "note"));
+                return;
+            }
+            foreach (var category in categories)
+            {
+                var toggle = new Toggle(L.F("#THUMBNAIL_CATEGORY_ARG0_ARG1", category.Name, category.Count)) {
+                    value = skipped.Contains(category.Name), tooltip = "mdl/" + category.Name + "/"
+                };
+                toggle.RegisterValueChangedCallback(change => {
+                    var selected = new HashSet<string>(assetLibrary.Settings.skippedThumbnailCategories ??
+                        Array.Empty<string>(), StringComparer.OrdinalIgnoreCase);
+                    if (change.newValue) selected.Add(category.Name); else selected.Remove(category.Name);
+                    ApplySkippedThumbnailCategories(selected);
+                });
+                thumbnailCategoryChoices.Add(toggle);
+            }
         }
 
         private void BuildIndexingPage()
@@ -239,6 +294,7 @@ namespace ReMap.Standalone
             {
                 CommitInspectorEdit(); CancelGizmoDrag(); world.ClearPreview();
                 settingsAssetFolder?.SetValueWithoutNotify(assetLibrary.AssetExportDirectory);
+                RefreshThumbnailCategoryChoices();
                 settingsScroll?.schedule.Execute(() => settingsScroll.scrollOffset = Vector2.zero);
             }
             settingsOverlay.style.display = show ? DisplayStyle.Flex : DisplayStyle.None;

@@ -38,6 +38,10 @@ namespace ReMap.Standalone
         public string rconAddress = "[::ffff:127.0.0.1]:37015", rconKey = "", rconPassword = "";
         public string assetExportDirectory = "";
         public bool assetExportDirectoryConfirmed;
+        // Versioned separately so an intentionally empty selection is distinct from an older
+        // settings file which predates automatic thumbnail category filtering.
+        public int thumbnailCategoryFilterVersion;
+        public string[] skippedThumbnailCategories = Array.Empty<string>();
         // Retained so older local JSON settings remain readable. Preview textures now always use 512 px.
         public int textureLimit = SharedTextureCache.PreviewMaximumSize;
         public string[] lastTargetMaps = Array.Empty<string>();
@@ -62,6 +66,8 @@ namespace ReMap.Standalone
     // The worker owns RSX calls. Unity only receives metadata or one exported model at a time.
     public sealed partial class RsxAssetLibrary : IDisposable
     {
+        public static readonly string[] DefaultSkippedThumbnailCategories =
+            { "fx", "humans", "humans_r5", "techart", "weapons", "weapons_r2", "weapons_r5" };
         private static readonly object InstallationDetectionLock = new object();
         private static Dictionary<string, string> cachedDriveInstallations;
         public readonly string LocalRoot;
@@ -100,10 +106,29 @@ namespace ReMap.Standalone
         private readonly CancellationTokenSource shutdown = new CancellationTokenSource();
         private readonly SemaphoreSlim worker = new SemaphoreSlim(1, 1);
         private readonly object extractionActivityLock = new object();
+        private HashSet<string> skippedThumbnailCategories;
         private AssetExtractionActivity extractionActivity;
         public AssetExtractionActivity ExtractionActivity
         {
             get { lock (extractionActivityLock) return extractionActivity; }
+        }
+        public bool ShouldAutomaticallyPrepareThumbnail(GameAssetRecord record)
+        {
+            if (record == null) return false;
+            if (skippedThumbnailCategories == null)
+                skippedThumbnailCategories = new HashSet<string>(Settings.skippedThumbnailCategories ??
+                    Array.Empty<string>(), StringComparer.OrdinalIgnoreCase);
+            return !skippedThumbnailCategories.Contains(record.Category);
+        }
+        public void ConfigureSkippedThumbnailCategories(IEnumerable<string> categories)
+        {
+            Settings.skippedThumbnailCategories = (categories ?? Enumerable.Empty<string>())
+                .Where(category => !string.IsNullOrWhiteSpace(category)).Select(category => category.Trim())
+                .Distinct(StringComparer.OrdinalIgnoreCase).OrderBy(category => category,
+                    StringComparer.OrdinalIgnoreCase).ToArray();
+            Settings.thumbnailCategoryFilterVersion = 1;
+            skippedThumbnailCategories = null;
+            SaveSettings();
         }
         private void SetExtractionActivity(AssetExtractionSource source, AssetExtractionOperation operation,
             string archive, int modelCount)
@@ -263,6 +288,16 @@ namespace ReMap.Standalone
             Settings.textureLimit = SharedTextureCache.PreviewMaximumSize;
             Settings.rsxBackend = "official";
             Settings.flowstateCast = false;
+            if (Settings.thumbnailCategoryFilterVersion < 1)
+            {
+                Settings.skippedThumbnailCategories = DefaultSkippedThumbnailCategories.ToArray();
+                Settings.thumbnailCategoryFilterVersion = 1;
+            }
+            else Settings.skippedThumbnailCategories = (Settings.skippedThumbnailCategories ?? Array.Empty<string>())
+                .Where(category => !string.IsNullOrWhiteSpace(category)).Select(category => category.Trim())
+                .Distinct(StringComparer.OrdinalIgnoreCase).OrderBy(category => category,
+                    StringComparer.OrdinalIgnoreCase).ToArray();
+            skippedThumbnailCategories = null;
             if (!Settings.assetExportDirectoryConfirmed && !string.IsNullOrWhiteSpace(Settings.assetExportDirectory))
                 Settings.assetExportDirectoryConfirmed = true;
             if (!string.IsNullOrWhiteSpace(Settings.gameDirectory))
