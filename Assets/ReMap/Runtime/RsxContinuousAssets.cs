@@ -219,9 +219,9 @@ namespace ReMap.Standalone
                 catch(Exception ex)when(ex is IOException||ex is ArgumentException){result.Errors[entry.Id]=ex.Message;}
             }
         }
-        public async Task ReleasePreviewSessionAsync()
+        public async Task ReleasePreviewSessionAsync(CancellationToken cancellation=default)
         {
-            await worker.WaitAsync();try{previewSession?.Dispose();previewSession=null;previewArchivePlan=null;}finally{worker.Release();}
+            await worker.WaitAsync(cancellation);try{cancellation.ThrowIfCancellationRequested();previewSession?.Dispose();previewSession=null;previewArchivePlan=null;}finally{worker.Release();}
         }
     }
 }

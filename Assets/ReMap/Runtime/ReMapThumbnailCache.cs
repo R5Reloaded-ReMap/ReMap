@@ -13,7 +13,9 @@ namespace ReMap.Standalone
     {
         private bool backgroundStopped, thumbnailLoopRunning, thumbnailPaused, indexRequested;
         private CancellationTokenSource thumbnailExport;
+        private CancellationTokenSource manualPreviewIdleRelease;
         private int thumbnailIdleRevision;
+        private const int ManualPreviewSessionIdleMilliseconds=60000;
         private string visibleThumbnailPage;
         private int visibleThumbnailRevision;
         private void InterruptBackgroundFor(GameAssetRecord requested=null,bool force=false) {
@@ -685,6 +687,32 @@ namespace ReMap.Standalone
             await Task.Delay(15000);
             if(this==null||backgroundStopped||thumbnailLoopRunning||revision!=thumbnailIdleRevision||generation!=assetLibrary.CacheRoot)return;
             await assetLibrary.ReleasePreviewSessionAsync();
+        }
+        private void CancelManualPreviewSessionRelease() {
+            var pending=manualPreviewIdleRelease;
+            manualPreviewIdleRelease=null;
+            if(pending==null)return;
+            try{pending.Cancel();}catch(ObjectDisposedException){}
+        }
+        private void ScheduleManualPreviewSessionRelease(string generation) {
+            CancelManualPreviewSessionRelease();
+            if(this==null||backgroundStopped||assetLibrary==null||assetLibrary.PreviewProcessId==0)return;
+            var cancellation=new CancellationTokenSource();
+            manualPreviewIdleRelease=cancellation;
+            _=ReleaseManualPreviewSessionAfterIdle(generation,cancellation);
+        }
+        private async Task ReleaseManualPreviewSessionAfterIdle(string generation,CancellationTokenSource cancellation) {
+            try {
+                await Task.Delay(ManualPreviewSessionIdleMilliseconds,cancellation.Token);
+                if(this==null||backgroundStopped||thumbnailLoopRunning||assetBusy||pendingAssetDrops>0||
+                    generation!=assetLibrary.CacheRoot)return;
+                await assetLibrary.ReleasePreviewSessionAsync(cancellation.Token);
+            }
+            catch(OperationCanceledException)when(cancellation.IsCancellationRequested){}
+            finally {
+                if(ReferenceEquals(manualPreviewIdleRelease,cancellation))manualPreviewIdleRelease=null;
+                cancellation.Dispose();
+            }
         }
         private void UpdateThumbnailControls() {
             if(thumbnailStatusRow==null)return;

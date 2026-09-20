@@ -257,6 +257,7 @@ namespace ReMap.Standalone
         }
         private async Task PreviewGameAsset(GameAssetRecord record,bool forceRefresh=false)
         {
+            CancelManualPreviewSessionRelease();
             bool needsExtraction=forceRefresh||assetLibrary.CachedModel(record)==null;
             if(needsExtraction)InterruptBackgroundFor(record,true);
             if (assetBusy||indexRequested) { queuedPreview = record; InterruptBackgroundFor(record); previewText.text=L.T("#PRIORITY_LOADING")+record.Name; return; }
@@ -291,7 +292,7 @@ namespace ReMap.Standalone
                 SetStatus(missing > 0 ? L.F("#ARG0_ARG1_MATERIAL_S_UNRESOLVED", record.Name, missing) : L.T("#SELECTED_MODEL") + record.Name);
             }
             catch (Exception ex) { if (this != null) { previewEntry = null; previewFailures[record.Id] = ex.Message; failedThumbnails.Add(record.Id); previewText.text = record.Name + " : " + ex.Message; previewText.tooltip = ex.ToString(); SetStatus(ex.Message); Debug.LogWarning(ex); } }
-            finally { await WaitForAssetUiIdle(); if (this != null) { Run(CommitInspectorEdit); if (model != null) world.models.Release(record.Id, model); Refresh(); SetAssetBusy(false); if (queuedPreview != null) { var next = queuedPreview; queuedPreview = null; _ = PreviewGameAsset(next); } } }
+            finally { await WaitForAssetUiIdle(); if (this != null) { Run(CommitInspectorEdit); if (model != null) world.models.Release(record.Id, model); Refresh(); SetAssetBusy(false); ScheduleManualPreviewSessionRelease(previewGeneration); if (queuedPreview != null) { var next = queuedPreview; queuedPreview = null; _ = PreviewGameAsset(next); } } }
         }
         private async Task WaitForAssetUiIdle() {
             while(this!=null&&(draggingGizmo||libraryDragging||sceneSelectionPending||assemblyDragging||layoutResizing))await Task.Delay(50);
