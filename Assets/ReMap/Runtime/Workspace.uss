@@ -412,6 +412,7 @@ Button.toolbar-snap-settings { width: 19px; min-width: 19px; height: 20px; min-h
 .thumbnail-dashboard-subtitle { margin-top: 5px; color: rgb(151,169,189); white-space: normal; }
 Button.thumbnail-dashboard-minimize { flex-shrink: 0; height: 29px; margin-left: 18px; padding-left: 13px; padding-right: 13px; }
 .thumbnail-dashboard-state { flex-shrink: 0; font-size: 15px; -unity-font-style: bold; color: rgb(116,202,174); }
+.thumbnail-dashboard-source { height: 19px; flex-shrink: 0; margin-top: 3px; color: rgb(133,177,218); -unity-font-style: bold; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .thumbnail-dashboard-detail { height: 20px; flex-shrink: 0; margin-top: 3px; color: rgb(174,185,199); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .thumbnail-dashboard-progress { height: 24px; flex-shrink: 0; margin: 10px 0 16px 0; }
 .thumbnail-dashboard-progress .unity-progress-bar__background { background-color: rgb(48,52,59); border-color: rgb(75,81,91); }

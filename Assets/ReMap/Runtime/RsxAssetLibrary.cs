@@ -46,6 +46,19 @@ namespace ReMap.Standalone
     }
     public sealed class MapSource { public string Id, Name; public override string ToString() => Name; }
 
+    public enum AssetExtractionSource { None, TargetGame, OfficialApex }
+    public enum AssetExtractionOperation { None, LoadingArchives, ExportingModels, RepairingTextures }
+    public readonly struct AssetExtractionActivity
+    {
+        public readonly AssetExtractionSource Source;
+        public readonly AssetExtractionOperation Operation;
+        public readonly string Archive;
+        public readonly int ModelCount;
+        internal AssetExtractionActivity(AssetExtractionSource source, AssetExtractionOperation operation,
+            string archive, int modelCount)
+        { Source = source; Operation = operation; Archive = archive ?? ""; ModelCount = modelCount; }
+    }
+
     // The worker owns RSX calls. Unity only receives metadata or one exported model at a time.
     public sealed partial class RsxAssetLibrary : IDisposable
     {
@@ -86,6 +99,18 @@ namespace ReMap.Standalone
         }
         private readonly CancellationTokenSource shutdown = new CancellationTokenSource();
         private readonly SemaphoreSlim worker = new SemaphoreSlim(1, 1);
+        private readonly object extractionActivityLock = new object();
+        private AssetExtractionActivity extractionActivity;
+        public AssetExtractionActivity ExtractionActivity
+        {
+            get { lock (extractionActivityLock) return extractionActivity; }
+        }
+        private void SetExtractionActivity(AssetExtractionSource source, AssetExtractionOperation operation,
+            string archive, int modelCount)
+        {
+            lock (extractionActivityLock)
+                extractionActivity = new AssetExtractionActivity(source, operation, archive, modelCount);
+        }
         private string[] Common => (TargetGame == GameTargets.R5Flowstate
             ? new[] { "common_early.rpak", "common.rpak", "common_mp.rpak", "common_roots.rpak", "common_flowstate.rpak" }
             : new[] { "common_early.rpak", "common.rpak", "common_mp.rpak", "common_roots.rpak", "common_sdk.rpak" });

@@ -5155,6 +5155,18 @@
       "text": "Extracting models with RSX"
     },
     {
+      "key": "#THUMBNAIL_STAGE_LOADING_RPAKS",
+      "text": "Loading source RPAKs"
+    },
+    {
+      "key": "#THUMBNAIL_STAGE_GENERATING_AND_EXTRACTING",
+      "text": "Generating thumbnails and extracting the next models"
+    },
+    {
+      "key": "#THUMBNAIL_STAGE_REPAIRING_TEXTURES",
+      "text": "Repairing textures from Apex Legends"
+    },
+    {
       "key": "#THUMBNAIL_STAGE_GENERATING",
       "text": "Generating thumbnails"
     },
@@ -5169,6 +5181,18 @@
     {
       "key": "#THUMBNAIL_WORKING_IN_BACKGROUND",
       "text": "The queue continues automatically while this application is open."
+    },
+    {
+      "key": "#THUMBNAIL_SOURCE_APEX_OFFICIAL",
+      "text": "Apex Legends (official)"
+    },
+    {
+      "key": "#THUMBNAIL_SOURCE_ARG0",
+      "text": "Export source: {0}"
+    },
+    {
+      "key": "#THUMBNAIL_SOURCE_ARG0_ARCHIVE_ARG1",
+      "text": "Export source: {0} · {1}"
     },
     {
       "key": "#THUMBNAIL_MODELS_PER_MINUTE_ARG0",

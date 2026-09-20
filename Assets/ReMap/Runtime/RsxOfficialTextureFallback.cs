@@ -298,14 +298,22 @@ namespace ReMap.Standalone
             if (officialPaks == null) return false;
             string origin = OriginArchive(entries[0], targets);
             OfficialArchivePlan plan = ResolveOfficialArchivePlan(officialPaks, origin);
-            if (plan == null) return false;
+            if (plan == null)
+            {
+                foreach (var entry in entries) officialPreviewMisses.Add(entry.Id);
+                return false;
+            }
 
             try
             {
                 // Reuse the same embedded process. LOAD can switch between official and legacy
                 // archive sets without paying for a process restart for every thumbnail batch.
+                SetExtractionActivity(AssetExtractionSource.OfficialApex,
+                    AssetExtractionOperation.LoadingArchives, plan.primaryArchive, entries.Length);
                 EnsurePreviewSession();
                 previewSession.Load(plan.archives, origin);
+                SetExtractionActivity(AssetExtractionSource.OfficialApex,
+                    AssetExtractionOperation.ExportingModels, plan.primaryArchive, entries.Length);
                 string output = entries.Length > 1
                     ? previewSession.ExportBatch(entries.Select(entry => entry.guid).ToArray())
                     : previewSession.Export(entries[0].guid);
@@ -415,7 +423,11 @@ namespace ReMap.Standalone
                 string officialCast = await Task.Run(() =>
                 {
                     using var session = new RsxPreviewSession(SessionExecutable, root, workerRoot, linked.Token);
+                    SetExtractionActivity(AssetExtractionSource.OfficialApex,
+                        AssetExtractionOperation.LoadingArchives, plan.primaryArchive, 1);
                     session.Load(plan.archives, origin);
+                    SetExtractionActivity(AssetExtractionSource.OfficialApex,
+                        AssetExtractionOperation.ExportingModels, plan.primaryArchive, 1);
                     string output = session.Export(entry.guid);
                     string[] lods = Directory.GetFiles(output, "*_LOD0.cast", SearchOption.AllDirectories);
                     string[] named = lods.Where(path => string.Equals(Path.GetFileName(path),
@@ -426,6 +438,8 @@ namespace ReMap.Standalone
                     return matches[0];
                 }, linked.Token);
 
+                SetExtractionActivity(AssetExtractionSource.OfficialApex,
+                    AssetExtractionOperation.RepairingTextures, plan.primaryArchive, 1);
                 int replaced = SharedTextureCache.ReplaceAlbedosFromOfficial(modelRoot, legacyCast,
                     officialCast, root, inspection.materialHashes);
                 Directory.CreateDirectory(modelRoot);

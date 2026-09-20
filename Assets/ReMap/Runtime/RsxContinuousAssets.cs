@@ -26,6 +26,8 @@ namespace ReMap.Standalone
         public bool ContinuousPreviewsSupported => SessionExecutable!=null;
         public bool BatchPreviewsSupported => ContinuousPreviewsSupported&&File.Exists(SessionExecutable+".remap-session-v2");
         public bool GeometryPreviewsSupported => ContinuousPreviewsSupported&&File.Exists(SessionExecutable+".remap-session-v3");
+        private void SetTargetExtractionActivity(AssetExtractionOperation operation,string archive,int modelCount) =>
+            SetExtractionActivity(AssetExtractionSource.TargetGame,operation,archive,modelCount);
         private void EnsurePreviewSession(bool geometryOnly=false)
         {
             if(previewSession!=null&&previewSession.Alive&&previewSession.GeometryOnly==geometryOnly)return;
@@ -73,8 +75,10 @@ namespace ReMap.Standalone
             string[] archives=PreviewArchivePlan(targets,archive);
             try
             {
+                SetTargetExtractionActivity(AssetExtractionOperation.LoadingArchives,archive,entries.Length);
                 EnsurePreviewSession();
                 previewSession.Load(archives,archive);
+                SetTargetExtractionActivity(AssetExtractionOperation.ExportingModels,archive,entries.Length);
                 if(BatchPreviewsSupported&&entries.Length>1)
                 {
                     try
@@ -113,7 +117,9 @@ namespace ReMap.Standalone
             }
             try
             {
+                SetTargetExtractionActivity(AssetExtractionOperation.LoadingArchives,archive,entries.Length);
                 EnsurePreviewSession();previewSession.Load(archives,archive);
+                SetTargetExtractionActivity(AssetExtractionOperation.ExportingModels,archive,entries.Length);
                 CommitContinuousExports(entries,previewSession.ExportBatch(entries.Select(entry=>entry.guid).ToArray()),archive,result);
                 var missing=entries.Where(entry=>!result.Paths.ContainsKey(entry.Id)).ToArray();
                 if(missing.Length>0)RetryContinuousTexturedSplit(missing,archives,archive,result);
@@ -135,7 +141,9 @@ namespace ReMap.Standalone
             ResetPreviewSession();
             try
             {
+                SetTargetExtractionActivity(AssetExtractionOperation.LoadingArchives,archive,entries.Length);
                 EnsurePreviewSession(true);previewSession.Load(archives,archive);
+                SetTargetExtractionActivity(AssetExtractionOperation.ExportingModels,archive,entries.Length);
                 if(entries.Length>1)
                 {
                     try {CommitContinuousExports(entries,previewSession.ExportBatch(entries.Select(e=>e.guid).ToArray(),true),archive,result,true);}
@@ -161,8 +169,10 @@ namespace ReMap.Standalone
                 if(result.Paths.ContainsKey(entry.Id))continue;
                 try
                 {
+                    SetTargetExtractionActivity(AssetExtractionOperation.LoadingArchives,archive,1);
                     EnsurePreviewSession(geometryOnly);
                     previewSession.Load(archives,archive);
+                    SetTargetExtractionActivity(AssetExtractionOperation.ExportingModels,archive,1);
                     CommitContinuousExports(new[]{entry},previewSession.Export(entry.guid,geometryOnly),archive,result,geometryOnly);
                     if(!geometryOnly&&GeometryPreviewsSupported&&!result.Paths.ContainsKey(entry.Id))RetryContinuousGeometry(new[]{entry},archives,archive,result);
                 }

@@ -38,7 +38,7 @@ namespace ReMap.Standalone
         private Action loadingCancelAction;
         private VisualElement thumbnailStatusRow, thumbnailDashboard;
         private ProgressBar thumbnailDashboardProgress;
-        private Label thumbnailDashboardState, thumbnailDashboardDetail, thumbnailDashboardCompleted,
+        private Label thumbnailDashboardState, thumbnailDashboardSource, thumbnailDashboardDetail, thumbnailDashboardCompleted,
             thumbnailDashboardRemaining, thumbnailDashboardFailed, thumbnailDashboardSpeed, thumbnailDashboardEta,
             thumbnailDashboardActive, thumbnailDashboardQueuedLeft, thumbnailDashboardQueuedRight, thumbnailDashboardPerformance;
         private Button thumbnailPauseButton, thumbnailDashboardPauseButton;
@@ -72,6 +72,7 @@ namespace ReMap.Standalone
             headingText.Add(Label(L.T("#THUMBNAIL_WORK_SUBTITLE"),"thumbnail-dashboard-subtitle"));
             heading.Add(Button(L.T("#MINIMIZE_TO_BACKGROUND"),()=>ShowThumbnailDashboard(false),"thumbnail-dashboard-minimize"));
             thumbnailDashboardState=Label(L.T("#THUMBNAIL_STAGE_PREPARING"),"thumbnail-dashboard-state");dashboard.Add(thumbnailDashboardState);
+            thumbnailDashboardSource=Label("","thumbnail-dashboard-source");dashboard.Add(thumbnailDashboardSource);
             thumbnailDashboardDetail=Label("","thumbnail-dashboard-detail");dashboard.Add(thumbnailDashboardDetail);
             thumbnailDashboardProgress=new ProgressBar{lowValue=0,highValue=1,value=0};thumbnailDashboardProgress.AddToClassList("thumbnail-dashboard-progress");dashboard.Add(thumbnailDashboardProgress);
             var metrics=new VisualElement();metrics.AddToClassList("thumbnail-dashboard-metrics");dashboard.Add(metrics);
@@ -196,8 +197,24 @@ namespace ReMap.Standalone
             int remaining=Mathf.Max(0,thumbnailTotal-thumbnailDone-thumbnailFailed);
             int completedThisRun=Mathf.Max(0,thumbnailDone-thumbnailRunStartDone);
             float perMinute=thumbnailActiveSeconds>0?completedThisRun*60f/thumbnailActiveSeconds:0;
-            string stage=thumbnailPaused?"#THUMBNAIL_STAGE_PAUSED":remaining==0?"#THUMBNAIL_STAGE_COMPLETE":thumbnailRendering?"#THUMBNAIL_STAGE_GENERATING":extractingThumbnails.Count>0?"#THUMBNAIL_STAGE_EXTRACTING":"#THUMBNAIL_STAGE_PREPARING";
+            AssetExtractionActivity activity=assetLibrary.ExtractionActivity;
+            bool extracting=extractingThumbnails.Count>0;
+            string stage=thumbnailPaused?"#THUMBNAIL_STAGE_PAUSED":remaining==0?"#THUMBNAIL_STAGE_COMPLETE":
+                activity.Operation==AssetExtractionOperation.RepairingTextures&&extracting?"#THUMBNAIL_STAGE_REPAIRING_TEXTURES":
+                thumbnailRendering&&extracting?"#THUMBNAIL_STAGE_GENERATING_AND_EXTRACTING":
+                thumbnailRendering?"#THUMBNAIL_STAGE_GENERATING":
+                extracting&&activity.Operation==AssetExtractionOperation.LoadingArchives?"#THUMBNAIL_STAGE_LOADING_RPAKS":
+                extracting?"#THUMBNAIL_STAGE_EXTRACTING":"#THUMBNAIL_STAGE_PREPARING";
             thumbnailDashboardState.text=L.T(stage);
+            AssetExtractionSource source=activity.Source;
+            if(source==AssetExtractionSource.None&&remaining>0)
+                source=eligible.Any(record=>assetLibrary.ShouldTryOfficialPreview(record))?
+                    AssetExtractionSource.OfficialApex:AssetExtractionSource.TargetGame;
+            string sourceName=source==AssetExtractionSource.OfficialApex?L.T("#THUMBNAIL_SOURCE_APEX_OFFICIAL"):
+                source==AssetExtractionSource.TargetGame?GameTargets.DisplayName(assetLibrary.TargetGame):"";
+            thumbnailDashboardSource.text=string.IsNullOrEmpty(sourceName)?"":
+                string.IsNullOrEmpty(activity.Archive)?L.F("#THUMBNAIL_SOURCE_ARG0",sourceName):
+                L.F("#THUMBNAIL_SOURCE_ARG0_ARCHIVE_ARG1",sourceName,activity.Archive);
             thumbnailDashboardDetail.text=string.IsNullOrWhiteSpace(detail)?L.T("#THUMBNAIL_WORKING_IN_BACKGROUND"):detail.Trim().TrimStart('·').Trim();
             thumbnailDashboardProgress.value=thumbnailTotal<=0?0:(float)(thumbnailDone+thumbnailFailed)/thumbnailTotal;
             thumbnailDashboardProgress.title=thumbnailTotal<=0?"0 %":Mathf.RoundToInt(100f*(thumbnailDone+thumbnailFailed)/thumbnailTotal)+" %";
