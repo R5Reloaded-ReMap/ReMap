@@ -27,6 +27,50 @@ namespace ReMap.Standalone
             if (welcomeAssetFolder == null || welcomeAssetFolder.parent == null ||
                 !welcomeAssetFolder.parent.ClassListContains("folder-picker") || welcomeAssetFolder.worldBound.width < 300)
                 return "Welcome asset-folder picker is missing or collapsed.";
+            var importBeta1 = welcomeOverlay.Q<Button>("import-beta1-settings");
+            if (importBeta1 == null || importBeta1.worldBound.height < 20)
+                return "Welcome beta.1 settings import is missing or collapsed.";
+            return null;
+        }
+
+        private string HelpLayoutError()
+        {
+            var panel = helpOverlay?.Q(className: "help-panel");
+            if (!HelpOpen || panel == null || helpPageTitle == null || helpPageBody == null || helpPageCounter == null)
+                return "Help guide or its page content is missing.";
+            if (panel.worldBound.xMin < root.worldBound.xMin || panel.worldBound.xMax > root.worldBound.xMax ||
+                panel.worldBound.yMin < root.worldBound.yMin || panel.worldBound.yMax > root.worldBound.yMax)
+                return "Help guide is clipped by the application bounds.";
+            if (helpPageBody.worldBound.width < panel.worldBound.width * .75f || string.IsNullOrWhiteSpace(helpPageBody.text))
+                return "Help guide content collapsed or is empty.";
+            if (helpPrevious == null || helpNext == null || helpPageCounter.worldBound.width < 40)
+                return "Help guide navigation is missing or collapsed.";
+            return null;
+        }
+
+        private string SettingsLayoutError()
+        {
+            var scroll = settingsPanel?.Q<ScrollView>(className: "settings-scroll");
+            var mprtPreset = scroll?.Query<DropdownField>(className: "settings-field").ToList().FirstOrDefault();
+            var mprtPresetInput = mprtPreset?.Q(className: "unity-base-popup-field__input");
+            if (scroll == null || mprtPreset == null || mprtPresetInput == null ||
+                mprtPreset.worldBound.height < 40f || mprtPresetInput.worldBound.height < 20f)
+                return "MPRT quality selector is vertically clipped.";
+            var mprtNumbers = scroll.Query<VisualElement>(className: "settings-number-field").ToList();
+            if (mprtNumbers.Count != 4 || mprtNumbers.Any(field =>
+                field.worldBound.height < 48f ||
+                field.Q(className: "unity-base-field__input") == null ||
+                field.Q(className: "unity-base-field__input").worldBound.height < 23f ||
+                field.Q(className: "unity-base-text-field__input") == null ||
+                field.Q(className: "unity-base-text-field__input").worldBound.height < 23f))
+                return "MPRT numeric settings are vertically clipped. " + string.Join("; ", mprtNumbers.Select(field =>
+                {
+                    var input = field.Q(className: "unity-base-field__input");
+                    var text = field.Q(className: "unity-base-text-field__input");
+                    return field.GetType().Name + " field=" + field.worldBound.height.ToString("0.##") +
+                        " input=" + (input == null ? "missing" : input.worldBound.height.ToString("0.##")) +
+                        " text=" + (text == null ? "missing" : text.worldBound.height.ToString("0.##"));
+                }));
             return null;
         }
 
@@ -53,6 +97,13 @@ namespace ReMap.Standalone
             if (!AboutOpen || aboutLogo?.image == null || aboutLogo.worldBound.width < 100 || aboutLogo.worldBound.height < 100)
                 throw new Exception("About dialog logo is missing or too small.");
             ShowAbout(false); await TreeFrames();
+            ShowHelpGuide(0); await TreeFrames();
+            string helpError = HelpLayoutError();
+            if (helpError != null) throw new Exception(helpError);
+            SetHelpPage(HelpTitleKeys.Length - 1); await TreeFrames();
+            if (HelpLayoutError() != null || helpPageTitle.text != L.T("#HELP_SHORTCUTS_TITLE"))
+                throw new Exception("Help guide could not display its shortcuts page.");
+            ShowHelpGuide(false); await TreeFrames();
             string layoutFixtureId = snapshot.objects[0].id; Select(layoutFixtureId); await TreeFrames();
             var snapToggle = root.Q<Toggle>(className: "toolbar-snap-toggle");
             var snapSettings = root.Q<Button>("snap-settings-button");
@@ -333,6 +384,17 @@ namespace ReMap.Standalone
             yield return new WaitForEndOfFrame(); image = ScreenCapture.CaptureScreenshotAsTexture();
             if (image != null) { File.WriteAllBytes(Path.Combine(Application.dataPath, "..", "editor-about-preview.png"), image.EncodeToPNG()); Destroy(image); }
             ShowAbout(false); for (int i = 0; i < 3; i++) yield return null;
+            ShowHelpGuide(0); for (int i = 0; i < 3; i++) yield return null;
+            string helpError = HelpLayoutError();
+            if (helpError != null)
+            {
+                Debug.LogError(helpError);
+                PlayerPrefs.DeleteKey(LayoutPreference + ".qa"); PlayerPrefs.Save();
+                Application.Quit(1); yield break;
+            }
+            yield return new WaitForEndOfFrame(); image = ScreenCapture.CaptureScreenshotAsTexture();
+            if (image != null) { File.WriteAllBytes(Path.Combine(Application.dataPath, "..", "editor-help-preview.png"), image.EncodeToPNG()); Destroy(image); }
+            ShowHelpGuide(false); for (int i = 0; i < 3; i++) yield return null;
             yield return new WaitForEndOfFrame(); image = ScreenCapture.CaptureScreenshotAsTexture();
             if (image != null) { File.WriteAllBytes(Path.Combine(Application.dataPath, "..", "editor-layout-preview.png"), image.EncodeToPNG()); Destroy(image); }
             if (!check.IsFaulted)

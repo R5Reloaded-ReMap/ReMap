@@ -499,6 +499,11 @@ Button.script-property-remove-button:hover { background-color: rgb(91,65,66); }
 .about-panel { width: 520px; max-width: 92%; max-height: 82%; background-color: rgb(43,44,49); border-width: 1px; border-color: rgb(100,105,116); border-radius: 3px; }
 .about-content { flex-grow: 1; min-height: 0; padding: 14px 18px 8px 18px; }
 .about-content .unity-scroll-view__content-container { align-items: stretch; }
+.help-panel { width: 650px; max-width: 92%; height: 560px; max-height: 86%; background-color: rgb(43,44,49); border-width: 1px; border-color: rgb(100,105,116); border-radius: 3px; }
+.help-content { flex-grow: 1; min-height: 0; padding: 22px; }
+.help-page-title { margin-bottom: 14px; color: rgb(214,226,239); font-size: 21px; -unity-font-style: bold; }
+.help-page-body { white-space: normal; color: rgb(190,204,219); font-size: 13px; }
+.help-page-counter { flex-grow: 1; color: rgb(137,157,178); }
 .welcome-panel { width: 620px; max-width: 92%; max-height: 90%; background-color: rgb(43,44,49); border-width: 1px; border-color: rgb(100,105,116); border-radius: 3px; }
 .welcome-content { width: 100%; align-self: stretch; flex-grow: 1; min-height: 0; padding: 18px; }
 .welcome-content .unity-scroll-view__content-container { align-items: stretch; }
@@ -507,6 +512,8 @@ Button.script-property-remove-button:hover { background-color: rgb(91,65,66); }
 .welcome-tagline { margin: 3px 0 14px 0; color: rgb(177,190,205); -unity-text-align: middle-center; }
 .welcome-copy { margin-bottom: 12px; white-space: normal; color: rgb(220,226,234); }
 .welcome-target { width: 100%; align-self: stretch; min-height: 64px; margin: 4px 0; padding: 9px; flex-direction: row; align-items: center; background-color: rgb(37,39,44); border-width: 1px; border-color: rgb(72,76,84); }
+.welcome-targets { width: 100%; align-self: stretch; }
+.welcome-import { align-self: flex-start; min-width: 190px; margin-top: 7px; }
 .welcome-target-copy { flex-grow: 1; min-width: 0; margin-right: 10px; }
 .welcome-target-name { -unity-font-style: bold; color: rgb(232,237,244); }
 .welcome-target-path { margin-top: 4px; color: rgb(164,177,191); white-space: normal; }

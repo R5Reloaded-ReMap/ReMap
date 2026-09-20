@@ -346,7 +346,7 @@ namespace ReMap.Standalone
 
             status = Label("", "status"); footer.Add(status); count = Label("", "count"); footer.Add(count);
 
-            BuildSettings(); BuildWelcome(); BuildAbout(); BuildWorkspaceGameDialog(); BuildNewMapDialog(); BuildLoadingUI(); BuildDragUI(); BuildDockLayout(body, workspace); BuildConstructionTools(); BuildCodePreviewWindow();
+            BuildSettings(); BuildWelcome(); BuildAbout(); BuildHelpGuide(); BuildWorkspaceGameDialog(); BuildNewMapDialog(); BuildLoadingUI(); BuildDragUI(); BuildDockLayout(body, workspace); BuildConstructionTools(); BuildCodePreviewWindow();
 #if UNITY_EDITOR || DEVELOPMENT_BUILD || REMAP_DEVELOPER_TOOLS
             BuildDevGameCompatibilityDialog();
 #endif

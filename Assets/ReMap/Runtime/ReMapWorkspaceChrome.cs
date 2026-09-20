@@ -130,6 +130,12 @@ namespace ReMap.Standalone
 
         private void BuildHelpMenu(VisualElement menu)
         {
+            MenuAction(menu, L.T("#GETTING_STARTED"), () => ShowHelpGuide(0));
+            MenuAction(menu, L.T("#KEYBOARD_SHORTCUTS"), () => ShowHelpGuide(4));
+            MenuSeparator(menu);
+            MenuAction(menu, L.T("#OPEN_LOG_FOLDER"), OpenLogFolder);
+            MenuAction(menu, L.T("#COPY_DIAGNOSTICS"), CopyDiagnostics);
+            MenuSeparator(menu);
             MenuAction(menu, L.T("#ABOUT_REMAP"), () => ShowAbout(true));
         }
 
@@ -815,7 +821,7 @@ namespace ReMap.Standalone
         private bool NewMapDialogOpen => newMapOverlay != null && newMapOverlay.style.display.value != DisplayStyle.None;
         private bool PortCompatibilityReportOpen => portCompatibilityOverlay != null && portCompatibilityOverlay.style.display.value != DisplayStyle.None;
         private bool WorkspaceGameDialogOpen => workspaceGameOverlay != null && workspaceGameOverlay.style.display.value != DisplayStyle.None;
-        private bool BlockingDialogOpen => WelcomeOpen || SettingsOpen || IndexingOpen || AboutOpen || WorkspaceGameDialogOpen || NewMapDialogOpen || PortCompatibilityReportOpen || AssemblySaveOpen || (renameMapOverlay != null && renameMapOverlay.style.display.value != DisplayStyle.None);
+        private bool BlockingDialogOpen => WelcomeOpen || SettingsOpen || IndexingOpen || AboutOpen || HelpOpen || WorkspaceGameDialogOpen || NewMapDialogOpen || PortCompatibilityReportOpen || AssemblySaveOpen || (renameMapOverlay != null && renameMapOverlay.style.display.value != DisplayStyle.None);
     }
 
     internal static class WindowsProjectFileDialog

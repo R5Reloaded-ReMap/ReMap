@@ -51,10 +51,13 @@ Distribute the complete `Builds/Windows` directory, including `ReMap_Data`, `ReM
 The Asset Cache location is configurable in **Settings**. The cache can grow to approximately **10 GB**, so choose a folder on a drive with enough free space.
 
 Saved projects are stored under `%USERPROFILE%\AppData\LocalLow\ReMap\ReMap\Maps`. Portable projects use `.remap-project.json`.
+Global settings are stored in `%USERPROFILE%\AppData\LocalLow\ReMap\ReMap\asset-source.local.json`. ReMap migrates the previous file stored beside the executable on first launch after updating.
+
+When beta.2 is extracted beside rather than over beta.1, use **Import beta.1 settings** on the welcome screen and select the old application folder. ReMap keeps using its existing `AssetCache` in place; it does not copy or delete the cache.
 
 ## Documentation
 
-[Editing tools](Docs/EDITOR-TOOLS.md) · [Construction tools](Docs/CONSTRUCTION-TOOLS.md) · [Game export](Docs/GAME-EXPORT.md) · [Asset pipeline](Docs/AssetPipeline.md) · [Releases](Docs/RELEASING.md) · [Contributing](CONTRIBUTING.md)
+[Getting started](Docs/GETTING-STARTED.md) · [Editing tools](Docs/EDITOR-TOOLS.md) · [Construction tools](Docs/CONSTRUCTION-TOOLS.md) · [Game export](Docs/GAME-EXPORT.md) · [Asset pipeline](Docs/AssetPipeline.md) · [Releases](Docs/RELEASING.md) · [Contributing](CONTRIBUTING.md)
 
 ## License and credits
 
