@@ -5299,6 +5299,10 @@
       "text": "{0} en échec"
     },
     {
+      "key": "#THUMBNAIL_WARNING_RETRY",
+      "text": "Aperçu disponible · réimporter pour retenter les textures"
+    },
+    {
       "key": "#THUMBNAIL_REMAINING",
       "text": "Restantes"
     },

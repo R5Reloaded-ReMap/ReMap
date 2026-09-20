@@ -5299,6 +5299,10 @@
       "text": "{0} failed"
     },
     {
+      "key": "#THUMBNAIL_WARNING_RETRY",
+      "text": "Preview available · reimport to retry textures"
+    },
+    {
       "key": "#THUMBNAIL_REMAINING",
       "text": "Remaining"
     },

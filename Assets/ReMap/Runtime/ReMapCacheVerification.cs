@@ -118,7 +118,7 @@ namespace ReMap.Standalone
                     {
                         RemoveCacheMarker(folder,"thumbnail-info.json");
                         RemoveCacheMarker(folder,"thumbnail.error.txt");
-                        readyThumbnails.Remove(record.Id);failedThumbnails.Remove(record.Id);previewFailures.Remove(record.Id);
+                        readyThumbnails.Remove(record.Id);failedThumbnails.Remove(record.Id);thumbnailWarnings.Remove(record.Id);previewFailures.Remove(record.Id);
                         repairs.Add(new CacheVerificationRepair{record=record,cast=cast,reimport=badModel||badTextures});
                     }
                     checkedModels++;
