@@ -195,7 +195,7 @@ namespace ReMap.Standalone
                         if(focusedFolder!=null&&rootPoses.TryGetValue(original.id,out var pose)){copy.position=pose.position;copy.rotation=pose.rotation;copy.scale=pose.scale;}
                     }
                     MapHierarchy.RemapInternalReferences(copy,mapping);
-                    if(data.roots.Contains(original.id))copy.displayName+=L.T("#COPY");doc.objects.Add(copy);
+                    if(data.roots.Contains(original.id))copy.displayName=MapHierarchy.NextDuplicateName(doc,original.displayName);doc.objects.Add(copy);
                 }
             });
             var pasted=roots.Select(id=>mapping[id]).ToArray();snapshot=session.Snapshot();SetSelection(pasted,pasted.LastOrDefault());if(selectedId!=null)RevealHierarchy(selectedId);Refresh();if(selectedId!=null)FocusHierarchy(selectedId);SetStatus(L.F("#PASTED_ARG0_ITEM_S",pasted.Length));

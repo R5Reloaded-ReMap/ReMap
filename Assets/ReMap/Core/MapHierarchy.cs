@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Globalization;
 using System.Linq;
 namespace ReMap.Standalone.Core
 {
@@ -98,6 +99,27 @@ namespace ReMap.Standalone.Core
             if (!string.IsNullOrEmpty(item.ziplineEndId) && mapping.TryGetValue(item.ziplineEndId, out var end)) item.ziplineEndId = end;
         }
 
+        public static string NextDuplicateName(MapDocument document, string sourceName)
+        {
+            if (document == null) throw new ArgumentNullException(nameof(document));
+            string stem = sourceName ?? "";
+            int separator = stem.LastIndexOf('_');
+            if (separator > 0 && stem.Length - separator > 2 &&
+                int.TryParse(stem.Substring(separator + 1), NumberStyles.None, CultureInfo.InvariantCulture, out _))
+            {
+                string possibleStem = stem.Substring(0, separator);
+                if (document.objects.Any(item => string.Equals(item.displayName, possibleStem, StringComparison.OrdinalIgnoreCase)))
+                    stem = possibleStem;
+            }
+            var names = new HashSet<string>(document.objects.Select(item => item.displayName ?? ""), StringComparer.OrdinalIgnoreCase);
+            for (int suffix = 1; suffix < int.MaxValue; suffix++)
+            {
+                string candidate = stem + "_" + suffix.ToString("D2", CultureInfo.InvariantCulture);
+                if (!names.Contains(candidate)) return candidate;
+            }
+            throw new InvalidOperationException("No duplicate name is available.");
+        }
+
         public static string Duplicate(MapDocument doc, string id)
         {
             var requested = doc.objects.Single(o => o.id == id);
@@ -124,7 +146,7 @@ namespace ReMap.Standalone.Core
                 var copy = item.Copy(); copy.id = mapping[item.id];
                 if (!string.IsNullOrEmpty(copy.parentId) && mapping.TryGetValue(copy.parentId, out var parent)) copy.parentId = parent;
                 RemapInternalReferences(copy, mapping);
-                if (item.id == id) { copy.displayName += L.T("#COPY"); copy.position.x += 1; }
+                if (item.id == id) { copy.displayName = NextDuplicateName(doc, item.displayName); copy.position.x += 1; }
                 doc.objects.Add(copy);
             }
             return mapping[id];

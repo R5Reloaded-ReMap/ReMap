@@ -131,7 +131,7 @@ namespace ReMap.Standalone
                     var copy=original.Copy();copy.id=mapping[original.id];
                     copy.parentId=!string.IsNullOrEmpty(original.parentId)&&mapping.TryGetValue(original.parentId,out var parent)?parent:"";
                     MapHierarchy.RemapInternalReferences(copy,mapping);
-                    if(rootSet.Contains(original.id)){copy.position=WorldView.ToData(WorldView.ToVector(original.position)+position);copy.displayName+=L.T("#COPY");}
+                    if(rootSet.Contains(original.id)){copy.position=WorldView.ToData(WorldView.ToVector(original.position)+position);copy.displayName=MapHierarchy.NextDuplicateName(doc,original.displayName);}
                     doc.objects.Add(copy);
                 }
             });

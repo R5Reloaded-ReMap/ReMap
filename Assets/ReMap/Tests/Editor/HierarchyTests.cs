@@ -40,6 +40,22 @@ namespace ReMap.Tests
             Assert.That(copied.Length, Is.EqualTo(3)); Assert.That(copied.Single(o => !o.isGroup).disabled, Is.True);
             Assert.That(copied.Single(o => !o.isGroup).parentId, Is.Not.EqualTo(b.id));
         }
+        [Test] public void DuplicateUsesIncrementingNumericSuffixes()
+        {
+            var original = new MapObject { displayName = "Crate" }; var doc = new MapDocument(); doc.objects.Add(original);
+            string first = MapHierarchy.Duplicate(doc, original.id);
+            string second = MapHierarchy.Duplicate(doc, original.id);
+            string third = MapHierarchy.Duplicate(doc, first);
+            Assert.That(doc.objects.Single(item => item.id == first).displayName, Is.EqualTo("Crate_01"));
+            Assert.That(doc.objects.Single(item => item.id == second).displayName, Is.EqualTo("Crate_02"));
+            Assert.That(doc.objects.Single(item => item.id == third).displayName, Is.EqualTo("Crate_03"));
+        }
+        [Test] public void DuplicatePreservesAnOriginalNumericSuffix()
+        {
+            var original = new MapObject { displayName = "Wall_01" }; var doc = new MapDocument(); doc.objects.Add(original);
+            string copy = MapHierarchy.Duplicate(doc, original.id);
+            Assert.That(doc.objects.Single(item => item.id == copy).displayName, Is.EqualTo("Wall_01_01"));
+        }
         [Test] public void ModelsCanContainChildrenAndRemainGenerated()
         {
             var a = new MapObject(); var b = new MapObject { parentId = a.id }; var doc = new MapDocument(); doc.objects.Add(a);
