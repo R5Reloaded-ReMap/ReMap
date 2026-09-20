@@ -348,7 +348,7 @@ namespace ReMap.Standalone
                 // archive sets without paying for a process restart for every thumbnail batch.
                 SetExtractionActivity(AssetExtractionSource.OfficialApex,
                     AssetExtractionOperation.LoadingArchives, plan.primaryArchive, entries.Length);
-                EnsurePreviewSession(false, true);
+                EnsurePreviewSession(plan.archives, false, true);
                 previewSession.Load(plan.archives, origin);
                 SetExtractionActivity(AssetExtractionSource.OfficialApex,
                     AssetExtractionOperation.ExportingModels, plan.primaryArchive, entries.Length);
@@ -483,7 +483,7 @@ namespace ReMap.Standalone
                 {
                     SetExtractionActivity(AssetExtractionSource.OfficialApex,
                         AssetExtractionOperation.LoadingArchives, plan.primaryArchive, pending.Count);
-                    EnsurePreviewSession(false, true);
+                    EnsurePreviewSession(plan.archives, false, true);
                     previewSession.Load(plan.archives, origin);
                     SetExtractionActivity(AssetExtractionSource.OfficialApex,
                         AssetExtractionOperation.ExportingModels, plan.primaryArchive, pending.Count);

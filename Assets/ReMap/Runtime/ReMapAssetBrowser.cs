@@ -333,7 +333,15 @@ namespace ReMap.Standalone
             }
             lastPreviewRequest=active;
             string cached=assetLibrary.CachedModel(active)??assetLibrary.TryAdoptExistingModel(active);
-            if(cached!=null) { _=PreviewGameAsset(active);return; }
+            if(cached!=null) {
+                if(assetBusy||indexRequested) {
+                    queuedPreview=null;queuedPreviewForceRefresh=false;
+                    previewEntry=ReadyPlacementEntry(active);ShowPreviewLoading(active,true);
+                    previewText.text=ModelDetails(active);previewText.tooltip=active.modelPath;
+                    RefreshCatalog();UpdateLibraryAssetActions();return;
+                }
+                _=PreviewGameAsset(active);return;
+            }
             previewEntry=null;ShowSelectedUnimportedAsset(active);RefreshCatalog();UpdateLibraryAssetActions();
         }
 

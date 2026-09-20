@@ -253,7 +253,7 @@ namespace ReMap.Standalone
             ResolveOfficialRsx();
             SyncActiveProfile();
             PakDirectory = FindPakDirectory(Settings.gameDirectory);
-            previewSession?.Dispose(); previewSession = null; previewArchivePlan=null; Records.Clear(); CacheRoot = null; DiscoverMaps();
+            ResetPreviewSession(); previewArchivePlan=null; Records.Clear(); CacheRoot = null; DiscoverMaps();
             SaveSettings();
         }
         public void ConfigureAssetExportDirectory(string directory)
@@ -267,7 +267,7 @@ namespace ReMap.Standalone
             Settings.assetExportDirectoryConfirmed = true;
             if (!string.Equals(previous, resolved, StringComparison.OrdinalIgnoreCase))
             {
-                previewSession?.Dispose(); previewSession = null; previewArchivePlan=null; Records.Clear(); CacheRoot = null;
+                ResetPreviewSession(); previewArchivePlan=null; Records.Clear(); CacheRoot = null;
             }
             SaveSettings();
             FirstLaunch = false;
@@ -291,7 +291,7 @@ namespace ReMap.Standalone
             // before saving in the persistent beta.2 settings so a side-by-side package keeps using it.
             imported.assetExportDirectory = ResolveAssetExportDirectory(legacyRoot, imported.assetExportDirectory);
             imported.assetExportDirectoryConfirmed = true;
-            previewSession?.Dispose(); previewSession = null; previewArchivePlan = null;
+            ResetPreviewSession(); previewArchivePlan = null;
             Records.Clear(); Maps.Clear(); CacheRoot = null;
             Settings = imported;
             MigrateSettings();
@@ -313,7 +313,7 @@ namespace ReMap.Standalone
         {
             if (worker.CurrentCount == 0) throw new InvalidOperationException(L.T("#WAIT_RSX_OPERATION_FINISH"));
             targetGame = GameTargets.Normalize(targetGame);
-            if (TargetGame != targetGame) { previewSession?.Dispose(); previewSession = null; previewArchivePlan=null; Records.Clear(); CacheRoot = null; }
+            if (TargetGame != targetGame) { ResetPreviewSession(); previewArchivePlan=null; Records.Clear(); CacheRoot = null; }
             Settings.targetGame = targetGame;
             SyncActiveProfile();
             PakDirectory = FindPakDirectory(Settings.gameDirectory);
@@ -694,7 +694,7 @@ namespace ReMap.Standalone
             await worker.WaitAsync(linked.Token);
             try
             {
-                previewSession?.Dispose(); previewSession=null; previewArchivePlan=null; // Release the CLI mutex before index subprocesses.
+                ResetPreviewSession(); previewArchivePlan=null; // Release embedded sessions before index subprocesses.
                 string root = await Task.Run(() => ActivateCacheGeneration(CacheDirectory, Fingerprint()), linked.Token);
                 var records = await Task.Run(() => {
                     var result = new List<GameAssetRecord>();
@@ -972,6 +972,6 @@ namespace ReMap.Standalone
             if (value.Contains("\"") || value.Contains("\n") || value.Contains("\r")) throw new ArgumentException(L.T("#INVALID_RSX_ARGUMENT"));
             return "\"" + value.TrimEnd('\\') + "\"";
         }
-        public void Dispose() { shutdown.Cancel(); previewSession?.Dispose(); previewSession=null; previewArchivePlan=null; }
+        public void Dispose() { shutdown.Cancel(); ResetPreviewSession(); previewArchivePlan=null; }
     }
 }
