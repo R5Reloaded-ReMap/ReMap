@@ -17,9 +17,6 @@ namespace ReMap.Standalone.Editor
         [MenuItem("ReMap/Prepare and open workspace")]
         public static void Prepare()
         {
-            // D3D12 SplitJobs intermittently crashes inside the app-local D3D12Core.dll on Windows.
-            // Keep D3D12 available, but use Unity's regular rendering thread instead of Graphics Jobs.
-            PlayerSettings.graphicsJobs = false;
             if (File.Exists(ScenePath))
             {
                 if (!Application.isBatchMode && !EditorSceneManager.SaveCurrentModifiedScenesIfUserWantsTo()) return;
