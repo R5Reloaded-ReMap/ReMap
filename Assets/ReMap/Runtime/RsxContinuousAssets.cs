@@ -26,7 +26,8 @@ namespace ReMap.Standalone
         public bool ContinuousPreviewsSupported => SessionExecutable!=null;
         public bool BatchPreviewsSupported => ContinuousPreviewsSupported&&File.Exists(SessionExecutable+".remap-session-v2");
         public bool GeometryPreviewsSupported => ContinuousPreviewsSupported&&File.Exists(SessionExecutable+".remap-session-v3");
-        public bool BulkTextureRepairsSupported => ContinuousPreviewsSupported&&File.Exists(SessionExecutable+".remap-session-v4");
+        public bool BulkExportsSupported => ContinuousPreviewsSupported&&File.Exists(SessionExecutable+".remap-session-v4");
+        public bool BulkTextureRepairsSupported => BulkExportsSupported;
         private void SetTargetExtractionActivity(AssetExtractionOperation operation,string archive,int modelCount) =>
             SetExtractionActivity(AssetExtractionSource.TargetGame,operation,archive,modelCount);
         private void EnsurePreviewSession(bool geometryOnly=false,bool loadAllAssetTypes=false)
@@ -85,7 +86,7 @@ namespace ReMap.Standalone
                 {
                     try
                     {
-                        CommitContinuousExports(entries,previewSession.ExportBatch(entries.Select(e=>e.guid).ToArray()),archive,result);
+                        CommitContinuousExports(entries,previewSession.ExportMany(entries.Select(e=>e.guid).ToArray()),archive,result);
                         var missing=entries.Where(entry=>!result.Paths.ContainsKey(entry.Id)).ToArray();
                         if(missing.Length>0)RetryContinuousIndividually(missing,archives,archive,result,false,false);
                     }
@@ -122,7 +123,7 @@ namespace ReMap.Standalone
                 SetTargetExtractionActivity(AssetExtractionOperation.LoadingArchives,archive,entries.Length);
                 EnsurePreviewSession();previewSession.Load(archives,archive);
                 SetTargetExtractionActivity(AssetExtractionOperation.ExportingModels,archive,entries.Length);
-                CommitContinuousExports(entries,previewSession.ExportBatch(entries.Select(entry=>entry.guid).ToArray()),archive,result);
+                CommitContinuousExports(entries,previewSession.ExportMany(entries.Select(entry=>entry.guid).ToArray()),archive,result);
                 var missing=entries.Where(entry=>!result.Paths.ContainsKey(entry.Id)).ToArray();
                 if(missing.Length>0)RetryContinuousTexturedSplit(missing,archives,archive,result);
             }
@@ -148,7 +149,7 @@ namespace ReMap.Standalone
                 SetTargetExtractionActivity(AssetExtractionOperation.ExportingModels,archive,entries.Length);
                 if(entries.Length>1)
                 {
-                    try {CommitContinuousExports(entries,previewSession.ExportBatch(entries.Select(e=>e.guid).ToArray(),true),archive,result,true);}
+                    try {CommitContinuousExports(entries,previewSession.ExportMany(entries.Select(e=>e.guid).ToArray(),true),archive,result,true);}
                     catch(Exception ex)when(ex is IOException||ex is TimeoutException)
                     {RetryContinuousIndividually(entries,archives,archive,result,true,true);return;}
                     var missing=entries.Where(entry=>!result.Paths.ContainsKey(entry.Id)).ToArray();

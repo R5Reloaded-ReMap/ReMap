@@ -66,6 +66,7 @@ namespace ReMap.Standalone
         private float thumbnailPerformanceStamp, thumbnailActiveSeconds, thumbnailLastExtractionSeconds,
             thumbnailLastGenerationSeconds;
         private int thumbnailRunStartDone;
+        private const int ThumbnailRenderBatchSize=8;
         private void BuildLoadingUI()
         {
             loadingOverlay = new VisualElement(); loadingOverlay.AddToClassList("loading-overlay"); root.Add(loadingOverlay);
@@ -487,9 +488,8 @@ namespace ReMap.Standalone
                     await Task.Yield();
                 }
                 thumbnailCheckingTextures=false;UpdateThumbnailDashboard(eligible);
-                // Repairs reuse one official RSX session;
-                // the embedded protocol exports at most eight models per command but LOAD is paid only
-                // once while consecutive batches use the same Apex map archive family.
+                // Repairs reuse one official RSX session. Protocol v4 can repair the whole compatible
+                // set in one command; older binaries retain their bounded eight-model fallback.
                 foreach(var batch in StagedRepairBatches(stagedThumbnails.Values,targets)) {
                     if(this==null||backgroundStopped||generation!=assetLibrary.CacheRoot||ThumbnailExternalWorkBlocked())return;
                     foreach(var work in batch)extractingThumbnails.Add(work.record.Id);
@@ -514,18 +514,25 @@ namespace ReMap.Standalone
                     }
                 }
                 thumbnailRendering=true;
-                foreach(var work in stagedThumbnails.Values.ToArray()) {
+                var renderQueue=stagedThumbnails.Values.ToArray();
+                for(int offset=0;offset<renderQueue.Length;offset+=ThumbnailRenderBatchSize) {
                     if(this==null||backgroundStopped||generation!=assetLibrary.CacheRoot||ThumbnailExternalWorkBlocked())return;
-                    float generationStarted=Time.realtimeSinceStartup;
-                    try {
-                        RenderStagedThumbnail(work,reloadScene);
+                    // Rendering uses Unity objects and therefore stays on the application thread.
+                    // Yield after at most eight previews, and let Pause stop before the next UI chunk;
+                    // an RSX export already in flight is deliberately not cancelled.
+                    foreach(var work in renderQueue.Skip(offset).Take(ThumbnailRenderBatchSize)) {
+                        if(this==null||backgroundStopped||generation!=assetLibrary.CacheRoot)return;
+                        float generationStarted=Time.realtimeSinceStartup;
+                        try {
+                            RenderStagedThumbnail(work,reloadScene);
+                        }
+                        catch(Exception ex){ThumbnailFailure(work.record,ex);}
+                        finally {
+                            thumbnailLastGenerationSeconds=Mathf.Max(0,Time.realtimeSinceStartup-generationStarted);
+                            stagedThumbnails.Remove(work.record.Id);UpdateThumbnailProgress(eligible);UpdateThumbnailControls();
+                        }
+                        await Task.Yield();
                     }
-                    catch(Exception ex){ThumbnailFailure(work.record,ex);}
-                    finally {
-                        thumbnailLastGenerationSeconds=Mathf.Max(0,Time.realtimeSinceStartup-generationStarted);
-                        stagedThumbnails.Remove(work.record.Id);UpdateThumbnailProgress(eligible);UpdateThumbnailControls();
-                    }
-                    await Task.Yield();
                 }
                 if(reloadScene.Count>0){foreach(string id in reloadScene)world.Reload(id);Refresh();}
             }
@@ -564,7 +571,8 @@ namespace ReMap.Standalone
                     }
                     if(ThumbnailWorkBlocked()){await Task.Delay(200);continue;}
                     bool continuous=assetLibrary.ContinuousPreviewsSupported;
-                    int batchSize=assetLibrary.BatchPreviewsSupported?8:continuous?1:assetLibrary.UsesForkFeatures?8:1;
+                    int batchSize=assetLibrary.BulkExportsSupported?64:assetLibrary.BatchPreviewsSupported?8:
+                        continuous?1:assetLibrary.UsesForkFeatures?8:1;
                     var current=prefetched;prefetched=null;
                     if(current==null) {
                         var nextBatch=NextThumbnailBatch(eligible,targetSet,targets,batchSize);
@@ -585,18 +593,20 @@ namespace ReMap.Standalone
                             var nextBatch=NextThumbnailBatch(eligible,targetSet,targets,batchSize);
                             if(nextBatch.Length>0)prefetched=StartThumbnailExtraction(nextBatch,targets,eligible);
                         }
-                        foreach(var next in batch) {
-                            await Task.Yield();
+                        for(int offset=0;offset<batch.Length;offset+=ThumbnailRenderBatchSize) {
                             if(thumbnailPaused)break;
-                            float generationStarted=Time.realtimeSinceStartup;
-                            try {
-                                if(result.Deferred.Contains(next.Id))continue;
-                                if(!result.Paths.TryGetValue(next.Id,out var cast))throw new IOException(result.Errors.TryGetValue(next.Id,out var error)?error:L.T("#EXPORT_MISSING"));
-                                await SharedTextureCache.Normalize(assetLibrary.ModelDirectory(next),SharedTextureCache.PreviewMaximumSize);
-                                if(this==null||backgroundStopped||generation!=assetLibrary.CacheRoot)return;
-                                stagedThumbnails[next.Id]=new StagedThumbnail{record=next,cast=cast};
-                            }catch(Exception ex){if(this==null||backgroundStopped||generation!=assetLibrary.CacheRoot)return;ThumbnailFailure(next,ex);}
-                            finally {thumbnailLastGenerationSeconds=Mathf.Max(0,Time.realtimeSinceStartup-generationStarted);if(this!=null&&!backgroundStopped){extractingThumbnails.Remove(next.Id);UpdateThumbnailProgress(eligible);UpdateThumbnailControls();}}
+                            foreach(var next in batch.Skip(offset).Take(ThumbnailRenderBatchSize)) {
+                                float generationStarted=Time.realtimeSinceStartup;
+                                try {
+                                    if(result.Deferred.Contains(next.Id))continue;
+                                    if(!result.Paths.TryGetValue(next.Id,out var cast))throw new IOException(result.Errors.TryGetValue(next.Id,out var error)?error:L.T("#EXPORT_MISSING"));
+                                    await SharedTextureCache.Normalize(assetLibrary.ModelDirectory(next),SharedTextureCache.PreviewMaximumSize);
+                                    if(this==null||backgroundStopped||generation!=assetLibrary.CacheRoot)return;
+                                    stagedThumbnails[next.Id]=new StagedThumbnail{record=next,cast=cast};
+                                }catch(Exception ex){if(this==null||backgroundStopped||generation!=assetLibrary.CacheRoot)return;ThumbnailFailure(next,ex);}
+                                finally {thumbnailLastGenerationSeconds=Mathf.Max(0,Time.realtimeSinceStartup-generationStarted);if(this!=null&&!backgroundStopped){extractingThumbnails.Remove(next.Id);UpdateThumbnailProgress(eligible);UpdateThumbnailControls();}}
+                                await Task.Yield();
+                            }
                         }
                         UpdateThumbnailDashboard(eligible);
                     }catch(OperationCanceledException) { Debug.Log("REMAP_THUMBNAIL_PREEMPTED"); /* Requeued without failure. */ }

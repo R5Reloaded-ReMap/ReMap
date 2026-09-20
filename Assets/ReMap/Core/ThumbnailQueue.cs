@@ -27,7 +27,7 @@ namespace ReMap.Standalone.Core
             // This preserves scene > visible > custom > search > background without bouncing between RPAKs.
             var tier=scenePending.Length>0?scenePending:visiblePending.Length>0?visiblePending:customPending.Length>0?customPending:searchPending.Length>0?searchPending:eligible;
             string archive=preferredArchive!=null&&tier.Any(r=>Origin(r)==preferredArchive)?preferredArchive:Origin(tier[0]);
-            return ordered.Where(r=>Origin(r)==archive).GroupBy(r=>r.Name,StringComparer.OrdinalIgnoreCase).Select(g=>g.First()).Take(Math.Min(8,Math.Max(1,limit))).ToArray();
+            return ordered.Where(r=>Origin(r)==archive).GroupBy(r=>r.Name,StringComparer.OrdinalIgnoreCase).Select(g=>g.First()).Take(Math.Max(1,limit)).ToArray();
         }
     }
 }

@@ -155,6 +155,13 @@ namespace ReMap.Standalone.Core
                 record.Category.IndexOf(term, StringComparison.OrdinalIgnoreCase) >= 0;
         }
 
+        public static bool ShowInCatalog(GameAssetRecord record, string search,
+            bool automaticallyPrepared, bool alreadyLoaded)
+        {
+            if (!MatchesSearch(record, search)) return false;
+            return NormalizeModelPath(search).Length > 0 || automaticallyPrepared || alreadyLoaded;
+        }
+
         public static string NormalizeGuid(string value)
         {
             if (value.StartsWith("0x", StringComparison.OrdinalIgnoreCase)) value = value.Substring(2);

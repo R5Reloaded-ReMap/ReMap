@@ -151,6 +151,10 @@
       "text": "A batch of 1 to 8 models is required."
     },
     {
+      "key": "#BATCH_1_64_MODELS_REQUIRED",
+      "text": "A batch of 1 to 64 models is required."
+    },
+    {
       "key": "#MAP_MAY_CONTAIN_MOST_10",
       "text": "A map may contain at most 10,000 objects."
     },

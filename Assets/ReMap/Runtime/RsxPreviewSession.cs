@@ -109,16 +109,22 @@ namespace ReMap.Standalone
                 throw new IOException(L.T("#RSX_MODEL_EXPORT_FAILED")+string.Join(" ",reply));
             return Path.Combine(Root,job);
         }
-        internal string ExportBulk(string[] guids)
+        internal string ExportBulk(string[] guids,bool geometryOnly=false)
         {
             if(guids==null||guids.Length<2||guids.Length>65536)throw new ArgumentException(L.T("#BATCH_1_8_MODELS_REQUIRED"));
             string job=Guid.NewGuid().ToString("N").Substring(0,8);
-            Send("EXPORTBATCH\t"+job+"\t"+string.Join("\t",guids));
+            Send((geometryOnly?"EXPORTBATCHGEOMETRY":"EXPORTBATCH")+"\t"+job+"\t"+string.Join("\t",guids));
             int timeout=Math.Min(2*60*60*1000,180000+guids.Length*5000);
             var reply=ReadReply(timeout);
             if(reply.Length!=3||reply[1]!="BATCHDONE"||reply[2]!=job)
                 throw new IOException(L.T("#RSX_MODEL_EXPORT_FAILED")+string.Join(" ",reply));
             return Path.Combine(Root,job);
+        }
+        internal string ExportMany(string[] guids,bool geometryOnly=false)
+        {
+            if(guids==null||guids.Length==0)throw new ArgumentException(L.T("#BATCH_1_64_MODELS_REQUIRED"));
+            if(guids.Length==1)return Export(guids[0],geometryOnly);
+            return guids.Length<=8?ExportBatch(guids,geometryOnly):ExportBulk(guids,geometryOnly);
         }
         public void Dispose()
         {

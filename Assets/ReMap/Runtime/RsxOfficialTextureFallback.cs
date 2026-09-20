@@ -323,9 +323,7 @@ namespace ReMap.Standalone
                 previewSession.Load(plan.archives, origin);
                 SetExtractionActivity(AssetExtractionSource.OfficialApex,
                     AssetExtractionOperation.ExportingModels, plan.primaryArchive, entries.Length);
-                string output = entries.Length > 1
-                    ? previewSession.ExportBatch(entries.Select(entry => entry.guid).ToArray())
-                    : previewSession.Export(entries[0].guid);
+                string output = previewSession.ExportMany(entries.Select(entry => entry.guid).ToArray());
                 int completedBefore = result.Paths.Count;
                 CommitOfficialPreviews(entries, output, previewSession.Root, plan.primaryArchive, result);
                 Debug.Log("REMAP_OFFICIAL_PREVIEW_BATCH: " + (result.Paths.Count - completedBefore) + "/" +

@@ -18,7 +18,8 @@ namespace ReMap.Standalone
     {
         public string OriginArchive(GameAssetRecord record,string[] targets) => record.origins.First(o=>o.mapId==""||targets.Contains(o.mapId)).archive;
         public async Task<AssetBatchResult> ExtractBatchAsync(GameAssetRecord[] entries,string[] targets,CancellationToken cancellation=default) {
-            if(entries.Length==0||entries.Length>8)throw new ArgumentException(L.T("#BATCH_1_8_MODELS_REQUIRED"));
+            int maximum=BulkExportsSupported?64:8;
+            if(entries.Length==0||entries.Length>maximum)throw new ArgumentException(L.T(maximum==64?"#BATCH_1_64_MODELS_REQUIRED":"#BATCH_1_8_MODELS_REQUIRED"));
             if(CacheRoot==null||entries.Any(e=>!e.Supports(targets)))throw new InvalidOperationException(L.T("#INDEX_COMPATIBLE_MAPS_EXTRACTION"));
             var result=new AssetBatchResult();
             if(!ContinuousPreviewsSupported&&!UsesForkFeatures) {

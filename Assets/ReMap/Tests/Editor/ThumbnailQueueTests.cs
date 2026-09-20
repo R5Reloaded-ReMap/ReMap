@@ -60,5 +60,18 @@ namespace ReMap.Standalone.Tests {
             Assert.That(result.First().Id,Is.EqualTo(prop.Id));
             Assert.That(GameAssetIndex.MatchesSearch(prop,@"mdl\props"),Is.True);
         }
+        [Test] public void QueueCanFillA64ModelRsxExport() {
+            var records=Enumerable.Range(0,80).Select(i=>Record(i.ToString(),"prop_"+i)).ToArray();
+            var result=ThumbnailQueue.Next(records,Array.Empty<GameAssetRecord>(),new HashSet<string>(),
+                new HashSet<string>(),"",Array.Empty<string>(),64);
+            Assert.That(result.Length,Is.EqualTo(64));
+        }
+        [Test] public void UnloadedExcludedModelsOnlyAppearWhenSearched() {
+            var fx=Record("1","impact");fx.modelPath="mdl/fx/impact.rmdl";
+            Assert.That(GameAssetIndex.ShowInCatalog(fx,"",false,false),Is.False);
+            Assert.That(GameAssetIndex.ShowInCatalog(fx,"mdl/fx",false,false),Is.True);
+            Assert.That(GameAssetIndex.ShowInCatalog(fx,"other",false,false),Is.False);
+            Assert.That(GameAssetIndex.ShowInCatalog(fx,"",false,true),Is.True);
+        }
     }
 }
