@@ -188,7 +188,7 @@ namespace ReMap.Standalone
             var lengthScale = CompactInspectorField(new FloatField(L.T("#LENGTH_SCALE_CABLE_GRAVITY")) {
                 value = item.ziplineLengthScale, isDelayed = true
             });
-            lengthScale.tooltip = L.T("Range 0-1.2; 0.9 is typical; values above 1 are exceptional.");
+                lengthScale.tooltip = L.T("#ZIPLINE_LENGTH_SCALE_HELP");
             section.Add(lengthScale);
             lengthScale.RegisterValueChangedCallback(change => Run(() =>
                 ChangeZipline(item.id, zipline =>

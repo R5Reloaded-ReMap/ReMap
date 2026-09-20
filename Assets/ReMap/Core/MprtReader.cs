@@ -28,7 +28,7 @@ namespace ReMap.Standalone.Core
 
         public static List<MprtPlacement> Read(Stream stream)
         {
-            if (stream == null || !stream.CanRead) throw new ArgumentException("The MPRT stream is not readable.");
+            if (stream == null || !stream.CanRead) throw new ArgumentException(L.T("#MPRT_STREAM_NOT_READABLE"));
             using (var reader = new BinaryReader(stream, Encoding.UTF8, true))
             {
                 if (reader.ReadUInt32() != Magic) throw new InvalidDataException("Invalid MPRT signature.");

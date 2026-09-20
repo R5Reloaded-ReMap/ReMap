@@ -36,7 +36,7 @@ namespace ReMap.Standalone
         {
             if (library == null) throw new ArgumentNullException(nameof(library));
             mapId = (mapId ?? "").Trim();
-            if (!ValidMapId(mapId)) throw new ArgumentException("Select a valid edited map before loading its BSP.");
+            if (!ValidMapId(mapId)) throw new ArgumentException(L.T("#SELECT_VALID_EDITED_MAP_BSP"));
 
             string root = Path.Combine(library.CacheDirectory, "MapReferences", library.TargetGame, mapId);
             Directory.CreateDirectory(root);
@@ -61,23 +61,23 @@ namespace ReMap.Standalone
         {
             if (library == null) throw new ArgumentNullException(nameof(library));
             mapId = (mapId ?? "").Trim();
-            if (!ValidMapId(mapId)) throw new ArgumentException("Select a valid edited map before exporting its entity lumps.");
+            if (!ValidMapId(mapId)) throw new ArgumentException(L.T("#SELECT_VALID_EDITED_MAP_ENTITIES"));
             string root = Path.Combine(library.CacheDirectory, "MapReferences", library.TargetGame, mapId);
             Directory.CreateDirectory(root);
             if (force || EntityLumpKinds.Any(kind => FindExtractedEntityLump(root, mapId, kind) == null))
                 await ExtractMapArchiveAsync(library, mapId, root, progress, cancellation);
             foreach (string kind in EntityLumpKinds)
                 if (FindExtractedEntityLump(root, mapId, kind) == null)
-                    throw new FileNotFoundException("ReVPK completed but the " + kind + " entity lump was not produced for " + mapId + ".");
+                    throw new FileNotFoundException(L.F("#REVPK_ENTITY_LUMP_MISSING_ARG0_ARG1", kind, mapId));
             return FindExtractedEntityLump(root, mapId, "script");
         }
 
         private static async Task ExtractMapArchiveAsync(RsxAssetLibrary library, string mapId, string root, IProgress<MapReferenceProgress> progress, CancellationToken cancellation)
         {
             string archive = FindMapArchive(library.GameDirectory, mapId);
-            if (archive == null) throw new FileNotFoundException("The BSP VPK for " + mapId + " was not found.");
+            if (archive == null) throw new FileNotFoundException(L.F("#BSP_VPK_NOT_FOUND_ARG0", mapId));
             string revpkSource = FindRevpk(library);
-            if (revpkSource == null) throw new FileNotFoundException("revpk.exe was not found in the configured game installations.");
+            if (revpkSource == null) throw new FileNotFoundException(L.T("#REVPK_NOT_FOUND_CONFIGURED_GAMES"));
             string revpk = StageRevpk(revpkSource);
             progress?.Report(new MapReferenceProgress("Extracting " + mapId + " BSP and entity lumps…", .08f));
             await RunProcessAsync(revpk, "-unpack " + Quote(Path.GetFileName(archive)) + " " + Quote(CommandPath(root)) + " 0", cancellation, Path.GetDirectoryName(archive));
@@ -147,12 +147,12 @@ namespace ReMap.Standalone
                 };
                 process.OutputDataReceived += (_, e) => { };
                 process.ErrorDataReceived += (_, e) => { if (!string.IsNullOrEmpty(e.Data) && errors.Length < 16000) errors.AppendLine(e.Data); };
-                if (!process.Start()) throw new InvalidOperationException("Could not start ReVPK.");
+                if (!process.Start()) throw new InvalidOperationException(L.T("#COULD_NOT_START_REVPK"));
                 process.BeginOutputReadLine(); process.BeginErrorReadLine();
                 using (cancellation.Register(() => { try { if (!process.HasExited) process.Kill(); } catch { } }))
                     await Task.Run(() => process.WaitForExit(), cancellation);
                 cancellation.ThrowIfCancellationRequested();
-                if (process.ExitCode != 0) throw new InvalidOperationException("ReVPK failed: " + errors.ToString().Trim());
+                if (process.ExitCode != 0) throw new InvalidOperationException(L.F("#REVPK_FAILED_ARG0", errors.ToString().Trim()));
             }
         }
 
@@ -186,7 +186,7 @@ namespace ReMap.Standalone
             uint length = GetShortPathName(path, shortPath, (uint)shortPath.Capacity);
             if (length > 0 && length < shortPath.Capacity && shortPath.ToString().IndexOf(' ') < 0)
                 return shortPath.ToString();
-            throw new IOException("ReVPK requires a path without spaces and no Windows short path is available: " + path);
+            throw new IOException(L.F("#REVPK_PATH_WITHOUT_SPACES_ARG0", path));
         }
 
         [DllImport("kernel32.dll", CharSet = CharSet.Unicode, SetLastError = true)]

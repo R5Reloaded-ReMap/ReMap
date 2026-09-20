@@ -1692,7 +1692,7 @@
     },
     {
       "key": "#SHOW_MPRT_MODELS_HELP",
-      "text": "Extracts and places the static models registered by the BSP. They remain locked and read-only."
+      "text": "Extracts and places the static models registered by the BSP. They remain locked and read-only. This option starts disabled each time ReMap launches."
     },
     {
       "key": "#RELOAD_MAP_REFERENCE",
@@ -1904,7 +1904,7 @@
     },
     {
       "key": "#ASSET_EXPORT_FOLDER",
-      "text": "Asset export folder"
+      "text": "Asset Cache folder"
     },
     {
       "key": "#ASSET_EXPORT_FOLDER_HELP",
@@ -3663,6 +3663,22 @@
       "text": "Game installations"
     },
     {
+      "key": "#OFFICIAL_APEX_FOLDER",
+      "text": "Official Apex folder"
+    },
+    {
+      "key": "#OFFICIAL_TEXTURE_FALLBACK",
+      "text": "Prefer official Apex for model previews"
+    },
+    {
+      "key": "#OFFICIAL_TEXTURE_FALLBACK_HELP",
+      "text": "When the same model GUID exists in official Apex, ReMap uses its current CAST and textures for the editor preview. The asset list, map archives, .ent data and exported model identity still come from R5Reloaded or R5Flowstate; unavailable official models fall back to that source."
+    },
+    {
+      "key": "#OFFICIAL_APEX_FOLDER_INVALID",
+      "text": "The selected folder is not an official Apex Legends installation."
+    },
+    {
       "key": "#R5RELOADED_FOLDER",
       "text": "R5Reloaded folder"
     },
@@ -4168,7 +4184,35 @@
     },
     {
       "key": "#WELCOME_INTRO",
-      "text": "Choose a detected modded game installation to start indexing its assets. If your installation is missing, open Settings and select its folder manually."
+      "text": "Choose where ReMap stores its Asset Cache before selecting a detected game installation. If your installation is missing, open Settings and select its folder manually."
+    },
+    {
+      "key": "#IMPORT_BETA1_SETTINGS",
+      "text": "Import beta.1 settings…"
+    },
+    {
+      "key": "#IMPORT_BETA1_SETTINGS_HELP",
+      "text": "Upgrading from a separate beta.1 folder? Import its settings to reuse the existing AssetCache without moving it."
+    },
+    {
+      "key": "#SELECT_BETA1_FOLDER",
+      "text": "Select the old ReMap beta.1 folder"
+    },
+    {
+      "key": "#BETA1_SETTINGS_IMPORTED_ARG0",
+      "text": "beta.1 settings imported. Existing Asset Cache: {0}"
+    },
+    {
+      "key": "#BETA1_SETTINGS_IMPORT_FAILED_ARG0",
+      "text": "Could not import beta.1 settings: {0}"
+    },
+    {
+      "key": "#BETA1_SETTINGS_FILE_NOT_FOUND_ARG0",
+      "text": "No beta.1 asset-source.local.json file was found at {0}."
+    },
+    {
+      "key": "#BETA1_SETTINGS_INVALID",
+      "text": "The beta.1 settings file is invalid or unreadable."
     },
     {
       "key": "#DETECTED_GAME_INSTALLATIONS",
@@ -5141,6 +5185,142 @@
     {
       "key": "#THUMBNAIL_PERFORMANCE_ARG0_ARG1",
       "text": "Last extraction: {0} s · last generation: {1} s"
+    },
+    {
+      "key": "#GETTING_STARTED",
+      "text": "Getting started"
+    },
+    {
+      "key": "#KEYBOARD_SHORTCUTS",
+      "text": "Keyboard and camera shortcuts"
+    },
+    {
+      "key": "#OPEN_LOG_FOLDER",
+      "text": "Open log folder"
+    },
+    {
+      "key": "#COPY_DIAGNOSTICS",
+      "text": "Copy diagnostic information"
+    },
+    {
+      "key": "#DIAGNOSTICS_COPIED",
+      "text": "Diagnostic information copied to the clipboard. No password or RCON key was included."
+    },
+    {
+      "key": "#LOG_FOLDER_NOT_FOUND",
+      "text": "The application log folder could not be located."
+    },
+    {
+      "key": "#HELP_PAGE_ARG0_ARG1",
+      "text": "Page {0} of {1}"
+    },
+    {
+      "key": "#PREVIOUS",
+      "text": "Previous"
+    },
+    {
+      "key": "#NEXT",
+      "text": "Next"
+    },
+    {
+      "key": "#HELP_SETUP_TITLE",
+      "text": "1. Configure ReMap"
+    },
+    {
+      "key": "#HELP_SETUP_BODY",
+      "text": "Open Settings and select the root folder of R5Reloaded and/or R5Flowstate. ReMap detects platform and RPAK folders automatically.\n\nChoose an Asset Cache folder on a drive with about 10 GB of free space, then save it. This folder stores indexes, extracted models, textures, and thumbnails. Changing it does not move or delete the previous cache.\n\nSave the game paths. The first-time setup button can then prepare the selected installation safely."
+    },
+    {
+      "key": "#HELP_PROJECT_TITLE",
+      "text": "2. Create and index a project"
+    },
+    {
+      "key": "#HELP_PROJECT_BODY",
+      "text": "Use File > New map, choose the target game and the Apex map you want to edit. The target stays attached to the project.\n\nOpen the Indexing page, enable the map archives required by the project, then apply the changes. Common assets are included automatically. The first indexing pass may take a while; ReMap remains usable while thumbnails continue in the background."
+    },
+    {
+      "key": "#HELP_EDIT_TITLE",
+      "text": "3. Place and edit objects"
+    },
+    {
+      "key": "#HELP_EDIT_BODY",
+      "text": "Search the model library, then double-click a card or drag it into the scene. Use W, E, and R for move, rotate, and scale. F frames the selection.\n\nUse the hierarchy to rename, group, reorder, disable, or reparent objects. Ctrl+D places a duplicate and Escape cancels placement. Save regularly with Ctrl+S. Personal assemblies let you reuse a complete selection later."
+    },
+    {
+      "key": "#HELP_EXPORT_TITLE",
+      "text": "4. Export and test in game"
+    },
+    {
+      "key": "#HELP_EXPORT_BODY",
+      "text": "Open the generated game code from the toolbar or File menu. Review the Scripts and ENT tabs, then use Build and install map.\n\nNative ENT optimization is enabled by default. Unsupported objects keep their script fallback. Restarting the map is optional; if automatic communication is unavailable, launch or reload the map from the game after installation. Keep the target game and edited map consistent with the open project."
+    },
+    {
+      "key": "#HELP_SHORTCUTS_TITLE",
+      "text": "5. Keyboard and camera reference"
+    },
+    {
+      "key": "#HELP_SHORTCUTS_BODY",
+      "text": "W / E / R — Move / rotate / scale\nF — Frame the selection\nF2 — Rename the selected hierarchy item\nCtrl+A — Select all\nCtrl+C / X / V — Copy / cut / paste\nCtrl+D — Place a duplicate\nCtrl+G — Group the selection\nCtrl+Z / Ctrl+Y — Undo / redo\nCtrl+S — Save\nDelete — Delete the selection\nEscape — Cancel the current placement or gesture\nF11 or Alt+Enter — Toggle fullscreen\n\nRight mouse + WASD/ZQSD — 3D flight\nMouse wheel — Zoom; hold Shift to accelerate\nMiddle click — Focus a point\nMiddle drag — Pan\nAlt + left mouse — Orbit around the focus point"
+    },
+    {
+      "key": "#REMAP_BRIDGE_MISSING_REBUILD",
+      "text": "The ReMap bridge is missing. Rebuild or reinstall ReMap."
+    },
+    {
+      "key": "#COULD_NOT_START_REMAP_BRIDGE",
+      "text": "Could not start the ReMap bridge."
+    },
+    {
+      "key": "#REMAP_FILE_DIALOG_FAILED",
+      "text": "The ReMap file dialog failed."
+    },
+    {
+      "key": "#ZIPLINE_LENGTH_SCALE_HELP",
+      "text": "Range 0–1.2. A value of 0.9 is typical; values above 1 are exceptional."
+    },
+    {
+      "key": "#MPRT_STREAM_NOT_READABLE",
+      "text": "The MPRT stream is not readable."
+    },
+    {
+      "key": "#MISSING_BSP_LUMP_ARG0",
+      "text": "Missing BSP lump {0}."
+    },
+    {
+      "key": "#SELECT_VALID_EDITED_MAP_BSP",
+      "text": "Select a valid edited map before loading its BSP."
+    },
+    {
+      "key": "#SELECT_VALID_EDITED_MAP_ENTITIES",
+      "text": "Select a valid edited map before exporting its entity lumps."
+    },
+    {
+      "key": "#REVPK_ENTITY_LUMP_MISSING_ARG0_ARG1",
+      "text": "ReVPK completed, but the {0} entity lump was not produced for {1}."
+    },
+    {
+      "key": "#BSP_VPK_NOT_FOUND_ARG0",
+      "text": "The BSP VPK for {0} was not found."
+    },
+    {
+      "key": "#REVPK_NOT_FOUND_CONFIGURED_GAMES",
+      "text": "revpk.exe was not found in the configured game installations."
+    },
+    {
+      "key": "#COULD_NOT_START_REVPK",
+      "text": "Could not start ReVPK."
+    },
+    {
+      "key": "#REVPK_FAILED_ARG0",
+      "text": "ReVPK failed: {0}"
+    },
+    {
+      "key": "#REVPK_PATH_WITHOUT_SPACES_ARG0",
+      "text": "ReVPK requires a path without spaces, and no Windows short path is available: {0}"
+    },
+    {
+      "key": "#ENT_VALUES_FINITE",
+      "text": "ENT values must be finite."
     }
   ]
 }

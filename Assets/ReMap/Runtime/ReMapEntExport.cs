@@ -1089,7 +1089,7 @@ namespace ReMap.Standalone
 
         private static string Number(float value)
         {
-            if (float.IsNaN(value) || float.IsInfinity(value)) throw new ArgumentException("ENT values must be finite.");
+            if (float.IsNaN(value) || float.IsInfinity(value)) throw new ArgumentException(L.T("#ENT_VALUES_FINITE"));
             double rounded = Math.Round(value, 4, MidpointRounding.AwayFromZero);
             if (Math.Abs(rounded) < .00005) rounded = 0;
             return rounded.ToString("0.####", CultureInfo.InvariantCulture);

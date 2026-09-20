@@ -167,7 +167,7 @@ namespace ReMap.Standalone.Core
                 string upper = bsp + "." + id.ToString("X4") + ".bsp_lump";
                 path = File.Exists(lower) ? lower : upper; offset = 0;
             }
-            if (!File.Exists(path)) { if (!required) return Array.Empty<byte>(); throw new FileNotFoundException("Missing BSP lump " + id.ToString("x4") + ".", path); }
+            if (!File.Exists(path)) { if (!required) return Array.Empty<byte>(); throw new FileNotFoundException(L.F("#MISSING_BSP_LUMP_ARG0", id.ToString("x4")), path); }
             using (var stream = File.Open(path, FileMode.Open, FileAccess.Read, FileShare.Read))
             {
                 if (offset < 0 || offset > stream.Length - lump.Length) throw new InvalidDataException("BSP lump " + id.ToString("x4") + " lies outside its file.");

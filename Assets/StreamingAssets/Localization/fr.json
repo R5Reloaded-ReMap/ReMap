@@ -1692,7 +1692,7 @@
     },
     {
       "key": "#SHOW_MPRT_MODELS_HELP",
-      "text": "Extrait et place les modèles statiques enregistrés par le BSP. Ils restent verrouillés et en lecture seule."
+      "text": "Extrait et place les modèles statiques enregistrés par le BSP. Ils restent verrouillés et en lecture seule. Cette option est désactivée à chaque lancement de ReMap."
     },
     {
       "key": "#RELOAD_MAP_REFERENCE",
@@ -1904,7 +1904,7 @@
     },
     {
       "key": "#ASSET_EXPORT_FOLDER",
-      "text": "Dossier d’exportation des ressources"
+      "text": "Dossier du cache des ressources"
     },
     {
       "key": "#ASSET_EXPORT_FOLDER_HELP",
@@ -3663,6 +3663,22 @@
       "text": "Installations des jeux"
     },
     {
+      "key": "#OFFICIAL_APEX_FOLDER",
+      "text": "Dossier Apex officiel"
+    },
+    {
+      "key": "#OFFICIAL_TEXTURE_FALLBACK",
+      "text": "Privilégier Apex officiel pour les aperçus"
+    },
+    {
+      "key": "#OFFICIAL_TEXTURE_FALLBACK_HELP",
+      "text": "Lorsque le même GUID de modèle existe dans Apex officiel, ReMap utilise son CAST et ses textures actuels pour l'aperçu dans l'éditeur. La liste des assets, les archives de map, les données .ent et l'identité exportée restent celles de R5Reloaded ou R5Flowstate ; les modèles absents d'Apex officiel retombent sur cette source."
+    },
+    {
+      "key": "#OFFICIAL_APEX_FOLDER_INVALID",
+      "text": "Le dossier sélectionné n'est pas une installation officielle d'Apex Legends."
+    },
+    {
       "key": "#R5RELOADED_FOLDER",
       "text": "Dossier R5Reloaded"
     },
@@ -4168,7 +4184,35 @@
     },
     {
       "key": "#WELCOME_INTRO",
-      "text": "Choisissez une installation modifiée détectée pour commencer l’indexation de ses ressources. Si votre installation manque, ouvrez les réglages et sélectionnez son dossier manuellement."
+      "text": "Choisissez où ReMap stocke son cache de ressources avant de sélectionner une installation de jeu détectée. Si votre installation manque, ouvrez les réglages et sélectionnez son dossier manuellement."
+    },
+    {
+      "key": "#IMPORT_BETA1_SETTINGS",
+      "text": "Importer les réglages beta.1…"
+    },
+    {
+      "key": "#IMPORT_BETA1_SETTINGS_HELP",
+      "text": "Vous venez d’un dossier beta.1 distinct ? Importez ses réglages pour réutiliser l’AssetCache existant sans le déplacer."
+    },
+    {
+      "key": "#SELECT_BETA1_FOLDER",
+      "text": "Sélectionner l’ancien dossier ReMap beta.1"
+    },
+    {
+      "key": "#BETA1_SETTINGS_IMPORTED_ARG0",
+      "text": "Réglages beta.1 importés. Asset Cache existant : {0}"
+    },
+    {
+      "key": "#BETA1_SETTINGS_IMPORT_FAILED_ARG0",
+      "text": "Impossible d’importer les réglages beta.1 : {0}"
+    },
+    {
+      "key": "#BETA1_SETTINGS_FILE_NOT_FOUND_ARG0",
+      "text": "Aucun fichier asset-source.local.json de beta.1 n’a été trouvé dans {0}."
+    },
+    {
+      "key": "#BETA1_SETTINGS_INVALID",
+      "text": "Le fichier de réglages beta.1 est invalide ou illisible."
     },
     {
       "key": "#DETECTED_GAME_INSTALLATIONS",
@@ -5141,6 +5185,142 @@
     {
       "key": "#THUMBNAIL_PERFORMANCE_ARG0_ARG1",
       "text": "Dernière extraction : {0} s · dernière génération : {1} s"
+    },
+    {
+      "key": "#GETTING_STARTED",
+      "text": "Bien démarrer"
+    },
+    {
+      "key": "#KEYBOARD_SHORTCUTS",
+      "text": "Raccourcis clavier et caméra"
+    },
+    {
+      "key": "#OPEN_LOG_FOLDER",
+      "text": "Ouvrir le dossier des journaux"
+    },
+    {
+      "key": "#COPY_DIAGNOSTICS",
+      "text": "Copier les informations de diagnostic"
+    },
+    {
+      "key": "#DIAGNOSTICS_COPIED",
+      "text": "Informations de diagnostic copiées dans le presse-papiers. Aucun mot de passe ni aucune clé RCON n’a été inclus."
+    },
+    {
+      "key": "#LOG_FOLDER_NOT_FOUND",
+      "text": "Le dossier des journaux de l’application est introuvable."
+    },
+    {
+      "key": "#HELP_PAGE_ARG0_ARG1",
+      "text": "Page {0} sur {1}"
+    },
+    {
+      "key": "#PREVIOUS",
+      "text": "Précédent"
+    },
+    {
+      "key": "#NEXT",
+      "text": "Suivant"
+    },
+    {
+      "key": "#HELP_SETUP_TITLE",
+      "text": "1. Configurer ReMap"
+    },
+    {
+      "key": "#HELP_SETUP_BODY",
+      "text": "Ouvrez les Réglages et sélectionnez le dossier racine de R5Reloaded et/ou R5Flowstate. ReMap détecte automatiquement les dossiers platform et RPAK.\n\nChoisissez un dossier Asset Cache sur un disque disposant d’environ 10 Go libres, puis enregistrez-le. Il contient les index, modèles extraits, textures et miniatures. Changer ce chemin ne déplace ni ne supprime l’ancien cache.\n\nEnregistrez les chemins des jeux. Le bouton de première configuration peut ensuite préparer l’installation sélectionnée sans risque."
+    },
+    {
+      "key": "#HELP_PROJECT_TITLE",
+      "text": "2. Créer et indexer un projet"
+    },
+    {
+      "key": "#HELP_PROJECT_BODY",
+      "text": "Utilisez Fichier > Nouvelle map, choisissez le jeu cible et la map Apex à modifier. La cible reste attachée au projet.\n\nOuvrez la page Indexation, activez les archives nécessaires au projet, puis appliquez les changements. Les ressources Common sont incluses automatiquement. La première indexation peut prendre du temps ; ReMap reste utilisable pendant que les miniatures continuent en arrière-plan."
+    },
+    {
+      "key": "#HELP_EDIT_TITLE",
+      "text": "3. Placer et modifier des objets"
+    },
+    {
+      "key": "#HELP_EDIT_BODY",
+      "text": "Recherchez un modèle dans la bibliothèque, puis double-cliquez sur sa carte ou glissez-le dans la scène. Utilisez W, E et R pour déplacer, tourner et redimensionner. F cadre la sélection.\n\nLa hiérarchie permet de renommer, regrouper, réordonner, désactiver ou reparenter les objets. Ctrl+D place une copie et Échap annule le placement. Enregistrez régulièrement avec Ctrl+S. Les assemblages personnels permettent de réutiliser une sélection complète."
+    },
+    {
+      "key": "#HELP_EXPORT_TITLE",
+      "text": "4. Exporter et tester dans le jeu"
+    },
+    {
+      "key": "#HELP_EXPORT_BODY",
+      "text": "Ouvrez le code de jeu généré depuis la barre d’outils ou le menu Fichier. Vérifiez les onglets Scripts et ENT, puis utilisez Construire et installer la map.\n\nL’optimisation native ENT est activée par défaut. Les objets non pris en charge conservent leur solution de repli en script. Le redémarrage de la map est facultatif ; si la communication automatique est indisponible, lancez ou rechargez la map depuis le jeu après l’installation. Vérifiez que le jeu cible et la map modifiée correspondent au projet ouvert."
+    },
+    {
+      "key": "#HELP_SHORTCUTS_TITLE",
+      "text": "5. Référence clavier et caméra"
+    },
+    {
+      "key": "#HELP_SHORTCUTS_BODY",
+      "text": "W / E / R — Déplacer / tourner / redimensionner\nF — Cadrer la sélection\nF2 — Renommer l’élément sélectionné dans la hiérarchie\nCtrl+A — Tout sélectionner\nCtrl+C / X / V — Copier / couper / coller\nCtrl+D — Placer une copie\nCtrl+G — Regrouper la sélection\nCtrl+Z / Ctrl+Y — Annuler / rétablir\nCtrl+S — Enregistrer\nSuppr — Supprimer la sélection\nÉchap — Annuler le placement ou le geste en cours\nF11 ou Alt+Entrée — Basculer en plein écran\n\nClic droit + WASD/ZQSD — Vol 3D\nMolette — Zoom ; maintenir Maj pour accélérer\nClic molette — Cadrer un point\nGlisser avec la molette — Panoramique\nAlt + clic gauche — Orbiter autour du point cadré"
+    },
+    {
+      "key": "#REMAP_BRIDGE_MISSING_REBUILD",
+      "text": "Le bridge de ReMap est absent. Reconstruisez ou réinstallez ReMap."
+    },
+    {
+      "key": "#COULD_NOT_START_REMAP_BRIDGE",
+      "text": "Impossible de démarrer le bridge de ReMap."
+    },
+    {
+      "key": "#REMAP_FILE_DIALOG_FAILED",
+      "text": "Échec de la boîte de dialogue de fichiers de ReMap."
+    },
+    {
+      "key": "#ZIPLINE_LENGTH_SCALE_HELP",
+      "text": "Plage de 0 à 1,2. Une valeur de 0,9 est habituelle ; les valeurs supérieures à 1 sont exceptionnelles."
+    },
+    {
+      "key": "#MPRT_STREAM_NOT_READABLE",
+      "text": "Le flux MPRT est illisible."
+    },
+    {
+      "key": "#MISSING_BSP_LUMP_ARG0",
+      "text": "Lump BSP {0} manquant."
+    },
+    {
+      "key": "#SELECT_VALID_EDITED_MAP_BSP",
+      "text": "Sélectionnez une map modifiée valide avant de charger son BSP."
+    },
+    {
+      "key": "#SELECT_VALID_EDITED_MAP_ENTITIES",
+      "text": "Sélectionnez une map modifiée valide avant d’exporter ses lumps d’entités."
+    },
+    {
+      "key": "#REVPK_ENTITY_LUMP_MISSING_ARG0_ARG1",
+      "text": "ReVPK a terminé, mais le lump d’entités {0} n’a pas été produit pour {1}."
+    },
+    {
+      "key": "#BSP_VPK_NOT_FOUND_ARG0",
+      "text": "Le VPK BSP de {0} est introuvable."
+    },
+    {
+      "key": "#REVPK_NOT_FOUND_CONFIGURED_GAMES",
+      "text": "revpk.exe est introuvable dans les installations de jeu configurées."
+    },
+    {
+      "key": "#COULD_NOT_START_REVPK",
+      "text": "Impossible de démarrer ReVPK."
+    },
+    {
+      "key": "#REVPK_FAILED_ARG0",
+      "text": "Échec de ReVPK : {0}"
+    },
+    {
+      "key": "#REVPK_PATH_WITHOUT_SPACES_ARG0",
+      "text": "ReVPK exige un chemin sans espaces et aucun chemin court Windows n’est disponible : {0}"
+    },
+    {
+      "key": "#ENT_VALUES_FINITE",
+      "text": "Les valeurs ENT doivent être finies."
     }
   ]
 }
