@@ -5511,6 +5511,14 @@
       "text": "RSX charge actuellement des archives, importe des modèles ou répare des textures."
     },
     {
+      "key": "#RSX_LOADING_RPAKS",
+      "text": "RSX charge les RPAK…"
+    },
+    {
+      "key": "#RSX_LOADING_RPAKS_HELP",
+      "text": "RSX charge les archives communes et toutes les archives des cartes sélectionnées avant d’importer les modèles."
+    },
+    {
       "key": "#LOADING_CACHED_ARG0",
       "text": "Chargement du modèle en cache : {0}"
     },

@@ -70,9 +70,14 @@ namespace ReMap.Standalone
                 return previewArchivePlan;
             }
             string[] available=Directory.EnumerateFiles(PakDirectory,"*.rpak",SearchOption.TopDirectoryOnly).Select(Path.GetFileName).ToArray();
+            string[] commonArchives=available.Where(name=>name.StartsWith("common",StringComparison.OrdinalIgnoreCase)).ToArray();
             string[] selectedMaps=SelectMapArchives(targets,available);
-            var pendingOrigins=new System.Collections.Generic.HashSet<string>(Records.Where(record=>record.Supports(targets)&&CachedModel(record)==null).Select(record=>OriginArchive(record,targets)),StringComparer.OrdinalIgnoreCase);
-            previewArchivePlan=Common.Concat(selectedMaps.Where(pendingOrigins.Contains)).Concat(new[]{requiredArchive}).Distinct(StringComparer.OrdinalIgnoreCase).Select(name=>Path.Combine(PakDirectory,name)).Where(File.Exists).ToArray();
+            // Keep the same in-game archive union alive for manual imports. Loading only the
+            // current model origin would force RSX to rebuild its session when the user moves
+            // from a common model to a selected-map model (or between two selected maps).
+            // Start with the known load order, then include every common extension discovered
+            // in the installation, including numbered archives such as common(01).rpak.
+            previewArchivePlan=Common.Concat(commonArchives).Concat(selectedMaps).Concat(new[]{requiredArchive}).Distinct(StringComparer.OrdinalIgnoreCase).Select(name=>Path.Combine(PakDirectory,name)).Where(File.Exists).ToArray();
             return previewArchivePlan;
         }
         // Called with the existing library semaphore held. Automatic work normally reuses the loaded

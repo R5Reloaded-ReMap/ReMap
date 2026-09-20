@@ -734,9 +734,11 @@ namespace ReMap.Standalone
             bool running=!backgroundStopped&&assetLibrary?.PreviewProcessId!=0;
             bool working=assetBusy||pendingAssetDrops>0||extractingThumbnails.Count>0||thumbnailExport!=null;
             bool countdown=running&&!working&&rsxSessionIdleRemainingSeconds.HasValue&&rsxSessionIdleRemainingSeconds.Value>0;
+            bool loading=running&&working&&assetLibrary.ExtractionActivity.Operation==AssetExtractionOperation.LoadingArchives;
             rsxSessionIdleStatus.text=countdown?L.F("#RSX_SESSION_CLOSES_IN_ARG0",rsxSessionIdleRemainingSeconds.Value):
-                running?L.T("#RSX_SESSION_RUNNING"):"";
-            rsxSessionIdleStatus.tooltip=countdown?L.T("#RSX_SESSION_IDLE_HELP"):running?L.T("#RSX_SESSION_RUNNING_HELP"):"";
+                loading?L.T("#RSX_LOADING_RPAKS"):running?L.T("#RSX_SESSION_RUNNING"):"";
+            rsxSessionIdleStatus.tooltip=countdown?L.T("#RSX_SESSION_IDLE_HELP"):
+                loading?L.T("#RSX_LOADING_RPAKS_HELP"):running?L.T("#RSX_SESSION_RUNNING_HELP"):"";
             rsxSessionIdleStatus.style.display=running?DisplayStyle.Flex:DisplayStyle.None;
         }
         private void UpdateLibraryFooterVisibility() {
