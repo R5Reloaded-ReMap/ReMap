@@ -685,7 +685,12 @@ namespace ReMap.Standalone
                         if(removed>0)Debug.Log("REMAP_TEXTURE_CACHE_CLEANED: "+removed);
                     }
                 }
-                finally{thumbnailLoopRunning=false;UpdateThumbnailControls();if(!backgroundStopped)ScheduleManualPreviewSessionRelease(generation);}
+                finally{
+                    thumbnailLoopRunning=false;UpdateThumbnailControls();
+                    if(!backgroundStopped&&!thumbnailPaused&&thumbnailDone+thumbnailFailed>=thumbnailTotal)
+                        ShowThumbnailDashboard(false);
+                    if(!backgroundStopped)ScheduleManualPreviewSessionRelease(generation);
+                }
             }
         }
         private void CancelManualPreviewSessionRelease() {
