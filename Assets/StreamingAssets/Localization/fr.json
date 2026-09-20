@@ -5255,6 +5255,18 @@
       "text": "Extraction Apex officielle"
     },
     {
+      "key": "#THUMBNAIL_MODEL_EXTRACTION",
+      "text": "Extraction des modèles"
+    },
+    {
+      "key": "#THUMBNAIL_APEX_SHORT",
+      "text": "Apex officiel"
+    },
+    {
+      "key": "#THUMBNAIL_TARGET_SHORT",
+      "text": "R5R / R5F"
+    },
+    {
       "key": "#THUMBNAIL_TARGET_EXTRACTION",
       "text": "Extraction R5R / R5F"
     },
@@ -5273,6 +5285,18 @@
     {
       "key": "#THUMBNAIL_ACTIVE_SUFFIX_ARG0",
       "text": " (+{0} en cours)"
+    },
+    {
+      "key": "#THUMBNAIL_ACTIVE_ARG0",
+      "text": "{0} en cours"
+    },
+    {
+      "key": "#THUMBNAIL_COMPLETED_ARG0_ARG1",
+      "text": "{0} / {1} terminées"
+    },
+    {
+      "key": "#THUMBNAIL_FAILED_ARG0",
+      "text": "{0} en échec"
     },
     {
       "key": "#THUMBNAIL_REMAINING",

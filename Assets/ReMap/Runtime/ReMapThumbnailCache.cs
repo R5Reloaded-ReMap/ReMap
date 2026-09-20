@@ -64,7 +64,7 @@ namespace ReMap.Standalone
         private ProgressBar thumbnailDashboardProgress;
         private Label thumbnailDashboardState, thumbnailDashboardSource, thumbnailDashboardDetail,
             thumbnailDashboardOfficialExtraction, thumbnailDashboardTargetExtraction, thumbnailDashboardGenerated,
-            thumbnailDashboardRepairs, thumbnailDashboardFailed, thumbnailDashboardEta,
+            thumbnailDashboardGeneratedDetail, thumbnailDashboardRepairs, thumbnailDashboardRepairsDetail, thumbnailDashboardEta,
             thumbnailDashboardQueuedTitle, thumbnailDashboardPerformance;
         private VisualElement thumbnailDashboardActive, thumbnailDashboardQueuedBody, thumbnailDashboardQueuedLeft,
             thumbnailDashboardQueuedRight;
@@ -116,12 +116,10 @@ namespace ReMap.Standalone
             thumbnailDashboardDetail=Label("","thumbnail-dashboard-detail");dashboard.Add(thumbnailDashboardDetail);
             thumbnailDashboardProgress=new ProgressBar{lowValue=0,highValue=1,value=0};thumbnailDashboardProgress.AddToClassList("thumbnail-dashboard-progress");dashboard.Add(thumbnailDashboardProgress);
             var metrics=new VisualElement();metrics.AddToClassList("thumbnail-dashboard-metrics");dashboard.Add(metrics);
-            metrics.Add(ThumbnailMetric(L.T("#THUMBNAIL_APEX_EXTRACTION"),out thumbnailDashboardOfficialExtraction));
-            metrics.Add(ThumbnailMetric(L.T("#THUMBNAIL_TARGET_EXTRACTION"),out thumbnailDashboardTargetExtraction));
-            metrics.Add(ThumbnailMetric(L.T("#THUMBNAIL_GENERATION_COUNTER"),out thumbnailDashboardGenerated));
-            metrics.Add(ThumbnailMetric(L.T("#THUMBNAIL_TEXTURE_REPAIR_COUNTER"),out thumbnailDashboardRepairs));
-            metrics.Add(ThumbnailMetric(L.T("#THUMBNAIL_FAILED"),out thumbnailDashboardFailed));
-            metrics.Add(ThumbnailMetric(L.T("#THUMBNAIL_ESTIMATED_TIME"),out thumbnailDashboardEta));
+            metrics.Add(ThumbnailExtractionMetric(out thumbnailDashboardOfficialExtraction,out thumbnailDashboardTargetExtraction));
+            metrics.Add(ThumbnailMetric(L.T("#THUMBNAIL_GENERATION_COUNTER"),out thumbnailDashboardGenerated,out thumbnailDashboardGeneratedDetail));
+            metrics.Add(ThumbnailMetric(L.T("#THUMBNAIL_TEXTURE_REPAIR_COUNTER"),out thumbnailDashboardRepairs,out thumbnailDashboardRepairsDetail));
+            metrics.Add(ThumbnailMetric(L.T("#THUMBNAIL_ESTIMATED_TIME"),out thumbnailDashboardEta,out _));
             thumbnailDashboardCategoryFilter=new Foldout{value=false};
             thumbnailDashboardCategoryFilter.AddToClassList("thumbnail-dashboard-category-filter");dashboard.Add(thumbnailDashboardCategoryFilter);
             thumbnailDashboardCategoryFilter.Add(Label(L.T("#THUMBNAIL_CATEGORY_FILTER_HELP"),"note"));
@@ -145,9 +143,22 @@ namespace ReMap.Standalone
             actions.Add(Button(L.T("#MINIMIZE_TO_BACKGROUND"),()=>ShowThumbnailDashboard(false)));
             thumbnailDashboard.style.display=DisplayStyle.None;
         }
-        private VisualElement ThumbnailMetric(string title,out Label value) {
+        private VisualElement ThumbnailMetric(string title,out Label value,out Label detail) {
             var metric=new VisualElement();metric.AddToClassList("thumbnail-dashboard-metric");
-            metric.Add(Label(title,"thumbnail-dashboard-metric-title"));value=Label("—","thumbnail-dashboard-metric-value");metric.Add(value);return metric;
+            metric.Add(Label(title,"thumbnail-dashboard-metric-title"));value=Label("—","thumbnail-dashboard-metric-value");metric.Add(value);
+            detail=Label("","thumbnail-dashboard-metric-detail");metric.Add(detail);return metric;
+        }
+        private VisualElement ThumbnailExtractionMetric(out Label official,out Label target) {
+            var metric=new VisualElement();metric.AddToClassList("thumbnail-dashboard-metric");
+            metric.Add(Label(L.T("#THUMBNAIL_MODEL_EXTRACTION"),"thumbnail-dashboard-metric-title"));
+            metric.Add(ThumbnailExtractionRow(L.T("#THUMBNAIL_APEX_SHORT"),out official));
+            metric.Add(ThumbnailExtractionRow(L.T("#THUMBNAIL_TARGET_SHORT"),out target));
+            return metric;
+        }
+        private VisualElement ThumbnailExtractionRow(string title,out Label value) {
+            var row=new VisualElement();row.AddToClassList("thumbnail-dashboard-extraction-row");
+            row.Add(Label(title,"thumbnail-dashboard-extraction-label"));
+            value=Label("—","thumbnail-dashboard-extraction-value");row.Add(value);return row;
         }
         private VisualElement ThumbnailQueuePanel(string title,out VisualElement content) {
             var panel=new VisualElement();panel.AddToClassList("thumbnail-dashboard-queue");panel.Add(Label(title,"thumbnail-dashboard-queue-title"));
@@ -295,9 +306,12 @@ namespace ReMap.Standalone
             thumbnailDashboardOfficialExtraction.text=PhaseCounter(thumbnailOfficialAttempts.Count,activeOfficial);
             thumbnailDashboardTargetExtraction.text=PhaseCounter(thumbnailTargetAttempts.Count,activeTarget);
             thumbnailDashboardGenerated.text=thumbnailDone+" / "+thumbnailTotal;
-            thumbnailDashboardRepairs.text=thumbnailRepairsCompleted.Count+" / "+thumbnailRepairCandidates.Count+
-                (activeThumbnailRepairs>0?L.F("#THUMBNAIL_ACTIVE_SUFFIX_ARG0",activeThumbnailRepairs):"");
-            thumbnailDashboardFailed.text=thumbnailFailed.ToString();
+            thumbnailDashboardGeneratedDetail.text=thumbnailFailed>0?L.F("#THUMBNAIL_FAILED_ARG0",thumbnailFailed):"";
+            thumbnailDashboardRepairs.text=activeThumbnailRepairs>0?
+                L.F("#THUMBNAIL_ACTIVE_ARG0",activeThumbnailRepairs):
+                thumbnailRepairCandidates.Count>0?thumbnailRepairsCompleted.Count+" / "+thumbnailRepairCandidates.Count:"—";
+            thumbnailDashboardRepairsDetail.text=activeThumbnailRepairs>0?
+                L.F("#THUMBNAIL_COMPLETED_ARG0_ARG1",thumbnailRepairsCompleted.Count,thumbnailRepairCandidates.Count):"";
             thumbnailDashboardEta.text=remaining==0?"0 s":perMinute>0?FormatThumbnailDuration(remaining/perMinute*60f):L.T("#THUMBNAIL_ETA_UNKNOWN");
             int queueRows=ThumbnailQueueRows();
             var active=eligible.Where(r=>extractingThumbnails.Contains(r.Id)).Take(queueRows).ToArray();
@@ -315,7 +329,8 @@ namespace ReMap.Standalone
             UpdateThumbnailPauseButtons();
         }
         private string PhaseCounter(int completed,int active) => active>0?
-            L.F("#THUMBNAIL_PHASE_COUNTER_ACTIVE_ARG0_ARG1",completed,active):completed.ToString();
+            (completed>0?L.F("#THUMBNAIL_PHASE_COUNTER_ACTIVE_ARG0_ARG1",completed,active):L.F("#THUMBNAIL_ACTIVE_ARG0",active)):
+            completed>0?completed.ToString():"—";
         private void PopulateThumbnailQueueColumn(VisualElement column,IEnumerable<GameAssetRecord> records,bool empty,string emptyText=null) {
             if(column==null)return;
             column.Clear();
