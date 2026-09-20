@@ -28,8 +28,6 @@ namespace ReMap.Standalone
             public string[] archives;
         }
 
-        private static readonly string[] OfficialCommonArchives =
-            { "common_early.rpak", "common.rpak", "common_mp.rpak", "common_roots.rpak" };
         private static readonly string[] OfficialMapArchiveSuffixes =
             { ".rpak", "_client_perm.rpak", "_client_temp.rpak", "_loadscreen.rpak" };
         private static readonly Regex OfficialMapVariantSuffix = new Regex(
@@ -283,10 +281,14 @@ namespace ReMap.Standalone
             var plan = new OfficialArchivePlan
             {
                 primaryArchive = primary,
-                archives = OfficialCommonArchives.Concat(selected).Distinct(StringComparer.OrdinalIgnoreCase)
-                    .Select(name => Path.Combine(officialPaks, name)).Where(File.Exists).ToArray()
+                // Match RSX's successful manual workflow: load one map family together. Mixing the
+                // current map with every common archive crashes RSX 2.3 during ProcessAssetsPostLoad.
+                archives = selected.Distinct(StringComparer.OrdinalIgnoreCase).Select(name =>
+                    Path.Combine(officialPaks, name)).Where(File.Exists).ToArray()
             };
             officialArchivePlans[cacheKey] = plan;
+            Debug.Log("REMAP_OFFICIAL_ARCHIVES: " + string.Join(", ",
+                plan.archives.Select(Path.GetFileName)));
             return failedOfficialArchivePlans.Contains(primary) ? null : plan;
         }
 
@@ -310,7 +312,7 @@ namespace ReMap.Standalone
                 // archive sets without paying for a process restart for every thumbnail batch.
                 SetExtractionActivity(AssetExtractionSource.OfficialApex,
                     AssetExtractionOperation.LoadingArchives, plan.primaryArchive, entries.Length);
-                EnsurePreviewSession();
+                EnsurePreviewSession(false, true);
                 previewSession.Load(plan.archives, origin);
                 SetExtractionActivity(AssetExtractionSource.OfficialApex,
                     AssetExtractionOperation.ExportingModels, plan.primaryArchive, entries.Length);
@@ -422,7 +424,8 @@ namespace ReMap.Standalone
                 previewArchivePlan = null;
                 string officialCast = await Task.Run(() =>
                 {
-                    using var session = new RsxPreviewSession(SessionExecutable, root, workerRoot, linked.Token);
+                    using var session = new RsxPreviewSession(SessionExecutable, root, workerRoot, linked.Token,
+                        false, true);
                     SetExtractionActivity(AssetExtractionSource.OfficialApex,
                         AssetExtractionOperation.LoadingArchives, plan.primaryArchive, 1);
                     session.Load(plan.archives, origin);

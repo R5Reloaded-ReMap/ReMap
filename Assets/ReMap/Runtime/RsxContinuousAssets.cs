@@ -28,12 +28,13 @@ namespace ReMap.Standalone
         public bool GeometryPreviewsSupported => ContinuousPreviewsSupported&&File.Exists(SessionExecutable+".remap-session-v3");
         private void SetTargetExtractionActivity(AssetExtractionOperation operation,string archive,int modelCount) =>
             SetExtractionActivity(AssetExtractionSource.TargetGame,operation,archive,modelCount);
-        private void EnsurePreviewSession(bool geometryOnly=false)
+        private void EnsurePreviewSession(bool geometryOnly=false,bool loadAllAssetTypes=false)
         {
-            if(previewSession!=null&&previewSession.Alive&&previewSession.GeometryOnly==geometryOnly)return;
+            if(previewSession!=null&&previewSession.Alive&&previewSession.GeometryOnly==geometryOnly&&
+                previewSession.LoadAllAssetTypes==loadAllAssetTypes)return;
             ResetPreviewSession();
             string workerRoot=Path.Combine(CacheDirectory,"Worker");
-            previewSession=new RsxPreviewSession(SessionExecutable,Path.Combine(workerRoot,"s"+Guid.NewGuid().ToString("N").Substring(0,8)),workerRoot,shutdown.Token,geometryOnly);
+            previewSession=new RsxPreviewSession(SessionExecutable,Path.Combine(workerRoot,"s"+Guid.NewGuid().ToString("N").Substring(0,8)),workerRoot,shutdown.Token,geometryOnly,loadAllAssetTypes);
             PreviewSessionStarts++;
         }
         private void ResetPreviewSession()

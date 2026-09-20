@@ -22,16 +22,22 @@ namespace ReMap.Standalone
         internal int ArchiveLoads { get; private set; }
         internal int ProcessId => process.Id;
         internal bool GeometryOnly { get; }
+        internal bool LoadAllAssetTypes { get; }
         internal bool Alive { get { try { return !process.HasExited; } catch { return false; } } }
-        internal RsxPreviewSession(string executable,string root,string workingDirectory,CancellationToken shutdown,bool geometryOnly=false)
+        internal RsxPreviewSession(string executable,string root,string workingDirectory,CancellationToken shutdown,
+            bool geometryOnly=false,bool loadAllAssetTypes=false)
         {
-            this.shutdown=shutdown;GeometryOnly=geometryOnly;Root=root;Directory.CreateDirectory(root);Directory.CreateDirectory(workingDirectory);
+            this.shutdown=shutdown;GeometryOnly=geometryOnly;LoadAllAssetTypes=loadAllAssetTypes;Root=root;Directory.CreateDirectory(root);Directory.CreateDirectory(workingDirectory);
             log=new StreamWriter(Path.Combine(root,"session.log"),false){AutoFlush=true};
             process=new Process();
             string threads=Math.Min(4,Math.Max(1,Environment.ProcessorCount/2)).ToString();
             // Several R5F asset loaders mutate shared registries while parsing. Keep archive parsing serial;
             // model export remains parallel and the loaded archive is reused across batches.
-            var arguments=new[]{"-nogui","-embedded","-export","--loadwhitelist",geometryOnly?"mdl_,Ptch":"mdl_,matl,txtr,shdr,shds,Ptch","--parsethreads","1","--exportthreads",threads}
+            // Current official Apex maps crash in ProcessAssetsPostLoad when loadwhitelist skips
+            // asset types referenced by the map. Official sessions therefore mirror the RSX GUI.
+            var arguments=new[]{"-nogui","-embedded","-export"}
+                .Concat(loadAllAssetTypes?Array.Empty<string>():new[]{"--loadwhitelist",geometryOnly?"mdl_,Ptch":"mdl_,matl,txtr,shdr,shds,Ptch"})
+                .Concat(new[]{"--parsethreads","1","--exportthreads",threads})
                 .Concat(geometryOnly?Array.Empty<string>():new[]{"-matltextures","--texturemaxsize",SharedTextureCache.PreviewMaximumSize.ToString()})
                 .Concat(new[]{"--remap-session",root}).ToArray();
             if(!geometryOnly&&File.Exists(executable+".remap-albedo-v1"))arguments=arguments.Concat(new[]{"-albedoonly"}).ToArray();
