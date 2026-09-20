@@ -280,6 +280,67 @@ namespace ReMap.Standalone.Tests
             }
             finally { if (Directory.Exists(root)) Directory.Delete(root, true); }
         }
+        [Test] public void FirstLaunchEndsWhenSettingsAreSaved()
+        {
+            string root = Path.Combine(Path.GetTempPath(), "ReMapFirstLaunch-" + Guid.NewGuid().ToString("N"));
+            Directory.CreateDirectory(root);
+            try
+            {
+                using (var library = new RsxAssetLibrary(root))
+                {
+                    Assert.That(library.FirstLaunch, Is.True);
+                    library.SaveSettings();
+                    Assert.That(library.FirstLaunch, Is.False);
+                }
+                using (var restored = new RsxAssetLibrary(root))
+                    Assert.That(restored.FirstLaunch, Is.False);
+            }
+            finally { if (Directory.Exists(root)) Directory.Delete(root, true); }
+        }
+        [Test] public void FindsNamedModdedInstallationsAndRejectsOfficialApex()
+        {
+            string root = Path.Combine(Path.GetTempPath(), "ReMapInstallDetection-" + Guid.NewGuid().ToString("N"));
+            try
+            {
+                string r5r = Path.Combine(root, "Games", "R5Reloaded", "R5R Library", "LIVE");
+                string r5f = Path.Combine(root, "Mods", "R5Flowstate");
+                CreateInstallation(r5r, "common_sdk.rpak", true);
+                CreateInstallation(r5f, "common_flowstate.rpak", true);
+
+                string official = Path.Combine(root, "steamapps", "common", "Apex Legends");
+                CreateInstallation(official, "common.rpak", false);
+                File.WriteAllText(Path.Combine(official, "r5apex.exe"), "test");
+
+                Assert.That(RsxAssetLibrary.FindInstallation(GameTargets.R5Reloaded, new[] { root }), Is.EqualTo(Path.GetFullPath(r5r)));
+                Assert.That(RsxAssetLibrary.FindInstallation(GameTargets.R5Flowstate, new[] { root }), Is.EqualTo(Path.GetFullPath(r5f)));
+                Assert.That(RsxAssetLibrary.IsGameInstallation(official, GameTargets.R5Reloaded), Is.False);
+                Assert.That(RsxAssetLibrary.IsGameInstallation(official, GameTargets.R5Flowstate), Is.False);
+            }
+            finally { if (Directory.Exists(root)) Directory.Delete(root, true); }
+        }
+        [Test] public void DedicatedServerAndTargetSpecificRpakAreRequired()
+        {
+            string root = Path.Combine(Path.GetTempPath(), "ReMapInstallSignature-" + Guid.NewGuid().ToString("N"));
+            try
+            {
+                string game = Path.Combine(root, "R5Flowstate");
+                CreateInstallation(game, "common_flowstate.rpak", false);
+                Assert.That(RsxAssetLibrary.IsGameInstallation(game, GameTargets.R5Flowstate), Is.False);
+                File.WriteAllText(Path.Combine(game, "r5apex_ds.exe"), "test");
+                Assert.That(RsxAssetLibrary.IsGameInstallation(game, GameTargets.R5Flowstate), Is.True);
+                Assert.That(RsxAssetLibrary.IsGameInstallation(game, GameTargets.R5Reloaded), Is.False);
+            }
+            finally { if (Directory.Exists(root)) Directory.Delete(root, true); }
+        }
+        private static void CreateInstallation(string game, string signatureRpak, bool dedicatedServer)
+        {
+            string paks = Path.Combine(game, "paks", "Win64");
+            Directory.CreateDirectory(paks);
+            File.WriteAllText(Path.Combine(paks, "common.rpak"), "test");
+            if (!string.Equals(signatureRpak, "common.rpak", StringComparison.OrdinalIgnoreCase))
+                File.WriteAllText(Path.Combine(paks, signatureRpak), "test");
+            if (dedicatedServer) File.WriteAllText(Path.Combine(game, "r5apex_ds.exe"), "test");
+        }
         [Test] public void MissingMapTargetsAreIgnoredWithoutDiscardingAvailableOnes()
         {
             var targets = RsxAssetLibrary.KeepAvailableTargets(

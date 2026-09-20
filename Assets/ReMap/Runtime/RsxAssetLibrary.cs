@@ -46,8 +46,11 @@ namespace ReMap.Standalone
     // The worker owns RSX calls. Unity only receives metadata or one exported model at a time.
     public sealed partial class RsxAssetLibrary : IDisposable
     {
+        private static readonly object InstallationDetectionLock = new object();
+        private static Dictionary<string, string> cachedDriveInstallations;
         public readonly string LocalRoot;
         public AssetSourceSettings Settings { get; private set; }
+        public bool FirstLaunch { get; private set; }
         public List<MapSource> Maps { get; private set; } = new List<MapSource>();
         public List<GameAssetRecord> Records { get; private set; } = new List<GameAssetRecord>();
         public string CacheRoot { get; private set; }
@@ -81,11 +84,12 @@ namespace ReMap.Standalone
         private string[] Common => (TargetGame == GameTargets.R5Flowstate
             ? new[] { "common_early.rpak", "common.rpak", "common_mp.rpak", "common_roots.rpak", "common_flowstate.rpak" }
             : new[] { "common_early.rpak", "common.rpak", "common_mp.rpak", "common_roots.rpak", "common_sdk.rpak" });
-        public bool Configured => File.Exists(Settings.rsxExecutable) && !string.IsNullOrEmpty(PakDirectory) && Directory.Exists(PakDirectory);
+        public bool Configured => ConfiguredFor(TargetGame);
         public RsxAssetLibrary(string root)
         {
             LocalRoot = root;
             string settingsPath = Path.Combine(root, "asset-source.local.json");
+            FirstLaunch = !File.Exists(settingsPath);
             Settings = File.Exists(settingsPath) ? JsonUtility.FromJson<AssetSourceSettings>(File.ReadAllText(settingsPath)) : new AssetSourceSettings();
             Settings = Settings ?? new AssetSourceSettings();
             MigrateSettings();
@@ -106,9 +110,9 @@ namespace ReMap.Standalone
             if (worker.CurrentCount == 0) throw new InvalidOperationException(L.T("#WAIT_RSX_OPERATION_FINISH"));
             targetGame = GameTargets.Normalize(targetGame);
             r5ReloadedGame = CleanPath(r5ReloadedGame); r5FlowstateGame = CleanPath(r5FlowstateGame);
-            if (!string.IsNullOrEmpty(r5ReloadedGame) && FindPakDirectory(r5ReloadedGame) == null)
+            if (!string.IsNullOrEmpty(r5ReloadedGame) && !IsGameInstallation(r5ReloadedGame, GameTargets.R5Reloaded))
                 throw new ArgumentException(L.T("#R5RELOADED_FOLDER_CONTAIN_RPAK_ARCHIVES"));
-            if (!string.IsNullOrEmpty(r5FlowstateGame) && FindPakDirectory(r5FlowstateGame) == null)
+            if (!string.IsNullOrEmpty(r5FlowstateGame) && !IsGameInstallation(r5FlowstateGame, GameTargets.R5Flowstate))
                 throw new ArgumentException(L.T("#R5FLOWSTATE_FOLDER_CONTAIN_RPAK_ARCHIVES"));
             string selected = targetGame == GameTargets.R5Flowstate ? r5FlowstateGame : r5ReloadedGame;
             if (string.IsNullOrEmpty(selected))
@@ -161,6 +165,7 @@ namespace ReMap.Standalone
         {
             SyncActiveProfile();
             File.WriteAllText(Path.Combine(LocalRoot, "asset-source.local.json"), JsonUtility.ToJson(Settings, true));
+            FirstLaunch = false;
         }
 
         private void MigrateSettings()
@@ -200,23 +205,61 @@ namespace ReMap.Standalone
 
         private void AutoDetectInstallations()
         {
+            if (!string.IsNullOrWhiteSpace(Settings.r5ReloadedGameDirectory) &&
+                !IsGameInstallation(Settings.r5ReloadedGameDirectory, GameTargets.R5Reloaded))
+            {
+                Settings.r5ReloadedGameDirectory = "";
+                Settings.r5ReloadedPlatformDirectory = "";
+            }
+            if (!string.IsNullOrWhiteSpace(Settings.r5FlowstateGameDirectory) &&
+                !IsGameInstallation(Settings.r5FlowstateGameDirectory, GameTargets.R5Flowstate))
+            {
+                Settings.r5FlowstateGameDirectory = "";
+                Settings.r5FlowstatePlatformDirectory = "";
+            }
             var roots = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
             foreach (string value in new[] { Settings.gameDirectory, Settings.r5ReloadedGameDirectory, Settings.r5FlowstateGameDirectory, LocalRoot })
             {
                 if (string.IsNullOrWhiteSpace(value)) continue;
                 var directory = new DirectoryInfo(Path.GetFullPath(value));
-                for (int i = 0; directory != null && i < 5; i++, directory = directory.Parent) roots.Add(directory.FullName);
+                for (int i = 0; directory != null && i < 5; i++, directory = directory.Parent)
+                    if (directory.Parent != null) roots.Add(directory.FullName);
             }
-            foreach (var drive in DriveInfo.GetDrives().Where(d => d.IsReady)) roots.Add(drive.RootDirectory.FullName);
+            Dictionary<string, string> nearby = FindInstallations(roots, 3);
             if (string.IsNullOrWhiteSpace(Settings.r5ReloadedGameDirectory))
-                Settings.r5ReloadedGameDirectory = FindInstallation(GameTargets.R5Reloaded, roots);
+            {
+                nearby.TryGetValue(GameTargets.R5Reloaded, out string found);
+                Settings.r5ReloadedGameDirectory = found ?? "";
+            }
             if (string.IsNullOrWhiteSpace(Settings.r5FlowstateGameDirectory))
-                Settings.r5FlowstateGameDirectory = FindInstallation(GameTargets.R5Flowstate, roots);
+            {
+                nearby.TryGetValue(GameTargets.R5Flowstate, out string found);
+                Settings.r5FlowstateGameDirectory = found ?? "";
+            }
+            if (string.IsNullOrWhiteSpace(Settings.r5ReloadedGameDirectory) || string.IsNullOrWhiteSpace(Settings.r5FlowstateGameDirectory))
+            {
+                Dictionary<string, string> drives = DetectDriveInstallations();
+                if (string.IsNullOrWhiteSpace(Settings.r5ReloadedGameDirectory) && drives.TryGetValue(GameTargets.R5Reloaded, out string r5r))
+                    Settings.r5ReloadedGameDirectory = r5r;
+                if (string.IsNullOrWhiteSpace(Settings.r5FlowstateGameDirectory) && drives.TryGetValue(GameTargets.R5Flowstate, out string r5f))
+                    Settings.r5FlowstateGameDirectory = r5f;
+            }
             if (string.IsNullOrWhiteSpace(Settings.r5ReloadedPlatformDirectory))
                 Settings.r5ReloadedPlatformDirectory = FindPlatformDirectory(Settings.r5ReloadedGameDirectory);
             if (string.IsNullOrWhiteSpace(Settings.r5FlowstatePlatformDirectory))
                 Settings.r5FlowstatePlatformDirectory = FindPlatformDirectory(Settings.r5FlowstateGameDirectory);
             ResolveOfficialRsx(roots);
+        }
+
+        private static Dictionary<string, string> DetectDriveInstallations()
+        {
+            lock (InstallationDetectionLock)
+            {
+                if (cachedDriveInstallations == null)
+                    cachedDriveInstallations = FindInstallations(
+                        DriveInfo.GetDrives().Where(d => d.IsReady).Select(d => d.RootDirectory.FullName), 4);
+                return cachedDriveInstallations;
+            }
         }
 
         private void ResolveOfficialRsx(IEnumerable<string> roots = null)
@@ -255,27 +298,88 @@ namespace ReMap.Standalone
             return "";
         }
 
-        private static string FindInstallation(string target, IEnumerable<string> roots)
+        public bool ConfiguredFor(string target)
         {
-            string[] relatives = target == GameTargets.R5Flowstate
-                ? new[] { "R5Flowstate", Path.Combine("r5_mods", "R5Flowstate") }
-                : new[] { Path.Combine("R5Reloaded", "R5R Library", "LIVE"), Path.Combine("r5_mods", "R5Reloaded", "R5R Library", "LIVE") };
-            foreach (string root in roots)
-            {
-                if (LooksLikeTarget(root, target)) return root;
-                foreach (string relative in relatives)
-                {
-                    string candidate = Path.Combine(root, relative);
-                    if (LooksLikeTarget(candidate, target)) return candidate;
-                }
-            }
-            return "";
+            return File.Exists(Settings.rsxExecutable) && HasInstallationFor(target);
         }
 
-        private static bool LooksLikeTarget(string path, string target)
+        public bool HasInstallationFor(string target)
         {
-            if (string.IsNullOrWhiteSpace(path) || !File.Exists(Path.Combine(path, "r5apex.exe")) || FindPakDirectory(path) == null) return false;
-            return target == GameTargets.R5Flowstate ? LooksLikeFlowstate(path) : !LooksLikeFlowstate(path);
+            string game = GameTargets.Normalize(target) == GameTargets.R5Flowstate
+                ? Settings.r5FlowstateGameDirectory : Settings.r5ReloadedGameDirectory;
+            return IsGameInstallation(game, target);
+        }
+
+        public static string FindInstallation(string target, IEnumerable<string> roots, int maxDepth = 4)
+        {
+            var found = FindInstallations(roots, maxDepth);
+            return found.TryGetValue(GameTargets.Normalize(target), out string path) ? path : "";
+        }
+
+        private static Dictionary<string, string> FindInstallations(IEnumerable<string> roots, int maxDepth)
+        {
+            var found = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
+            var visited = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+            var queue = new Queue<(string path, int depth)>();
+            foreach (string value in roots ?? Array.Empty<string>())
+            {
+                if (string.IsNullOrWhiteSpace(value)) continue;
+                try
+                {
+                    string path = Path.GetFullPath(value);
+                    if (Directory.Exists(path) && visited.Add(path)) queue.Enqueue((path, 0));
+                }
+                catch { }
+            }
+
+            while (queue.Count > 0 && found.Count < 2)
+            {
+                (string path, int depth) = queue.Dequeue();
+                string name = Path.GetFileName(path.TrimEnd(Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar));
+                bool explicitRoot = depth == 0;
+                if ((explicitRoot || string.Equals(name, "LIVE", StringComparison.OrdinalIgnoreCase)) &&
+                    IsGameInstallation(path, GameTargets.R5Reloaded) && !found.ContainsKey(GameTargets.R5Reloaded))
+                    found[GameTargets.R5Reloaded] = path;
+                if ((explicitRoot || string.Equals(name, "R5Flowstate", StringComparison.OrdinalIgnoreCase)) &&
+                    IsGameInstallation(path, GameTargets.R5Flowstate) && !found.ContainsKey(GameTargets.R5Flowstate))
+                    found[GameTargets.R5Flowstate] = path;
+                if (depth >= Math.Max(0, maxDepth)) continue;
+
+                try
+                {
+                    foreach (string child in Directory.EnumerateDirectories(path).OrderBy(item => item, StringComparer.OrdinalIgnoreCase))
+                    {
+                        try
+                        {
+                            var info = new DirectoryInfo(child);
+                            if ((info.Attributes & (FileAttributes.ReparsePoint | FileAttributes.System | FileAttributes.Hidden)) != 0) continue;
+                            if (ShouldSkipSearchDirectory(info.Name)) continue;
+                            string full = info.FullName;
+                            if (visited.Add(full)) queue.Enqueue((full, depth + 1));
+                        }
+                        catch { }
+                    }
+                }
+                catch { }
+            }
+            return found;
+        }
+
+        private static bool ShouldSkipSearchDirectory(string name)
+        {
+            return new[] { "$Recycle.Bin", "System Volume Information", "Windows", "Recovery", ".git", "node_modules", "Library" }
+                .Any(value => string.Equals(value, name, StringComparison.OrdinalIgnoreCase));
+        }
+
+        public static bool IsGameInstallation(string path, string target)
+        {
+            if (string.IsNullOrWhiteSpace(path) || !File.Exists(Path.Combine(path, "r5apex_ds.exe"))) return false;
+            string paks = FindPakDirectory(path);
+            if (paks == null) return false;
+            bool flowstate = File.Exists(Path.Combine(paks, "common_flowstate.rpak"));
+            return GameTargets.Normalize(target) == GameTargets.R5Flowstate
+                ? flowstate && LooksLikeFlowstate(path)
+                : !flowstate && File.Exists(Path.Combine(paks, "common_sdk.rpak"));
         }
 
         private static bool LooksLikeFlowstate(string path)
