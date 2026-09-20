@@ -319,7 +319,10 @@ namespace ReMap.Standalone
                 string output = entries.Length > 1
                     ? previewSession.ExportBatch(entries.Select(entry => entry.guid).ToArray())
                     : previewSession.Export(entries[0].guid);
+                int completedBefore = result.Paths.Count;
                 CommitOfficialPreviews(entries, output, previewSession.Root, plan.primaryArchive, result);
+                Debug.Log("REMAP_OFFICIAL_PREVIEW_BATCH: " + (result.Paths.Count - completedBefore) + "/" +
+                    entries.Length + " from " + plan.primaryArchive);
                 foreach (var entry in entries)
                     if (!result.Paths.ContainsKey(entry.Id)) officialPreviewMisses.Add(entry.Id);
             }
@@ -367,7 +370,6 @@ namespace ReMap.Standalone
                         "\ntextured\n" + ActiveCacheGeneration());
                     result.Paths[entry.Id] = cast;
                     result.Errors.Remove(entry.Id);
-                    Debug.Log("REMAP_OFFICIAL_PREVIEW: " + entry.modelPath);
                 }
                 catch (Exception exception) when (exception is IOException || exception is ArgumentException)
                 {

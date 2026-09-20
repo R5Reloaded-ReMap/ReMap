@@ -454,7 +454,7 @@ namespace ReMap.Standalone
                                 SaveThumbnailInfo(next,world.models.MissingAlbedo(next.Id));
                                 readyThumbnails.Add(next.Id);failedThumbnails.Remove(next.Id);previewFailures.Remove(next.Id);
                             }catch(Exception ex){if(this==null||backgroundStopped||generation!=assetLibrary.CacheRoot)return;ThumbnailFailure(next,ex);}
-                            finally {thumbnailLastGenerationSeconds=Mathf.Max(0,Time.realtimeSinceStartup-generationStarted);if(this!=null&&!backgroundStopped){if(model!=null)world.models.Release(next.Id,model);if(thumbnail!=null)Destroy(thumbnail);extractingThumbnails.Remove(next.Id);UpdateThumbnailProgress(eligible);UpdateThumbnailControls();RefreshCatalog();}}
+                            finally {thumbnailLastGenerationSeconds=Mathf.Max(0,Time.realtimeSinceStartup-generationStarted);if(this!=null&&!backgroundStopped){if(model!=null)world.models.Release(next.Id,model);if(thumbnail!=null)Destroy(thumbnail);extractingThumbnails.Remove(next.Id);UpdateThumbnailProgress(eligible);UpdateThumbnailControls();}}
                         }
                         thumbnailRendering=false;UpdateThumbnailDashboard(eligible);
                         if(reloadScene.Count>0){foreach(string id in reloadScene)world.Reload(id);Refresh();}
