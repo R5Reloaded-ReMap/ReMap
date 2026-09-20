@@ -315,13 +315,11 @@ namespace ReMap.Standalone
             ShowSettings(true); await TreeFrames();
             var settingsScroll = settingsPanel.Q<ScrollView>(className: "settings-scroll");
             CheckVerticalScrollbar(settingsScroll, "Settings");
-            var mprtPreset = settingsScroll.Query<DropdownField>(className: "settings-field").ToList().FirstOrDefault();
-            var mprtPresetInput = mprtPreset?.Q(className: "unity-base-popup-field__input");
-            if (mprtPreset == null || mprtPresetInput == null || mprtPreset.worldBound.height < 40f || mprtPresetInput.worldBound.height < 20f)
-                throw new Exception("MPRT quality selector is vertically clipped.");
-            if (settingsScroll.Query<VisualElement>(className: "folder-picker").ToList().Count != 3 ||
+            string settingsError = SettingsLayoutError();
+            if (settingsError != null) throw new Exception(settingsError);
+            if (settingsScroll.Query<VisualElement>(className: "folder-picker").ToList().Count != 4 ||
                 settingsAssetFolder?.parent == null || !settingsAssetFolder.parent.ClassListContains("folder-picker"))
-                throw new Exception("Settings should expose the two game folders and the asset cache folder.");
+                throw new Exception("Settings should expose the three game folders and the asset cache folder.");
             bool gameConnectionVisible = settingsScroll.Query<Label>().ToList().Any(label => label.text == L.T("#GAME_CONNECTION"));
             if (gameConnectionVisible != LiveMapEnabled)
                 throw new Exception("Live Map connection settings do not match this build type.");
@@ -406,6 +404,27 @@ namespace ReMap.Standalone
             }
             PlayerPrefs.DeleteKey(LayoutPreference + ".qa"); PlayerPrefs.Save();
             Application.Quit(check.IsFaulted ? 1 : 0);
+        }
+
+        private IEnumerator SettingsSmoke()
+        {
+            for (int i = 0; i < 12; i++) yield return null;
+            ShowSettings(true); for (int i = 0; i < 3; i++) yield return null;
+            string error = SettingsLayoutError();
+            if (error != null)
+            {
+                Debug.LogError(error);
+                Application.Quit(1); yield break;
+            }
+            yield return new WaitForEndOfFrame();
+            var image = ScreenCapture.CaptureScreenshotAsTexture();
+            if (image != null)
+            {
+                File.WriteAllBytes(Path.Combine(Application.dataPath, "..", "settings-fields-preview.png"), image.EncodeToPNG());
+                Destroy(image);
+            }
+            Debug.Log("REMAP_SETTINGS_LAYOUT_OK");
+            Application.Quit(0);
         }
     }
 }

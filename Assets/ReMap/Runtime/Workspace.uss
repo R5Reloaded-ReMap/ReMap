@@ -231,8 +231,12 @@ Button.dock-tab-action { height: 19px; min-height: 19px; border-width: 0; backgr
 .settings-scroll .section-title { margin-top: 10px; margin-bottom: 5px; font-size: 11px; letter-spacing: 0; }
 .settings-field { margin: 5px 0; }
 .settings-field > Label { margin-bottom: 3px; font-size: 11px; }
-.settings-number-field { height: 43px; min-height: 43px; }
-.settings-number-field > .unity-base-text-field__input { height: 22px; min-height: 22px; flex-shrink: 0; }
+.settings-scroll .settings-field > .unity-base-field__input { min-height: 24px; flex-shrink: 0; }
+.settings-scroll .settings-field > .unity-base-text-field__input { min-height: 24px; flex-shrink: 0; }
+.settings-number-field { height: 50px; min-height: 50px; }
+.settings-number-field > .unity-base-field__label { height: 18px; min-height: 18px; margin-bottom: 4px; flex-shrink: 0; }
+.settings-number-field > .unity-base-field__input { height: 27px; min-height: 27px; flex-shrink: 0; }
+.settings-number-field > .unity-base-text-field__input { height: 27px; min-height: 27px; padding: 4px 6px; flex-shrink: 0; }
 .inspector .settings-number-field { height: 45px; min-height: 45px; flex-shrink: 0; }
 .inspector .settings-number-field > .unity-base-field__label { height: 18px; min-height: 18px; margin-bottom: 3px; flex-shrink: 0; }
 .inspector .settings-number-field > .unity-base-text-field__input { height: 24px; min-height: 24px; flex-shrink: 0; }
