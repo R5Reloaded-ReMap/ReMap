@@ -22,7 +22,24 @@ namespace ReMap.Standalone
             public int replaced;
         }
 
+        private sealed class OfficialArchivePlan
+        {
+            public string primaryArchive;
+            public string[] archives;
+        }
+
+        private static readonly string[] OfficialCommonArchives =
+            { "common_early.rpak", "common.rpak", "common_mp.rpak", "common_roots.rpak" };
+        private static readonly string[] OfficialMapArchiveSuffixes =
+            { ".rpak", "_client_perm.rpak", "_client_temp.rpak", "_loadscreen.rpak" };
+        private static readonly Regex OfficialMapVariantSuffix = new Regex(
+            @"(?:_64k_x_64k|_mu\d+|_hu|_uh|_nx\d*|_night\d*|_tt|_avt|_snapback|_landscape|_staging)$",
+            RegexOptions.IgnoreCase | RegexOptions.CultureInvariant);
+
         private readonly HashSet<string> officialPreviewMisses = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+        private readonly HashSet<string> failedOfficialArchivePlans = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+        private readonly Dictionary<string, OfficialArchivePlan> officialArchivePlans =
+            new Dictionary<string, OfficialArchivePlan>(StringComparer.OrdinalIgnoreCase);
         private bool? officialPreviewAvailable;
         public bool OfficialTextureFallbackAvailable
         {
@@ -46,6 +63,8 @@ namespace ReMap.Standalone
             Settings.officialApexGameDirectory = directory;
             Settings.officialTextureFallback = enabled;
             officialPreviewMisses.Clear();
+            failedOfficialArchivePlans.Clear();
+            officialArchivePlans.Clear();
             officialPreviewAvailable = null;
             SaveSettings();
         }
@@ -175,6 +194,102 @@ namespace ReMap.Standalone
             catch (UnauthorizedAccessException) { }
         }
 
+        private static string MapIdFromArchive(string archive)
+        {
+            string name = Path.GetFileName(archive) ?? "";
+            foreach (string suffix in new[] { "_client_perm.rpak", "_client_temp.rpak", "_loadscreen.rpak", ".rpak" })
+                if (name.EndsWith(suffix, StringComparison.OrdinalIgnoreCase))
+                    return name.Substring(0, name.Length - suffix.Length);
+            return "";
+        }
+
+        private static string OfficialMapFamily(string mapId)
+        {
+            string family = mapId ?? "";
+            while (true)
+            {
+                string parent = OfficialMapVariantSuffix.Replace(family, "");
+                if (parent.Length == family.Length) return family;
+                family = parent;
+            }
+        }
+
+        private static int OfficialMapRevision(string mapId)
+        {
+            int revision = 0;
+            foreach (Match match in Regex.Matches(mapId ?? "", @"_mu(\d+)(?:_|$)",
+                RegexOptions.IgnoreCase | RegexOptions.CultureInvariant))
+                if (int.TryParse(match.Groups[1].Value, out int value)) revision = Math.Max(revision, value);
+            return revision;
+        }
+
+        public static string[] SelectOfficialMapArchives(string originArchive,
+            IEnumerable<string> availableArchives)
+        {
+            string sourceMap = MapIdFromArchive(originArchive);
+            if (!sourceMap.StartsWith("mp_rr_", StringComparison.OrdinalIgnoreCase)) return Array.Empty<string>();
+
+            string[] names = (availableArchives ?? Array.Empty<string>()).Select(Path.GetFileName)
+                .Where(name => !string.IsNullOrEmpty(name)).Distinct(StringComparer.OrdinalIgnoreCase).ToArray();
+            var available = new HashSet<string>(names, StringComparer.OrdinalIgnoreCase);
+            string sourceFamily = OfficialMapFamily(sourceMap);
+            string selectedMap = names
+                .Where(name => name.EndsWith(".rpak", StringComparison.OrdinalIgnoreCase) &&
+                    !name.EndsWith("_client_perm.rpak", StringComparison.OrdinalIgnoreCase) &&
+                    !name.EndsWith("_client_temp.rpak", StringComparison.OrdinalIgnoreCase) &&
+                    !name.EndsWith("_loadscreen.rpak", StringComparison.OrdinalIgnoreCase))
+                .Select(name => name.Substring(0, name.Length - ".rpak".Length))
+                .Where(map => string.Equals(OfficialMapFamily(map), sourceFamily,
+                    StringComparison.OrdinalIgnoreCase))
+                .OrderByDescending(map => string.Equals(map, sourceMap, StringComparison.OrdinalIgnoreCase))
+                .ThenByDescending(map => map.StartsWith(sourceMap + "_", StringComparison.OrdinalIgnoreCase))
+                .ThenByDescending(map => sourceMap.StartsWith(map + "_", StringComparison.OrdinalIgnoreCase))
+                .ThenByDescending(OfficialMapRevision)
+                .ThenByDescending(map => map.Length)
+                .ThenBy(map => map, StringComparer.OrdinalIgnoreCase)
+                .FirstOrDefault();
+            if (string.IsNullOrEmpty(selectedMap)) return Array.Empty<string>();
+
+            return OfficialMapArchiveSuffixes.Select(suffix => selectedMap + suffix)
+                .Where(available.Contains).ToArray();
+        }
+
+        private OfficialArchivePlan ResolveOfficialArchivePlan(string officialPaks, string origin)
+        {
+            string cacheKey = Path.GetFullPath(officialPaks) + "|" + origin;
+            if (officialArchivePlans.TryGetValue(cacheKey, out OfficialArchivePlan cached))
+                return cached != null && !failedOfficialArchivePlans.Contains(cached.primaryArchive) ? cached : null;
+
+            string[] available = Directory.EnumerateFiles(officialPaks, "*.rpak", SearchOption.TopDirectoryOnly)
+                .Select(Path.GetFileName).ToArray();
+            string[] selected;
+            string mapId = MapIdFromArchive(origin);
+            if (mapId.StartsWith("mp_rr_", StringComparison.OrdinalIgnoreCase))
+            {
+                selected = SelectOfficialMapArchives(origin, available);
+                // The map may not be active in the installed season. Never spend time loading only
+                // common archives in that case: the legacy R5R/R5F source is the immediate fallback.
+                if (selected.Length == 0) return officialArchivePlans[cacheKey] = null;
+            }
+            else
+            {
+                string exact = available.FirstOrDefault(name => string.Equals(name, origin,
+                    StringComparison.OrdinalIgnoreCase));
+                if (exact == null) return officialArchivePlans[cacheKey] = null;
+                selected = new[] { exact };
+            }
+
+            string primary = selected[0];
+            var plan = new OfficialArchivePlan
+            {
+                primaryArchive = primary,
+                archives = OfficialCommonArchives.Concat(selected).Distinct(StringComparer.OrdinalIgnoreCase)
+                    .Select(name => Path.Combine(officialPaks, name)).Where(File.Exists).ToArray()
+            };
+            officialArchivePlans[cacheKey] = plan;
+            return failedOfficialArchivePlans.Contains(primary) ? null : plan;
+        }
+
         private bool TryExtractOfficialPreviews(GameAssetRecord[] entries, string[] targets, AssetBatchResult result)
         {
             if (entries == null || entries.Length == 0 || !OfficialTextureFallbackAvailable ||
@@ -182,21 +297,19 @@ namespace ReMap.Standalone
             string officialPaks = FindPakDirectory(Settings.officialApexGameDirectory);
             if (officialPaks == null) return false;
             string origin = OriginArchive(entries[0], targets);
-            string[] archives = new[] { "common_early.rpak", "common.rpak", "common_mp.rpak", "common_roots.rpak", origin }
-                .Distinct(StringComparer.OrdinalIgnoreCase).Select(name => Path.Combine(officialPaks, name))
-                .Where(File.Exists).ToArray();
-            if (archives.Length == 0) return false;
+            OfficialArchivePlan plan = ResolveOfficialArchivePlan(officialPaks, origin);
+            if (plan == null) return false;
 
             try
             {
                 // Reuse the same embedded process. LOAD can switch between official and legacy
                 // archive sets without paying for a process restart for every thumbnail batch.
                 EnsurePreviewSession();
-                previewSession.Load(archives, origin);
+                previewSession.Load(plan.archives, origin);
                 string output = entries.Length > 1
                     ? previewSession.ExportBatch(entries.Select(entry => entry.guid).ToArray())
                     : previewSession.Export(entries[0].guid);
-                CommitOfficialPreviews(entries, output, previewSession.Root, origin, result);
+                CommitOfficialPreviews(entries, output, previewSession.Root, plan.primaryArchive, result);
                 foreach (var entry in entries)
                     if (!result.Paths.ContainsKey(entry.Id)) officialPreviewMisses.Add(entry.Id);
             }
@@ -204,7 +317,11 @@ namespace ReMap.Standalone
             {
                 Debug.LogWarning("REMAP_OFFICIAL_PREVIEW_FALLBACK: " + exception.Message);
                 foreach (var entry in entries) officialPreviewMisses.Add(entry.Id);
-                if (exception is TimeoutException) ResetPreviewSession();
+                if (exception is TimeoutException || previewSession == null || !previewSession.Alive)
+                {
+                    failedOfficialArchivePlans.Add(plan.primaryArchive);
+                    ResetPreviewSession();
+                }
             }
             foreach (var entry in entries)
                 if (!result.Paths.ContainsKey(entry.Id)) result.Deferred.Add(entry.Id);
@@ -271,14 +388,12 @@ namespace ReMap.Standalone
             string officialPaks = FindPakDirectory(Settings.officialApexGameDirectory);
             if (officialPaks == null) return false;
             string origin = OriginArchive(entry, targets);
-            string[] archiveNames = new[] { "common_early.rpak", "common.rpak", "common_mp.rpak", "common_roots.rpak", origin }
-                .Distinct(StringComparer.OrdinalIgnoreCase).ToArray();
-            string[] archives = archiveNames.Select(name => Path.Combine(officialPaks, name)).Where(File.Exists).ToArray();
-            if (archives.Length == 0) return false;
+            OfficialArchivePlan plan = ResolveOfficialArchivePlan(officialPaks, origin);
+            if (plan == null) return false;
 
             string modelRoot = ModelDirectory(entry);
             string marker = Path.Combine(modelRoot, "official-texture-fallback.json");
-            string fingerprint = OfficialTextureFingerprint(archives, inspection.materialHashes);
+            string fingerprint = OfficialTextureFingerprint(plan.archives, inspection.materialHashes);
             try
             {
                 if (File.Exists(marker))
@@ -300,7 +415,7 @@ namespace ReMap.Standalone
                 string officialCast = await Task.Run(() =>
                 {
                     using var session = new RsxPreviewSession(SessionExecutable, root, workerRoot, linked.Token);
-                    session.Load(archives, origin);
+                    session.Load(plan.archives, origin);
                     string output = session.Export(entry.guid);
                     string[] lods = Directory.GetFiles(output, "*_LOD0.cast", SearchOption.AllDirectories);
                     string[] named = lods.Where(path => string.Equals(Path.GetFileName(path),

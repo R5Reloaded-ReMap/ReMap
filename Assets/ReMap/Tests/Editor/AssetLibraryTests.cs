@@ -53,6 +53,54 @@ namespace ReMap.Standalone.Tests
             }));
         }
 
+        [Test] public void OfficialMapArchivesPreferTheExactUpdateAndKeepCompoundMapNames()
+        {
+            var result = RsxAssetLibrary.SelectOfficialMapArchives(
+                "mp_rr_divided_moon_mu1_client_temp.rpak",
+                new[] {
+                    "mp_rr_divided_moon_mu1.rpak",
+                    "mp_rr_divided_moon_mu1_client_perm.rpak",
+                    "mp_rr_divided_moon_mu1_client_temp.rpak",
+                    "mp_rr_divided_moon_mu1_uh.rpak",
+                    "mp_rr_divided_moon_mu1_uh_client_perm.rpak",
+                    "mp_rr_divided_moonlight.rpak"
+                });
+            Assert.That(result, Is.EqualTo(new[] {
+                "mp_rr_divided_moon_mu1.rpak",
+                "mp_rr_divided_moon_mu1_client_perm.rpak",
+                "mp_rr_divided_moon_mu1_client_temp.rpak"
+            }));
+        }
+
+        [Test] public void OfficialMapArchivesUseNewestSameFamilyWhenExactMapIsAbsent()
+        {
+            var result = RsxAssetLibrary.SelectOfficialMapArchives(
+                "mp_rr_district.rpak",
+                new[] {
+                    "mp_rr_district_mu1.rpak",
+                    "mp_rr_district_mu1_client_perm.rpak",
+                    "mp_rr_district_mu1_uh.rpak",
+                    "mp_rr_district_mu1_uh_client_perm.rpak",
+                    "mp_rr_district_mu1_uh_client_temp.rpak",
+                    "mp_rr_district_mu1_uh_loadscreen.rpak",
+                    "mp_rr_olympus_mu3.rpak"
+                });
+            Assert.That(result, Is.EqualTo(new[] {
+                "mp_rr_district_mu1_uh.rpak",
+                "mp_rr_district_mu1_uh_client_perm.rpak",
+                "mp_rr_district_mu1_uh_client_temp.rpak",
+                "mp_rr_district_mu1_uh_loadscreen.rpak"
+            }));
+        }
+
+        [Test] public void OfficialMapArchivesDoNotSubstituteAnotherMapFamily()
+        {
+            var result = RsxAssetLibrary.SelectOfficialMapArchives(
+                "mp_rr_arena_phase_runner.rpak",
+                new[] { "mp_rr_district_mu1_uh.rpak", "mp_rr_olympus_mu3.rpak" });
+            Assert.That(result, Is.Empty);
+        }
+
         [TestCase("mp_rr_divided_moon_mu1", "mp_rr_divided_moon")]
         [TestCase("mp_rr_divided_moon_mu4", "mp_rr_divided_moon")]
         [TestCase("mp_rr_desertlands_hu", "mp_rr_desertlands")]

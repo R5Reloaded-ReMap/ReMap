@@ -546,9 +546,15 @@ namespace ReMap.Standalone
             if (OfficialTextureFallbackAvailable)
             {
                 string officialPaks = FindPakDirectory(Settings.officialApexGameDirectory);
-                var officialCommon = new FileInfo(Path.Combine(officialPaks, "common.rpak"));
-                signature.Append("|official:").Append(Path.GetFullPath(Settings.officialApexGameDirectory))
-                    .Append(':').Append(officialCommon.Length).Append(':').Append(officialCommon.LastWriteTimeUtc.Ticks);
+                signature.Append("|official:").Append(Path.GetFullPath(Settings.officialApexGameDirectory));
+                foreach (string file in Directory.EnumerateFiles(officialPaks).Where(path =>
+                    path.EndsWith(".rpak", StringComparison.OrdinalIgnoreCase) ||
+                    path.EndsWith(".starpak", StringComparison.OrdinalIgnoreCase)).OrderBy(path => path, StringComparer.Ordinal))
+                {
+                    var info = new FileInfo(file);
+                    signature.Append('|').Append(info.Name).Append(':').Append(info.Length)
+                        .Append(':').Append(info.LastWriteTimeUtc.Ticks);
+                }
             }
             using (var hash = SHA256.Create()) return BitConverter.ToString(hash.ComputeHash(Encoding.UTF8.GetBytes(signature.ToString()))).Replace("-", "").Substring(0, 24).ToLowerInvariant();
         }
