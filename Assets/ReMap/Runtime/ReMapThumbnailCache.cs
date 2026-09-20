@@ -113,11 +113,12 @@ namespace ReMap.Standalone
             queues.Add(ThumbnailQueuePanel(L.T("#THUMBNAIL_CURRENT_MODELS"),out thumbnailDashboardActive));
             queues.Add(ThumbnailQueueColumns(L.T("#THUMBNAIL_NEXT_MODELS"),out thumbnailDashboardQueuedTitle,
                 out thumbnailDashboardQueuedLeft,out thumbnailDashboardQueuedRight,out thumbnailDashboardQueuedBody));
+            thumbnailDashboardPerformance=Label("","thumbnail-dashboard-performance");dashboard.Add(thumbnailDashboardPerformance);
             thumbnailDashboardCategoryFilter.RegisterValueChangedCallback(change => {
                 queues.style.display=change.newValue?DisplayStyle.None:DisplayStyle.Flex;
+                thumbnailDashboardPerformance.style.display=change.newValue?DisplayStyle.None:DisplayStyle.Flex;
                 thumbnailDashboardCategoryFilter.EnableInClassList("expanded",change.newValue);
             });
-            thumbnailDashboardPerformance=Label("","thumbnail-dashboard-performance");dashboard.Add(thumbnailDashboardPerformance);
             var actions=new VisualElement();actions.AddToClassList("thumbnail-dashboard-actions");dashboard.Add(actions);
             thumbnailDashboardPauseButton=ImmediateThumbnailPauseButton();thumbnailDashboardPauseButton.AddToClassList("primary");actions.Add(thumbnailDashboardPauseButton);
             actions.Add(Button(L.T("#MINIMIZE_TO_BACKGROUND"),()=>ShowThumbnailDashboard(false)));

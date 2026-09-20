@@ -512,6 +512,7 @@ namespace ReMap.Standalone.Tests
             {
                 var weapon = new GameAssetRecord { modelPath = "mdl/weapons/rifle.rmdl" };
                 var weaponR5 = new GameAssetRecord { modelPath = "mdl/weapons_r5/rifle.rmdl" };
+                var weaponR2 = new GameAssetRecord { modelPath = "mdl/weapons_r2/rifle.rmdl" };
                 var fx = new GameAssetRecord { modelPath = "mdl/fx/spark.rmdl" };
                 var human = new GameAssetRecord { modelPath = "mdl/humans/pilot.rmdl" };
                 var techart = new GameAssetRecord { modelPath = "mdl/techart/test.rmdl" };
@@ -519,7 +520,8 @@ namespace ReMap.Standalone.Tests
                 using (var library = new RsxAssetLibrary(root))
                 {
                     Assert.That(library.ShouldAutomaticallyPrepareThumbnail(weapon), Is.False);
-                    Assert.That(library.ShouldAutomaticallyPrepareThumbnail(weaponR5), Is.False);
+                    Assert.That(library.ShouldAutomaticallyPrepareThumbnail(weaponR5), Is.True);
+                    Assert.That(library.ShouldAutomaticallyPrepareThumbnail(weaponR2), Is.True);
                     Assert.That(library.ShouldAutomaticallyPrepareThumbnail(fx), Is.False);
                     Assert.That(library.ShouldAutomaticallyPrepareThumbnail(human), Is.True);
                     Assert.That(library.ShouldAutomaticallyPrepareThumbnail(techart), Is.True);
@@ -535,8 +537,10 @@ namespace ReMap.Standalone.Tests
         [Test] public void PreviousDefaultThumbnailExclusionsMigrateWithoutOverwritingCustomChoices()
         {
             string migratedRoot = Path.Combine(Path.GetTempPath(), "ReMapThumbnailMigration-" + Guid.NewGuid().ToString("N"));
+            string versionTwoRoot = Path.Combine(Path.GetTempPath(), "ReMapThumbnailMigrationV2-" + Guid.NewGuid().ToString("N"));
             string customRoot = Path.Combine(Path.GetTempPath(), "ReMapThumbnailCustom-" + Guid.NewGuid().ToString("N"));
             Directory.CreateDirectory(migratedRoot);
+            Directory.CreateDirectory(versionTwoRoot);
             Directory.CreateDirectory(customRoot);
             try
             {
@@ -549,9 +553,19 @@ namespace ReMap.Standalone.Tests
                 using (var migrated = new RsxAssetLibrary(migratedRoot))
                 {
                     Assert.That(migrated.Settings.skippedThumbnailCategories,
-                        Is.EquivalentTo(new[] { "fx", "weapons", "weapons_r2", "weapons_r5" }));
-                    Assert.That(migrated.Settings.thumbnailCategoryFilterVersion, Is.EqualTo(2));
+                        Is.EquivalentTo(new[] { "fx", "weapons" }));
+                    Assert.That(migrated.Settings.thumbnailCategoryFilterVersion, Is.EqualTo(3));
                 }
+
+                var versionTwoDefaults = new AssetSourceSettings {
+                    thumbnailCategoryFilterVersion = 2,
+                    skippedThumbnailCategories = new[] { "fx", "weapons", "weapons_r2", "weapons_r5" }
+                };
+                File.WriteAllText(Path.Combine(versionTwoRoot, "asset-source.local.json"),
+                    UnityEngine.JsonUtility.ToJson(versionTwoDefaults, true));
+                using (var migrated = new RsxAssetLibrary(versionTwoRoot))
+                    Assert.That(migrated.Settings.skippedThumbnailCategories,
+                        Is.EquivalentTo(new[] { "fx", "weapons" }));
 
                 var custom = new AssetSourceSettings {
                     thumbnailCategoryFilterVersion = 1,
@@ -565,6 +579,7 @@ namespace ReMap.Standalone.Tests
             finally
             {
                 if (Directory.Exists(migratedRoot)) Directory.Delete(migratedRoot, true);
+                if (Directory.Exists(versionTwoRoot)) Directory.Delete(versionTwoRoot, true);
                 if (Directory.Exists(customRoot)) Directory.Delete(customRoot, true);
             }
         }
