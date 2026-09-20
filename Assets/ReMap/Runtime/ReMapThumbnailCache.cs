@@ -59,6 +59,7 @@ namespace ReMap.Standalone
         private Button loadingCancelButton;
         private Action loadingCancelAction;
         private VisualElement thumbnailStatusRow, thumbnailDashboard;
+        private Label rsxSessionIdleStatus;
         private ProgressBar thumbnailDashboardProgress;
         private Label thumbnailDashboardState, thumbnailDashboardSource, thumbnailDashboardDetail,
             thumbnailDashboardOfficialExtraction, thumbnailDashboardTargetExtraction, thumbnailDashboardGenerated,
@@ -97,6 +98,10 @@ namespace ReMap.Standalone
             row.Add(Button(L.T("#THUMBNAIL_DETAILS"), () => ShowThumbnailDashboard(true)));
             thumbnailPauseButton=ImmediateThumbnailPauseButton();row.Add(thumbnailPauseButton);
             row.style.display=DisplayStyle.None;
+            rsxSessionIdleStatus=Label("","library-state");
+            rsxSessionIdleStatus.AddToClassList("rsx-session-status");
+            rsxSessionIdleStatus.style.display=DisplayStyle.None;
+            libraryFooter.Add(rsxSessionIdleStatus);
 
             thumbnailDashboard=new VisualElement();thumbnailDashboard.AddToClassList("thumbnail-dashboard");root.Add(thumbnailDashboard);
             var dashboard=new VisualElement();dashboard.AddToClassList("thumbnail-dashboard-panel");thumbnailDashboard.Add(dashboard);
@@ -588,6 +593,7 @@ namespace ReMap.Standalone
         private async Task PrepareThumbnails()
         {
             if(thumbnailLoopRunning||assetLibrary.CacheRoot==null)return;
+            CancelManualPreviewSessionRelease();
             thumbnailIdleRevision++;
             thumbnailLoopRunning=true;string generation=assetLibrary.CacheRoot;ReadThumbnailState();
             ThumbnailExtraction prefetched=null;
@@ -691,6 +697,7 @@ namespace ReMap.Standalone
         private void CancelManualPreviewSessionRelease() {
             var pending=manualPreviewIdleRelease;
             manualPreviewIdleRelease=null;
+            UpdateRsxSessionIdleStatus(null);
             if(pending==null)return;
             try{pending.Cancel();}catch(ObjectDisposedException){}
         }
@@ -699,20 +706,44 @@ namespace ReMap.Standalone
             if(this==null||backgroundStopped||assetLibrary==null||assetLibrary.PreviewProcessId==0)return;
             var cancellation=new CancellationTokenSource();
             manualPreviewIdleRelease=cancellation;
+            UpdateRsxSessionIdleStatus(ManualPreviewSessionIdleMilliseconds/1000);
             _=ReleaseManualPreviewSessionAfterIdle(generation,cancellation);
         }
         private async Task ReleaseManualPreviewSessionAfterIdle(string generation,CancellationTokenSource cancellation) {
             try {
-                await Task.Delay(ManualPreviewSessionIdleMilliseconds,cancellation.Token);
+                DateTime deadline=DateTime.UtcNow.AddMilliseconds(ManualPreviewSessionIdleMilliseconds);
+                while(true) {
+                    int remaining=Math.Max(0,(int)Math.Ceiling((deadline-DateTime.UtcNow).TotalSeconds));
+                    UpdateRsxSessionIdleStatus(remaining);
+                    if(remaining==0)break;
+                    await Task.Delay(Math.Min(1000,remaining*1000),cancellation.Token);
+                }
                 if(this==null||backgroundStopped||thumbnailLoopRunning||assetBusy||pendingAssetDrops>0||
                     generation!=assetLibrary.CacheRoot)return;
                 await assetLibrary.ReleasePreviewSessionAsync(cancellation.Token);
             }
             catch(OperationCanceledException)when(cancellation.IsCancellationRequested){}
             finally {
-                if(ReferenceEquals(manualPreviewIdleRelease,cancellation))manualPreviewIdleRelease=null;
+                if(ReferenceEquals(manualPreviewIdleRelease,cancellation)) {
+                    manualPreviewIdleRelease=null;
+                    UpdateRsxSessionIdleStatus(null);
+                }
                 cancellation.Dispose();
             }
+        }
+        private void UpdateRsxSessionIdleStatus(int? remainingSeconds) {
+            if(rsxSessionIdleStatus==null)return;
+            bool show=remainingSeconds.HasValue&&remainingSeconds.Value>0&&!backgroundStopped&&assetLibrary?.PreviewProcessId!=0;
+            rsxSessionIdleStatus.text=show?L.F("#RSX_SESSION_CLOSES_IN_ARG0",remainingSeconds.Value):"";
+            rsxSessionIdleStatus.tooltip=show?L.T("#RSX_SESSION_IDLE_HELP"):"";
+            rsxSessionIdleStatus.style.display=show?DisplayStyle.Flex:DisplayStyle.None;
+            UpdateLibraryFooterVisibility();
+        }
+        private void UpdateLibraryFooterVisibility() {
+            if(libraryFooter==null)return;
+            bool thumbnailVisible=thumbnailStatusRow?.style.display.value==DisplayStyle.Flex;
+            bool sessionVisible=rsxSessionIdleStatus?.style.display.value==DisplayStyle.Flex;
+            libraryFooter.style.display=thumbnailVisible||sessionVisible?DisplayStyle.Flex:DisplayStyle.None;
         }
         private void UpdateThumbnailControls() {
             if(thumbnailStatusRow==null)return;
@@ -722,7 +753,7 @@ namespace ReMap.Standalone
                 !readyThumbnails.Contains(r.Id)&&!failedThumbnails.Contains(r.Id));
             bool show=!complete&&(thumbnailLoopRunning||visiblePending)||thumbnailFailed>0;
             thumbnailStatusRow.style.display=show?DisplayStyle.Flex:DisplayStyle.None;
-            if(libraryFooter!=null)libraryFooter.style.display=show?DisplayStyle.Flex:DisplayStyle.None;
+            UpdateLibraryFooterVisibility();
             if(thumbnailPauseButton!=null)thumbnailPauseButton.style.display=!complete&&(thumbnailLoopRunning||visiblePending)?DisplayStyle.Flex:DisplayStyle.None;
             if(thumbnailDashboardPauseButton!=null)thumbnailDashboardPauseButton.style.display=complete?DisplayStyle.None:DisplayStyle.Flex;
         }

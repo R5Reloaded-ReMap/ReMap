@@ -5453,6 +5453,14 @@
     {
       "key": "#ENT_VALUES_FINITE",
       "text": "Les valeurs ENT doivent être finies."
+    },
+    {
+      "key": "#RSX_SESSION_CLOSES_IN_ARG0",
+      "text": "Session RSX active · fermeture dans {0} s"
+    },
+    {
+      "key": "#RSX_SESSION_IDLE_HELP",
+      "text": "Les RPAK chargés restent disponibles pour un autre import manuel. Le compte à rebours redémarre après chaque import."
     }
   ]
 }
