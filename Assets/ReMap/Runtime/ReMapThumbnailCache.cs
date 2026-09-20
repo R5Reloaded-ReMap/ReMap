@@ -226,14 +226,80 @@ namespace ReMap.Standalone
             new Dictionary<string,StagedThumbnail>(StringComparer.OrdinalIgnoreCase);
         private readonly List<GameAssetRecord> visibleAssets=new List<GameAssetRecord>();
         private string thumbnailStateRoot;
+        private string thumbnailStateGeneration,thumbnailStateContext;
         private int thumbnailStateCount=-1;
+        [Serializable] private sealed class ThumbnailFailureInfo
+        {
+            public int rendererVersion;
+            public string cacheGeneration;
+            public string context;
+            public string message;
+        }
+        private string ThumbnailFailureGeneration()
+        {
+            try
+            {
+                if(string.IsNullOrEmpty(assetLibrary?.CacheRoot))return "";
+                string path=Path.Combine(assetLibrary.CacheRoot,"active-generation.txt");
+                return File.Exists(path)?File.ReadAllText(path).Trim():"";
+            }
+            catch(IOException){return "";}catch(UnauthorizedAccessException){return "";}
+        }
+        private string ThumbnailFailureContext() => assetLibrary.TargetGame+"|"+
+            string.Join("|",(Targets??Array.Empty<string>()).OrderBy(value=>value,StringComparer.OrdinalIgnoreCase));
+        private string ThumbnailFailureMarker(GameAssetRecord record) =>
+            Path.Combine(assetLibrary.ModelDirectory(record),"thumbnail.error.txt");
+        private void SaveThumbnailFailure(GameAssetRecord record,string message)
+        {
+            string folder=assetLibrary.ModelDirectory(record);Directory.CreateDirectory(folder);
+            var info=new ThumbnailFailureInfo{rendererVersion=ThumbnailRendererVersion,
+                cacheGeneration=ThumbnailFailureGeneration(),context=ThumbnailFailureContext(),message=message??""};
+            File.WriteAllText(ThumbnailFailureMarker(record),JsonUtility.ToJson(info,true));
+        }
+        private bool RestoreThumbnailFailure(GameAssetRecord record,string generation,string context)
+        {
+            string marker=ThumbnailFailureMarker(record);
+            if(!File.Exists(marker))return false;
+            try
+            {
+                string contents=File.ReadAllText(marker),message=contents;
+                var info=contents.TrimStart().StartsWith("{")?JsonUtility.FromJson<ThumbnailFailureInfo>(contents):null;
+                if(info!=null)
+                {
+                    if(info.rendererVersion!=ThumbnailRendererVersion||
+                        !string.Equals(info.cacheGeneration,generation,StringComparison.Ordinal)||
+                        !string.Equals(info.context,context,StringComparison.OrdinalIgnoreCase))
+                    {File.Delete(marker);return false;}
+                    message=info.message;
+                }
+                else
+                {
+                    // Migrate markers written by earlier builds so the failure visible before this
+                    // update is not retried one more time on the next application launch.
+                    SaveThumbnailFailure(record,message);
+                }
+                failedThumbnails.Add(record.Id);previewFailures[record.Id]=message;return true;
+            }
+            catch(Exception exception)when(exception is IOException||exception is UnauthorizedAccessException||
+                exception is ArgumentException)
+            {Debug.LogWarning(L.T("#THUMBNAIL_CACHE")+exception.Message);return false;}
+        }
+        private void ClearThumbnailFailure(GameAssetRecord record)
+        {
+            failedThumbnails.Remove(record.Id);previewFailures.Remove(record.Id);
+            try{string marker=ThumbnailFailureMarker(record);if(File.Exists(marker))File.Delete(marker);}
+            catch(IOException){}catch(UnauthorizedAccessException){}
+        }
         private void ReadThumbnailState() {
-            if(thumbnailStateRoot==assetLibrary.CacheRoot&&thumbnailStateCount==assetLibrary.Records.Count)return;
+            string generation=ThumbnailFailureGeneration(),context=ThumbnailFailureContext();
+            if(thumbnailStateRoot==assetLibrary.CacheRoot&&thumbnailStateCount==assetLibrary.Records.Count&&
+                thumbnailStateGeneration==generation&&thumbnailStateContext==context)return;
             if(thumbnailStateRoot!=assetLibrary.CacheRoot)preparedPlacementEntries.Clear();
             thumbnailDashboardShownForRun=false;thumbnailPerformanceStamp=0;
             thumbnailActiveSeconds=0;thumbnailLastExtractionSeconds=0;thumbnailLastGenerationSeconds=0;thumbnailRunStartDone=0;
             if(thumbnailDashboard!=null){thumbnailDashboard.style.display=DisplayStyle.None;if(world?.Camera!=null)world.Camera.enabled=true;}
-            thumbnailStateRoot=assetLibrary.CacheRoot;thumbnailStateCount=assetLibrary.Records.Count;readyThumbnails.Clear();availableThumbnails.Clear();failedThumbnails.Clear();stagedThumbnails.Clear();thumbnailAlbedo.Clear();
+            thumbnailStateRoot=assetLibrary.CacheRoot;thumbnailStateGeneration=generation;thumbnailStateContext=context;
+            thumbnailStateCount=assetLibrary.Records.Count;readyThumbnails.Clear();availableThumbnails.Clear();failedThumbnails.Clear();stagedThumbnails.Clear();thumbnailAlbedo.Clear();
             thumbnailOfficialAttempts.Clear();thumbnailTargetAttempts.Clear();thumbnailRepairCandidates.Clear();thumbnailRepairsCompleted.Clear();
             activeThumbnailExtraction=null;activeThumbnailRepairs=0;
             if(thumbnailStateRoot==null)return;
@@ -244,7 +310,8 @@ namespace ReMap.Standalone
                     availableThumbnails.Add(record.Id);
                     if(!NeedsThumbnailRefresh(record))readyThumbnails.Add(record.Id);
                 }
-                // Previous failures get one fresh attempt per launch; current failures stay out of the loop.
+                if(readyThumbnails.Contains(record.Id))ClearThumbnailFailure(record);
+                else RestoreThumbnailFailure(record,generation,context);
             }
         }
         private void UpdateThumbnailProgress(GameAssetRecord[] eligible,string detail=null)
@@ -511,7 +578,7 @@ namespace ReMap.Standalone
                 File.WriteAllBytes(Path.Combine(assetLibrary.ModelDirectory(work.record),"thumbnail.png"),thumbnail.EncodeToPNG());
                 availableThumbnails.Add(work.record.Id);
                 SaveThumbnailInfo(work.record,world.models.MissingAlbedo(work.record.Id));
-                readyThumbnails.Add(work.record.Id);failedThumbnails.Remove(work.record.Id);previewFailures.Remove(work.record.Id);
+                readyThumbnails.Add(work.record.Id);ClearThumbnailFailure(work.record);
             }
             finally {
                 if(model!=null)world.models.Release(work.record.Id,model);if(thumbnail!=null)Destroy(thumbnail);
@@ -795,7 +862,7 @@ namespace ReMap.Standalone
             if(thumbnailDashboardPauseButton!=null)thumbnailDashboardPauseButton.style.display=complete?DisplayStyle.None:DisplayStyle.Flex;
         }
         private void ThumbnailFailure(GameAssetRecord entry,Exception ex) {
-            string folder=assetLibrary.ModelDirectory(entry);Directory.CreateDirectory(folder);File.WriteAllText(Path.Combine(folder,"thumbnail.error.txt"),ex.Message);
+            SaveThumbnailFailure(entry,ex.Message);
             failedThumbnails.Add(entry.Id);previewFailures[entry.Id]=ex.Message;Debug.LogWarning(L.T("#THUMBNAIL")+entry.Name+" : "+ex.Message);
         }
     }

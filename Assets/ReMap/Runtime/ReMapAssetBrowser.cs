@@ -402,8 +402,7 @@ namespace ReMap.Standalone
                 var renderedThumbnail=ModelThumbnail.Render(model);
                 if(currentThumbnail!=null)Destroy(currentThumbnail);
                 currentThumbnail=renderedThumbnail;assetPreview.image=currentThumbnail;
-                previewFailures.Remove(record.Id); readyThumbnails.Add(record.Id); failedThumbnails.Remove(record.Id);
-                string errorMarker = Path.Combine(assetLibrary.ModelDirectory(record), "thumbnail.error.txt"); if (File.Exists(errorMarker)) File.Delete(errorMarker);
+                readyThumbnails.Add(record.Id);ClearThumbnailFailure(record);
                 int missing = world.models.MissingAlbedo(record.Id); SaveThumbnailInfo(record,missing);
                 previewEntry = RememberPlacementEntry(record,model);
                 previewText.text = ModelDetails(record, missing, ApexDisplay.Position(bounds.size));
