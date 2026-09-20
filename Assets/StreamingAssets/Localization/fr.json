@@ -1167,6 +1167,38 @@
       "text": "Réessayer"
     },
     {
+      "key": "#IMPORT_MODEL",
+      "text": "Importer"
+    },
+    {
+      "key": "#REIMPORT_MODELS",
+      "text": "Réimporter"
+    },
+    {
+      "key": "#IMPORT_SELECTED_MODELS_ARG0",
+      "text": "Importer les {0} modèles sélectionnés"
+    },
+    {
+      "key": "#MODEL_NOT_IMPORTED_USE_IMPORT",
+      "text": "Ce modèle n’est pas importé. Cliquez sur Importer pour préparer la sélection."
+    },
+    {
+      "key": "#IMPORT_MODEL_BEFORE_PLACING",
+      "text": "Importez ce modèle avant de le placer."
+    },
+    {
+      "key": "#IMPORTING_SELECTED_MODELS_ARG0_ARG1",
+      "text": "Import des modèles sélectionnés : {0} / {1}"
+    },
+    {
+      "key": "#IMPORTED_SELECTED_MODELS_ARG0_ARG1",
+      "text": "{0} / {1} modèles sélectionnés importés."
+    },
+    {
+      "key": "#IMPORT_CANCELED",
+      "text": "Import des modèles annulé."
+    },
+    {
       "key": "#ROLL",
       "text": "Roulis (roll)"
     },
@@ -5465,6 +5497,14 @@
     {
       "key": "#RSX_SESSION_IDLE_HELP",
       "text": "Les RPAK chargés restent disponibles pour un autre import manuel. Le compte à rebours redémarre après chaque import."
+    },
+    {
+      "key": "#RSX_SESSION_RUNNING",
+      "text": "RSX est en cours d’exécution"
+    },
+    {
+      "key": "#RSX_SESSION_RUNNING_HELP",
+      "text": "RSX charge actuellement des archives, importe des modèles ou répare des textures."
     },
     {
       "key": "#LOADING_CACHED_ARG0",

@@ -432,7 +432,11 @@ namespace ReMap.Standalone
                 if (e.clickCount == 2 && id == null)
                 {
                     EndLibraryDrag(); suppressCardClick = true;
-                    if (record != null) _ = RequestModelPlacement(record);
+                    if (record != null) {
+                        var ready=ReadyPlacementEntry(record);
+                        if(ready!=null){CancelPlacement();BeginPlacement(ready);}
+                        else SetStatus(L.T("#IMPORT_MODEL_BEFORE_PLACING"));
+                    }
                     else if (entry != null) { CancelPlacement(); BeginPlacement(entry); }
                     e.StopImmediatePropagation(); return;
                 }
@@ -552,7 +556,7 @@ namespace ReMap.Standalone
         }
         private System.Threading.Tasks.Task DropLibraryItem(CatalogEntry entry, GameAssetRecord record, string id, string parent, Vector2 point, bool scene) =>
             DropLibraryItem(entry, record, id, parent, null, point, scene);
-        private async System.Threading.Tasks.Task DropLibraryItem(CatalogEntry entry, GameAssetRecord record, string id, string parent, string beforeSiblingId, Vector2 point, bool scene)
+        private System.Threading.Tasks.Task DropLibraryItem(CatalogEntry entry, GameAssetRecord record, string id, string parent, string beforeSiblingId, Vector2 point, bool scene)
         {
             try
             {
@@ -562,27 +566,28 @@ namespace ReMap.Standalone
                         if(!world.SurfacePoint(point,snap?moveSnap:0,out var surface))throw new InvalidOperationException(L.T("#DROP_ONTO_SURFACE"));
                         var bounds=world.CombinedBounds(SelectionRoots());var anchor=bounds.HasValue?new Vector3(bounds.Value.center.x,bounds.Value.min.y,bounds.Value.center.z):SelectionPivot();
                         MoveSelection(surface-anchor);
-                    } else ReparentObject(id,parent,beforeSiblingId);return;
+                    } else ReparentObject(id,parent,beforeSiblingId);return System.Threading.Tasks.Task.CompletedTask;
                 }
                 Vector3? dropSurface=null;
                 if(scene) {if(!world.SurfacePoint(point,0,out var surface))throw new InvalidOperationException(L.T("#DROP_ONTO_CONSTRUCTION_SURFACE"));dropSurface=surface;}
                 if (record != null)
                 {
-                    entry = await PrepareDropEntry(record);
-                    if (this == null || entry?.Id != record.Id) return;
+                    entry = ReadyPlacementEntry(record);
+                    if(entry==null)throw new InvalidOperationException(L.T("#IMPORT_MODEL_BEFORE_PLACING"));
                     if (!record.Supports(Targets)) throw new InvalidOperationException(L.T("#ARCHIVES_CHANGED_DROP_CANCELED"));
                 }
-                if (entry == null) return;
+                if (entry == null) return System.Threading.Tasks.Task.CompletedTask;
                 var position = Vector3.zero;
                 if(scene)position=WorldView.PlacementPosition(dropSurface.Value,entry,snap,moveSnap);
                 CommitInspectorEdit();
-                if (entry.CustomType != null) { InsertCustomObject(entry, position, parent); return; }
+                if (entry.CustomType != null) { InsertCustomObject(entry, position, parent); return System.Threading.Tasks.Task.CompletedTask; }
                 var item = new MapObject { assetId = entry.Id, displayName = entry.Name, parentId = parent, position = WorldView.ToData(position), scale = WorldView.ToData(entry.Size),
                     gameModelPath = entry.GameAsset?.modelPath ?? "", commonAsset = entry.GameAsset?.IsCommon ?? false,
                     availableMaps = entry.GameAsset?.origins.Select(o => o.mapId).Where(m => m != "").Distinct().ToList() ?? new List<string>() };
                 session.Edit(doc => { doc.objects.Add(item); if (beforeSiblingId != null) MapHierarchy.Reorder(doc, item.id, parent, beforeSiblingId); }); selectedId = item.id; RevealHierarchy(item.id); Refresh(); FocusHierarchy(item.id);
             }
             catch (Exception ex) { if (this != null) SetStatus(ex.Message); }
+            return System.Threading.Tasks.Task.CompletedTask;
         }
     }
 }

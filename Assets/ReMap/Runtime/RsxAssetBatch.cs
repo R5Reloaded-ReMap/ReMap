@@ -19,7 +19,7 @@ namespace ReMap.Standalone
     public sealed partial class RsxAssetLibrary
     {
         public string OriginArchive(GameAssetRecord record,string[] targets) => record.origins.First(o=>o.mapId==""||targets.Contains(o.mapId)).archive;
-        public async Task<AssetBatchResult> ExtractBatchAsync(GameAssetRecord[] entries,string[] targets,CancellationToken cancellation=default) {
+        public async Task<AssetBatchResult> ExtractBatchAsync(GameAssetRecord[] entries,string[] targets,CancellationToken cancellation=default,bool forceRefresh=false) {
             int maximum=BulkExportsSupported?64:8;
             if(entries.Length==0||entries.Length>maximum)throw new ArgumentException(L.T(maximum==64?"#BATCH_1_64_MODELS_REQUIRED":"#BATCH_1_8_MODELS_REQUIRED"));
             if(CacheRoot==null||entries.Any(e=>!e.Supports(targets)))throw new InvalidOperationException(L.T("#INDEX_COMPATIBLE_MAPS_EXTRACTION"));
@@ -27,15 +27,18 @@ namespace ReMap.Standalone
             if(!ContinuousPreviewsSupported&&!UsesForkFeatures) {
                 foreach(var entry in entries)try {
                     bool cached=CachedModel(entry)!=null;
-                    result.Paths[entry.Id]=await ExtractAsync(entry,targets,cancellation);
-                    if(!cached)result.TargetAttempts.Add(entry.Id);
+                    result.Paths[entry.Id]=await ExtractAsync(entry,targets,cancellation,forceRefresh);
+                    if(forceRefresh||!cached)result.TargetAttempts.Add(entry.Id);
                 }catch(Exception ex)when(!(ex is OperationCanceledException)){result.TargetAttempts.Add(entry.Id);result.Errors[entry.Id]=ex.Message;}
                 return result;
             }
             using var linked=CancellationTokenSource.CreateLinkedTokenSource(shutdown.Token,cancellation);
             await worker.WaitAsync(linked.Token);
             try {
-                var pending=entries.Where(e=> {var path=CachedModel(e);if(path==null)return true;result.Paths[e.Id]=path;return false;}).ToArray();
+                var pending=entries.Where(e=> {
+                    if(forceRefresh)return true;
+                    var path=CachedModel(e);if(path==null)return true;result.Paths[e.Id]=path;return false;
+                }).ToArray();
                 if(pending.Length==0)return result;
                 if(ContinuousPreviewsSupported)
                 {

@@ -14,6 +14,7 @@ namespace ReMap.Standalone
         private bool backgroundStopped, thumbnailLoopRunning, thumbnailPaused, indexRequested;
         private CancellationTokenSource thumbnailExport;
         private CancellationTokenSource manualPreviewIdleRelease;
+        private int? rsxSessionIdleRemainingSeconds;
         private int thumbnailIdleRevision;
         private const int ManualPreviewSessionIdleMilliseconds=60000;
         private string visibleThumbnailPage;
@@ -101,6 +102,7 @@ namespace ReMap.Standalone
             rsxSessionIdleStatus=Label("","library-state");
             rsxSessionIdleStatus.AddToClassList("rsx-session-status");
             rsxSessionIdleStatus.style.display=DisplayStyle.None;
+            rsxSessionIdleStatus.schedule.Execute(RefreshRsxSessionStatus).Every(250);
 
             thumbnailDashboard=new VisualElement();thumbnailDashboard.AddToClassList("thumbnail-dashboard");root.Add(thumbnailDashboard);
             var dashboard=new VisualElement();dashboard.AddToClassList("thumbnail-dashboard-panel");thumbnailDashboard.Add(dashboard);
@@ -717,7 +719,7 @@ namespace ReMap.Standalone
                     if(remaining==0)break;
                     await Task.Delay(Math.Min(1000,remaining*1000),cancellation.Token);
                 }
-                if(this==null||backgroundStopped||thumbnailLoopRunning||assetBusy||pendingAssetDrops>0||
+                if(this==null||backgroundStopped||(thumbnailLoopRunning&&!thumbnailPaused)||assetBusy||pendingAssetDrops>0||
                     generation!=assetLibrary.CacheRoot)return;
                 await assetLibrary.ReleasePreviewSessionAsync(cancellation.Token);
             }
@@ -731,11 +733,17 @@ namespace ReMap.Standalone
             }
         }
         private void UpdateRsxSessionIdleStatus(int? remainingSeconds) {
+            rsxSessionIdleRemainingSeconds=remainingSeconds;RefreshRsxSessionStatus();
+        }
+        private void RefreshRsxSessionStatus() {
             if(rsxSessionIdleStatus==null)return;
-            bool show=remainingSeconds.HasValue&&remainingSeconds.Value>0&&!backgroundStopped&&assetLibrary?.PreviewProcessId!=0;
-            rsxSessionIdleStatus.text=show?L.F("#RSX_SESSION_CLOSES_IN_ARG0",remainingSeconds.Value):"";
-            rsxSessionIdleStatus.tooltip=show?L.T("#RSX_SESSION_IDLE_HELP"):"";
-            rsxSessionIdleStatus.style.display=show?DisplayStyle.Flex:DisplayStyle.None;
+            bool running=!backgroundStopped&&assetLibrary?.PreviewProcessId!=0;
+            bool working=assetBusy||pendingAssetDrops>0||extractingThumbnails.Count>0||thumbnailExport!=null;
+            bool countdown=running&&!working&&rsxSessionIdleRemainingSeconds.HasValue&&rsxSessionIdleRemainingSeconds.Value>0;
+            rsxSessionIdleStatus.text=countdown?L.F("#RSX_SESSION_CLOSES_IN_ARG0",rsxSessionIdleRemainingSeconds.Value):
+                running?L.T("#RSX_SESSION_RUNNING"):"";
+            rsxSessionIdleStatus.tooltip=countdown?L.T("#RSX_SESSION_IDLE_HELP"):running?L.T("#RSX_SESSION_RUNNING_HELP"):"";
+            rsxSessionIdleStatus.style.display=running?DisplayStyle.Flex:DisplayStyle.None;
         }
         private void UpdateLibraryFooterVisibility() {
             if(libraryFooter==null)return;

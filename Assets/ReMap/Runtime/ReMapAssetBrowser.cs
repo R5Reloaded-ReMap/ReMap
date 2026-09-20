@@ -63,7 +63,7 @@ namespace ReMap.Standalone
             var actions = new VisualElement(); actions.style.flexDirection = FlexDirection.Row; preview.Add(actions);
             placeAssetButton = Button(L.T("#PLACE"), () => { if (CanPlace(previewEntry)) BeginPlacement(previewEntry); }, "primary");
             placeAssetButton.SetEnabled(false); actions.Add(placeAssetButton);
-            retryPreviewButton = Button(L.T("#RETRY"), () => { if (lastPreviewRequest != null) _ = PreviewGameAsset(lastPreviewRequest, true); }); retryPreviewButton.SetEnabled(false); actions.Add(retryPreviewButton);
+            retryPreviewButton = Button(L.T("#IMPORT_MODEL"), () => { _ = ImportSelectedLibraryAssets(); }); retryPreviewButton.SetEnabled(false); actions.Add(retryPreviewButton);
             pageState = Label("", "library-count");
             libraryFooter=new VisualElement();libraryFooter.AddToClassList("library-footer");libraryFooter.style.display=DisplayStyle.None;library.Add(libraryFooter);
         }
@@ -135,7 +135,7 @@ namespace ReMap.Standalone
         }
         private void SetAssetBusy(bool value)
         {
-            assetBusy = value; retryPreviewButton?.SetEnabled(!value && lastPreviewRequest != null); indexButton?.SetEnabled(!indexRequested); placeAssetButton?.SetEnabled(!value && CanPlace(previewEntry));
+            assetBusy = value; indexButton?.SetEnabled(!indexRequested); UpdateLibraryAssetActions();
         }
         private void RefreshAssetCatalog()
         {
@@ -160,6 +160,7 @@ namespace ReMap.Standalone
             selectedLibraryAssetIds.RemoveWhere(id => !visibleIds.Contains(id));
             if (librarySelectionAnchorId != null && !visibleIds.Contains(librarySelectionAnchorId)) librarySelectionAnchorId = null;
             UpdateLibraryModelCount();
+            UpdateLibraryAssetActions();
             renderedCatalogFirst=renderedCatalogLast=renderedCatalogColumns=-1;
             RenderVisibleCatalog(true);
             if (catalogRecords.Length == 0) catalogList.Add(Label(L.T("#INDEX_SOURCES_CHANGE_FILTERS"), "note"));
@@ -208,7 +209,7 @@ namespace ReMap.Standalone
                     int row=index/columns,column=index%columns;
                 bool additiveClick=false,rangeClick=false;
                 var card = Button("", () => {
-                    if (!suppressCardClick) _ = SelectGameAsset(record,additiveClick,rangeClick);
+                    if (!suppressCardClick) SelectGameAsset(record,additiveClick,rangeClick);
                     additiveClick=rangeClick=false;
                 }, "game-card");
                 card.RegisterCallback<PointerDownEvent>(e => {
@@ -270,6 +271,27 @@ namespace ReMap.Standalone
                 : L.F("#ARG0_MODELS",catalogRecords.Length);
         }
 
+        private GameAssetRecord[] SelectedLibraryRecords() => catalogRecords
+            .Where(record=>selectedLibraryAssetIds.Contains(record.Id)).ToArray();
+
+        private void UpdateLibraryAssetActions()
+        {
+            if(retryPreviewButton==null||placeAssetButton==null)return;
+            if(catalogMode==null||catalogMode.index!=0) {
+                retryPreviewButton.SetEnabled(false);
+                placeAssetButton.SetEnabled(!assetBusy&&CanPlace(previewEntry));
+                return;
+            }
+            var selected=SelectedLibraryRecords();
+            if(lastPreviewRequest==null||!selectedLibraryAssetIds.Contains(lastPreviewRequest.Id))previewEntry=null;
+            else previewEntry=ReadyPlacementEntry(lastPreviewRequest);
+            bool allImported=selected.Length>0&&selected.All(record=>assetLibrary.CachedModel(record)!=null);
+            retryPreviewButton.text=L.T(allImported?"#REIMPORT_MODELS":"#IMPORT_MODEL");
+            retryPreviewButton.tooltip=selected.Length>1?L.F("#IMPORT_SELECTED_MODELS_ARG0",selected.Length):"";
+            retryPreviewButton.SetEnabled(!assetBusy&&!indexRequested&&selected.Length>0);
+            placeAssetButton.SetEnabled(!assetBusy&&CanPlace(previewEntry));
+        }
+
         private void SelectLibraryAsset(GameAssetRecord record,bool additive,bool range)
         {
             int anchorIndex=librarySelectionAnchorId==null?-1:Array.FindIndex(catalogRecords,item=>item.Id.Equals(librarySelectionAnchorId,StringComparison.OrdinalIgnoreCase));
@@ -284,13 +306,36 @@ namespace ReMap.Standalone
             } else {
                 selectedLibraryAssetIds.Clear();selectedLibraryAssetIds.Add(record.Id);librarySelectionAnchorId=record.Id;
             }
-            UpdateLibraryModelCount();RenderVisibleCatalog(true);
+            UpdateLibraryModelCount();RenderVisibleCatalog(true);UpdateLibraryAssetActions();
         }
 
-        private async Task SelectGameAsset(GameAssetRecord record,bool additive=false,bool range=false)
+        private void SelectGameAsset(GameAssetRecord record,bool additive=false,bool range=false)
         {
             SelectLibraryAsset(record,additive,range);
-            SetLibraryDetails(true); await PreviewGameAsset(record);
+            var active=selectedLibraryAssetIds.Contains(record.Id)?record:SelectedLibraryRecords().LastOrDefault();
+            SetLibraryDetails(true);
+            if(active==null) {
+                lastPreviewRequest=null;previewEntry=null;
+                if(currentThumbnail!=null)Destroy(currentThumbnail);currentThumbnail=null;assetPreview.image=null;
+                previewText.text=L.T("#CLICK_MODEL_LOAD_PREVIEW");UpdateLibraryAssetActions();return;
+            }
+            lastPreviewRequest=active;
+            string cached=assetLibrary.CachedModel(active);
+            if(cached!=null) { _=PreviewGameAsset(active);return; }
+            previewEntry=null;ShowSelectedUnimportedAsset(active);RefreshCatalog();UpdateLibraryAssetActions();
+        }
+
+        private void ShowSelectedUnimportedAsset(GameAssetRecord record)
+        {
+            if(currentThumbnail!=null)Destroy(currentThumbnail);currentThumbnail=null;assetPreview.image=null;
+            string thumbnailPath=Path.Combine(assetLibrary.ModelDirectory(record),"thumbnail.png");
+            if(File.Exists(thumbnailPath))try {
+                var image=new Texture2D(2,2);
+                if(ImageConversion.LoadImage(image,File.ReadAllBytes(thumbnailPath),true)){currentThumbnail=image;assetPreview.image=image;}
+                else Destroy(image);
+            }catch(Exception ex){Debug.LogWarning(L.T("#THUMBNAIL_CACHE")+ex.Message);}
+            previewText.text=ModelDetails(record)+"\n\n"+L.T("#MODEL_NOT_IMPORTED_USE_IMPORT");
+            previewText.tooltip=record.modelPath;
         }
 
         private string ModelDetails(GameAssetRecord record, int missingAlbedo = 0, Vector3? apexDimensions = null)
@@ -398,7 +443,7 @@ namespace ReMap.Standalone
             foreach (var toggle in mapToggles) toggle.Value.SetValueWithoutNotify(snapshot.targetMaps.Contains(toggle.Key));
             RefreshEditingMapChoice();
             if (placing?.GameAsset != null && !placing.GameAsset.Supports(Targets)) CancelPlacement();
-            placeAssetButton?.SetEnabled(CanPlace(previewEntry));
+            UpdateLibraryAssetActions();
             var currentTargets = Targets;
             if (displayedTargets == null || !displayedTargets.SequenceEqual(currentTargets)) { displayedTargets = currentTargets; RefreshCatalog(); }
         }

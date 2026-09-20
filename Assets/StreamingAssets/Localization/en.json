@@ -1167,6 +1167,38 @@
       "text": "Retry"
     },
     {
+      "key": "#IMPORT_MODEL",
+      "text": "Import"
+    },
+    {
+      "key": "#REIMPORT_MODELS",
+      "text": "Reimport"
+    },
+    {
+      "key": "#IMPORT_SELECTED_MODELS_ARG0",
+      "text": "Import the {0} selected models"
+    },
+    {
+      "key": "#MODEL_NOT_IMPORTED_USE_IMPORT",
+      "text": "This model is not imported. Click Import to prepare the selection."
+    },
+    {
+      "key": "#IMPORT_MODEL_BEFORE_PLACING",
+      "text": "Import this model before placing it."
+    },
+    {
+      "key": "#IMPORTING_SELECTED_MODELS_ARG0_ARG1",
+      "text": "Importing selected models: {0} / {1}"
+    },
+    {
+      "key": "#IMPORTED_SELECTED_MODELS_ARG0_ARG1",
+      "text": "Imported {0} / {1} selected models."
+    },
+    {
+      "key": "#IMPORT_CANCELED",
+      "text": "Model import canceled."
+    },
+    {
       "key": "#ROLL",
       "text": "Roll"
     },
@@ -5465,6 +5497,14 @@
     {
       "key": "#RSX_SESSION_IDLE_HELP",
       "text": "The loaded RPAKs remain available for another manual model import. The countdown restarts after each import."
+    },
+    {
+      "key": "#RSX_SESSION_RUNNING",
+      "text": "RSX is running"
+    },
+    {
+      "key": "#RSX_SESSION_RUNNING_HELP",
+      "text": "RSX is currently loading archives, importing models, or repairing textures."
     },
     {
       "key": "#LOADING_CACHED_ARG0",
