@@ -1900,7 +1900,7 @@
     },
     {
       "key": "#ASSET_EXPORT_FOLDER_HELP",
-      "text": "Extracted models, textures, indexes, and temporary export files are stored here. Changing this path does not move or delete the previous folder."
+      "text": "Extracted models, textures, indexes, and temporary export files are stored here. Allow approximately 10 GB of free space. Changing this path does not move or delete the previous folder."
     },
     {
       "key": "#SAVE_ASSET_EXPORT_FOLDER",

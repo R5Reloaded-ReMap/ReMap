@@ -17,6 +17,7 @@ namespace ReMap.Standalone
         private ScrollView settingsScroll;
         private System.Threading.Tasks.Task settingsIndexTask;
         private DropdownField editingMapChoice;
+        private TextField settingsAssetFolder;
         private Label missingMapNotice;
         private readonly List<string> editingMapIds = new List<string>();
 
@@ -92,11 +93,14 @@ namespace ReMap.Standalone
             scroll.Add(Button(L.T("#SAVE_PATHS"), applyGameSources));
             scroll.Add(Label(L.T("#ASSET_CACHE"), "section-title"));
             scroll.Add(Label(L.T("#COMPATIBLE_MODELS_TEXTURES_SHARED_BETWEEN"), "note"));
-            var cachePath = new TextField(L.T("#ASSET_EXPORT_FOLDER")) { value = assetLibrary.AssetExportDirectory, isDelayed = true }; cachePath.AddToClassList("settings-field"); scroll.Add(cachePath);
+            settingsAssetFolder = AddFolderPicker(scroll, L.T("#ASSET_EXPORT_FOLDER"),
+                assetLibrary.AssetExportDirectory, () => assetLibrary.AssetExportDirectory);
+            settingsAssetFolder.isDelayed = true;
             scroll.Add(Label(L.T("#ASSET_EXPORT_FOLDER_HELP"), "note"));
             scroll.Add(Button(L.T("#SAVE_ASSET_EXPORT_FOLDER"), () => {
-                assetLibrary.ConfigureAssetExportDirectory(cachePath.value);
-                cachePath.SetValueWithoutNotify(assetLibrary.AssetExportDirectory);
+                assetLibrary.ConfigureAssetExportDirectory(settingsAssetFolder.value);
+                settingsAssetFolder.SetValueWithoutNotify(assetLibrary.AssetExportDirectory);
+                welcomeAssetFolder?.SetValueWithoutNotify(assetLibrary.AssetExportDirectory);
                 CancelPlacement(); previewEntry = null; lastPreviewRequest = null; previewFailures.Clear();
                 world.models.ForgetPrepared();
                 foreach (var id in snapshot.objects.Where(item => item.assetId.StartsWith("apex:", StringComparison.Ordinal)).Select(item => item.assetId).Distinct()) world.Reload(id);
@@ -229,6 +233,7 @@ namespace ReMap.Standalone
             if (show)
             {
                 CommitInspectorEdit(); CancelGizmoDrag(); world.ClearPreview();
+                settingsAssetFolder?.SetValueWithoutNotify(assetLibrary.AssetExportDirectory);
                 settingsScroll?.schedule.Execute(() => settingsScroll.scrollOffset = Vector2.zero);
             }
             settingsOverlay.style.display = show ? DisplayStyle.Flex : DisplayStyle.None;

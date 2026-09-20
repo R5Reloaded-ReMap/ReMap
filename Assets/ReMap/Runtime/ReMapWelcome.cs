@@ -6,6 +6,7 @@ namespace ReMap.Standalone
     public sealed partial class ReMapApp
     {
         private VisualElement welcomeOverlay;
+        private TextField welcomeAssetFolder;
 
         private void BuildWelcome()
         {
@@ -27,12 +28,19 @@ namespace ReMap.Standalone
             content.Add(Label(L.T("#DETECTED_GAME_INSTALLATIONS"), "section-title"));
             AddWelcomeTarget(content, GameTargets.R5Reloaded);
             AddWelcomeTarget(content, GameTargets.R5Flowstate);
+            content.Add(Label(L.T("#ASSET_CACHE"), "section-title"));
+            welcomeAssetFolder = AddFolderPicker(content, L.T("#ASSET_EXPORT_FOLDER"),
+                assetLibrary.AssetExportDirectory, () => assetLibrary.AssetExportDirectory);
+            welcomeAssetFolder.isDelayed = true;
+            content.Add(Label(L.T("#ASSET_EXPORT_FOLDER_HELP"), "note"));
 
             var actions = new VisualElement();
             actions.AddToClassList("dialog-actions");
-            actions.Add(Button(L.T("#OPEN_SETTINGS"), () => { ShowWelcome(false); ShowSettings(true); }));
+            actions.Add(Button(L.T("#OPEN_SETTINGS"), () => {
+                ApplyWelcomeAssetFolder(); ShowWelcome(false); ShowSettings(true);
+            }));
             actions.Add(Button(L.T("#CONTINUE_WITHOUT_GAME_FILES"), () => {
-                assetLibrary.SaveSettings();
+                ApplyWelcomeAssetFolder();
                 ShowWelcome(false);
                 SetStatus(L.T("#GAME_FILES_CAN_BE_CONFIGURED_LATER"));
             }));
@@ -55,6 +63,7 @@ namespace ReMap.Standalone
 
         private void UseWelcomeTarget(string target)
         {
+            ApplyWelcomeAssetFolder();
             assetLibrary.SelectTarget(target);
             session.Edit(document => document.gameTarget = GameTargets.Normalize(target));
             RefreshProjectSelector(DraftSlot(target));
@@ -63,6 +72,13 @@ namespace ReMap.Standalone
             ShowWelcome(false);
             SetStatus(L.T("#GAME_SELECTED_INDEXING_ASSETS"));
             _ = IndexAssets();
+        }
+
+        private void ApplyWelcomeAssetFolder()
+        {
+            assetLibrary.ConfigureAssetExportDirectory(welcomeAssetFolder?.value);
+            welcomeAssetFolder?.SetValueWithoutNotify(assetLibrary.AssetExportDirectory);
+            settingsAssetFolder?.SetValueWithoutNotify(assetLibrary.AssetExportDirectory);
         }
 
         private void ShowWelcome(bool show)

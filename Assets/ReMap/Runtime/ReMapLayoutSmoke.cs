@@ -24,6 +24,9 @@ namespace ReMap.Standalone
             var logo = welcomeOverlay.Q<Image>(className: "welcome-logo");
             if (logo?.image == null || logo.worldBound.width < 100 || logo.worldBound.height < 100)
                 return "Welcome logo is missing or too small.";
+            if (welcomeAssetFolder == null || welcomeAssetFolder.parent == null ||
+                !welcomeAssetFolder.parent.ClassListContains("folder-picker") || welcomeAssetFolder.worldBound.width < 300)
+                return "Welcome asset-folder picker is missing or collapsed.";
             return null;
         }
 
@@ -265,8 +268,9 @@ namespace ReMap.Standalone
             var mprtPresetInput = mprtPreset?.Q(className: "unity-base-popup-field__input");
             if (mprtPreset == null || mprtPresetInput == null || mprtPreset.worldBound.height < 40f || mprtPresetInput.worldBound.height < 20f)
                 throw new Exception("MPRT quality selector is vertically clipped.");
-            if (settingsScroll.Query<VisualElement>(className: "folder-picker").ToList().Count != 2)
-                throw new Exception("Settings should expose one root-folder picker per game.");
+            if (settingsScroll.Query<VisualElement>(className: "folder-picker").ToList().Count != 3 ||
+                settingsAssetFolder?.parent == null || !settingsAssetFolder.parent.ClassListContains("folder-picker"))
+                throw new Exception("Settings should expose the two game folders and the asset cache folder.");
             bool gameConnectionVisible = settingsScroll.Query<Label>().ToList().Any(label => label.text == L.T("#GAME_CONNECTION"));
             if (gameConnectionVisible != LiveMapEnabled)
                 throw new Exception("Live Map connection settings do not match this build type.");

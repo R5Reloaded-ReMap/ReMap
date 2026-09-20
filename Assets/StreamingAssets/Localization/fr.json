@@ -1900,7 +1900,7 @@
     },
     {
       "key": "#ASSET_EXPORT_FOLDER_HELP",
-      "text": "Les modèles, textures, index et fichiers d’exportation temporaires sont stockés ici. Changer ce chemin ne déplace ni ne supprime l’ancien dossier."
+      "text": "Les modèles, textures, index et fichiers d’exportation temporaires sont stockés ici. Prévoyez environ 10 Go d’espace libre. Changer ce chemin ne déplace ni ne supprime l’ancien dossier."
     },
     {
       "key": "#SAVE_ASSET_EXPORT_FOLDER",
