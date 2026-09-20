@@ -19,7 +19,7 @@ namespace ReMap.Standalone.Core
             var scenePending=(scene??Enumerable.Empty<GameAssetRecord>()).Where(r=>ids.Contains(r.Id)).ToArray();
             var visiblePending=(visible??Enumerable.Empty<GameAssetRecord>()).Where(r=>ids.Contains(r.Id)).ToArray();
             var customPending=(custom??Enumerable.Empty<GameAssetRecord>()).Where(r=>ids.Contains(r.Id)).ToArray();
-            var searchPending=eligible.Where(r=>r.modelPath.IndexOf(search??"",StringComparison.OrdinalIgnoreCase)>=0).ToArray();
+            var searchPending=eligible.Where(r=>GameAssetIndex.MatchesSearch(r,search)).ToArray();
             var ordered=scenePending.Concat(visiblePending).Concat(customPending).Concat(searchPending).Concat(eligible).GroupBy(r=>r.Id).Select(g=>g.First()).ToArray();
             if(ordered.Length==0)return Array.Empty<GameAssetRecord>();
             string Origin(GameAssetRecord r)=>r.origins.First(o=>o.mapId==""||targets.Contains(o.mapId)).archive;

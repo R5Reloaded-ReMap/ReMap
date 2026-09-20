@@ -145,6 +145,16 @@ namespace ReMap.Standalone.Core
             string.Equals(NormalizeModelPath(left), NormalizeModelPath(right),
                 StringComparison.OrdinalIgnoreCase);
 
+        public static bool MatchesSearch(GameAssetRecord record, string search)
+        {
+            if (record == null) return false;
+            string term = NormalizeModelPath(search);
+            if (term.Length == 0) return true;
+            return NormalizeModelPath(record.modelPath).IndexOf(term, StringComparison.OrdinalIgnoreCase) >= 0 ||
+                record.Name.IndexOf(term, StringComparison.OrdinalIgnoreCase) >= 0 ||
+                record.Category.IndexOf(term, StringComparison.OrdinalIgnoreCase) >= 0;
+        }
+
         public static string NormalizeGuid(string value)
         {
             if (value.StartsWith("0x", StringComparison.OrdinalIgnoreCase)) value = value.Substring(2);

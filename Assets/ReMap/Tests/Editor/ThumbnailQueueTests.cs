@@ -52,5 +52,13 @@ namespace ReMap.Standalone.Tests {
             result=ThumbnailQueue.NextVisible(new[]{visible,offscreen},new[]{visible},new HashSet<string>{visible.Id},new HashSet<string>(),"",Array.Empty<string>());
             Assert.That(result,Is.Empty);
         }
+        [Test] public void SearchNormalizesModelPathSeparators() {
+            var unrelated=Record("1","unrelated");
+            var prop=Record("2","crate");prop.modelPath=@"mdl\props\industrial\crate.rmdl";
+            var result=ThumbnailQueue.Next(new[]{unrelated,prop},Array.Empty<GameAssetRecord>(),
+                new HashSet<string>(),new HashSet<string>(),"mdl/props",Array.Empty<string>());
+            Assert.That(result.First().Id,Is.EqualTo(prop.Id));
+            Assert.That(GameAssetIndex.MatchesSearch(prop,@"mdl\props"),Is.True);
+        }
     }
 }

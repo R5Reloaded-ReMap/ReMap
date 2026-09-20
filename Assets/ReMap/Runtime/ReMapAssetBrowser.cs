@@ -147,7 +147,7 @@ namespace ReMap.Standalone
             string term = search.value ?? "";
             var targetSet = new HashSet<string>(targets, StringComparer.OrdinalIgnoreCase);
             catalogRecords = assetLibrary.Records.Where(r => r.Supports(targetSet) &&
-                (r.modelPath.IndexOf(term, StringComparison.OrdinalIgnoreCase) >= 0 || r.Category.IndexOf(term, StringComparison.OrdinalIgnoreCase) >= 0)).ToArray();
+                GameAssetIndex.MatchesSearch(r,term)).ToArray();
             pageState.text = L.F("#ARG0_MODELS", catalogRecords.Length);
             renderedCatalogFirst=renderedCatalogLast=renderedCatalogColumns=-1;
             RenderVisibleCatalog(true);
