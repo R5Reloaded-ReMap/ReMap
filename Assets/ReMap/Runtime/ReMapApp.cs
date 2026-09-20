@@ -140,6 +140,7 @@ namespace ReMap.Standalone
             centrePivot = PlayerPrefs.GetInt(CentrePivotPreferenceKey, 1) != 0;
             autoCollapseOtherFolders = PlayerPrefs.GetInt(AutoCollapseOtherFoldersPreferenceKey, 0) != 0;
             LoadLayout(); BuildInterface();
+            if (!Environment.GetCommandLineArgs().AnySmokeFlag()) InitializeDiscordPresence();
 
             session.Edit(doc => {
 
@@ -564,6 +565,7 @@ namespace ReMap.Standalone
         {
 
             snapshot = session.Snapshot();
+            RefreshDiscordPresence();
 
             NormalizeSelection();
 
@@ -1351,7 +1353,7 @@ namespace ReMap.Standalone
 
         private void OnApplicationQuit() { SaveWorkspaceRecovery(); }
 
-        private void OnDestroy() { SaveWorkspaceRecovery(); backgroundStopped = true; mapReferenceCancellation?.Cancel(); assetLibrary?.Dispose(); world?.Dispose(); if (currentThumbnail != null) Destroy(currentThumbnail); foreach (var thumbnail in pageThumbnails) Destroy(thumbnail); }
+        private void OnDestroy() { SaveWorkspaceRecovery(); DisposeDiscordPresence(); backgroundStopped = true; mapReferenceCancellation?.Cancel(); assetLibrary?.Dispose(); world?.Dispose(); if (currentThumbnail != null) Destroy(currentThumbnail); foreach (var thumbnail in pageThumbnails) Destroy(thumbnail); }
 
     }
 

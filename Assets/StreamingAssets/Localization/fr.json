@@ -71,6 +71,14 @@
       "text": " objets · "
     },
     {
+      "key": "#DISCORD_EDITING_ARG0",
+      "text": "Édition : {0}"
+    },
+    {
+      "key": "#DISCORD_TARGET_OBJECTS_VERSION_ARG0_ARG1_ARG2",
+      "text": "{0} · {1} objets · v{2}"
+    },
+    {
       "key": "#ROOTS",
       "text": " racines"
     },
