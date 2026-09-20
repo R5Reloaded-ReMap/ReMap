@@ -695,7 +695,7 @@ namespace ReMap.Standalone
             foreach (var pair in newMapToggles)
             {
                 bool selected = pair.Key == primary;
-                if (selected) pair.Value.SetValueWithoutNotify(true);
+                pair.Value.SetValueWithoutNotify(selected);
                 pair.Value.SetEnabled(!selected);
             }
         }
