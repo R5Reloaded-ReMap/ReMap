@@ -21,6 +21,9 @@ namespace ReMap.Standalone
                 return "Welcome dialog is clipped by the application bounds.";
             if (targets.Any(target => target.worldBound.width < panel.worldBound.width * .8f))
                 return "Welcome game target rows collapsed horizontally.";
+            var logo = welcomeOverlay.Q<Image>(className: "welcome-logo");
+            if (logo?.image == null || logo.worldBound.width < 100 || logo.worldBound.height < 100)
+                return "Welcome logo is missing or too small.";
             return null;
         }
 
@@ -42,6 +45,11 @@ namespace ReMap.Standalone
             string welcomeError = WelcomeLayoutError();
             if (welcomeError != null) throw new Exception(welcomeError);
             ShowWelcome(false); await TreeFrames();
+            ShowAbout(true); await TreeFrames();
+            var aboutLogo = aboutOverlay.Q<Image>(className: "about-logo");
+            if (!AboutOpen || aboutLogo?.image == null || aboutLogo.worldBound.width < 100 || aboutLogo.worldBound.height < 100)
+                throw new Exception("About dialog logo is missing or too small.");
+            ShowAbout(false); await TreeFrames();
             string layoutFixtureId = snapshot.objects[0].id; Select(layoutFixtureId); await TreeFrames();
             var snapToggle = root.Q<Toggle>(className: "toolbar-snap-toggle");
             var snapSettings = root.Q<Button>("snap-settings-button");
@@ -317,6 +325,10 @@ namespace ReMap.Standalone
             yield return new WaitForEndOfFrame(); var image = ScreenCapture.CaptureScreenshotAsTexture();
             if (image != null) { File.WriteAllBytes(Path.Combine(Application.dataPath, "..", "editor-welcome-preview.png"), image.EncodeToPNG()); Destroy(image); }
             ShowWelcome(false); for (int i = 0; i < 3; i++) yield return null;
+            ShowAbout(true); for (int i = 0; i < 3; i++) yield return null;
+            yield return new WaitForEndOfFrame(); image = ScreenCapture.CaptureScreenshotAsTexture();
+            if (image != null) { File.WriteAllBytes(Path.Combine(Application.dataPath, "..", "editor-about-preview.png"), image.EncodeToPNG()); Destroy(image); }
+            ShowAbout(false); for (int i = 0; i < 3; i++) yield return null;
             yield return new WaitForEndOfFrame(); image = ScreenCapture.CaptureScreenshotAsTexture();
             if (image != null) { File.WriteAllBytes(Path.Combine(Application.dataPath, "..", "editor-layout-preview.png"), image.EncodeToPNG()); Destroy(image); }
             if (!check.IsFaulted)

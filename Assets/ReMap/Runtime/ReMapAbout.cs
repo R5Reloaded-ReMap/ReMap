@@ -26,7 +26,7 @@ namespace ReMap.Standalone
             content.AddToClassList("about-content");
             panel.Add(content);
 
-            content.Add(Label("ReMap", "about-brand"));
+            content.Add(BrandLogo("about-logo"));
             content.Add(Label(L.F("#VERSION_ARG0", Application.version), "about-version"));
             content.Add(Label(L.T(Debug.isDebugBuild ? "#DEVELOPMENT_BUILD" : "#RELEASE_BUILD"), "about-build-type"));
             content.Add(Label(L.T("#ABOUT_TAGLINE"), "about-tagline"));

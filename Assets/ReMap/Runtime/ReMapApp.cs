@@ -242,6 +242,18 @@ namespace ReMap.Standalone
 
         { var label = new Label(text); label.AddToClassList(className); return label; }
 
+        private static Image BrandLogo(string className)
+        {
+            var image = new Image {
+                image = Resources.Load<Texture2D>("Branding/remap-logo"),
+                scaleMode = ScaleMode.ScaleToFit,
+                pickingMode = PickingMode.Ignore
+            };
+            image.AddToClassList("brand-logo");
+            image.AddToClassList(className);
+            return image;
+        }
+
 
 
         private void BuildInterface()

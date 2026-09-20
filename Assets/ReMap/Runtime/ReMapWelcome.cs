@@ -18,10 +18,10 @@ namespace ReMap.Standalone
             welcomeOverlay.Add(panel);
 
             panel.Add(DockTitle(L.T("#WELCOME_REMAP")));
-            var content = new VisualElement();
+            var content = new ScrollView();
             content.AddToClassList("welcome-content");
             panel.Add(content);
-            content.Add(Label("ReMap", "welcome-brand"));
+            content.Add(BrandLogo("welcome-logo"));
             content.Add(Label(L.T("#WELCOME_TAGLINE"), "welcome-tagline"));
             content.Add(Label(L.T("#WELCOME_INTRO"), "welcome-copy"));
             content.Add(Label(L.T("#DETECTED_GAME_INSTALLATIONS"), "section-title"));

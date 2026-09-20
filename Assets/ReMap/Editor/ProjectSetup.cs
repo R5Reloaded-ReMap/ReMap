@@ -13,6 +13,7 @@ namespace ReMap.Standalone.Editor
     public static class ProjectSetup
     {
         public const string ScenePath = "Assets/ReMap/Workspace.unity";
+        private const string LogoPath = "Assets/ReMap/Resources/Branding/remap-logo.png";
         [MenuItem("ReMap/Prepare and open workspace")]
         public static void Prepare()
         {
@@ -20,6 +21,8 @@ namespace ReMap.Standalone.Editor
             {
                 if (!Application.isBatchMode && !EditorSceneManager.SaveCurrentModifiedScenesIfUserWantsTo()) return;
                 EditorSceneManager.OpenScene(ScenePath);
+                ApplyBranding();
+                AssetDatabase.SaveAssets();
                 return;
             }
             if (!Application.isBatchMode && !EditorSceneManager.SaveCurrentModifiedScenesIfUserWantsTo()) return;
@@ -46,8 +49,28 @@ namespace ReMap.Standalone.Editor
             PlayerSettings.allowFullscreenSwitch = false; // F11 / Alt+Enter are handled by the app so Windows cannot toggle a second mode underneath it.
             PlayerSettings.resizableWindow = true;
             PlayerSettings.runInBackground = true;
+            ApplyBranding();
             AssetDatabase.SaveAssets();
             Debug.Log("REMAP_SETUP_OK");
+        }
+
+        private static void ApplyBranding()
+        {
+            var logo = AssetDatabase.LoadAssetAtPath<Texture2D>(LogoPath);
+            if (logo == null) throw new FileNotFoundException("ReMap logo is missing.", LogoPath);
+            var target = UnityEditor.Build.NamedBuildTarget.Standalone;
+            int[] sizes = PlayerSettings.GetIconSizes(target, IconKind.Application);
+            if (sizes.Length == 0) throw new InvalidDataException("Unity exposes no Standalone application icon slots.");
+            var applicationIcons = new Texture2D[sizes.Length];
+            for (int index = 0; index < applicationIcons.Length; index++) applicationIcons[index] = logo;
+            PlayerSettings.SetIcons(target, applicationIcons, IconKind.Application);
+            foreach (PlatformIconKind kind in PlayerSettings.GetSupportedIconKinds(target))
+            {
+                PlatformIcon[] icons = PlayerSettings.GetPlatformIcons(target, kind);
+                foreach (PlatformIcon icon in icons)
+                    for (int layer = 0; layer < icon.maxLayerCount; layer++) icon.SetTexture(logo, layer);
+                PlayerSettings.SetPlatformIcons(target, kind, icons);
+            }
         }
 
         [MenuItem("ReMap/Build Windows app")]
