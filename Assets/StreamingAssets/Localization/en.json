@@ -5147,6 +5147,10 @@
       "text": "Models remaining"
     },
     {
+      "key": "#THUMBNAIL_NEXT_MODELS_ARG0_ARG1",
+      "text": "Models remaining · showing {0} of {1}"
+    },
+    {
       "key": "#THUMBNAIL_STAGE_PREPARING",
       "text": "Preparing the next batch"
     },

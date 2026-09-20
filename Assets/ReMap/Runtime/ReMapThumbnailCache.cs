@@ -40,7 +40,9 @@ namespace ReMap.Standalone
         private ProgressBar thumbnailDashboardProgress;
         private Label thumbnailDashboardState, thumbnailDashboardSource, thumbnailDashboardDetail, thumbnailDashboardCompleted,
             thumbnailDashboardRemaining, thumbnailDashboardFailed, thumbnailDashboardSpeed, thumbnailDashboardEta,
-            thumbnailDashboardActive, thumbnailDashboardQueuedLeft, thumbnailDashboardQueuedRight, thumbnailDashboardPerformance;
+            thumbnailDashboardActive, thumbnailDashboardQueuedTitle, thumbnailDashboardQueuedLeft,
+            thumbnailDashboardQueuedRight, thumbnailDashboardPerformance;
+        private VisualElement thumbnailDashboardQueuedBody;
         private Button thumbnailPauseButton, thumbnailDashboardPauseButton;
         private int thumbnailDone, thumbnailFailed, thumbnailTotal, thumbnailAvailable;
         private bool thumbnailDashboardShownForRun, thumbnailRendering;
@@ -84,7 +86,8 @@ namespace ReMap.Standalone
             metrics.Add(ThumbnailMetric(L.T("#THUMBNAIL_ESTIMATED_TIME"),out thumbnailDashboardEta));
             var queues=new VisualElement();queues.AddToClassList("thumbnail-dashboard-queues");dashboard.Add(queues);
             queues.Add(ThumbnailQueuePanel(L.T("#THUMBNAIL_CURRENT_MODELS"),out thumbnailDashboardActive));
-            queues.Add(ThumbnailQueueColumns(L.T("#THUMBNAIL_NEXT_MODELS"),out thumbnailDashboardQueuedLeft,out thumbnailDashboardQueuedRight));
+            queues.Add(ThumbnailQueueColumns(L.T("#THUMBNAIL_NEXT_MODELS"),out thumbnailDashboardQueuedTitle,
+                out thumbnailDashboardQueuedLeft,out thumbnailDashboardQueuedRight,out thumbnailDashboardQueuedBody));
             thumbnailDashboardPerformance=Label("","thumbnail-dashboard-performance");dashboard.Add(thumbnailDashboardPerformance);
             var actions=new VisualElement();actions.AddToClassList("thumbnail-dashboard-actions");dashboard.Add(actions);
             thumbnailDashboardPauseButton=ImmediateThumbnailPauseButton();thumbnailDashboardPauseButton.AddToClassList("primary");actions.Add(thumbnailDashboardPauseButton);
@@ -99,9 +102,11 @@ namespace ReMap.Standalone
             var panel=new VisualElement();panel.AddToClassList("thumbnail-dashboard-queue");panel.Add(Label(title,"thumbnail-dashboard-queue-title"));
             content=Label("","thumbnail-dashboard-queue-content");panel.Add(content);return panel;
         }
-        private VisualElement ThumbnailQueueColumns(string title,out Label left,out Label right) {
-            var panel=new VisualElement();panel.AddToClassList("thumbnail-dashboard-queue");panel.Add(Label(title,"thumbnail-dashboard-queue-title"));
-            var columns=new VisualElement();columns.AddToClassList("thumbnail-dashboard-queue-columns");panel.Add(columns);
+        private VisualElement ThumbnailQueueColumns(string title,out Label titleLabel,out Label left,out Label right,
+            out VisualElement columns) {
+            var panel=new VisualElement();panel.AddToClassList("thumbnail-dashboard-queue");
+            titleLabel=Label(title,"thumbnail-dashboard-queue-title");panel.Add(titleLabel);
+            columns=new VisualElement();columns.AddToClassList("thumbnail-dashboard-queue-columns");panel.Add(columns);
             left=Label("","thumbnail-dashboard-queue-column");columns.Add(left);
             right=Label("","thumbnail-dashboard-queue-column");right.AddToClassList("thumbnail-dashboard-queue-column-right");columns.Add(right);
             return panel;
@@ -229,9 +234,14 @@ namespace ReMap.Standalone
             var pending=eligible.Where(r=>!readyThumbnails.Contains(r.Id)&&!failedThumbnails.Contains(r.Id)&&!extractingThumbnails.Contains(r.Id)).ToArray();
             int visibleCount=Math.Min(pending.Length,queueRows*2),queueOffset=pending.Length>visibleCount?Mathf.FloorToInt(Time.realtimeSinceStartup)%pending.Length:0;
             var queued=Enumerable.Range(0,visibleCount).Select(i=>pending[(queueOffset+i)%pending.Length]).ToArray();
-            int queuedSplit=Math.Min(queueRows,queued.Length);
+            // Balance a partial page between both columns. Filling the left column up to the
+            // theoretical row limit first left a large visual hole in the right column.
+            int queuedSplit=Mathf.CeilToInt(queued.Length/2f);
+            thumbnailDashboardQueuedTitle.text=L.F("#THUMBNAIL_NEXT_MODELS_ARG0_ARG1",visibleCount,remaining);
             thumbnailDashboardQueuedLeft.text=queued.Length==0?L.T("#THUMBNAIL_QUEUE_EMPTY"):string.Join("\n",queued.Take(queuedSplit).Select(r=>"• "+r.Name));
             thumbnailDashboardQueuedRight.text=queued.Length<=queuedSplit?"":string.Join("\n",queued.Skip(queuedSplit).Select(r=>"• "+r.Name));
+            thumbnailDashboardQueuedLeft.tooltip=string.Join("\n",queued.Take(queuedSplit).Select(r=>r.Name));
+            thumbnailDashboardQueuedRight.tooltip=string.Join("\n",queued.Skip(queuedSplit).Select(r=>r.Name));
             thumbnailDashboardPerformance.text=L.F("#THUMBNAIL_PERFORMANCE_ARG0_ARG1",thumbnailLastExtractionSeconds.ToString("0.0"),thumbnailLastGenerationSeconds.ToString("0.0"));
             UpdateThumbnailPauseButtons();
         }
@@ -241,9 +251,12 @@ namespace ReMap.Standalone
             return minutes>0?minutes+" min "+total%60+" s":total+" s";
         }
         private int ThumbnailQueueRows() {
-            float height=thumbnailDashboardActive==null?0:thumbnailDashboardActive.resolvedStyle.height;
+            // Measure the actual queue body, not the active label whose height depends on how
+            // many names it currently contains. The latter made the capacity fluctuate and
+            // could reduce a large queue to only a handful of visible entries.
+            float height=thumbnailDashboardQueuedBody==null?0:thumbnailDashboardQueuedBody.resolvedStyle.height;
             if(!float.IsFinite(height)||height<32)return 16;
-            return Mathf.Clamp(Mathf.FloorToInt(height/16f),8,24);
+            return Mathf.Clamp(Mathf.FloorToInt(height/16f),8,32);
         }
         [Serializable] private sealed class ThumbnailInfo { public int missingAlbedo; public int rendererVersion; }
         // Version 5 invalidates previews rendered from textures exported by the
