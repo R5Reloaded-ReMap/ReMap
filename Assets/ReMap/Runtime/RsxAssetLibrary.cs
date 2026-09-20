@@ -561,10 +561,26 @@ namespace ReMap.Standalone
                         if (!File.Exists(csv))
                         {
                             string temporary = csv + ".pending";
-                            RunRsx(new[] { "--list", temporary, "--listformat", "csv",
-                                Path.Combine(PakDirectory, source.archive) }, root, cancellation: linked.Token);
-                            if (!File.Exists(temporary) || !GameAssetIndex.IsSupportedCsvHeader(File.ReadLines(temporary).FirstOrDefault())) throw new IOException(L.T("#MISSING_INVALID_RSX_INDEX") + source.archive);
-                            File.Move(temporary, csv);
+                            bool optionalClient = !string.IsNullOrEmpty(source.mapId) &&
+                                (source.archive.EndsWith("_client_perm.rpak", StringComparison.OrdinalIgnoreCase) ||
+                                 source.archive.EndsWith("_client_temp.rpak", StringComparison.OrdinalIgnoreCase));
+                            try
+                            {
+                                if (File.Exists(temporary)) File.Delete(temporary);
+                                RunRsx(new[] { "--list", temporary, "--listformat", "csv",
+                                    Path.Combine(PakDirectory, source.archive) }, root, cancellation: linked.Token);
+                                if (!File.Exists(temporary) || !GameAssetIndex.IsSupportedCsvHeader(File.ReadLines(temporary).FirstOrDefault()))
+                                    throw new IOException(L.T("#MISSING_INVALID_RSX_INDEX") + source.archive);
+                                File.Move(temporary, csv);
+                            }
+                            catch (Exception exception) when (optionalClient &&
+                                (exception is IOException || exception is TimeoutException))
+                            {
+                                if (File.Exists(temporary)) File.Delete(temporary);
+                                UnityEngine.Debug.LogWarning("REMAP_OPTIONAL_MAP_ARCHIVE_SKIPPED: " + source.archive + ": " + exception.Message);
+                                progress?.Report("Skipped incompatible optional archive: " + source.archive);
+                                continue;
+                            }
                         }
                         result.AddRange(GameAssetIndex.ReadCsv(csv, source.mapId, source.archive));
                     }
