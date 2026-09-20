@@ -189,6 +189,14 @@ namespace ReMap.Standalone
             if (catalogMode.choices.Count != 3 || catalogMode.choices.Any(choice => choice.IndexOf("Demo", StringComparison.OrdinalIgnoreCase) >= 0)) throw new Exception("Demo Shapes is still available in the catalog.");
             ShowNewMapDialog(true); await TreeFrames();
             if (!NewMapDialogOpen || newMapName == null || newMapPrimary == null) throw new Exception("New map dialog did not open.");
+            foreach (var column in newMapSources.Query<VisualElement>(className: "map-choice-column").ToList())
+            {
+                var inputs = column.Query<Toggle>().ToList()
+                    .Select(toggle => toggle.Q(className: "unity-toggle__input"))
+                    .Where(input => input != null).ToList();
+                if (inputs.Count > 1 && inputs.Max(input => input.worldBound.xMax) - inputs.Min(input => input.worldBound.xMax) > 1.5f)
+                    throw new Exception("New-project RPAK toggles do not share a common right edge.");
+            }
             CheckVerticalScrollbar(newMapOverlay.Q<ScrollView>(className: "new-map-content"), "New project");
             ShowNewMapDialog(false); ShowAssemblySave(true); await TreeFrames();
             if (!AssemblySaveOpen || assemblyName == null) throw new Exception("Assembly save dialog did not open.");

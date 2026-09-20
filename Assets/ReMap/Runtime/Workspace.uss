@@ -543,8 +543,8 @@ Button.script-property-remove-button:hover { background-color: rgb(91,65,66); }
 .map-choice-column { width: 50%; min-width: 0; padding: 1px 9px 1px 3px; }
 .map-choice-column-right { padding-left: 12px; padding-right: 3px; border-left-width: 1px; border-left-color: rgb(70,74,82); }
 .map-choice-column Toggle { width: 100%; min-width: 0; flex-direction: row; align-items: center; padding: 0; }
-.map-choice-column Toggle > .unity-base-field__label { min-width: 0; flex-grow: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.map-choice-column Toggle > .unity-toggle__input { width: 18px; min-width: 18px; flex-shrink: 0; margin-left: 5px; }
+.map-choice-column Toggle > .unity-base-field__label { width: auto; min-width: 0; flex-grow: 1; flex-shrink: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.map-choice-column Toggle > .unity-toggle__input { width: 18px; min-width: 18px; flex-grow: 0; flex-shrink: 0; margin-left: auto; margin-right: 0; }
 .settings-scroll #editing-map-setting { margin: 6px 0 2px 0; }
 .game-paths-foldout { flex-shrink: 0; margin: 3px 0; padding: 2px 6px 5px 6px; background-color: rgb(38,40,45); border-width: 1px; border-color: rgb(62,65,71); border-radius: 2px; }
 .game-paths-foldout > Toggle { height: 23px; -unity-font-style: bold; color: rgb(214,222,232); }
