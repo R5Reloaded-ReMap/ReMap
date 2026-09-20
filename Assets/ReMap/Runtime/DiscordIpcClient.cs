@@ -63,19 +63,31 @@ namespace ReMap.Standalone
 
         public void Dispose()
         {
+            FileStream connection;
             lock (sync)
             {
                 if (disposed) return;
-                if (ready && stream != null)
-                {
-                    try { WriteFrame(stream, FrameOpcode, ActivityCommand(null)); }
-                    catch { }
-                }
                 disposed = true;
-                CloseLocked();
+                connection = stream;
+                stream = null;
+                ready = false;
+                sentActivity = null;
             }
             reconnect.Set();
-            if (Thread.CurrentThread != worker && worker.Join(500)) reconnect.Dispose();
+            if (connection != null) ThreadPool.QueueUserWorkItem(_ => DisposeConnection(connection));
+        }
+
+        private void DisposeConnection(FileStream connection)
+        {
+            // Named-pipe writes and disposal can block while Discord is unresponsive. Cleanup is
+            // deliberately best-effort on a background thread so application shutdown never waits.
+            try
+            {
+                lock (writeSync) WriteFrame(connection, FrameOpcode, ActivityCommand(null));
+            }
+            catch { }
+            try { connection.Dispose(); }
+            catch { }
         }
 
         private void Run()

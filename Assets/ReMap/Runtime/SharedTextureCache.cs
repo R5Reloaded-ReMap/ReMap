@@ -4,6 +4,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Security.Cryptography;
+using System.Text.RegularExpressions;
 using System.Threading;
 using System.Threading.Tasks;
 using UnityEngine;
@@ -131,12 +132,12 @@ namespace ReMap.Standalone
             {
                 try
                 {
-                    var manifest=JsonUtility.FromJson<Manifest>(File.ReadAllText(path));
                     // Legacy manifests may reference corrupted or oversized PNGs. Do not keep those files
                     // alive: the model cache rejects the manifest and RSX will recreate it on demand.
-                    if(manifest?.entries==null||manifest.maximumSize!=PreviewMaximumSize)continue;
-                    foreach(var entry in manifest.entries)
-                        if(entry!=null&&!string.IsNullOrEmpty(entry.hash)&&entry.hash.Length==64&&entry.hash.All(Uri.IsHexDigit))referenced.Add(entry.hash);
+                    string json=File.ReadAllText(path);
+                    if(!Regex.IsMatch(json,"\\\"maximumSize\\\"\\s*:\\s*"+PreviewMaximumSize+"(?:\\s*[,}])"))continue;
+                    foreach(Match match in Regex.Matches(json,"\\\"hash\\\"\\s*:\\s*\\\"([0-9a-fA-F]{64})\\\""))
+                        referenced.Add(match.Groups[1].Value);
                 }
                 catch(IOException){}
             }

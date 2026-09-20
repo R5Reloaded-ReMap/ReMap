@@ -99,6 +99,7 @@ namespace ReMap.Standalone
 
 
         private long lastSavedRevision = -1;
+        private bool shutdownStarted;
 
         private CatalogEntry placing;
 
@@ -1382,9 +1383,22 @@ namespace ReMap.Standalone
 
         private void OnApplicationPause(bool paused) { if (paused) SaveWorkspaceRecovery(); }
 
-        private void OnApplicationQuit() { SaveWorkspaceRecovery(); }
+        private void BeginShutdown()
+        {
+            if (shutdownStarted) return;
+            shutdownStarted = true;
+            backgroundStopped = true;
+            thumbnailIdleRevision++;
+            try { thumbnailExport?.Cancel(); }
+            catch (ObjectDisposedException) { }
+            mapReferenceCancellation?.Cancel();
+            assetLibrary?.Dispose();
+            DisposeDiscordPresence();
+        }
 
-        private void OnDestroy() { SaveWorkspaceRecovery(); DisposeDiscordPresence(); backgroundStopped = true; mapReferenceCancellation?.Cancel(); assetLibrary?.Dispose(); world?.Dispose(); if (currentThumbnail != null) Destroy(currentThumbnail); foreach (var thumbnail in pageThumbnails) Destroy(thumbnail); }
+        private void OnApplicationQuit() { BeginShutdown(); SaveWorkspaceRecovery(); }
+
+        private void OnDestroy() { BeginShutdown(); SaveWorkspaceRecovery(); world?.Dispose(); if (currentThumbnail != null) Destroy(currentThumbnail); foreach (var thumbnail in pageThumbnails) Destroy(thumbnail); }
 
     }
 
