@@ -115,12 +115,22 @@ namespace ReMap.Standalone
             {
                 if(!process.HasExited)
                 {
-                    try {process.StandardInput.WriteLine("QUIT");process.StandardInput.Flush();process.StandardInput.Close();} catch(IOException){}
-                    if(!process.WaitForExit(2000)){process.Kill();process.WaitForExit(2000);}
+                    if(shutdown.IsCancellationRequested)
+                    {
+                        // Application shutdown runs on Unity's main thread. Waiting several seconds
+                        // for an idle/paused native worker makes Windows mark ReMap as hung.
+                        process.Kill();
+                    }
+                    else
+                    {
+                        try {process.StandardInput.WriteLine("QUIT");process.StandardInput.Flush();process.StandardInput.Close();} catch(IOException){}
+                        if(!process.WaitForExit(2000)){process.Kill();process.WaitForExit(250);}
+                    }
                 }
             }
             catch(InvalidOperationException){}catch(System.ComponentModel.Win32Exception){}
-            process.Dispose();lock(logGate)log.Dispose();
+            try{process.Dispose();}catch(ObjectDisposedException){}
+            lock(logGate)try{log.Dispose();}catch(ObjectDisposedException){}
         }
     }
 }
