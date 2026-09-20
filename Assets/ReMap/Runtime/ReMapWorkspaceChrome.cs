@@ -240,6 +240,8 @@ namespace ReMap.Standalone
             MenuSeparator(menu);
             MenuAction(menu, L.T("#WORKSPACE_GAME"), () => ShowWorkspaceGameDialog(true));
             MenuAction(menu, L.T("#INDEXING_PAGE"), () => ShowIndexing(true), !indexRequested);
+            MenuAction(menu, L.T("#VERIFY_ASSET_CACHE"), () => _ = VerifyAssetCache(),
+                !assetBusy&&!indexRequested&&assetLibrary?.CacheRoot!=null);
         }
 
         private void BuildWorkspaceGameDialog()

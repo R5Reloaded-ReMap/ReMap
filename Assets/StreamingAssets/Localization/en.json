@@ -4371,6 +4371,26 @@
       "text": "Indexing…"
     },
     {
+      "key": "#VERIFY_ASSET_CACHE",
+      "text": "Verify models, textures and thumbnails"
+    },
+    {
+      "key": "#VERIFYING_ASSET_CACHE_ARG0_ARG1",
+      "text": "Verifying asset cache: {0}/{1}"
+    },
+    {
+      "key": "#REPAIRING_ASSET_CACHE_ARG0_ARG1_ARG2",
+      "text": "Repairing asset cache: {0}/{1} · {2}"
+    },
+    {
+      "key": "#ASSET_CACHE_VERIFIED_ARG0_ARG1_ARG2_ARG3",
+      "text": "Cache verification complete: {0} models checked · {1} invalid models · {2} invalid texture sets · {3} invalid thumbnails"
+    },
+    {
+      "key": "#ASSET_CACHE_VERIFICATION_CANCELLED",
+      "text": "Asset cache verification cancelled."
+    },
+    {
       "key": "#INDEXING_PAGE_INTRO",
       "text": "Choose the edited Apex map and every additional RPAK source needed by this project, then rebuild its model catalog."
     },

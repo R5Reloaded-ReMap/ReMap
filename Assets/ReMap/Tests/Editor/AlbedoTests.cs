@@ -3,6 +3,7 @@ using System.Collections;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using System.Security.Cryptography;
 using System.Threading;
 using NUnit.Framework;
 using ReMap.Standalone.Core;
@@ -55,6 +56,36 @@ namespace ReMap.Standalone.Tests
                 Assert.That(File.Exists(Path.Combine(textures,legacy+".png")),Is.False);
             }
             finally{if(Directory.Exists(root))Directory.Delete(root,true);}
+        }
+
+        [Test]
+        public void TextureVerificationRemovesCorruptSharedPng()
+        {
+            string root=Path.Combine(Path.GetTempPath(),"remap-texture-audit-"+Guid.NewGuid().ToString("N"));
+            string model=Path.Combine(root,"AssetCache","Models","test"),textures=Path.Combine(root,"AssetCache","Textures");
+            Directory.CreateDirectory(model);Directory.CreateDirectory(textures);Texture2D texture=null;
+            try
+            {
+                texture=new Texture2D(32,32,TextureFormat.RGBA32,false);
+                texture.SetPixels32(Enumerable.Repeat(new Color32(40,90,160,255),32*32).ToArray());texture.Apply();
+                byte[] png=texture.EncodeToPNG();string hash;
+                using(var sha=SHA256.Create())hash=BitConverter.ToString(sha.ComputeHash(png)).Replace("-","").ToLowerInvariant();
+                string shared=Path.Combine(textures,hash+".png");File.WriteAllBytes(shared,png);
+                File.WriteAllText(Path.Combine(model,"textures.manifest.json"),JsonUtility.ToJson(new SharedTextureCache.Manifest{
+                    maximumSize=SharedTextureCache.PreviewMaximumSize,
+                    entries=new List<SharedTextureCache.Entry>{new SharedTextureCache.Entry{source="color.png",hash=hash}}},true));
+                Assert.That(SharedTextureCache.VerifyManifestTextures(model,SharedTextureCache.PreviewMaximumSize,
+                    new Dictionary<string,bool>(StringComparer.OrdinalIgnoreCase),true),Is.True);
+                File.WriteAllBytes(shared,new byte[]{1,2,3,4});
+                Assert.That(SharedTextureCache.VerifyManifestTextures(model,SharedTextureCache.PreviewMaximumSize,
+                    new Dictionary<string,bool>(StringComparer.OrdinalIgnoreCase),true),Is.False);
+                Assert.That(File.Exists(shared),Is.False);
+            }
+            finally
+            {
+                if(texture!=null)UnityEngine.Object.DestroyImmediate(texture);
+                if(Directory.Exists(root))Directory.Delete(root,true);
+            }
         }
 
         [UnityTest]

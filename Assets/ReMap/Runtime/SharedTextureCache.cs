@@ -64,6 +64,53 @@ namespace ReMap.Standalone
             }
             catch{return false;}
         }
+        public static bool VerifyManifestTextures(string modelRoot,int limit,
+            IDictionary<string,bool> verifiedPaths=null,bool removeCorrupt=false)
+        {
+            try
+            {
+                string manifestPath=Path.Combine(modelRoot,"textures.manifest.json");
+                if(!File.Exists(manifestPath))return false;
+                var manifest=JsonUtility.FromJson<Manifest>(File.ReadAllText(manifestPath));
+                if(manifest==null||manifest.maximumSize!=Mathf.Clamp(limit<=0?PreviewMaximumSize:limit,256,2048))return false;
+                string shared=RootFor(modelRoot);bool valid=true;
+                foreach(var entry in manifest.entries??new List<Entry>())
+                {
+                    if(entry==null||string.IsNullOrEmpty(entry.hash)||entry.hash.Length!=64||entry.hash.Any(c=>!Uri.IsHexDigit(c)))
+                    {valid=false;continue;}
+                    string path=Path.Combine(shared,entry.hash+".png");
+                    if(verifiedPaths!=null&&verifiedPaths.TryGetValue(path,out bool cached))
+                    {if(!cached)valid=false;continue;}
+                    bool current=false;
+                    try
+                    {
+                        if(File.Exists(path))
+                        {
+                            byte[] bytes=File.ReadAllBytes(path);string hash;
+                            using(var sha=SHA256.Create())hash=BitConverter.ToString(sha.ComputeHash(bytes)).Replace("-","").ToLowerInvariant();
+                            Texture2D decoded=null;
+                            try
+                            {
+                                decoded=new Texture2D(2,2,TextureFormat.RGBA32,false);
+                                current=string.Equals(hash,entry.hash,StringComparison.OrdinalIgnoreCase)&&
+                                    ImageConversion.LoadImage(decoded,bytes,false)&&decoded.width>0&&decoded.height>0&&
+                                    !LooksLikeRandomCorruption(path);
+                            }
+                            finally{DestroyTexture(decoded);}
+                        }
+                    }
+                    catch(Exception exception)when(exception is IOException||exception is UnauthorizedAccessException||exception is InvalidDataException)
+                    {current=false;}
+                    if(verifiedPaths!=null)verifiedPaths[path]=current;
+                    if(current)continue;
+                    valid=false;suspiciousPngs.Remove(path);
+                    if(removeCorrupt)try{if(File.Exists(path))File.Delete(path);}catch(IOException){}catch(UnauthorizedAccessException){}
+                }
+                return valid;
+            }
+            catch(Exception exception)when(exception is IOException||exception is UnauthorizedAccessException||exception is ArgumentException)
+            {return false;}
+        }
         private static async Task NormalizeCore(string modelRoot, int limit, CancellationToken cancellation)
         {
             cancellation.ThrowIfCancellationRequested();

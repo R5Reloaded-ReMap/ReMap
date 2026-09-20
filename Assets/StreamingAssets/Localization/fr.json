@@ -4371,6 +4371,26 @@
       "text": "Indexation…"
     },
     {
+      "key": "#VERIFY_ASSET_CACHE",
+      "text": "Vérifier les modèles, textures et miniatures"
+    },
+    {
+      "key": "#VERIFYING_ASSET_CACHE_ARG0_ARG1",
+      "text": "Vérification du cache : {0}/{1}"
+    },
+    {
+      "key": "#REPAIRING_ASSET_CACHE_ARG0_ARG1_ARG2",
+      "text": "Réparation du cache : {0}/{1} · {2}"
+    },
+    {
+      "key": "#ASSET_CACHE_VERIFIED_ARG0_ARG1_ARG2_ARG3",
+      "text": "Vérification terminée : {0} modèles contrôlés · {1} modèles invalides · {2} ensembles de textures invalides · {3} miniatures invalides"
+    },
+    {
+      "key": "#ASSET_CACHE_VERIFICATION_CANCELLED",
+      "text": "Vérification du cache annulée."
+    },
+    {
       "key": "#INDEXING_PAGE_INTRO",
       "text": "Choisissez la carte Apex modifiée et toutes les sources RPAK supplémentaires nécessaires à ce projet, puis reconstruisez son catalogue de modèles."
     },
