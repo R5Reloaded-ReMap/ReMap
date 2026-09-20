@@ -48,6 +48,8 @@ Distribute the complete `Builds/Windows` directory, including `ReMap_Data`, `ReM
 4. Restart or live-rebuild the active map from ReMap.
 5. Use **Reset installed game script** to clear ReMap scripts and restore or remove its loose `.ent` overrides.
 
+The Asset Cache location is configurable in **Settings**. The cache can grow to approximately **10 GB**, so choose a folder on a drive with enough free space.
+
 Saved projects are stored under `%USERPROFILE%\AppData\LocalLow\ReMap\ReMap\Maps`. Portable projects use `.remap-project.json`.
 
 ## Documentation
