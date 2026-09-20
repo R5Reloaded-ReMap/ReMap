@@ -431,6 +431,7 @@ Button.thumbnail-dashboard-minimize { flex-shrink: 0; height: 29px; margin-left:
 .thumbnail-dashboard-queue { min-width: 220px; flex-grow: 1; flex-basis: 0; margin: 0 5px; padding: 12px 14px; background-color: rgb(31,33,37); border-width: 1px; border-color: rgb(57,61,68); border-radius: 3px; overflow: hidden; }
 .thumbnail-dashboard-queue-title { height: 22px; flex-shrink: 0; color: rgb(174,195,218); -unity-font-style: bold; font-size: 11px; }
 .thumbnail-dashboard-queue-content { flex-grow: 1; color: rgb(194,202,213); font-size: 11px; line-height: 16px; white-space: normal; overflow: hidden; }
+.thumbnail-dashboard-queue-list { min-height: 0; flex-grow: 1; overflow: hidden; }
 .thumbnail-dashboard-queue-columns { min-height: 0; flex-grow: 1; flex-direction: row; overflow: hidden; }
 .thumbnail-dashboard-queue-column { min-width: 0; flex-grow: 1; flex-basis: 0; overflow: hidden; }
 .thumbnail-dashboard-queue-column-right { margin-left: 12px; }

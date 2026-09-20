@@ -5191,6 +5191,30 @@
       "text": "Terminées"
     },
     {
+      "key": "#THUMBNAIL_APEX_EXTRACTION",
+      "text": "Extraction Apex officielle"
+    },
+    {
+      "key": "#THUMBNAIL_TARGET_EXTRACTION",
+      "text": "Extraction R5R / R5F"
+    },
+    {
+      "key": "#THUMBNAIL_GENERATION_COUNTER",
+      "text": "Miniatures générées"
+    },
+    {
+      "key": "#THUMBNAIL_TEXTURE_REPAIR_COUNTER",
+      "text": "Réparations des textures"
+    },
+    {
+      "key": "#THUMBNAIL_PHASE_COUNTER_ACTIVE_ARG0_ARG1",
+      "text": "{0} (+{1} en cours)"
+    },
+    {
+      "key": "#THUMBNAIL_ACTIVE_SUFFIX_ARG0",
+      "text": " (+{0} en cours)"
+    },
+    {
       "key": "#THUMBNAIL_REMAINING",
       "text": "Restantes"
     },

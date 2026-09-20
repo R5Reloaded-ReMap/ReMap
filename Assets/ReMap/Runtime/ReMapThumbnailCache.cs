@@ -53,10 +53,11 @@ namespace ReMap.Standalone
         private Action loadingCancelAction;
         private VisualElement thumbnailStatusRow, thumbnailDashboard;
         private ProgressBar thumbnailDashboardProgress;
-        private Label thumbnailDashboardState, thumbnailDashboardSource, thumbnailDashboardDetail, thumbnailDashboardCompleted,
-            thumbnailDashboardRemaining, thumbnailDashboardFailed, thumbnailDashboardSpeed, thumbnailDashboardEta,
-            thumbnailDashboardActive, thumbnailDashboardQueuedTitle, thumbnailDashboardPerformance;
-        private VisualElement thumbnailDashboardQueuedBody, thumbnailDashboardQueuedLeft,
+        private Label thumbnailDashboardState, thumbnailDashboardSource, thumbnailDashboardDetail,
+            thumbnailDashboardOfficialExtraction, thumbnailDashboardTargetExtraction, thumbnailDashboardGenerated,
+            thumbnailDashboardRepairs, thumbnailDashboardFailed, thumbnailDashboardEta,
+            thumbnailDashboardQueuedTitle, thumbnailDashboardPerformance;
+        private VisualElement thumbnailDashboardActive, thumbnailDashboardQueuedBody, thumbnailDashboardQueuedLeft,
             thumbnailDashboardQueuedRight;
         private Foldout thumbnailDashboardCategoryFilter;
         private VisualElement thumbnailDashboardCategoryChoices;
@@ -67,6 +68,12 @@ namespace ReMap.Standalone
             thumbnailLastGenerationSeconds;
         private int thumbnailRunStartDone;
         private const int ThumbnailRenderBatchSize=8;
+        private readonly HashSet<string> thumbnailOfficialAttempts=new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+        private readonly HashSet<string> thumbnailTargetAttempts=new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+        private readonly HashSet<string> thumbnailRepairCandidates=new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+        private readonly HashSet<string> thumbnailRepairsCompleted=new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+        private ThumbnailExtraction activeThumbnailExtraction;
+        private int activeThumbnailRepairs;
         private void BuildLoadingUI()
         {
             loadingOverlay = new VisualElement(); loadingOverlay.AddToClassList("loading-overlay"); root.Add(loadingOverlay);
@@ -96,11 +103,11 @@ namespace ReMap.Standalone
             thumbnailDashboardDetail=Label("","thumbnail-dashboard-detail");dashboard.Add(thumbnailDashboardDetail);
             thumbnailDashboardProgress=new ProgressBar{lowValue=0,highValue=1,value=0};thumbnailDashboardProgress.AddToClassList("thumbnail-dashboard-progress");dashboard.Add(thumbnailDashboardProgress);
             var metrics=new VisualElement();metrics.AddToClassList("thumbnail-dashboard-metrics");dashboard.Add(metrics);
-            metrics.Add(ThumbnailMetric(L.T("#THUMBNAIL_COMPLETED"),out thumbnailDashboardCompleted));
-            metrics.Add(ThumbnailMetric(L.T("#THUMBNAIL_REMAINING"),out thumbnailDashboardRemaining));
+            metrics.Add(ThumbnailMetric(L.T("#THUMBNAIL_APEX_EXTRACTION"),out thumbnailDashboardOfficialExtraction));
+            metrics.Add(ThumbnailMetric(L.T("#THUMBNAIL_TARGET_EXTRACTION"),out thumbnailDashboardTargetExtraction));
+            metrics.Add(ThumbnailMetric(L.T("#THUMBNAIL_GENERATION_COUNTER"),out thumbnailDashboardGenerated));
+            metrics.Add(ThumbnailMetric(L.T("#THUMBNAIL_TEXTURE_REPAIR_COUNTER"),out thumbnailDashboardRepairs));
             metrics.Add(ThumbnailMetric(L.T("#THUMBNAIL_FAILED"),out thumbnailDashboardFailed));
-            metrics.Add(ThumbnailMetric(L.T("#THUMBNAIL_SPEED"),out thumbnailDashboardSpeed));
-            thumbnailDashboardSpeed.AddToClassList("thumbnail-dashboard-speed-value");
             metrics.Add(ThumbnailMetric(L.T("#THUMBNAIL_ESTIMATED_TIME"),out thumbnailDashboardEta));
             thumbnailDashboardCategoryFilter=new Foldout{value=false};
             thumbnailDashboardCategoryFilter.AddToClassList("thumbnail-dashboard-category-filter");dashboard.Add(thumbnailDashboardCategoryFilter);
@@ -129,9 +136,9 @@ namespace ReMap.Standalone
             var metric=new VisualElement();metric.AddToClassList("thumbnail-dashboard-metric");
             metric.Add(Label(title,"thumbnail-dashboard-metric-title"));value=Label("—","thumbnail-dashboard-metric-value");metric.Add(value);return metric;
         }
-        private VisualElement ThumbnailQueuePanel(string title,out Label content) {
+        private VisualElement ThumbnailQueuePanel(string title,out VisualElement content) {
             var panel=new VisualElement();panel.AddToClassList("thumbnail-dashboard-queue");panel.Add(Label(title,"thumbnail-dashboard-queue-title"));
-            content=Label("","thumbnail-dashboard-queue-content");panel.Add(content);return panel;
+            content=new VisualElement();content.AddToClassList("thumbnail-dashboard-queue-list");panel.Add(content);return panel;
         }
         private VisualElement ThumbnailQueueColumns(string title,out Label titleLabel,out VisualElement left,out VisualElement right,
             out VisualElement columns) {
@@ -202,6 +209,8 @@ namespace ReMap.Standalone
             thumbnailActiveSeconds=0;thumbnailLastExtractionSeconds=0;thumbnailLastGenerationSeconds=0;thumbnailRunStartDone=0;
             if(thumbnailDashboard!=null){thumbnailDashboard.style.display=DisplayStyle.None;if(world?.Camera!=null)world.Camera.enabled=true;}
             thumbnailStateRoot=assetLibrary.CacheRoot;thumbnailStateCount=assetLibrary.Records.Count;readyThumbnails.Clear();availableThumbnails.Clear();failedThumbnails.Clear();stagedThumbnails.Clear();thumbnailAlbedo.Clear();
+            thumbnailOfficialAttempts.Clear();thumbnailTargetAttempts.Clear();thumbnailRepairCandidates.Clear();thumbnailRepairsCompleted.Clear();
+            activeThumbnailExtraction=null;activeThumbnailRepairs=0;
             if(thumbnailStateRoot==null)return;
             foreach(var record in assetLibrary.Records) {
                 string thumbnail=Path.Combine(assetLibrary.ModelDirectory(record),"thumbnail.png");
@@ -264,14 +273,21 @@ namespace ReMap.Standalone
             thumbnailDashboardDetail.text=string.IsNullOrWhiteSpace(detail)?L.T("#THUMBNAIL_WORKING_IN_BACKGROUND"):detail.Trim().TrimStart('·').Trim();
             thumbnailDashboardProgress.value=thumbnailTotal<=0?0:(float)(thumbnailDone+thumbnailFailed)/thumbnailTotal;
             thumbnailDashboardProgress.title=thumbnailTotal<=0?"0 %":Mathf.RoundToInt(100f*(thumbnailDone+thumbnailFailed)/thumbnailTotal)+" %";
-            thumbnailDashboardCompleted.text=thumbnailDone+" / "+thumbnailTotal;
-            thumbnailDashboardRemaining.text=remaining.ToString();
+            bool exportInFlight=activeThumbnailExtraction!=null&&!activeThumbnailExtraction.work.IsCompleted;
+            int activeOfficial=exportInFlight&&activity.Source==AssetExtractionSource.OfficialApex?
+                activeThumbnailExtraction.batch.Length:0;
+            int activeTarget=exportInFlight&&activity.Source==AssetExtractionSource.TargetGame?
+                activeThumbnailExtraction.batch.Length:0;
+            thumbnailDashboardOfficialExtraction.text=PhaseCounter(thumbnailOfficialAttempts.Count,activeOfficial);
+            thumbnailDashboardTargetExtraction.text=PhaseCounter(thumbnailTargetAttempts.Count,activeTarget);
+            thumbnailDashboardGenerated.text=thumbnailDone+" / "+thumbnailTotal;
+            thumbnailDashboardRepairs.text=thumbnailRepairsCompleted.Count+" / "+thumbnailRepairCandidates.Count+
+                (activeThumbnailRepairs>0?L.F("#THUMBNAIL_ACTIVE_SUFFIX_ARG0",activeThumbnailRepairs):"");
             thumbnailDashboardFailed.text=thumbnailFailed.ToString();
-            thumbnailDashboardSpeed.text=perMinute>0?L.F("#THUMBNAIL_MODELS_PER_MINUTE_ARG0",perMinute.ToString("0.0")):"—";
             thumbnailDashboardEta.text=remaining==0?"0 s":perMinute>0?FormatThumbnailDuration(remaining/perMinute*60f):L.T("#THUMBNAIL_ETA_UNKNOWN");
             int queueRows=ThumbnailQueueRows();
             var active=eligible.Where(r=>extractingThumbnails.Contains(r.Id)).Take(queueRows).ToArray();
-            thumbnailDashboardActive.text=active.Length==0?L.T("#THUMBNAIL_NO_ACTIVE_MODEL"):string.Join("\n",active.Select(r=>"• "+r.Name));
+            PopulateThumbnailQueueColumn(thumbnailDashboardActive,active,active.Length==0,L.T("#THUMBNAIL_NO_ACTIVE_MODEL"));
             var pending=eligible.Where(r=>!readyThumbnails.Contains(r.Id)&&!failedThumbnails.Contains(r.Id)&&!extractingThumbnails.Contains(r.Id)).ToArray();
             int visibleCount=Math.Min(pending.Length,queueRows*2),queueOffset=pending.Length>visibleCount?Mathf.FloorToInt(Time.realtimeSinceStartup)%pending.Length:0;
             var queued=Enumerable.Range(0,visibleCount).Select(i=>pending[(queueOffset+i)%pending.Length]).ToArray();
@@ -284,11 +300,13 @@ namespace ReMap.Standalone
             thumbnailDashboardPerformance.text=L.F("#THUMBNAIL_PERFORMANCE_ARG0_ARG1",thumbnailLastExtractionSeconds.ToString("0.0"),thumbnailLastGenerationSeconds.ToString("0.0"));
             UpdateThumbnailPauseButtons();
         }
-        private void PopulateThumbnailQueueColumn(VisualElement column,IEnumerable<GameAssetRecord> records,bool empty) {
+        private string PhaseCounter(int completed,int active) => active>0?
+            L.F("#THUMBNAIL_PHASE_COUNTER_ACTIVE_ARG0_ARG1",completed,active):completed.ToString();
+        private void PopulateThumbnailQueueColumn(VisualElement column,IEnumerable<GameAssetRecord> records,bool empty,string emptyText=null) {
             if(column==null)return;
             column.Clear();
             if(empty) {
-                var placeholder=Label(L.T("#THUMBNAIL_QUEUE_EMPTY"),"thumbnail-dashboard-queue-row");
+                var placeholder=Label(string.IsNullOrEmpty(emptyText)?L.T("#THUMBNAIL_QUEUE_EMPTY"):emptyText,"thumbnail-dashboard-queue-row");
                 column.Add(placeholder);return;
             }
             foreach(var record in records) {
@@ -408,6 +426,7 @@ namespace ReMap.Standalone
             UpdateThumbnailProgress(eligible,multiple?L.F("#EXTRACTING_ARG0_MODELS",batch.Length):L.F("#PREPARING_ARG0",batch[0].Name));
             thumbnailExport=extraction.cancellation;
             extraction.work=assetLibrary.ExtractBatchAsync(batch,targets,extraction.cancellation.Token);
+            activeThumbnailExtraction=extraction;
             extraction.progress=thumbnailProgress.schedule.Execute(()=> {
                 if(extraction.work.IsCompleted)return;
                 UpdateThumbnailProgress(eligible,multiple?L.F("#ARG0_S_READING_ARG1_MODELS",(int)(Time.realtimeSinceStartup-started),batch.Length):L.F("#ARG0_S_ARG1",(int)(Time.realtimeSinceStartup-started),batch[0].Name));
@@ -420,6 +439,7 @@ namespace ReMap.Standalone
                 thumbnailLastExtractionSeconds=Mathf.Max(0,Time.realtimeSinceStartup-extraction.started);
                 extraction.progress.Pause();
                 if(ReferenceEquals(thumbnailExport,extraction.cancellation))thumbnailExport=null;
+                if(ReferenceEquals(activeThumbnailExtraction,extraction))activeThumbnailExtraction=null;
                 extraction.cancellation.Dispose();
             }
         }
@@ -481,7 +501,10 @@ namespace ReMap.Standalone
                 int checkedTextures=0;
                 foreach(var work in stagedThumbnails.Values.Where(work=>work.inspection==null).ToArray()) {
                     if(this==null||backgroundStopped||generation!=assetLibrary.CacheRoot||ThumbnailExternalWorkBlocked())return;
-                    try {work.inspection=SharedTextureCache.InspectAlbedos(work.cast);}
+                    try {
+                        work.inspection=SharedTextureCache.InspectAlbedos(work.cast);
+                        if(work.inspection.NeedsFallback)thumbnailRepairCandidates.Add(work.record.Id);
+                    }
                     catch(Exception ex){ThumbnailFailure(work.record,ex);stagedThumbnails.Remove(work.record.Id);}
                     checkedTextures++;
                     if(checkedTextures%8==0)UpdateThumbnailDashboard(eligible);
@@ -493,6 +516,7 @@ namespace ReMap.Standalone
                 foreach(var batch in StagedRepairBatches(stagedThumbnails.Values,targets)) {
                     if(this==null||backgroundStopped||generation!=assetLibrary.CacheRoot||ThumbnailExternalWorkBlocked())return;
                     foreach(var work in batch)extractingThumbnails.Add(work.record.Id);
+                    activeThumbnailRepairs=batch.Length;
                     UpdateThumbnailProgress(eligible,L.F("#EXTRACTING_ARG0_MODELS",batch.Length));
                     float repairStarted=Time.realtimeSinceStartup;
                     var repairTask=assetLibrary.TryRepairOfficialTexturesBatchAsync(batch.Select(work=>
@@ -509,7 +533,8 @@ namespace ReMap.Standalone
                     }
                     finally {
                         repairProgress.Pause();
-                        foreach(var work in batch) {work.repairAttempted=true;extractingThumbnails.Remove(work.record.Id);}
+                        foreach(var work in batch) {work.repairAttempted=true;thumbnailRepairsCompleted.Add(work.record.Id);extractingThumbnails.Remove(work.record.Id);}
+                        activeThumbnailRepairs=0;
                         if(this!=null&&!backgroundStopped)UpdateThumbnailProgress(eligible);
                     }
                 }
@@ -537,7 +562,7 @@ namespace ReMap.Standalone
                 if(reloadScene.Count>0){foreach(string id in reloadScene)world.Reload(id);Refresh();}
             }
             finally {
-                thumbnailCheckingTextures=false;thumbnailRendering=false;SetAssetBusy(false);RefreshCatalog();UpdateThumbnailDashboard(eligible);
+                thumbnailCheckingTextures=false;thumbnailRendering=false;activeThumbnailRepairs=0;SetAssetBusy(false);RefreshCatalog();UpdateThumbnailDashboard(eligible);
             }
         }
         private async Task PrepareThumbnails()
@@ -586,6 +611,9 @@ namespace ReMap.Standalone
                     try {
                         AssetBatchResult result=await FinishThumbnailExtraction(current);
                         if(this==null||backgroundStopped||generation!=assetLibrary.CacheRoot)return;
+                        thumbnailOfficialAttempts.UnionWith(result.OfficialAttempts);
+                        thumbnailTargetAttempts.UnionWith(result.TargetAttempts);
+                        UpdateThumbnailDashboard(eligible);
                         // Keep RSX busy with one bounded look-ahead batch while this batch is
                         // normalized. Texture inspection deliberately waits until every model has
                         // been exported, avoiding any target-game/Apex session switching here.

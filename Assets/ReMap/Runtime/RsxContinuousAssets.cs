@@ -74,6 +74,7 @@ namespace ReMap.Standalone
             bool officialAttempted=TryExtractOfficialPreviews(entries,targets,result);
             entries=entries.Where(entry=>!result.Paths.ContainsKey(entry.Id)).ToArray();
             if(entries.Length==0||officialAttempted)return result;
+            result.TargetAttempts.UnionWith(entries.Select(entry=>entry.Id));
             string archive=OriginArchive(entries[0],targets);
             string[] archives=PreviewArchivePlan(targets,archive);
             try

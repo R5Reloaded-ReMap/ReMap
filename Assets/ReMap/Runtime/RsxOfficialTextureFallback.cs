@@ -313,6 +313,8 @@ namespace ReMap.Standalone
                 return false;
             }
 
+            result.OfficialAttempts.UnionWith(entries.Select(entry => entry.Id));
+
             try
             {
                 // Reuse the same embedded process. LOAD can switch between official and legacy

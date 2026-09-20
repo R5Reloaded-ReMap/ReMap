@@ -5191,6 +5191,30 @@
       "text": "Completed"
     },
     {
+      "key": "#THUMBNAIL_APEX_EXTRACTION",
+      "text": "Apex official extraction"
+    },
+    {
+      "key": "#THUMBNAIL_TARGET_EXTRACTION",
+      "text": "R5R / R5F extraction"
+    },
+    {
+      "key": "#THUMBNAIL_GENERATION_COUNTER",
+      "text": "Thumbnails generated"
+    },
+    {
+      "key": "#THUMBNAIL_TEXTURE_REPAIR_COUNTER",
+      "text": "Texture repairs"
+    },
+    {
+      "key": "#THUMBNAIL_PHASE_COUNTER_ACTIVE_ARG0_ARG1",
+      "text": "{0} (+{1} active)"
+    },
+    {
+      "key": "#THUMBNAIL_ACTIVE_SUFFIX_ARG0",
+      "text": " (+{0} active)"
+    },
+    {
       "key": "#THUMBNAIL_REMAINING",
       "text": "Remaining"
     },

@@ -10,6 +10,8 @@ namespace ReMap.Standalone
     public sealed class AssetBatchResult {
         public readonly Dictionary<string,string> Paths=new Dictionary<string,string>();
         public readonly Dictionary<string,string> Errors=new Dictionary<string,string>();
+        public readonly HashSet<string> OfficialAttempts=new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+        public readonly HashSet<string> TargetAttempts=new HashSet<string>(StringComparer.OrdinalIgnoreCase);
         // Deferred means the official phase tested this GUID but did not contain it. The thumbnail
         // queue will revisit it in the later legacy phase without displaying a false failure.
         public readonly HashSet<string> Deferred=new HashSet<string>(StringComparer.OrdinalIgnoreCase);
@@ -23,7 +25,11 @@ namespace ReMap.Standalone
             if(CacheRoot==null||entries.Any(e=>!e.Supports(targets)))throw new InvalidOperationException(L.T("#INDEX_COMPATIBLE_MAPS_EXTRACTION"));
             var result=new AssetBatchResult();
             if(!ContinuousPreviewsSupported&&!UsesForkFeatures) {
-                foreach(var entry in entries)try {result.Paths[entry.Id]=await ExtractAsync(entry,targets,cancellation);}catch(Exception ex)when(!(ex is OperationCanceledException)){result.Errors[entry.Id]=ex.Message;}
+                foreach(var entry in entries)try {
+                    bool cached=CachedModel(entry)!=null;
+                    result.Paths[entry.Id]=await ExtractAsync(entry,targets,cancellation);
+                    if(!cached)result.TargetAttempts.Add(entry.Id);
+                }catch(Exception ex)when(!(ex is OperationCanceledException)){result.TargetAttempts.Add(entry.Id);result.Errors[entry.Id]=ex.Message;}
                 return result;
             }
             using var linked=CancellationTokenSource.CreateLinkedTokenSource(shutdown.Token,cancellation);
@@ -40,6 +46,7 @@ namespace ReMap.Standalone
                 }
                 string archive=OriginArchive(pending[0],targets);
                 if(pending.Any(e=>OriginArchive(e,targets)!=archive)||pending.Select(e=>e.Name).Distinct(StringComparer.OrdinalIgnoreCase).Count()!=pending.Length)throw new ArgumentException(L.T("#BATCH_SHARE_ARCHIVE_HAVE_DISTINCT"));
+                result.TargetAttempts.UnionWith(pending.Select(entry=>entry.Id));
                 return await Task.Run(()=> {
                     string batch=Path.Combine(CacheDirectory,"Worker","b"+Guid.NewGuid().ToString("N").Substring(0,12));Directory.CreateDirectory(batch);
                     void Export(GameAssetRecord[] models,bool geometry) {
