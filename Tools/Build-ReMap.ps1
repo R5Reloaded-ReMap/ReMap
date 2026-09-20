@@ -163,7 +163,8 @@ if ($interactiveMode) {
     if (Test-Path -LiteralPath $publisher -PathType Leaf) {
         Write-Host "  4. Package a personal/test build"
         Write-Host "  5. Package a public release"
-        Write-Host "  6. Package a Unity development/RC build"
+        Write-Host "  6. Package an optimized beta build"
+        Write-Host "  7. Package an optimized release candidate"
     }
     Write-Host "  Q. Cancel"
     Write-Host ""
@@ -191,7 +192,14 @@ if ($interactiveMode) {
             if (-not (Test-Path -LiteralPath $publisher -PathType Leaf)) {
                 throw "The personal release packager is not installed at $publisher."
             }
-            & $publisher -Mode Development
+            & $publisher -Mode Beta
+            exit 0
+        }
+        "7" {
+            if (-not (Test-Path -LiteralPath $publisher -PathType Leaf)) {
+                throw "The personal release packager is not installed at $publisher."
+            }
+            & $publisher -Mode ReleaseCandidate
             exit 0
         }
         "Q" { exit 0 }
