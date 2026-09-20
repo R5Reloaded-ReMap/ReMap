@@ -847,7 +847,8 @@ namespace ReMap.Standalone
             }
             return Directory.EnumerateFiles(folder, "*_LOD0.cast", SearchOption.AllDirectories).SingleOrDefault();
         }
-        public async Task<string> ExtractAsync(GameAssetRecord entry, string[] targets, CancellationToken cancellation = default)
+        public async Task<string> ExtractAsync(GameAssetRecord entry, string[] targets,
+            CancellationToken cancellation = default, bool forceRefresh = false)
         {
             if (!entry.Supports(targets)) throw new InvalidOperationException(L.T("#MODEL_SELECTED_ARCHIVES"));
             if (CacheRoot == null) throw new InvalidOperationException(L.T("#INDEX_ARCHIVES_EXTRACTION"));
@@ -855,7 +856,7 @@ namespace ReMap.Standalone
             await worker.WaitAsync(linked.Token);
             try
             {
-                var cached = CachedModel(entry); if (cached != null) return cached;
+                if (!forceRefresh) { var cached = CachedModel(entry); if (cached != null) return cached; }
                 if(ContinuousPreviewsSupported)return await Task.Run(()=>ExtractContinuous(entry,targets),shutdown.Token);
                 var origin = entry.origins.First(o => o.mapId == "" || targets.Contains(o.mapId));
                 string folder = ModelDirectory(entry);

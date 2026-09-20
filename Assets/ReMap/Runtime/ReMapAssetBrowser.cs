@@ -59,7 +59,7 @@ namespace ReMap.Standalone
             var actions = new VisualElement(); actions.style.flexDirection = FlexDirection.Row; preview.Add(actions);
             placeAssetButton = Button(L.T("#PLACE"), () => { if (CanPlace(previewEntry)) BeginPlacement(previewEntry); }, "primary");
             placeAssetButton.SetEnabled(false); actions.Add(placeAssetButton);
-            retryPreviewButton = Button(L.T("#RETRY"), () => { if (lastPreviewRequest != null) _ = PreviewGameAsset(lastPreviewRequest); }); retryPreviewButton.SetEnabled(false); actions.Add(retryPreviewButton);
+            retryPreviewButton = Button(L.T("#RETRY"), () => { if (lastPreviewRequest != null) _ = PreviewGameAsset(lastPreviewRequest, true); }); retryPreviewButton.SetEnabled(false); actions.Add(retryPreviewButton);
             pageState = Label("", "library-count");
             libraryFooter=new VisualElement();libraryFooter.AddToClassList("library-footer");libraryFooter.style.display=DisplayStyle.None;library.Add(libraryFooter);
         }
@@ -204,7 +204,10 @@ namespace ReMap.Standalone
                 if (assetLibrary.CacheRoot != null)
                 {
                     string thumbnailPath = Path.Combine(assetLibrary.ModelDirectory(record), "thumbnail.png");
-                    if (File.Exists(thumbnailPath) && !NeedsThumbnailRefresh(record))
+                    // Keep an existing preview visible even when it is due for regeneration.
+                    // Category exclusions stop automatic work; they must not turn a previously
+                    // usable library card blank while the user decides whether to retry it.
+                    if (File.Exists(thumbnailPath))
                     {
                         var texture = new Texture2D(2, 2); pageThumbnails.Add(texture);
                         try { if (ImageConversion.LoadImage(texture, File.ReadAllBytes(thumbnailPath), true)) { image.image = texture; hasImage = true; } }
@@ -251,7 +254,7 @@ namespace ReMap.Standalone
             if (missingAlbedo > 0) details += "\n\n" + L.F("#ARG0_MATERIAL_S_UNRESOLVED_ALBEDO", missingAlbedo);
             return details;
         }
-        private async Task PreviewGameAsset(GameAssetRecord record)
+        private async Task PreviewGameAsset(GameAssetRecord record,bool forceRefresh=false)
         {
             if (assetBusy||indexRequested) { queuedPreview = record; InterruptBackgroundFor(record); previewText.text=L.T("#PRIORITY_LOADING")+record.Name; return; }
             lastPreviewRequest = record; string previewGeneration=assetLibrary.CacheRoot;
@@ -261,11 +264,15 @@ namespace ReMap.Standalone
             GameObject model = null;
             try
             {
-                string path = await assetLibrary.ExtractAsync(record, Targets);
+                string path = await assetLibrary.ExtractAsync(record, Targets, forceRefresh: forceRefresh);
                 if (this == null || previewGeneration!=assetLibrary.CacheRoot) return;
                 if (!record.Supports(Targets)) throw new InvalidOperationException(L.T("#SELECTED_ARCHIVES_CHANGED_DURING_EXTRACTION"));
                 previewText.text=L.T("#PREPARING_TEXTURES")+record.Name;
                 await SharedTextureCache.Normalize(assetLibrary.ModelDirectory(record), SharedTextureCache.PreviewMaximumSize);
+                if (this == null || previewGeneration!=assetLibrary.CacheRoot) return;
+                var albedos=SharedTextureCache.InspectAlbedos(path);
+                if(albedos.NeedsFallback)
+                    await assetLibrary.TryRepairOfficialTexturesAsync(record,path,albedos,Targets,forceRefresh:forceRefresh);
                 if (this == null || previewGeneration!=assetLibrary.CacheRoot) return;
                 world.models.Prepare(record.Id, path); model = world.models.Create(record.Id, false);
                 var bounds = model.GetComponent<MeshFilter>().sharedMesh.bounds;

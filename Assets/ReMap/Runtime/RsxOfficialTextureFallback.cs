@@ -391,7 +391,8 @@ namespace ReMap.Standalone
         }
 
         public async Task<bool> TryRepairOfficialTexturesAsync(GameAssetRecord entry, string legacyCast,
-            SharedTextureCache.AlbedoInspection inspection, string[] targets, CancellationToken cancellation = default)
+            SharedTextureCache.AlbedoInspection inspection, string[] targets, CancellationToken cancellation = default,
+            bool forceRefresh = false)
         {
             if (entry == null || inspection == null || !inspection.NeedsFallback ||
                 !OfficialTextureFallbackAvailable || SessionExecutable == null ||
@@ -408,7 +409,7 @@ namespace ReMap.Standalone
             string fingerprint = OfficialTextureFingerprint(plan.archives, inspection.materialHashes);
             try
             {
-                if (File.Exists(marker))
+                if (!forceRefresh && File.Exists(marker))
                 {
                     var previous = JsonUtility.FromJson<OfficialTextureAttempt>(File.ReadAllText(marker));
                     if (previous != null && previous.fingerprint == fingerprint) return previous.replaced > 0;

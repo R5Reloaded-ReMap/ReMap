@@ -56,7 +56,11 @@ namespace ReMap.Standalone
                 string path=Path.Combine(modelRoot,"textures.manifest.json");
                 if(!File.Exists(path))return false;
                 var manifest=JsonUtility.FromJson<Manifest>(File.ReadAllText(path));
-                return manifest!=null&&manifest.maximumSize==Mathf.Clamp(limit<=0?PreviewMaximumSize:limit,256,2048);
+                if(manifest==null||manifest.maximumSize!=Mathf.Clamp(limit<=0?PreviewMaximumSize:limit,256,2048))return false;
+                string shared=RootFor(modelRoot);
+                return (manifest.entries??new List<Entry>()).All(entry=>entry!=null&&
+                    !string.IsNullOrEmpty(entry.hash)&&entry.hash.Length==64&&entry.hash.All(Uri.IsHexDigit)&&
+                    File.Exists(Path.Combine(shared,entry.hash+".png")));
             }
             catch{return false;}
         }

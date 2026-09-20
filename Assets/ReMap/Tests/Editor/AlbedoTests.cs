@@ -44,6 +44,10 @@ namespace ReMap.Standalone.Tests
                 File.WriteAllText(Path.Combine(legacyModel,"textures.manifest.json"),JsonUtility.ToJson(new SharedTextureCache.Manifest{
                     entries=new List<SharedTextureCache.Entry>{new SharedTextureCache.Entry{source="old.png",hash=legacy}}},true));
                 Assert.That(SharedTextureCache.ManifestMatchesMaximum(model,SharedTextureCache.PreviewMaximumSize),Is.True);
+                File.Delete(Path.Combine(textures,kept+".png"));
+                Assert.That(SharedTextureCache.ManifestMatchesMaximum(model,SharedTextureCache.PreviewMaximumSize),Is.False,
+                    "A manifest must not keep a model cached when its shared texture was removed.");
+                File.WriteAllBytes(Path.Combine(textures,kept+".png"),new byte[]{1});
                 Assert.That(SharedTextureCache.ManifestMatchesMaximum(legacyModel,SharedTextureCache.PreviewMaximumSize),Is.False);
                 Assert.That(SharedTextureCache.CollectGarbage(cache),Is.EqualTo(2));
                 Assert.That(File.Exists(Path.Combine(textures,kept+".png")),Is.True);
