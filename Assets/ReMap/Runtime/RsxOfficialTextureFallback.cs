@@ -164,7 +164,8 @@ namespace ReMap.Standalone
                 if (!string.IsNullOrWhiteSpace(workingDirectory)) AddOfficialCandidates(candidates, workingDirectory);
             }
             catch (Exception exception) when (exception is COMException || exception is TargetInvocationException ||
-                exception is ArgumentException || exception is NotSupportedException) { }
+                exception is ArgumentException || exception is NotSupportedException ||
+                exception is NotImplementedException || exception is PlatformNotSupportedException) { }
             finally
             {
                 if (shortcut != null && Marshal.IsComObject(shortcut)) Marshal.FinalReleaseComObject(shortcut);
